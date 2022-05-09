@@ -1,0 +1,5 @@
+rootProject.name = 'StreamlineAPI'
+include(
+        'bungee'
+)
+findProject(':bungee')?.name = 'StreamlineAPI-Bungee'
