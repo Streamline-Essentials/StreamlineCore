@@ -12,10 +12,20 @@ public abstract class BasePlugin extends Plugin {
             this.name = "StreamlineAPI";
             this.version = "${project.version}";
             this.instance = this;
+            this.enable();
+        }
+        @Override
+        public void onDisable() {
+            this.disable();
+        }
+        @Override
+        public void onLoad() {
+            this.load();
         }
 
         abstract public void enable();
         abstract public void disable();
+        abstract public void load();
         abstract public void reload();
 
         public String getName() {return this.name;}
