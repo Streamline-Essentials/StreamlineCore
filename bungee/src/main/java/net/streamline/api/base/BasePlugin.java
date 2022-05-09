@@ -1,9 +1,6 @@
 package net.streamline.api.base;
 
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Plugin;
-
-import java.util.logging.Logger;
 
 public abstract class BasePlugin extends Plugin {
         String name;
@@ -12,8 +9,9 @@ public abstract class BasePlugin extends Plugin {
 
         @Override
         public void onEnable() {
-            name = "StreamlineAPI";
-            version = "${project.version}";
+            this.name = "StreamlineAPI";
+            this.version = "${project.version}";
+            this.instance = this;
         }
 
         abstract public void enable();
@@ -22,4 +20,5 @@ public abstract class BasePlugin extends Plugin {
 
         public String getName() {return this.name;}
         public String getVersion() {return this.version;}
+        public BasePlugin getInstance() {return this.instance;}
 }
