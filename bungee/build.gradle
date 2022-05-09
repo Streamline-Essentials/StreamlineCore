@@ -25,4 +25,5 @@ dependencies {
 
 blossom {
     replaceToken '${project.version}', project.version, 'src/main/resources/bungee.yml'
+    replaceToken '${project.version}', project.version, 'src/main/net/streamline/api/base/BasePlugin.java'
 }
