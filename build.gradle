@@ -14,7 +14,7 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'com.github.johnrengelman.shadow'
 
-    group = 'tv.quaint'
+    group = 'net.streamline'
     version = '1.0.1.0-ht1'
 
     repositories {
