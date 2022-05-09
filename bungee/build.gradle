@@ -1,0 +1,28 @@
+plugins {
+    id "net.kyori.blossom" version "1.2.0" //For replacing version in Streamline.java
+}
+
+repositories {
+    //Velocity
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+
+dependencies {
+    compileOnly "net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT"
+
+    compileOnly "net.luckperms:api:5.4"
+
+    implementation shadow("com.github.simplix-softworks:simplixstorage:3.2.4")
+
+    implementation shadow("net.objecthunter:exp4j:0.4.8")
+
+    implementation shadow("com.zaxxer:HikariCP:5.0.1")
+
+    implementation shadow("com.google.re2j:re2j:1.6")
+
+    implementation shadow("org.mongodb:mongo-java-driver:3.12.10")
+}
+
+blossom {
+    replaceToken '${project.version}', project.version, 'src/main/resources/bungee.yml'
+}
