@@ -25,6 +25,8 @@ subprojects {
         //JitPack
         maven { url 'https://jitpack.io' }
         maven { url 'https://mvnrepository.com/artifact' }
+        // Apache Commons Lang
+
     }
 
     jar.enabled = false

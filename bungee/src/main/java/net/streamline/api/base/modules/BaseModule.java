@@ -1,18 +1,7 @@
 package net.streamline.api.base.modules;
 
-public abstract class BaseModule {
-    String identifier;
-    boolean enabled;
-    String path;
-
-    public abstract void onEnable();
-    public abstract void onDisable();
-    public abstract void onLoad();
-    public abstract void onReload();
-
-
-    public boolean isEnabled() {return enabled;}
-    public String getIdentifier() {return identifier;}
-    public String getPath() {return path;}
-
+public abstract class BaseModule implements Module {
+    @Override public final int hashCode() {return getName().hashCode();}
+    @Override public final boolean equals(Object obj) {if(this==obj){return true;}if(obj==null){return false;}if(!(obj instanceof Module)){return false;}return getName().equals(((Module) obj).getName());}
+    public final String getName() {return getDescription().getName();}
 }

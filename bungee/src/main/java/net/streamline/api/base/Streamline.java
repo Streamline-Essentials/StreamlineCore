@@ -1,5 +1,7 @@
 package net.streamline.api.base;
 
+import net.md_5.bungee.api.ProxyServer;
+
 import java.util.logging.Logger;
 
 public class Streamline extends BasePlugin {
