@@ -3,7 +3,8 @@ package net.streamline.api.base.modules.java;
 import net.md_5.bungee.api.ProxyServer;
 import net.streamline.api.base.modules.*;
 
-import java.io.File;
+import java.io.*;
+import java.util.logging.Level;
 
 public class JavaModule extends BaseModule {
     private boolean isEnabled = false;
@@ -97,6 +98,44 @@ public class JavaModule extends BaseModule {
 
     private boolean isStrictlyUTF8() {
         return getDescription().getAwareness().contains(ModuleAwareness.Flags.UTF8);
+    }
+
+    @Override
+    public void saveResource(String resourcePath, boolean replace) {
+        if (resourcePath == null || resourcePath.equals("")) {
+            throw new IllegalArgumentException("ResourcePath cannot be null or empty");
+        }
+
+        resourcePath = resourcePath.replace('\\', '/');
+        InputStream in = getResource(resourcePath);
+        if (in == null) {
+            throw new IllegalArgumentException("The embedded resource '" + resourcePath + "' cannot be found in " + file);
+        }
+
+        File outFile = new File(dataFolder, resourcePath);
+        int lastIndex = resourcePath.lastIndexOf('/');
+        File outDir = new File(dataFolder, resourcePath.substring(0, lastIndex >= 0 ? lastIndex : 0));
+
+        if (!outDir.exists()) {
+            outDir.mkdirs();
+        }
+
+        try {
+            if (!outFile.exists() || replace) {
+                OutputStream out = new FileOutputStream(outFile);
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                out.close();
+                ((InputStream) in).close();
+            } else {
+                logger.log(Level.WARNING, "Could not save " + outFile.getName() + " to " + outFile + " because " + outFile.getName() + " already exists.");
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Could not save " + outFile.getName() + " to " + outFile, ex);
+        }
     }
 
 }
