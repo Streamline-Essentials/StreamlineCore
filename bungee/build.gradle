@@ -9,19 +9,16 @@ repositories {
 
 dependencies {
     compileOnly "net.md-5:bungeecord-api:1.18-R0.1-SNAPSHOT"
-
     compileOnly "net.luckperms:api:5.4"
-
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testCompileOnly 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
     implementation shadow("com.github.simplix-softworks:simplixstorage:3.2.4")
-
     implementation shadow("net.objecthunter:exp4j:0.4.8")
-
     implementation shadow("com.zaxxer:HikariCP:5.0.1")
-
     implementation shadow("com.google.re2j:re2j:1.6")
-
     implementation shadow("org.mongodb:mongo-java-driver:3.12.10")
-
     implementation("org.apache.commons:commons-lang3:3.12.0")
 }
 
