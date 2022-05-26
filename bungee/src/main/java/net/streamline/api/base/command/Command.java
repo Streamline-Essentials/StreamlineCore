@@ -50,7 +50,7 @@ public abstract class Command {
         ArrayList<String> matchedPlayers = new ArrayList<String>();
         for(ProxiedPlayer player : executorPlayer.getServer().getInfo().getPlayers()) {
             String name = player.getName();
-            if( && StringUtil.startsWithIgnoreCase(name, lastWord)) {
+            if(StringUtil.startsWithIgnoreCase(name, lastWord)) {
                 matchedPlayers.add(name);
             }
         }
