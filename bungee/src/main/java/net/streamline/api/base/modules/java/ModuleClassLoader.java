@@ -8,49 +8,27 @@ import net.streamline.api.base.modules.ModuleDescriptionFile;
 import org.apache.commons.lang3.Validate;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ModuleClassLoader extends URLClassLoader {
-    private final JavaPluginLoader loader;
+    private final JavaModuleLoader loader;
     private final Map<String, Class<?>> classes = new java.util.concurrent.ConcurrentHashMap<String, Class<?>>(); // Spigot
-    private final PluginDescriptionFile description;
+    private final ModuleDescriptionFile description;
     private final File dataFolder;
     private final File file;
-    final JavaPlugin plugin;
-    private JavaPlugin pluginInit;
+    final JavaModule plugin;
+    private JavaModule pluginInit;
     private IllegalStateException pluginState;
 
-    // Spigot Start
-    static
-    {
-        try
-        {
-            Method method = ClassLoader.class.getDeclaredMethod( "registerAsParallelCapable" );
-            if ( method != null )
-            {
-                boolean oldAccessible = method.isAccessible();
-                method.setAccessible( true );
-                method.invoke( null );
-                method.setAccessible( oldAccessible );
-                Streamline.get( Level.INFO, "Set PluginClassLoader as parallel capable" );
-            }
-        } catch ( NoSuchMethodException ex )
-        {
-            // Ignore
-        } catch ( Exception ex )
-        {
-            Logger.getLogger().log(Level.WARNING, "Error setting PluginClassLoader as parallel capable", ex);
-        }
-    }
-    // Spigot End
-
-    ModuleClassLoader(final JavaModuleLoader loader, final ClassLoader parent, final ModuleDescriptionFile description, final File dataFolder, final File file) throws InvalidModuleException, MalformedURLException {
+    ModuleClassLoader(final JavaModuleLoader loader, final ClassLoader parent, final ModuleDescriptionFile description, final File dataFolder, final File file) throws Throwable {
         super(new URL[] {file.toURI().toURL()}, parent);
         Validate.notNull(loader, "Loader cannot be null");
 
@@ -67,14 +45,14 @@ public class ModuleClassLoader extends URLClassLoader {
                 throw new InvalidModuleException("Cannot find main class `" + description.getMain() + "'", ex);
             }
 
-            Class<? extends JavaPlugin> pluginClass;
+            Class<? extends JavaModule> moduleClass;
             try {
-                pluginClass = jarClass.asSubclass(JavaPlugin.class);
+                moduleClass = jarClass.asSubclass(JavaModule.class);
             } catch (ClassCastException ex) {
                 throw new InvalidModuleException("main class `" + description.getMain() + "' does not extend JavaPlugin", ex);
             }
 
-            plugin = pluginClass.newInstance();
+            plugin = moduleClass.getDeclaredConstructor().newInstance();
         } catch (IllegalAccessException ex) {
             throw new InvalidModuleException("No public constructor", ex);
         } catch (InstantiationException ex) {
