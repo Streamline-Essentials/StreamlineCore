@@ -1,5 +1,7 @@
 package net.streamline.api.base.command;
 
+import java.util.List;
+
 public interface CommandMap {
     /**
      * Registers all the commands belonging to a certain plugin.
@@ -71,7 +73,7 @@ public interface CommandMap {
      * @throws CommandException Thrown when the executor for the given command
      *     fails with an unhandled exception
      */
-    public boolean dispatch(CommandSender sender, String cmdLine) throws CommandException;
+    public boolean dispatch(CommandExecutor sender, String cmdLine) throws CommandException;
 
     /**
      * Clears all registered commands.
@@ -102,5 +104,5 @@ public interface CommandMap {
      *     command fails with an unhandled exception
      * @throws IllegalArgumentException if either sender or cmdLine are null
      */
-    public List<String> tabComplete(CommandSender sender, String cmdLine) throws IllegalArgumentException;
+    public List<String> tabComplete(CommandExecutor sender, String cmdLine) throws IllegalArgumentException;
 }
