@@ -3,6 +3,7 @@ package net.streamline.api.base.modules.java;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Command;
+import net.streamline.api.base.command.ModuleCommand;
 import net.streamline.api.base.modules.*;
 import org.apache.commons.lang3.Validate;
 
