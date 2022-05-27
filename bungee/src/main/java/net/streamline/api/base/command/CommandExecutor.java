@@ -1,5 +1,8 @@
 package net.streamline.api.base.command;
 
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
+
 public interface CommandExecutor {
     /**
      * Executes the given command, returning its success
@@ -10,7 +13,7 @@ public interface CommandExecutor {
      * @param args Passed command arguments
      * @return true if a valid command, otherwise false
      */
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args);
+    public boolean onCommand(CommandExecutor sender, Command command, String label, String[] args);
 
     /**
      * Sends this sender a message
@@ -31,7 +34,7 @@ public interface CommandExecutor {
      *
      * @return Server instance
      */
-    public Server getServer();
+    public ProxyServer getServer();
 
     /**
      * Gets the name of this command sender

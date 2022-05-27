@@ -67,7 +67,7 @@ public abstract class Command {
         if(args.length==0) {return ImmutableList.of();}
 
         String lastWord = args[args.length-1];
-        ProxiedPlayer executorPlayer = executor instanceof CommandExecutor ? (CommandExecutor) executor : null;
+        ProxiedPlayer executorPlayer = executor instanceof CommandExecutor ? (ProxiedPlayer) executor : null;
 
         ArrayList<String> matchedPlayers = new ArrayList<String>();
         for(ProxiedPlayer player : executorPlayer.getServer().getInfo().getPlayers()) {

@@ -3,6 +3,8 @@ package net.streamline.api.base.command;
 import net.streamline.api.base.modules.Module;
 import org.apache.commons.lang3.Validate;
 
+import java.util.List;
+
 public class ModuleCommand extends Command implements ModuleIdentifiableCommand {
     private final Module owningModule;
     private CommandExecutor executor;
@@ -16,19 +18,19 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
     }
 
     @Override
-    public boolean execute(CommandSender sender, String commandLabel, String[] args) {
+    public boolean execute(CommandExecutor executor, String commandLabel, String[] args) {
         boolean success = false;
 
-        if (!owningPlugin.isEnabled()) {
+        if (!owningModule.isEnabled()) {
             return false;
         }
 
-        if (!testPermission(sender)) {
+        if (!testPermission(executor)) {
             return true;
         }
 
         try {
-            success = executor.onCommand(sender, this, commandLabel, args);
+            success = executor.onCommand(executor, this, commandLabel, args);
         } catch (Throwable ex) {
             throw new CommandException("Unhandled exception executing command '" + commandLabel + "' in plugin " + owningPlugin.getDescription().getFullName(), ex);
         }
@@ -127,7 +129,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
             for (String arg : args) {
                 message.append(arg).append(' ');
             }
-            message.deleteCharAt(message.length() - 1).append("' in plugin ").append(owningPlugin.getDescription().getFullName());
+            message.deleteCharAt(message.length() - 1).append("' in plugin ").append(owningModule.getDescription().getFullName());
             throw new CommandException(message.toString(), ex);
         }
 
@@ -141,7 +143,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder(super.toString());
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        stringBuilder.append(", ").append(owningPlugin.getDescription().getFullName()).append(')');
+        stringBuilder.append(", ").append(owningModule.getDescription().getFullName()).append(')');
         return stringBuilder.toString();
     }
 }
