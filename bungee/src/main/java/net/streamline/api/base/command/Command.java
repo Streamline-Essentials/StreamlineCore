@@ -290,25 +290,9 @@ public abstract class Command {
 
     public static void broadcastCommandMessage(CommandExecutor source, String message, boolean sendToSource) {
         String result = source.getName() + ": " + message;
-
-        if (source instanceof BlockCommandSender) {
-            BlockCommandSender blockCommandSender = (BlockCommandSender) source;
-
-            if (blockCommandSender.getBlock().getWorld().getGameRuleValue("commandBlockOutput").equalsIgnoreCase("false")) {
-                ProxyServer.getInstance().getConsole().sendMessage(result);
-                return;
-            }
-        } else if (source instanceof CommandMinecart) {
-            CommandMinecart commandMinecart = (CommandMinecart) source;
-
-            if (commandMinecart.getWorld().getGameRuleValue("commandBlockOutput").equalsIgnoreCase("false")) {
-                Bukkit.getConsoleSender().sendMessage(result);
-                return;
-            }
-        }
         String colored = ChatColor.GRAY + "" + ChatColor.ITALIC + "[" + result + ChatColor.GRAY + ChatColor.ITALIC + "]";
 
-        if (sendToSource && !(source instanceof ConsoleCommandSender)) {
+        if (sendToSource && ! (source instanceof ConsoleCommandSender)) {
             source.sendMessage(message);
         }
     }

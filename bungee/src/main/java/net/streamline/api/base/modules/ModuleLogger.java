@@ -10,7 +10,7 @@ public class ModuleLogger extends Logger {
         super(context.getClass().getCanonicalName(), null);
         String prefix = context.getDescription().getPrefix();
         moduleName = prefix != null ? new StringBuilder().append("[").append(prefix).append("] ").toString() : "[" + context.getDescription().getName() + "] ";
-        setParent(context.getServer().getLogger());
+        setParent(context.getBase().getLogger());
         setLevel(Level.ALL);
     }
     @Override

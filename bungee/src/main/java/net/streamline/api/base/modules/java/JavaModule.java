@@ -1,8 +1,8 @@
 package net.streamline.api.base.modules.java;
 
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Command;
+import net.streamline.api.base.BasePlugin;
 import net.streamline.api.base.command.ModuleCommand;
 import net.streamline.api.base.modules.*;
 import org.apache.commons.lang3.Validate;
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JavaModule extends BaseModule {
+public abstract class JavaModule extends BaseModule {
     private boolean isEnabled = false;
     private ModuleLoader loader = null;
-    private ProxyServer server = null;
+    private BasePlugin base = null;
     private File file = null;
     private ModuleDescriptionFile description = null;
     private File dataFolder = null;
@@ -40,7 +40,7 @@ public class JavaModule extends BaseModule {
         if (classLoader instanceof ModuleClassLoader) {
             throw new IllegalStateException("Cannot use initialization constructor at runtime");
         }
-        init(loader, loader.server, description, dataFolder, file, classLoader);
+        init(loader, loader.base, description, dataFolder, file, classLoader);
     }
 
     /**
@@ -70,8 +70,8 @@ public class JavaModule extends BaseModule {
      * @return Server running this plugin
      */
     @Override
-    public final ProxyServer getServer() {
-        return server;
+    public final BasePlugin getBase() {
+        return base;
     }
 
     /**
@@ -147,6 +147,16 @@ public class JavaModule extends BaseModule {
     }
 
     @Override
+    public void reloadConfig() {
+
+    }
+
+    @Override
+    public ModuleLoader getModuleLoader() {
+        return null;
+    }
+
+    @Override
     public InputStream getResource(String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
@@ -165,6 +175,16 @@ public class JavaModule extends BaseModule {
         } catch (IOException ex) {
             return null;
         }
+    }
+
+    @Override
+    public void saveConfig() {
+
+    }
+
+    @Override
+    public void saveDefaultConfig() {
+
     }
 
     /**
@@ -193,9 +213,9 @@ public class JavaModule extends BaseModule {
         }
     }
 
-    final void init(ModuleLoader loader, ProxyServer server, ModuleDescriptionFile description, File dataFolder, File file, ClassLoader classLoader) {
+    final void init(ModuleLoader loader, BasePlugin base, ModuleDescriptionFile description, File dataFolder, File file, ClassLoader classLoader) {
         this.loader = loader;
-        this.server = server;
+        this.base = base;
         this.file = file;
         this.description = description;
         this.dataFolder = dataFolder;
@@ -230,10 +250,10 @@ public class JavaModule extends BaseModule {
      */
     public ModuleCommand getCommand(String name) {
         String alias = name.toLowerCase();
-        ModuleCommand command = getServer().getModuleCommand(alias);
+        ModuleCommand command = getBase().getModuleCommand(alias);
 
         if (command == null || command.getModule() != this) {
-            command = getServer().getModuleCommand(description.getName().toLowerCase() + ":" + alias);
+            command = getBase().getModuleCommand(description.getName().toLowerCase() + ":" + alias);
         }
 
         if (command != null && command.getModule() == this) {
@@ -252,7 +272,7 @@ public class JavaModule extends BaseModule {
     @Override public String toString() {return description.getFullName();}
     /**
      * This method provides fast access to the module that has {@link
-     * #getProvidingModule(Class) provided} the given module class, which is
+     * #getModule(Class)}  provided} the given module class, which is
      * usually the module that implemented it.
      * <p>
      * An exception to this would be if module's jar that contained the class
@@ -272,7 +292,7 @@ public class JavaModule extends BaseModule {
      * @throws ClassCastException if plugin that provided the class does not
      *     extend the class
      */
-    public static <T extends JavaModule> T getPlugin(Class<T> clazz) {
+    public static <T extends JavaModule> T getModule(Class<T> clazz) {
         Validate.notNull(clazz, "Null class cannot have a plugin");
         if (!JavaModule.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException(clazz + " does not extend " + JavaModule.class);

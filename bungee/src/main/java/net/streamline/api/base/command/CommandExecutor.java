@@ -1,7 +1,7 @@
 package net.streamline.api.base.command;
 
-import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
+import net.streamline.api.base.BasePlugin;
 
 public interface CommandExecutor {
     /**
@@ -34,7 +34,7 @@ public interface CommandExecutor {
      *
      * @return Server instance
      */
-    public ProxyServer getServer();
+    public BasePlugin getBase();
 
     /**
      * Gets the name of this command sender
@@ -42,4 +42,26 @@ public interface CommandExecutor {
      * @return Name of the sender
      */
     public String getName();
+
+    /**
+     * Gets the uuid of this command sender
+     *
+     * @return UUID of the sender
+     */
+    public String getUUID();
+
+    /**
+     * Checks if the sender has the given permission
+     *
+     * @param permission The permission to check
+     * @return If the sender has the given permission
+     */
+    public boolean hasPermission(String permission);
+
+    /**
+     * Checks if the sender is online
+     *
+     * @return whether the sender is online or not
+     */
+    public boolean isOnline();
 }

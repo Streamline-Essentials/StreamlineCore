@@ -27,6 +27,8 @@ subprojects {
         maven { url 'https://mvnrepository.com/artifact' }
         // Apache Commons Lang
 
+        //ViaVersion
+        maven { url 'https://repo.viaversion.com' }
     }
 
     jar.enabled = false
