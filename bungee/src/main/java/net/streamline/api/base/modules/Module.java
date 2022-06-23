@@ -1,12 +1,14 @@
 package net.streamline.api.base.modules;
 
 import net.md_5.bungee.api.ProxyServer;
+import net.streamline.api.base.BasePlugin;
+import net.streamline.api.base.command.TabExecutor;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-public interface Module {
+public interface Module extends TabExecutor {
     public File getDataFolder();
     public ModuleDescriptionFile getDescription();
     /*getConfig();*/
@@ -16,7 +18,7 @@ public interface Module {
     public void saveResource(String resourcePath, boolean replace);
     public void reloadConfig();
     public ModuleLoader getModuleLoader();
-    public ProxyServer getServer();
+    public BasePlugin getBase();
     public boolean isEnabled();
     public void onDisable();
     public void onLoad();

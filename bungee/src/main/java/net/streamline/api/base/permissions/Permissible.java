@@ -1,6 +1,10 @@
 package net.streamline.api.base.permissions;
 
-public interface  Permissible {
+import net.luckperms.api.node.Node;
+
+import java.util.Set;
+
+public interface Permissible {
     /**
      * Checks if this object contains an override for the specified
      * permission, by fully qualified name
@@ -12,12 +16,12 @@ public interface  Permissible {
 
     /**
      * Checks if this object contains an override for the specified {@link
-     * Permission}
+     * Node}
      *
      * @param perm Permission to check
      * @return true if the permission is set, otherwise false
      */
-    public boolean isPermissionSet(Permission perm);
+    public boolean isPermissionSet(Node perm);
 
     /**
      * Gets the value of the specified permission, if set.
@@ -39,13 +43,13 @@ public interface  Permissible {
      * @param perm Permission to get
      * @return Value of the permission
      */
-    public boolean hasPermission(Permission perm);
+    public boolean hasPermission(Node perm);
 
     /**
      * Adds a new {@link PermissionAttachment} with a single permission by
      * name and value
      *
-     * @param plugin Plugin responsible for this attachment, may not be null
+     * @param module Module responsible for this attachment, may not be null
      *     or disabled
      * @param name Name of the permission to attach
      * @param value Value of the permission
@@ -111,5 +115,5 @@ public interface  Permissible {
      *
      * @return Set of currently effective permissions
      */
-    public Set<PermissionAttachmentInfo> getEffectivePermissions();
+    public Set<PermissionAttachment> getEffectivePermissions();
 }

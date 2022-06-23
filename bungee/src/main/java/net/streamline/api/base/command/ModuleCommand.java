@@ -32,12 +32,12 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
         try {
             success = executor.onCommand(executor, this, commandLabel, args);
         } catch (Throwable ex) {
-            throw new CommandException("Unhandled exception executing command '" + commandLabel + "' in plugin " + owningPlugin.getDescription().getFullName(), ex);
+            throw new CommandException("Unhandled exception executing command '" + commandLabel + "' in plugin " + owningModule.getDescription().getFullName(), ex);
         }
 
         if (!success && usageMessage.length() > 0) {
             for (String line : usageMessage.replace("<command>", commandLabel).split("\n")) {
-                sender.sendMessage(line);
+                executor.sendMessage(line);
             }
         }
 
@@ -50,7 +50,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      * @param executor New executor to run
      */
     public void setExecutor(CommandExecutor executor) {
-        this.executor = executor == null ? owningPlugin : executor;
+        this.executor = executor == null ? owningModule : executor;
     }
 
     /**
@@ -88,8 +88,8 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *
      * @return Plugin that owns this command
      */
-    public Module getPlugin() {
-        return owningPlugin;
+    public Module getModule() {
+        return owningModule;
     }
 
     /**

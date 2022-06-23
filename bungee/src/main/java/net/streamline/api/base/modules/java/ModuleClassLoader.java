@@ -1,22 +1,14 @@
 package net.streamline.api.base.modules.java;
 
-import net.md_5.bungee.api.plugin.Plugin;
-import net.streamline.api.base.BasePlugin;
-import net.streamline.api.base.Streamline;
 import net.streamline.api.base.modules.InvalidModuleException;
 import net.streamline.api.base.modules.ModuleDescriptionFile;
 import org.apache.commons.lang3.Validate;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ModuleClassLoader extends URLClassLoader {
     private final JavaModuleLoader loader;
@@ -104,6 +96,6 @@ public class ModuleClassLoader extends URLClassLoader {
         pluginState = new IllegalStateException("Initial initialization");
         this.pluginInit = javaModule;
 
-        javaModule.init(loader, loader.server, description, dataFolder, file, this);
+        javaModule.init(loader, loader.base, description, dataFolder, file, this);
     }
 }

@@ -1,6 +1,7 @@
 package net.streamline.api.base.modules.java;
 
 import net.md_5.bungee.api.ProxyServer;
+import net.streamline.api.base.BasePlugin;
 import net.streamline.api.base.modules.*;
 import net.streamline.api.base.modules.Module;
 import org.apache.commons.lang3.Validate;
@@ -18,18 +19,19 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class JavaModuleLoader implements ModuleLoader {
-    final ProxyServer server;
+    final BasePlugin base;
     private final Pattern[] fileFilters = new Pattern[] { Pattern.compile("\\.jar$"), };
     private final Map<String, Class<?>> classes = new java.util.concurrent.ConcurrentHashMap<String, Class<?>>(); // Streamline
     private final Map<String, ModuleClassLoader> loaders = new LinkedHashMap<String, ModuleClassLoader>();
 
     @Deprecated
-    public JavaModuleLoader(ProxyServer instance) {
+    public JavaModuleLoader(BasePlugin instance) {
         Validate.notNull(instance, "Server cannot be null");
-        server = instance;
+        base = instance;
     }
 
-    public Module loadPlugin(final File file) throws InvalidModuleException {
+    @Override
+    public Module loadModule(final File file) throws InvalidModuleException {
         Validate.notNull(file, "File cannot be null");
         if(!file.exists()) {throw new InvalidModuleException(new FileNotFoundException(file.getPath() + " does not exist"));}
         final ModuleDescriptionFile description;
@@ -48,7 +50,7 @@ public class JavaModuleLoader implements ModuleLoader {
         if(dataFolder.equals(oldDataFolder)) {
             // They are equal -- nothing needs to be done!
         } else if(dataFolder.isDirectory() && oldDataFolder.isDirectory()) {
-            server.getLogger().warning(String.format(
+            base.getLogger().warning(String.format(
                     "While loading %s (%s) found old-data folder: `%s' next to the new one `%s'",
                     description.getFullName(),
                     file,
@@ -59,7 +61,7 @@ public class JavaModuleLoader implements ModuleLoader {
             if(!oldDataFolder.renameTo(dataFolder)) {
                 throw new InvalidModuleException("Unable to rename old data folder : `"+oldDataFolder+"' to: `"+dataFolder+"'");
             }
-            server.getLogger().log(Level.INFO, String.format(
+            base.getLogger().log(Level.INFO, String.format(
                     "While loading %s (%s) renamed data folder: `%s' to `%s'",
                     description.getFullName(), file, oldDataFolder,dataFolder
             ));
@@ -143,7 +145,8 @@ public class JavaModuleLoader implements ModuleLoader {
             }
 
             try {jModule.setEnabled(true);}
-            catch (Throwable ex) {server.getLogger().log(Level.SEVERE, "Error occured while enabling " +
+            catch (Throwable ex) {
+                base.getLogger().log(Level.SEVERE, "Error occured while enabling " +
                     module.getDescription().getFullName() + " (Is it up to date?)", ex);}
             //Call plugin enable event -- Here
         }
@@ -159,7 +162,8 @@ public class JavaModuleLoader implements ModuleLoader {
             ClassLoader cloader = jModule.getClassLoader();
 
             try {jModule.setEnabled(false);}
-            catch (Throwable ex) {server.getLogger().log(Level.SEVERE, "Error occured while enabling " +
+            catch (Throwable ex) {
+                base.getLogger().log(Level.SEVERE, "Error occured while enabling " +
                     module.getDescription().getFullName() + " (Is it up to date?)", ex);}
 
             loaders.remove(jModule.getDescription().getName());
