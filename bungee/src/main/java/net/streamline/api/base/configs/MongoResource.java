@@ -45,6 +45,11 @@ public class MongoResource extends StorageResource<Document> {
         return thing;
     }
 
+    @Override
+    public void sync() {
+        this.databaseConfig.mongoConnection().update(this.collectionName, this.getWhere(), this.sheet);
+    }
+
     public Document getWhere() {
         return StorageUtils.getWhere(discriminatorKey, discriminator);
     }

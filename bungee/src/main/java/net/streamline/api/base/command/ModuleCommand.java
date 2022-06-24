@@ -1,43 +1,56 @@
 package net.streamline.api.base.command;
 
+import com.google.common.base.Preconditions;
 import net.streamline.api.base.modules.Module;
-import org.apache.commons.lang3.Validate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ModuleCommand extends Command implements ModuleIdentifiableCommand {
+/**
+ * Represents a {@link Command} belonging to a module
+ */
+public final class ModuleCommand extends Command implements ModuleIdentifiableCommand {
     private final Module owningModule;
     private CommandExecutor executor;
     private TabCompleter completer;
 
-    protected ModuleCommand(String name, Module owner) {
+    protected ModuleCommand(@NotNull String name, @NotNull Module owner) {
         super(name);
         this.executor = owner;
         this.owningModule = owner;
         this.usageMessage = "";
     }
 
+    /**
+     * Executes the command, returning its success
+     *
+     * @param sender Source object which is executing this command
+     * @param commandLabel The alias of the command used
+     * @param args All arguments passed to the command, split via ' '
+     * @return true if the command was successful, otherwise false
+     */
     @Override
-    public boolean execute(CommandExecutor executor, String commandLabel, String[] args) {
+    public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
         boolean success = false;
 
         if (!owningModule.isEnabled()) {
-            return false;
+            throw new CommandException("Cannot execute command '" + commandLabel + "' in module " + owningModule.getDescription().getFullName() + " - module is disabled.");
         }
 
-        if (!testPermission(executor)) {
+        if (!testPermission(sender)) {
             return true;
         }
 
         try {
-            success = executor.onCommand(executor, this, commandLabel, args);
+            success = executor.onCommand(sender, this, commandLabel, args);
         } catch (Throwable ex) {
-            throw new CommandException("Unhandled exception executing command '" + commandLabel + "' in plugin " + owningModule.getDescription().getFullName(), ex);
+            throw new CommandException("Unhandled exception executing command '" + commandLabel + "' in module " + owningModule.getDescription().getFullName(), ex);
         }
 
         if (!success && usageMessage.length() > 0) {
             for (String line : usageMessage.replace("<command>", commandLabel).split("\n")) {
-                executor.sendMessage(line);
+                sender.sendMessage(line);
             }
         }
 
@@ -49,7 +62,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *
      * @param executor New executor to run
      */
-    public void setExecutor(CommandExecutor executor) {
+    public void setExecutor(@Nullable CommandExecutor executor) {
         this.executor = executor == null ? owningModule : executor;
     }
 
@@ -58,6 +71,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *
      * @return CommandExecutor object linked to this command
      */
+    @NotNull
     public CommandExecutor getExecutor() {
         return executor;
     }
@@ -70,7 +84,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *
      * @param completer New tab completer
      */
-    public void setTabCompleter(TabCompleter completer) {
+    public void setTabCompleter(@Nullable TabCompleter completer) {
         this.completer = completer;
     }
 
@@ -79,15 +93,18 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *
      * @return TabCompleter object linked to this command
      */
+    @Nullable
     public TabCompleter getTabCompleter() {
         return completer;
     }
 
     /**
-     * Gets the owner of this PluginCommand
+     * Gets the owner of this ModuleCommand
      *
-     * @return Plugin that owns this command
+     * @return Module that owns this command
      */
+    @Override
+    @NotNull
     public Module getModule() {
         return owningModule;
     }
@@ -99,9 +116,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      * <p>
      * If it is not present or returns null, will delegate to the current
      * command executor if it implements {@link TabCompleter}. If a non-null
-     * list has not been found, will default to standard player name
-     * completion in {@link
-     * Command#tabComplete(CommandExecutor, String, String[])}.
+     * list has not been found.
      * <p>
      * This method does not consider permissions.
      *
@@ -109,11 +124,12 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
      *     exception during the process of tab-completing.
      * @throws IllegalArgumentException if sender, alias, or args is null
      */
+    @NotNull
     @Override
-    public java.util.List<String> tabComplete(CommandExecutor sender, String alias, String[] args) throws CommandException, IllegalArgumentException {
-        Validate.notNull(sender, "Sender cannot be null");
-        Validate.notNull(args, "Arguments cannot be null");
-        Validate.notNull(alias, "Alias cannot be null");
+    public java.util.List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws CommandException, IllegalArgumentException {
+        Preconditions.checkArgument(sender != null, "Sender cannot be null");
+        Preconditions.checkArgument(args != null, "Arguments cannot be null");
+        Preconditions.checkArgument(alias != null, "Alias cannot be null");
 
         List<String> completions = null;
         try {
@@ -129,7 +145,7 @@ public class ModuleCommand extends Command implements ModuleIdentifiableCommand 
             for (String arg : args) {
                 message.append(arg).append(' ');
             }
-            message.deleteCharAt(message.length() - 1).append("' in plugin ").append(owningModule.getDescription().getFullName());
+            message.deleteCharAt(message.length() - 1).append("' in module ").append(owningModule.getDescription().getFullName());
             throw new CommandException(message.toString(), ex);
         }
 

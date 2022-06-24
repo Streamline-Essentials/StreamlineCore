@@ -38,6 +38,8 @@ public abstract class StorageResource<T> {
 
     public abstract <O> O getOrSetDefault(String key, O value);
 
+    public abstract void sync();
+
     public void setHangingMillis(int setAs) {
         this.hangingMillis = setAs;
     }

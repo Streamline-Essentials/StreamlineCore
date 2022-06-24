@@ -1,6 +1,7 @@
 package net.streamline.api.base.command;
 
 import net.streamline.api.base.modules.Module;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This interface is used by the help system to group commands into
@@ -9,10 +10,12 @@ import net.streamline.api.base.modules.Module;
  * automatically generated on the plugin's behalf.
  */
 public interface ModuleIdentifiableCommand {
+
     /**
      * Gets the owner of this PluginIdentifiableCommand.
      *
-     * @return Module that owns this PluginIdentifiableCommand.
+     * @return Plugin that owns this PluginIdentifiableCommand.
      */
+    @NotNull
     public Module getModule();
 }

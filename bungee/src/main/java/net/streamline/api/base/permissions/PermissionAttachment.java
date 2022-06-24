@@ -1,6 +1,5 @@
 package net.streamline.api.base.permissions;
 
-import net.luckperms.api.node.Node;
 import net.streamline.api.base.modules.Module;
 
 import java.util.LinkedHashMap;
@@ -95,8 +94,8 @@ public class PermissionAttachment {
      * @param perm Permission to set
      * @param value New value of the permission
      */
-    public void setPermission(Node perm, boolean value) {
-        setPermission(perm.getKey(), value);
+    public void setPermission(Permission perm, boolean value) {
+        setPermission(perm.getName(), value);
     }
 
     /**
@@ -120,8 +119,8 @@ public class PermissionAttachment {
      *
      * @param perm Permission to remove
      */
-    public void unsetPermission(Node perm) {
-        unsetPermission(perm.getKey());
+    public void unsetPermission(Permission perm) {
+        unsetPermission(perm.getName());
     }
 
     /**

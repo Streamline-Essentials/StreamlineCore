@@ -1,11 +1,18 @@
 package net.streamline.api.base.modules.java;
 
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.plugin.Command;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import net.streamline.api.base.BasePlugin;
+import net.streamline.api.base.command.Command;
+import net.streamline.api.base.command.CommandExecutor;
 import net.streamline.api.base.command.ModuleCommand;
-import net.streamline.api.base.modules.*;
-import org.apache.commons.lang3.Validate;
+import net.streamline.api.base.configs.StorageResource;
+import net.streamline.api.base.modules.ModuleBase;
+import net.streamline.api.base.modules.ModuleDescriptionFile;
+import net.streamline.api.base.modules.ModuleLoader;
+import net.streamline.api.base.modules.ModuleLogger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
@@ -14,71 +21,77 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class JavaModule extends BaseModule {
+/**
+ * Represents a Java module
+ */
+public abstract class JavaModule extends ModuleBase {
     private boolean isEnabled = false;
     private ModuleLoader loader = null;
-    private BasePlugin base = null;
+    private BasePlugin server = null;
     private File file = null;
     private ModuleDescriptionFile description = null;
     private File dataFolder = null;
     private ClassLoader classLoader = null;
     private boolean naggable = true;
-    /*private FileConfiguration newConfig = null;*/
+    private StorageResource<?> newConfig = null;
     private File configFile = null;
     private ModuleLogger logger = null;
 
     public JavaModule() {
         final ClassLoader classLoader = this.getClass().getClassLoader();
-        if(!(classLoader instanceof ModuleClassLoader)) {
+        if (!(classLoader instanceof ModuleClassLoader)) {
             throw new IllegalStateException("JavaModule requires " + ModuleClassLoader.class.getName());
         }
         ((ModuleClassLoader) classLoader).initialize(this);
     }
 
-    protected JavaModule(final JavaModuleLoader loader, final ModuleDescriptionFile description, final File dataFolder, final File file) {
+    protected JavaModule(@NotNull final JavaModuleLoader loader, @NotNull final ModuleDescriptionFile description, @NotNull final File dataFolder, @NotNull final File file) {
         final ClassLoader classLoader = this.getClass().getClassLoader();
         if (classLoader instanceof ModuleClassLoader) {
             throw new IllegalStateException("Cannot use initialization constructor at runtime");
         }
-        init(loader, loader.base, description, dataFolder, file, classLoader);
+        init(loader, loader.server, description, dataFolder, file, classLoader);
     }
 
     /**
-     * Returns the folder that the plugin data's files are located in. The
+     * Returns the folder that the module data's files are located in. The
      * folder may not yet exist.
      *
      * @return The folder.
      */
+    @NotNull
     @Override
     public final File getDataFolder() {
         return dataFolder;
     }
 
     /**
-     * Gets the associated PluginLoader responsible for this plugin
+     * Gets the associated ModuleLoader responsible for this module
      *
-     * @return PluginLoader that controls this plugin
+     * @return ModuleLoader that controls this module
      */
+    @NotNull
     @Override
-    public final ModuleLoader getPluginLoader() {
+    public final ModuleLoader getModuleLoader() {
         return loader;
     }
 
     /**
-     * Returns the Server instance currently running this plugin
+     * Returns the Server instance currently running this module
      *
-     * @return Server running this plugin
+     * @return Server running this module
      */
+    @NotNull
     @Override
-    public final BasePlugin getBase() {
-        return base;
+    public final BasePlugin getServer() {
+        return server;
     }
 
     /**
-     * Returns a value indicating whether or not this plugin is currently
+     * Returns a value indicating whether or not this module is currently
      * enabled
      *
-     * @return true if this plugin is enabled, otherwise false
+     * @return true if this module is enabled, otherwise false
      */
     @Override
     public final boolean isEnabled() {
@@ -86,30 +99,70 @@ public abstract class JavaModule extends BaseModule {
     }
 
     /**
-     * Returns the file which contains this plugin
+     * Returns the file which contains this module
      *
-     * @return File containing this plugin
+     * @return File containing this module
      */
+    @NotNull
     protected File getFile() {
         return file;
     }
 
     /**
-     * Returns the plugin.yaml file containing the details for this plugin
+     * Returns the module.yaml file containing the details for this module
      *
-     * @return Contents of the plugin.yaml file
+     * @return Contents of the module.yaml file
      */
+    @NotNull
     @Override
     public final ModuleDescriptionFile getDescription() {
         return description;
     }
 
-    private boolean isStrictlyUTF8() {
-        return getDescription().getAwareness().contains(ModuleAwareness.Flags.UTF8);
+    @NotNull
+    public StorageResource<?> getConfig() {
+        if (newConfig == null) {
+            reloadConfig();
+        }
+        return newConfig;
+    }
+
+    /**
+     * Provides a reader for a text file located inside the jar.
+     * <p>
+     * The returned reader will read text with the UTF-8 charset.
+     *
+     * @param file the filename of the resource to load
+     * @return null if {@link #getResource(String)} returns null
+     * @throws IllegalArgumentException if file is null
+     * @see ClassLoader#getResourceAsStream(String)
+     */
+    @Nullable
+    protected final Reader getTextResource(@NotNull String file) {
+        final InputStream in = getResource(file);
+
+        return in == null ? null : new InputStreamReader(in, Charsets.UTF_8);
     }
 
     @Override
-    public void saveResource(String resourcePath, boolean replace) {
+    public void reloadConfig() {
+        newConfig.reloadResource();
+    }
+
+    @Override
+    public void saveConfig() {
+        getConfig().sync();
+    }
+
+    @Override
+    public void saveDefaultConfig() {
+        if (!configFile.exists()) {
+            saveResource("config.yml", false);
+        }
+    }
+
+    @Override
+    public void saveResource(@NotNull String resourcePath, boolean replace) {
         if (resourcePath == null || resourcePath.equals("")) {
             throw new IllegalArgumentException("ResourcePath cannot be null or empty");
         }
@@ -137,7 +190,7 @@ public abstract class JavaModule extends BaseModule {
                     out.write(buf, 0, len);
                 }
                 out.close();
-                ((InputStream) in).close();
+                in.close();
             } else {
                 logger.log(Level.WARNING, "Could not save " + outFile.getName() + " to " + outFile + " because " + outFile.getName() + " already exists.");
             }
@@ -146,18 +199,9 @@ public abstract class JavaModule extends BaseModule {
         }
     }
 
+    @Nullable
     @Override
-    public void reloadConfig() {
-
-    }
-
-    @Override
-    public ModuleLoader getModuleLoader() {
-        return null;
-    }
-
-    @Override
-    public InputStream getResource(String filename) {
+    public InputStream getResource(@NotNull String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
         }
@@ -169,7 +213,7 @@ public abstract class JavaModule extends BaseModule {
                 return null;
             }
 
-            URLConnection connection = ((URL) url).openConnection();
+            URLConnection connection = url.openConnection();
             connection.setUseCaches(false);
             return connection.getInputStream();
         } catch (IOException ex) {
@@ -177,27 +221,18 @@ public abstract class JavaModule extends BaseModule {
         }
     }
 
-    @Override
-    public void saveConfig() {
-
-    }
-
-    @Override
-    public void saveDefaultConfig() {
-
-    }
-
     /**
-     * Returns the ClassLoader which holds this plugin
+     * Returns the ClassLoader which holds this module
      *
-     * @return ClassLoader holding this plugin
+     * @return ClassLoader holding this module
      */
+    @NotNull
     protected final ClassLoader getClassLoader() {
         return classLoader;
     }
 
     /**
-     * Sets the enabled state of this plugin
+     * Sets the enabled state of this module
      *
      * @param enabled true if enabled, otherwise false
      */
@@ -213,9 +248,10 @@ public abstract class JavaModule extends BaseModule {
         }
     }
 
-    final void init(ModuleLoader loader, BasePlugin base, ModuleDescriptionFile description, File dataFolder, File file, ClassLoader classLoader) {
+
+    final void init(@NotNull ModuleLoader loader, @NotNull BasePlugin server, @NotNull ModuleDescriptionFile description, @NotNull File dataFolder, @NotNull File file, @NotNull ClassLoader classLoader) {
         this.loader = loader;
-        this.base = base;
+        this.server = server;
         this.file = file;
         this.description = description;
         this.dataFolder = dataFolder;
@@ -228,7 +264,7 @@ public abstract class JavaModule extends BaseModule {
      * {@inheritDoc}
      */
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandExecutor sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         return false;
     }
 
@@ -236,24 +272,26 @@ public abstract class JavaModule extends BaseModule {
      * {@inheritDoc}
      */
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+    @Nullable
+    public List<String> onTabComplete(@NotNull CommandExecutor sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         return null;
     }
 
     /**
-     * Gets the command with the given name, specific to this plugin. Commands
+     * Gets the command with the given name, specific to this module. Commands
      * need to be registered in the {@link ModuleDescriptionFile#getCommands()
-     * PluginDescriptionFile} to exist at runtime.
+     * ModuleDescriptionFile} to exist at runtime.
      *
      * @param name name or alias of the command
-     * @return the plugin command if found, otherwise null
+     * @return the module command if found, otherwise null
      */
-    public ModuleCommand getCommand(String name) {
-        String alias = name.toLowerCase();
-        ModuleCommand command = getBase().getModuleCommand(alias);
+    @Nullable
+    public ModuleCommand getCommand(@NotNull String name) {
+        String alias = name.toLowerCase(java.util.Locale.ENGLISH);
+        ModuleCommand command = getServer().getModuleCommand(alias);
 
         if (command == null || command.getModule() != this) {
-            command = getBase().getModuleCommand(description.getName().toLowerCase() + ":" + alias);
+            command = getServer().getModuleCommand(description.getName().toLowerCase(java.util.Locale.ENGLISH) + ":" + alias);
         }
 
         if (command != null && command.getModule() == this) {
@@ -263,37 +301,62 @@ public abstract class JavaModule extends BaseModule {
         }
     }
 
-    @Override public void onLoad() {}
-    @Override public void onDisable() {}
-    @Override public void onEnable() {}
-    @Override public final boolean isNaggable() {return naggable;}
-    @Override public final void setNaggable(boolean canNag) {this.naggable = canNag;}
-    @Override public final Logger getLogger() {return logger;}
-    @Override public String toString() {return description.getFullName();}
+    @Override
+    public void onLoad() {}
+
+    @Override
+    public void onDisable() {}
+
+    @Override
+    public void onEnable() {}
+
+    @Override
+    public final boolean isNaggable() {
+        return naggable;
+    }
+
+    @Override
+    public final void setNaggable(boolean canNag) {
+        this.naggable = canNag;
+    }
+
+    @Override
+    public @NotNull Logger getLogger() {
+        return logger;
+    }
+
+    @NotNull
+    @Override
+    public String toString() {
+        return description.getFullName();
+    }
+
     /**
      * This method provides fast access to the module that has {@link
-     * #getModule(Class)}  provided} the given module class, which is
+     * #getProvidingModule(Class) provided} the given module class, which is
      * usually the module that implemented it.
      * <p>
      * An exception to this would be if module's jar that contained the class
      * does not extend the class, where the intended module would have
      * resided in a different jar / classloader.
      *
+     * @param <T> a class that extends JavaModule
      * @param clazz the class desired
-     * @return the plugin that provides and implements said class
+     * @return the module that provides and implements said class
      * @throws IllegalArgumentException if clazz is null
      * @throws IllegalArgumentException if clazz does not extend {@link
      *     JavaModule}
-     * @throws IllegalStateException if clazz was not provided by a plugin,
+     * @throws IllegalStateException if clazz was not provided by a module,
      *     for example, if called with
-     *     <code>JavaPlugin.getPlugin(JavaPlugin.class)</code>
+     *     <code>JavaModule.getModule(JavaModule.class)</code>
      * @throws IllegalStateException if called from the static initializer for
-     *     given JavaPlugin
-     * @throws ClassCastException if plugin that provided the class does not
+     *     given JavaModule
+     * @throws ClassCastException if module that provided the class does not
      *     extend the class
      */
-    public static <T extends JavaModule> T getModule(Class<T> clazz) {
-        Validate.notNull(clazz, "Null class cannot have a plugin");
+    @NotNull
+    public static <T extends JavaModule> T getModule(@NotNull Class<T> clazz) {
+        Preconditions.checkArgument(clazz != null, "Null class cannot have a module");
         if (!JavaModule.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException(clazz + " does not extend " + JavaModule.class);
         }
@@ -301,12 +364,36 @@ public abstract class JavaModule extends BaseModule {
         if (!(cl instanceof ModuleClassLoader)) {
             throw new IllegalArgumentException(clazz + " is not initialized by " + ModuleClassLoader.class);
         }
-        JavaModule plugin = ((ModuleClassLoader) cl).plugin;
-        if (plugin == null) {
-            throw new IllegalStateException("Cannot get plugin for " + clazz + " from a static initializer");
+        JavaModule module = ((ModuleClassLoader) cl).module;
+        if (module == null) {
+            throw new IllegalStateException("Cannot get module for " + clazz + " from a static initializer");
         }
-        return clazz.cast(plugin);
+        return clazz.cast(module);
     }
 
-
+    /**
+     * This method provides fast access to the module that has provided the
+     * given class.
+     *
+     * @param clazz a class belonging to a module
+     * @return the module that provided the class
+     * @throws IllegalArgumentException if the class is not provided by a
+     *     JavaModule
+     * @throws IllegalArgumentException if class is null
+     * @throws IllegalStateException if called from the static initializer for
+     *     given JavaModule
+     */
+    @NotNull
+    public static JavaModule getProvidingModule(@NotNull Class<?> clazz) {
+        Preconditions.checkArgument(clazz != null, "Null class cannot have a module");
+        final ClassLoader cl = clazz.getClassLoader();
+        if (!(cl instanceof ModuleClassLoader)) {
+            throw new IllegalArgumentException(clazz + " is not provided by " + ModuleClassLoader.class);
+        }
+        JavaModule module = ((ModuleClassLoader) cl).module;
+        if (module == null) {
+            throw new IllegalStateException("Cannot get module for " + clazz + " from a static initializer");
+        }
+        return module;
+    }
 }
