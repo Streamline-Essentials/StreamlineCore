@@ -10,6 +10,7 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.base.Streamline;
+import net.streamline.api.base.command.CommandExecutor;
 import net.streamline.api.base.savables.UserManager;
 import net.streamline.api.base.savables.users.SavableUser;
 import net.streamline.api.utils.objects.SingleSet;
@@ -36,6 +37,13 @@ public class MessagingUtils {
         Streamline.getInstance().getLogger().severe(loggedMessage(message));
     }
 
+    public static void sendMessage(CommandSender to, String message) {
+        to.sendMessage(codedText(message));
+    }
+
+    public static void sendMessage(CommandExecutor to, String message) {
+        to.sendMessage(codedString(message));
+    }
 
     public static String removeExtraDot(String string){
         String s = string.replace("..", ".");

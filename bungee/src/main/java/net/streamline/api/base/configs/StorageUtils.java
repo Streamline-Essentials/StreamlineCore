@@ -8,7 +8,20 @@ import de.leonhard.storage.internal.FlatFile;
 import net.streamline.api.base.Streamline;
 import org.bson.Document;
 
+import java.io.File;
+import java.nio.file.Files;
+
 public class StorageUtils {
+    public static boolean copy(File updateFile, File file) {
+        try {
+            Files.copy(updateFile.toPath(), file.toPath());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public enum StorageType {
         YAML,
         JSON,

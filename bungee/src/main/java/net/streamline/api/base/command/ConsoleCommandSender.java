@@ -6,5 +6,5 @@ import net.md_5.bungee.api.chat.BaseComponent;
 
 import java.util.Collection;
 
-public interface ConsoleCommandSender extends CommandExecutor {
+public interface ConsoleCommandSender extends CommandSender {
 }

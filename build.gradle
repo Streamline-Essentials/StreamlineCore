@@ -4,6 +4,7 @@ buildscript {
     }
     dependencies {
         classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.0"
+//        classpath "org.codehaus.plexus:plexus-compiler-eclipse:2.12.0"
     }
 }
 

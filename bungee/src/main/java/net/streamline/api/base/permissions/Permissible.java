@@ -1,10 +1,16 @@
 package net.streamline.api.base.permissions;
 
-import net.luckperms.api.node.Node;
+import net.streamline.api.base.modules.Module;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public interface Permissible {
+/**
+ * Represents an object that may be assigned permissions
+ */
+public interface Permissible extends ServerOperator {
+
     /**
      * Checks if this object contains an override for the specified
      * permission, by fully qualified name
@@ -12,16 +18,16 @@ public interface Permissible {
      * @param name Name of the permission
      * @return true if the permission is set, otherwise false
      */
-    public boolean isPermissionSet(String name);
+    public boolean isPermissionSet(@NotNull String name);
 
     /**
      * Checks if this object contains an override for the specified {@link
-     * Node}
+     * Permission}
      *
      * @param perm Permission to check
      * @return true if the permission is set, otherwise false
      */
-    public boolean isPermissionSet(Node perm);
+    public boolean isPermissionSet(@NotNull Permission perm);
 
     /**
      * Gets the value of the specified permission, if set.
@@ -32,7 +38,7 @@ public interface Permissible {
      * @param name Name of the permission
      * @return Value of the permission
      */
-    public boolean hasPermission(String name);
+    public boolean hasPermission(@NotNull String name);
 
     /**
      * Gets the value of the specified permission, if set.
@@ -43,7 +49,7 @@ public interface Permissible {
      * @param perm Permission to get
      * @return Value of the permission
      */
-    public boolean hasPermission(Node perm);
+    public boolean hasPermission(@NotNull Permission perm);
 
     /**
      * Adds a new {@link PermissionAttachment} with a single permission by
@@ -55,7 +61,8 @@ public interface Permissible {
      * @param value Value of the permission
      * @return The PermissionAttachment that was just created
      */
-    public PermissionAttachment addAttachment(Module module, String name, boolean value);
+    @NotNull
+    public PermissionAttachment addAttachment(@NotNull Module module, @NotNull String name, boolean value);
 
     /**
      * Adds a new empty {@link PermissionAttachment} to this object
@@ -64,7 +71,8 @@ public interface Permissible {
      *     or disabled
      * @return The PermissionAttachment that was just created
      */
-    public PermissionAttachment addAttachment(Module module);
+    @NotNull
+    public PermissionAttachment addAttachment(@NotNull Module module);
 
     /**
      * Temporarily adds a new {@link PermissionAttachment} with a single
@@ -78,7 +86,8 @@ public interface Permissible {
      *     after
      * @return The PermissionAttachment that was just created
      */
-    public PermissionAttachment addAttachment(Module module, String name, boolean value, int ticks);
+    @Nullable
+    public PermissionAttachment addAttachment(@NotNull Module module, @NotNull String name, boolean value, int ticks);
 
     /**
      * Temporarily adds a new empty {@link PermissionAttachment} to this
@@ -90,7 +99,8 @@ public interface Permissible {
      *     after
      * @return The PermissionAttachment that was just created
      */
-    public PermissionAttachment addAttachment(Module module, int ticks);
+    @Nullable
+    public PermissionAttachment addAttachment(@NotNull Module module, int ticks);
 
     /**
      * Removes the given {@link PermissionAttachment} from this object
@@ -99,13 +109,13 @@ public interface Permissible {
      * @throws IllegalArgumentException Thrown when the specified attachment
      *     isn't part of this object
      */
-    public void removeAttachment(PermissionAttachment attachment);
+    public void removeAttachment(@NotNull PermissionAttachment attachment);
 
     /**
      * Recalculates the permissions for this object, if the attachments have
      * changed values.
      * <p>
-     * This should very rarely need to be called from a plugin.
+     * This should very rarely need to be called from a module.
      */
     public void recalculatePermissions();
 
@@ -115,5 +125,6 @@ public interface Permissible {
      *
      * @return Set of currently effective permissions
      */
-    public Set<PermissionAttachment> getEffectivePermissions();
+    @NotNull
+    public Set<PermissionAttachmentInfo> getEffectivePermissions();
 }

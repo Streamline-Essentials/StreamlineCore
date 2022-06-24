@@ -5,17 +5,21 @@ import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.streamline.api.base.command.CommandException;
+import net.streamline.api.base.command.CommandExecutor;
 import net.streamline.api.base.command.ModuleCommand;
 import net.streamline.api.base.configs.self.MainConfigHandler;
 import net.streamline.api.base.configs.self.MainMessagesHandler;
+import net.streamline.api.base.modules.ServicesManager;
+import net.streamline.api.base.modules.SimpleModuleManager;
 import net.streamline.api.base.placeholder.RATAPI;
+import net.streamline.api.base.scheduler.StreamlineScheduler;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
-public abstract class BasePlugin extends Plugin {
+public abstract class BasePlugin extends Plugin implements IPlugin {
     TreeMap<String, ModuleCommand> loadedCommands = new TreeMap<>();
 
     static String name;
@@ -24,9 +28,15 @@ public abstract class BasePlugin extends Plugin {
     static RATAPI ratapi;
     static File userFolder;
     static File moduleFolder;
+    static File updateFolder;
     static MainConfigHandler mainConfigHandler;
     static MainMessagesHandler mainMessagesHandler;
+    static SimpleModuleManager moduleManager;
     static LuckPerms luckPerms;
+    static UnsafeValues unsafeValues;
+    static Warning.WarningState warningState;
+    static StreamlineScheduler scheduler;
+    static ServicesManager servicesManager;
 
     @Override
     public void onEnable() {
@@ -88,6 +98,18 @@ public abstract class BasePlugin extends Plugin {
         return mainMessagesHandler;
     }
 
+    public SimpleModuleManager getModuleManager() {
+        return moduleManager;
+    }
+
+    public StreamlineScheduler getScheduler() {
+        return scheduler;
+    }
+
+    public ServicesManager getServicesManager() {
+        return servicesManager;
+    }
+
     public static LuckPerms getLuckPerms() {
         return luckPerms;
     }
@@ -98,6 +120,18 @@ public abstract class BasePlugin extends Plugin {
 
     public static File getModuleFolder() {
         return moduleFolder;
+    }
+
+    public static File getUpdateFolder() {
+        return updateFolder;
+    }
+
+    public static UnsafeValues getUnsafe() {
+        return unsafeValues;
+    }
+
+    public Warning.WarningState getWarningState() {
+        return warningState;
     }
 
     public List<ProxiedPlayer> onlinePlayers() {
@@ -128,5 +162,17 @@ public abstract class BasePlugin extends Plugin {
         this.loadedCommands.put(command.getName(), command);
     }
 
+    public static boolean dispatchCommand(@NotNull CommandExecutor sender, @NotNull String commandLine) throws CommandException {
+        return getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getPlayer(sender.getUUID()), commandLine);
+    }
 
+    public Map<String, String[]> getCommandAliases() {
+        Map<String, String[]> r = new HashMap<>();
+
+        for (ModuleCommand command : loadedCommands.values()) {
+            r.put(command.getLabel(), command.getAliases().toArray(new String[0]));
+        }
+
+        return r;
+    }
 }

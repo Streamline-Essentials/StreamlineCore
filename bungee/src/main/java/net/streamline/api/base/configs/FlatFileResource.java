@@ -54,6 +54,11 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         return this.resource.getOrSetDefault(key, value);
     }
 
+    @Override
+    public void sync() {
+        this.resource.write();
+    }
+
     public T loadConfigFromSelf(File file, String fileString) {
         if (! file.exists()) {
             try {
