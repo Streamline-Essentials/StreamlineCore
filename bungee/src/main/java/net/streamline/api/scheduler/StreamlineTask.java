@@ -1,5 +1,6 @@
 package net.streamline.api.scheduler;
 
+import net.streamline.api.modules.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**

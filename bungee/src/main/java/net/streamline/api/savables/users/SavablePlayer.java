@@ -6,6 +6,8 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
+import net.streamline.api.savables.events.LevelChangePlayerEvent;
+import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
 import net.streamline.utils.MathUtils;
@@ -182,10 +184,27 @@ public class SavablePlayer extends SavableUser {
    9 × current_level – 158 (for levels 31+)
     */
 
+
+    public void setLevel(int amount) {
+        int oldL = this.level;
+
+        this.level = amount;
+
+        Streamline.getInstance().getProxy().getPluginManager().callEvent(new LevelChangePlayerEvent(this, oldL));
+    }
+
+    public void addLevel(int amount) {
+        setLevel(this.level + amount);
+    }
+
+    public void removeLevel(int amount) {
+        setLevel(this.level - amount);
+    }
+
     public float getNeededXp(){
         float needed = 0;
 
-        String function = MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerLevelingEquation(), this)
+        String function = MessagingUtils.replaceAllPlayerBungee(this, Streamline.getMainConfig().playerLevelingEquation())
                         .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
@@ -198,24 +217,31 @@ public class SavablePlayer extends SavableUser {
     }
 
     public void addTotalXP(float amount){
-        setTotalXP(amount + this.totalXP);
+        setTotalXP(this.totalXP + amount);
+    }
+
+    public void removeTotalXP(float amount){
+        setTotalXP(this.totalXP - amount);
     }
 
     public void setTotalXP(float amount){
+        float old = this.totalXP;
+
         this.totalXP = amount;
 
         while (xpUntilNextLevel() <= 0) {
-            int setLevel = this.level + 1;
-            this.level = setLevel;
+            addLevel(1);
         }
 
         this.currentXP = getCurrentXP();
+
+        Streamline.getInstance().getProxy().getPluginManager().callEvent(new XPChangePlayerEvent(this, old));
     }
 
     public float getCurrentLevelXP(){
         float needed = 0;
 
-        String function = MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)), this)
+        String function = MessagingUtils.replaceAllPlayerBungee(this, Streamline.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
                 .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);

@@ -1,6 +1,6 @@
 package net.streamline.api.help;
 
-import net.streamline.api.command.CommandSender;
+import net.streamline.api.command.ICommandSender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ public abstract class HelpTopic {
     protected String amendedPermission = null;
 
     /**
-     * Determines if a {@link CommandSender} is allowed to see this help topic.
+     * Determines if a {@link ICommandSender} is allowed to see this help topic.
      * <p>
      * HelpTopic implementations should take server administrator wishes into
      * account as set by the {@link HelpTopic#amendCanSee(String)} function.
@@ -31,7 +31,7 @@ public abstract class HelpTopic {
      * @param player The Player in question.
      * @return True of the Player can see this help topic, false otherwise.
      */
-    public abstract boolean canSee(@NotNull CommandSender player);
+    public abstract boolean canSee(@NotNull ICommandSender player);
 
     /**
      * Allows the server administrator to override the permission required to
@@ -39,7 +39,7 @@ public abstract class HelpTopic {
      * <p>
      * HelpTopic implementations should take this into account when
      * determining topic visibility on the {@link
-     * HelpTopic#canSee(CommandSender)} function.
+     * HelpTopic#canSee(ICommandSender)} function.
      *
      * @param amendedPermission The permission node the server administrator
      *     wishes to apply to this topic.
@@ -81,7 +81,7 @@ public abstract class HelpTopic {
      * @return A full topic description.
      */
     @NotNull
-    public String getFullText(@NotNull CommandSender forWho) {
+    public String getFullText(@NotNull ICommandSender forWho) {
         return fullText;
     }
 

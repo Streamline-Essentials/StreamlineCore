@@ -1,7 +1,7 @@
 package net.streamline.api.entities;
 
 import net.streamline.api.BasePlugin;
-import net.streamline.api.command.CommandSender;
+import net.streamline.api.command.ICommandSender;
 import net.streamline.api.modules.Module;
 import net.streamline.api.permissions.Permission;
 import net.streamline.api.permissions.PermissionAttachment;
@@ -214,17 +214,17 @@ public class Player implements IPlayer {
     }
 
     @Override
-    public void hideEntity(@NotNull Module module, @NotNull CommandSender entity) {
+    public void hideEntity(@NotNull Module module, @NotNull ICommandSender entity) {
 
     }
 
     @Override
-    public void showEntity(@NotNull Module module, @NotNull CommandSender entity) {
+    public void showEntity(@NotNull Module module, @NotNull ICommandSender entity) {
 
     }
 
     @Override
-    public boolean canSee(@NotNull CommandSender entity) {
+    public boolean canSee(@NotNull ICommandSender entity) {
         return false;
     }
 

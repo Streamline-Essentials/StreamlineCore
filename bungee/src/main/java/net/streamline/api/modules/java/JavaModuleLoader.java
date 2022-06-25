@@ -4,10 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.re2j.Pattern;
 import net.streamline.api.BasePlugin;
 import net.streamline.api.Warning;
-import net.streamline.api.events.Event;
-import net.streamline.api.events.EventException;
-import net.streamline.api.events.EventHandler;
-import net.streamline.api.events.Listener;
 import net.streamline.api.events.server.ModuleDisableEvent;
 import net.streamline.api.events.server.ModuleEnableEvent;
 import net.streamline.api.modules.*;
@@ -205,97 +201,6 @@ public final class JavaModuleLoader implements ModuleLoader {
 //        }
     }
 
-//    @Override
-    @NotNull
-    public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners(@NotNull Listener listener, @NotNull final Module module) {
-        Preconditions.checkArgument(module != null, "Module can not be null");
-        Preconditions.checkArgument(listener != null, "Listener can not be null");
-
-        boolean useTimings = server.getModuleManager().useTimings();
-        Map<Class<? extends Event>, Set<RegisteredListener>> ret = new HashMap<Class<? extends Event>, Set<RegisteredListener>>();
-        Set<Method> methods;
-        try {
-            Method[] publicMethods = listener.getClass().getMethods();
-            Method[] privateMethods = listener.getClass().getDeclaredMethods();
-            methods = new HashSet<Method>(publicMethods.length + privateMethods.length, 1.0f);
-            for (Method method : publicMethods) {
-                methods.add(method);
-            }
-            for (Method method : privateMethods) {
-                methods.add(method);
-            }
-        } catch (NoClassDefFoundError e) {
-            module.getLogger().severe("Module " + module.getDescription().getFullName() + " has failed to register events for " + listener.getClass() + " because " + e.getMessage() + " does not exist.");
-            return ret;
-        }
-
-        for (final Method method : methods) {
-            final EventHandler eh = method.getAnnotation(EventHandler.class);
-            if (eh == null) continue;
-            // Do not register bridge or synthetic methods to avoid event duplication
-            // Fixes SPIGOT-893
-            if (method.isBridge() || method.isSynthetic()) {
-                continue;
-            }
-            final Class<?> checkClass;
-            if (method.getParameterTypes().length != 1 || !Event.class.isAssignableFrom(checkClass = method.getParameterTypes()[0])) {
-                module.getLogger().severe(module.getDescription().getFullName() + " attempted to register an invalid EventHandler method signature \"" + method.toGenericString() + "\" in " + listener.getClass());
-                continue;
-            }
-            final Class<? extends Event> eventClass = checkClass.asSubclass(Event.class);
-            method.setAccessible(true);
-            Set<RegisteredListener> eventSet = ret.get(eventClass);
-            if (eventSet == null) {
-                eventSet = new HashSet<RegisteredListener>();
-                ret.put(eventClass, eventSet);
-            }
-
-            for (Class<?> clazz = eventClass; Event.class.isAssignableFrom(clazz); clazz = clazz.getSuperclass()) {
-                // This loop checks for extending deprecated events
-                if (clazz.getAnnotation(Deprecated.class) != null) {
-                    Warning warning = clazz.getAnnotation(Warning.class);
-                    Warning.WarningState warningState = server.getWarningState();
-                    if (!warningState.printFor(warning)) {
-                        break;
-                    }
-                    module.getLogger().log(
-                            Level.WARNING,
-                            String.format(
-                                    "\"%s\" has registered a listener for %s on method \"%s\", but the event is Deprecated. \"%s\"; please notify the authors %s.",
-                                    module.getDescription().getFullName(),
-                                    clazz.getName(),
-                                    method.toGenericString(),
-                                    (warning != null && warning.reason().length() != 0) ? warning.reason() : "Server performance will be affected",
-                                    Arrays.toString(module.getDescription().getAuthors().toArray())),
-                            warningState == Warning.WarningState.ON ? new AuthorNagException(null) : null);
-                    break;
-                }
-            }
-
-            EventExecutor executor = new EventExecutor() {
-                @Override
-                public void execute(@NotNull Listener listener, @NotNull Event event) throws EventException {
-                    try {
-                        if (!eventClass.isAssignableFrom(event.getClass())) {
-                            return;
-                        }
-                        method.invoke(listener, event);
-                    } catch (InvocationTargetException ex) {
-                        throw new EventException(ex.getCause());
-                    } catch (Throwable t) {
-                        throw new EventException(t);
-                    }
-                }
-            };
-            if (useTimings) {
-                eventSet.add(new TimedRegisteredListener(listener, executor, eh.priority(), module, eh.ignoreCancelled()));
-            } else {
-                eventSet.add(new RegisteredListener(listener, executor, eh.priority(), module, eh.ignoreCancelled()));
-            }
-        }
-        return ret;
-    }
-
     @Override
     public void enableModule(@NotNull final Module module) {
         Preconditions.checkArgument(module instanceof JavaModule, "Module is not associated with this ModuleLoader");
@@ -320,7 +225,7 @@ public final class JavaModuleLoader implements ModuleLoader {
 
             // Perhaps abort here, rather than continue going, but as it stands,
             // an abort is not possible the way it's currently written
-            server.getModuleManager().callEvent(new ModuleEnableEvent(module));
+            server.getProxy().getPluginManager().callEvent(new ModuleEnableEvent(module));
         }
     }
 
@@ -332,7 +237,7 @@ public final class JavaModuleLoader implements ModuleLoader {
             String message = String.format("Disabling %s", module.getDescription().getFullName());
             module.getLogger().info(message);
 
-            server.getModuleManager().callEvent(new ModuleDisableEvent(module));
+            server.getProxy().getPluginManager().callEvent(new ModuleDisableEvent(module));
 
             JavaModule jModule = (JavaModule) module;
             ClassLoader cloader = jModule.getClassLoader();

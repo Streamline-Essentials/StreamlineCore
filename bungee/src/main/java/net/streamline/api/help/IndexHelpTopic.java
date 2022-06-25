@@ -2,8 +2,8 @@ package net.streamline.api.help;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.command.CommandSender;
-import net.streamline.api.command.ConsoleCommandSender;
+import net.streamline.api.command.ICommandSender;
+import net.streamline.api.command.IConsoleCommandSender;
 import net.streamline.utils.ChatPaginator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +46,8 @@ public class IndexHelpTopic extends HelpTopic {
     }
 
     @Override
-    public boolean canSee(@NotNull CommandSender sender) {
-        if (sender instanceof ConsoleCommandSender) {
+    public boolean canSee(@NotNull ICommandSender sender) {
+        if (sender instanceof IConsoleCommandSender) {
             return true;
         }
         if (permission == null) {
@@ -63,7 +63,7 @@ public class IndexHelpTopic extends HelpTopic {
 
     @Override
     @NotNull
-    public String getFullText(@NotNull CommandSender sender) {
+    public String getFullText(@NotNull ICommandSender sender) {
         StringBuilder sb = new StringBuilder();
 
         if (preamble != null) {
@@ -94,7 +94,7 @@ public class IndexHelpTopic extends HelpTopic {
      * @return The topic preamble.
      */
     @NotNull
-    protected String buildPreamble(@NotNull CommandSender sender) {
+    protected String buildPreamble(@NotNull ICommandSender sender) {
         return ChatColor.GRAY + preamble;
     }
 
@@ -107,7 +107,7 @@ public class IndexHelpTopic extends HelpTopic {
      * @return The rendered index line.
      */
     @NotNull
-    protected String buildIndexLine(@NotNull CommandSender sender, @NotNull HelpTopic topic) {
+    protected String buildIndexLine(@NotNull ICommandSender sender, @NotNull HelpTopic topic) {
         StringBuilder line = new StringBuilder();
         line.append(ChatColor.GOLD);
         line.append(topic.getName());

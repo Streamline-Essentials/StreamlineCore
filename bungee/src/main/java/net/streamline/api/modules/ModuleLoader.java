@@ -1,8 +1,6 @@
 package net.streamline.api.modules;
 
 import com.google.re2j.Pattern;
-import net.streamline.api.events.Event;
-import net.streamline.api.events.Listener;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -48,17 +46,6 @@ public interface ModuleLoader {
      */
     @NotNull
     public Pattern[] getModuleFileFilters();
-
-    /**
-     * Creates and returns registered listeners for the event classes used in
-     * this listener
-     *
-     * @param listener The object that will handle the eventual call back
-     * @param module The module to use when creating registered listeners
-     * @return The registered listeners.
-     */
-    @NotNull
-    public Map<Class<? extends Event>, Set<RegisteredListener>> createRegisteredListeners(@NotNull Listener listener, @NotNull Module module);
 
     /**
      * Enables the specified module

@@ -46,7 +46,7 @@ public class SimpleServicesManager implements ServicesManager {
             }
 
         }
-        module.getBase().getModuleManager().callEvent(new ServiceRegisterEvent(registeredProvider));
+        Streamline.getInstance().getProxy().getPluginManager().callEvent(new ServiceRegisterEvent(registeredProvider));
     }
 
     /**
@@ -87,7 +87,7 @@ public class SimpleServicesManager implements ServicesManager {
             } catch (NoSuchElementException e) {}
         }
         for (ServiceUnregisterEvent event : unregisteredEvents) {
-            module.getBase().getModuleManager().callEvent(event);
+            Streamline.getInstance().getProxy().getPluginManager().callEvent(event);
         }
     }
 
@@ -136,7 +136,7 @@ public class SimpleServicesManager implements ServicesManager {
             } catch (NoSuchElementException e) {}
         }
         for (ServiceUnregisterEvent event : unregisteredEvents) {
-            Streamline.getInstance().getModuleManager().callEvent(event);
+            Streamline.getInstance().getProxy().getPluginManager().callEvent(event);
         }
     }
 
@@ -178,7 +178,7 @@ public class SimpleServicesManager implements ServicesManager {
             } catch (NoSuchElementException e) {}
         }
         for (ServiceUnregisterEvent event : unregisteredEvents) {
-            Streamline.getInstance().getModuleManager().callEvent(event);
+            Streamline.getInstance().getProxy().getPluginManager().callEvent(event);
         }
     }
 

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public interface CommandSender extends Permissible {
+public interface ICommandSender extends Permissible {
 
     /**
      * Sends this sender a message

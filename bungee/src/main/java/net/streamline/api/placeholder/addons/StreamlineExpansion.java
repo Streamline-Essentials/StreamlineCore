@@ -8,6 +8,7 @@ import net.streamline.api.placeholder.RATExpansion;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
+import net.streamline.utils.MessagingUtils;
 
 public class StreamlineExpansion extends RATExpansion {
     public StreamlineExpansion() {
@@ -57,6 +58,17 @@ public class StreamlineExpansion extends RATExpansion {
         }
         if (params.equals("placeholders_offline")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
+        }
+        if (params.startsWith("parse_")) {
+            try {
+                String p = params.substring("parse_".length());
+                String[] things = p.split(":::", 2);
+                SavableUser user = UserManager.getOrGetUser(Streamline.getInstance().getUUIDFromName(things[0]));
+                String parse = things[1].replace("*/*", "%");
+                return MessagingUtils.replaceAllPlayerBungee(user, parse);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         return null;

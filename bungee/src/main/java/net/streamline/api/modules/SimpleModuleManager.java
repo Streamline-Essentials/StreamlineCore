@@ -10,13 +10,10 @@ import net.streamline.api.command.Command;
 import net.streamline.api.command.ModuleCommandYamlParser;
 import net.streamline.api.command.SimpleCommandMap;
 import net.streamline.api.configs.StorageUtils;
-import net.streamline.api.events.Event;
-import net.streamline.api.events.EventPriority;
-import net.streamline.api.events.HandlerList;
-import net.streamline.api.events.Listener;
 import net.streamline.api.permissions.Permissible;
 import net.streamline.api.permissions.Permission;
 import net.streamline.api.permissions.PermissionDefault;
+import net.streamline.base.Streamline;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -464,8 +461,6 @@ public class SimpleModuleManager implements ModuleManager {
             } catch (Throwable ex) {
                 server.getLogger().log(Level.SEVERE, "Error occurred (in the Module loader) while enabling " + Module.getDescription().getFullName() + " (Is it up to date?)", ex);
             }
-
-            HandlerList.bakeAll();
         }
     }
 
@@ -497,12 +492,6 @@ public class SimpleModuleManager implements ModuleManager {
             } catch (Throwable ex) {
                 server.getLogger().log(Level.SEVERE, "Error occurred (in the Module loader) while unregistering services for " + Module.getDescription().getFullName() + " (Is it up to date?)", ex);
             }
-
-            try {
-                HandlerList.unregisterAll(Module);
-            } catch (Throwable ex) {
-                server.getLogger().log(Level.SEVERE, "Error occurred (in the Module loader) while unregistering events for " + Module.getDescription().getFullName() + " (Is it up to date?)", ex);
-            }
         }
     }
 
@@ -513,138 +502,10 @@ public class SimpleModuleManager implements ModuleManager {
             Modules.clear();
             lookupNames.clear();
 //            dependencyGraph = GraphBuilder.directed().build();
-            HandlerList.unregisterAll();
             fileAssociations.clear();
             permissions.clear();
             defaultPerms.get(true).clear();
             defaultPerms.get(false).clear();
-        }
-    }
-
-    /**
-     * Calls an event with the given details.
-     *
-     * @param event Event details
-     */
-    @Override
-    public void callEvent(@NotNull Event event) {
-        if (event.isAsynchronous()) {
-            if (Thread.holdsLock(this)) {
-                throw new IllegalStateException(event.getEventName() + " cannot be triggered asynchronously from inside synchronized code.");
-            }
-//            if (server.isPrimaryThread()) {
-//                throw new IllegalStateException(event.getEventName() + " cannot be triggered asynchronously from primary server thread.");
-//            }
-        } else {
-//            if (!server.isPrimaryThread()) {
-//                throw new IllegalStateException(event.getEventName() + " cannot be triggered asynchronously from another thread.");
-//            }
-        }
-
-        fireEvent(event);
-    }
-
-    private void fireEvent(@NotNull Event event) {
-        HandlerList handlers = event.getHandlers();
-        RegisteredListener[] listeners = handlers.getRegisteredListeners();
-
-        for (RegisteredListener registration : listeners) {
-            if (!registration.getModule().isEnabled()) {
-                continue;
-            }
-
-            try {
-                registration.callEvent(event);
-            } catch (AuthorNagException ex) {
-                Module Module = registration.getModule();
-
-                if (Module.isNaggable()) {
-                    Module.setNaggable(false);
-
-                    server.getLogger().log(Level.SEVERE, String.format(
-                            "Nag author(s): '%s' of '%s' about the following: %s",
-                            Module.getDescription().getAuthors(),
-                            Module.getDescription().getFullName(),
-                            ex.getMessage()
-                    ));
-                }
-            } catch (Throwable ex) {
-                server.getLogger().log(Level.SEVERE, "Could not pass event " + event.getEventName() + " to " + registration.getModule().getDescription().getFullName(), ex);
-            }
-        }
-    }
-
-    @Override
-    public void registerEvents(@NotNull Listener listener, @NotNull Module Module) {
-        if (!Module.isEnabled()) {
-            throw new IllegalModuleAccessException("Module attempted to register " + listener + " while not enabled");
-        }
-
-        for (Map.Entry<Class<? extends Event>, Set<RegisteredListener>> entry : Module.getModuleLoader().createRegisteredListeners(listener, Module).entrySet()) {
-            getEventListeners(getRegistrationClass(entry.getKey())).registerAll(entry.getValue());
-        }
-
-    }
-
-    @Override
-    public void registerEvent(@NotNull Class<? extends Event> event, @NotNull Listener listener, @NotNull EventPriority priority, @NotNull EventExecutor executor, @NotNull Module Module) {
-        registerEvent(event, listener, priority, executor, Module, false);
-    }
-
-    /**
-     * Registers the given event to the specified listener using a directly
-     * passed EventExecutor
-     *
-     * @param event Event class to register
-     * @param listener PlayerListener to register
-     * @param priority Priority of this event
-     * @param executor EventExecutor to register
-     * @param Module Module to register
-     * @param ignoreCancelled Do not call executor if event was already
-     *     cancelled
-     */
-    @Override
-    public void registerEvent(@NotNull Class<? extends Event> event, @NotNull Listener listener, @NotNull EventPriority priority, @NotNull EventExecutor executor, @NotNull Module Module, boolean ignoreCancelled) {
-        Preconditions.checkArgument(listener != null, "Listener cannot be null");
-        Preconditions.checkArgument(priority != null, "Priority cannot be null");
-        Preconditions.checkArgument(executor != null, "Executor cannot be null");
-        Preconditions.checkArgument(Module != null, "Module cannot be null");
-
-        if (!Module.isEnabled()) {
-            throw new IllegalModuleAccessException("Module attempted to register " + event + " while not enabled");
-        }
-
-        if (useTimings) {
-            getEventListeners(event).register(new TimedRegisteredListener(listener, executor, priority, Module, ignoreCancelled));
-        } else {
-            getEventListeners(event).register(new RegisteredListener(listener, executor, priority, Module, ignoreCancelled));
-        }
-    }
-
-    @NotNull
-    private HandlerList getEventListeners(@NotNull Class<? extends Event> type) {
-        try {
-            Method method = getRegistrationClass(type).getDeclaredMethod("getHandlerList");
-            method.setAccessible(true);
-            return (HandlerList) method.invoke(null);
-        } catch (Exception e) {
-            throw new IllegalModuleAccessException(e.toString());
-        }
-    }
-
-    @NotNull
-    private Class<? extends Event> getRegistrationClass(@NotNull Class<? extends Event> clazz) {
-        try {
-            clazz.getDeclaredMethod("getHandlerList");
-            return clazz;
-        } catch (NoSuchMethodException e) {
-            if (clazz.getSuperclass() != null
-                    && !clazz.getSuperclass().equals(Event.class)
-                    && Event.class.isAssignableFrom(clazz.getSuperclass())) {
-                return getRegistrationClass(clazz.getSuperclass().asSubclass(Event.class));
-            } else {
-                throw new IllegalModuleAccessException("Unable to find handler list for event " + clazz.getName() + ". Static getHandlerList method required!");
-            }
         }
     }
 

@@ -5,8 +5,8 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 import net.streamline.api.command.CommandException;
-import net.streamline.api.command.CommandSender;
-import net.streamline.api.command.ConsoleCommandSender;
+import net.streamline.api.command.ICommandSender;
+import net.streamline.api.command.IConsoleCommandSender;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.entities.IPlayer;
 import net.streamline.api.help.HelpMap;
@@ -209,6 +209,28 @@ public interface IPlugin {
     public long getConnectionThrottle();
 
     /**
+     * Gets a saved player object by the given username.
+     * <p>
+     * This method may not return objects for offline players.
+     *
+     * @param name the name to look up
+     * @return a player if one was found, null otherwise
+     */
+    @Nullable
+    public SavablePlayer getSavedPlayer(@NotNull String name);
+
+    /**
+     * Gets a saved player object by the given username.
+     * <p>
+     * This method may not return objects for offline players.
+     *
+     * @param uuid the uuid to look up
+     * @return a player if one was found, null otherwise
+     */
+    @Nullable
+    public SavablePlayer getSavedPlayerByUUID(@NotNull String uuid);
+
+    /**
      * Gets a player object by the given username.
      * <p>
      * This method may not return objects for offline players.
@@ -366,7 +388,7 @@ public interface IPlugin {
      * @throws CommandException thrown when the executor for the given command
      *     fails with an unhandled exception
      */
-    public boolean dispatchCommand(@NotNull CommandSender sender, @NotNull String commandLine) throws CommandException;
+    public boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException;
 
     /**
      * Gets a list of command aliases defined in the plugin properties.
@@ -539,13 +561,13 @@ public interface IPlugin {
     public Set<SavablePlayer> getOperators();
 
     /**
-     * Gets a {@link ConsoleCommandSender} that may be used as an input source
+     * Gets a {@link IConsoleCommandSender} that may be used as an input source
      * for this plugin.
      *
      * @return a console command sender
      */
     @NotNull
-    public ConsoleCommandSender getConsoleSender();
+    public IConsoleCommandSender getConsoleSender();
 
     /**
      * Gets every player that has ever played on this plugin.

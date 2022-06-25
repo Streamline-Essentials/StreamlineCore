@@ -96,7 +96,8 @@ public class PlaceholderUtils {
         return found;
     }
 
-    public static String parsePlaceholder(RATExpansion expansion, SavableUser on, String from) {
+    public static RATResult parsePlaceholder(RATExpansion expansion, SavableUser on, String from) {
+        int replaced = 0;
         try {
             Matcher matcher = setupMatcher("([%](" + expansion.identifier + ")[_](.*?)[%])", from);
             List<PlaceholderValue> pvs = getMatched(matcher);
@@ -108,15 +109,15 @@ public class PlaceholderUtils {
                 pv = pv.setParsed(expansion.doRequest(on, pv.params));
                 toReplace.put(pv.unparsed, pv.parsed);
             }
-
             for (String match : toReplace.keySet()) {
                 from = from.replace(match, toReplace.get(match));
+                replaced ++;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return from;
+        return new RATResult(from, replaced);
     }
 
     public static String parsePlaceholderJustLogic(RATExpansion expansion, String from) {

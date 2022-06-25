@@ -60,7 +60,7 @@ public class StorageUtils {
     }
 
     public static String parseDotsMongo(String key) {
-        return key.replace(".", "_");
+        return key.replace(".", "0");
     }
 
     public static boolean areUsersFlatFiles() {

@@ -31,7 +31,7 @@ public final class ModuleCommand extends Command implements ModuleIdentifiableCo
      * @return true if the command was successful, otherwise false
      */
     @Override
-    public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+    public boolean execute(@NotNull ICommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
         boolean success = false;
 
         if (!owningModule.isEnabled()) {
@@ -126,7 +126,7 @@ public final class ModuleCommand extends Command implements ModuleIdentifiableCo
      */
     @NotNull
     @Override
-    public List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
+    public List<String> tabComplete(@NotNull ICommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
         Preconditions.checkArgument(sender != null, "Sender cannot be null");
         Preconditions.checkArgument(args != null, "Arguments cannot be null");
         Preconditions.checkArgument(alias != null, "Alias cannot be null");

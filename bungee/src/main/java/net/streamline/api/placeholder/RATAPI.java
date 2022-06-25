@@ -41,7 +41,11 @@ public class RATAPI {
 
     public String parseAllPlaceholders(SavableUser of, String from) {
         for (RATExpansion expansion : loadedExpansions) {
-           from = PlaceholderUtils.parsePlaceholder(expansion, of, from);
+            RATResult result = PlaceholderUtils.parsePlaceholder(expansion, of, from);
+            from = result.string;
+            if (result.didReplacement()) {
+                from = parseAllPlaceholders(of, from);
+            }
         }
 
         return from;

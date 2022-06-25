@@ -91,6 +91,18 @@ public class MainConfigHandler extends FlatFileResource<Config> {
         return resource.getString("users.players.name.offline");
     }
 
+    public boolean announceLevelChangeTitle() {
+        reloadResource();
+
+        return resource.getBoolean("users.players.experience.announce.level-change.title");
+    }
+
+    public boolean announceLevelChangeChat() {
+        reloadResource();
+
+        return resource.getBoolean("users.players.experience.announce.level-change.chat");
+    }
+
     public float playerPayoutExperienceAmount() {
         reloadResource();
 

@@ -4,6 +4,8 @@ import de.leonhard.storage.Config;
 import net.streamline.base.Streamline;
 import net.streamline.api.configs.FlatFileResource;
 
+import java.util.List;
+
 public class MainMessagesHandler extends FlatFileResource<Config> {
     public MainMessagesHandler() {
         super(Config.class, "main-messages.yml", Streamline.getInstance().getDataFolder(), true);
@@ -71,6 +73,35 @@ public class MainMessagesHandler extends FlatFileResource<Config> {
 
             public String get() {
                 return MainMessagesHandler.MESSAGES.get(this.key);
+            }
+        }
+
+        public enum EXPERIENCE {
+            ONCHANGE_TITLE_MAIN("experience.level.on-change.title.main"),
+            ONCHANGE_TITLE_SUBTITLE("experience.level.on-change.title.subtitle"),
+            ONCHANGE_TITLE_IN("experience.level.on-change.title.in"),
+            ONCHANGE_TITLE_STAY("experience.level.on-change.title.stay"),
+            ONCHANGE_TITLE_OUT("experience.level.on-change.title.out"),
+
+            ONCHANGE_CHAT("experience.level.on-change.chat"),
+            ;
+
+            public final String key;
+
+            EXPERIENCE(String key) {
+                this.key = key;
+            }
+
+            public String get() {
+                return MainMessagesHandler.MESSAGES.get(this.key);
+            }
+
+            public int getInt() {
+                return Streamline.getMainMessages().resource.getInt(this.key);
+            }
+
+            public List<String> getStringList() {
+                return Streamline.getMainMessages().resource.getStringList(this.key);
             }
         }
 

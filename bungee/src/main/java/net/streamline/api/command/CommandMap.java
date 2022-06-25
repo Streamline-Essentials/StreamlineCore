@@ -77,7 +77,7 @@ public interface CommandMap {
      * @throws CommandException Thrown when the executor for the given command
      *     fails with an unhandled exception
      */
-    public boolean dispatch(@NotNull CommandSender sender, @NotNull String cmdLine) throws CommandException;
+    public boolean dispatch(@NotNull ICommandSender sender, @NotNull String cmdLine) throws CommandException;
 
     /**
      * Clears all registered commands.
@@ -109,5 +109,5 @@ public interface CommandMap {
      * @throws IllegalArgumentException if either sender or cmdLine are null
      */
     @Nullable
-    public List<String> tabComplete(@NotNull CommandSender sender, @NotNull String cmdLine) throws IllegalArgumentException;
+    public List<String> tabComplete(@NotNull ICommandSender sender, @NotNull String cmdLine) throws IllegalArgumentException;
 }

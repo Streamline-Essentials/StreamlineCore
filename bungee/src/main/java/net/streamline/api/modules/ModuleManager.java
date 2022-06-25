@@ -1,8 +1,5 @@
 package net.streamline.api.modules;
 
-import net.streamline.api.events.Event;
-import net.streamline.api.events.EventPriority;
-import net.streamline.api.events.Listener;
 import net.streamline.api.permissions.Permissible;
 import net.streamline.api.permissions.Permission;
 import org.jetbrains.annotations.Contract;
@@ -99,49 +96,6 @@ public interface ModuleManager {
      * Disables and removes all modules
      */
     public void clearModules();
-
-    /**
-     * Calls an event with the given details
-     *
-     * @param event Event details
-     * @throws IllegalStateException Thrown when an asynchronous event is
-     *     fired from synchronous code.
-     *     <p>
-     *     <i>Note: This is best-effort basis, and should not be used to test
-     *     synchronized state. This is an indicator for flawed flow logic.</i>
-     */
-    public void callEvent(@NotNull Event event) throws IllegalStateException;
-
-    /**
-     * Registers all the events in the given listener class
-     *
-     * @param listener Listener to register
-     * @param module Module to register
-     */
-    public void registerEvents(@NotNull Listener listener, @NotNull Module module);
-
-    /**
-     * Registers the specified executor to the given event class
-     *
-     * @param event Event type to register
-     * @param listener Listener to register
-     * @param priority Priority to register this event at
-     * @param executor EventExecutor to register
-     * @param module Module to register
-     */
-    public void registerEvent(@NotNull Class<? extends Event> event, @NotNull Listener listener, @NotNull EventPriority priority, @NotNull EventExecutor executor, @NotNull Module module);
-
-    /**
-     * Registers the specified executor to the given event class
-     *
-     * @param event Event type to register
-     * @param listener Listener to register
-     * @param priority Priority to register this event at
-     * @param executor EventExecutor to register
-     * @param module Module to register
-     * @param ignoreCancelled Whether to pass cancelled events or not
-     */
-    public void registerEvent(@NotNull Class<? extends Event> event, @NotNull Listener listener, @NotNull EventPriority priority, @NotNull EventExecutor executor, @NotNull Module module, boolean ignoreCancelled);
 
     /**
      * Enables the specified module
