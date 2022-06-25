@@ -3,6 +3,7 @@ package net.streamline.api.command;
 import com.google.common.base.Preconditions;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.BasePlugin;
+import net.streamline.base.Streamline;
 import net.streamline.utils.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,11 +113,20 @@ public class SimpleCommandMap implements CommandMap {
         return registered;
     }
 
+    public void flushCommands() {
+        Streamline.flushCommands();
+        for (Command command : knownCommands.values()) {
+            if (command instanceof StreamlineCommand streamlineCommand) {
+                Streamline.registerProperCommand(new ProperCommandBuilder(streamlineCommand));
+            }
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean dispatch(@NotNull CommandSender sender, @NotNull String commandLine) throws CommandException {
+    public boolean dispatch(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {
         String[] args = commandLine.split(" ");
 
         if (args.length == 0) {
@@ -161,7 +171,7 @@ public class SimpleCommandMap implements CommandMap {
 
     @Override
     @Nullable
-    public List<String> tabComplete(@NotNull CommandSender sender, @NotNull String cmdLine) {
+    public List<String> tabComplete(@NotNull ICommandSender sender, @NotNull String cmdLine) {
         Preconditions.checkArgument(sender != null, "Sender cannot be null");
         Preconditions.checkArgument(cmdLine != null, "Command line cannot null");
 

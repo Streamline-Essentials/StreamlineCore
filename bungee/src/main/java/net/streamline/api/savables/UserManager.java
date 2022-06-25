@@ -149,9 +149,9 @@ public class UserManager {
 
         if (stat instanceof SavablePlayer) {
             if (stat.online) {
-                return MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerOnlineName(), stat);
+                return MessagingUtils.replaceAllPlayerBungee(stat, Streamline.getMainConfig().playerOnlineName());
             } else {
-                return MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerOfflineName(), stat);
+                return MessagingUtils.replaceAllPlayerBungee(stat, Streamline.getMainConfig().playerOfflineName());
             }
         }
 
@@ -169,9 +169,9 @@ public class UserManager {
 
         if (stat instanceof SavablePlayer) {
             if (stat.online) {
-                return MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerOnlineName(), stat);
+                return MessagingUtils.replaceAllPlayerBungee(stat, Streamline.getMainConfig().playerOnlineName());
             } else {
-                return MessagingUtils.replaceAllPlayerBungee(Streamline.getMainConfig().playerOfflineName(), stat);
+                return MessagingUtils.replaceAllPlayerBungee(stat, Streamline.getMainConfig().playerOfflineName());
             }
         }
 

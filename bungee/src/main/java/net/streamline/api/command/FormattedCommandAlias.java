@@ -15,7 +15,7 @@ public class FormattedCommandAlias extends Command {
     }
 
     @Override
-    public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+    public boolean execute(@NotNull ICommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
         boolean result = false;
         ArrayList<String> commands = new ArrayList<String>();
         for (String formatString : formatStrings) {

@@ -54,7 +54,7 @@ public abstract class Command {
      * @param args All arguments passed to the command, split via ' '
      * @return true if the command was successful, otherwise false
      */
-    public abstract boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args);
+    public abstract boolean execute(@NotNull ICommandSender sender, @NotNull String commandLabel, @NotNull String[] args);
 
     /**
      * Executed on tab completion for this command, returning a list of
@@ -68,7 +68,7 @@ public abstract class Command {
      * @throws IllegalArgumentException if sender, alias, or args is null
      */
     @NotNull
-    public List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
+    public List<String> tabComplete(@NotNull ICommandSender sender, @NotNull String alias, @NotNull String[] args) throws IllegalArgumentException {
         Preconditions.checkArgument(sender != null, "Sender cannot be null");
         Preconditions.checkArgument(args != null, "Arguments cannot be null");
         Preconditions.checkArgument(alias != null, "Alias cannot be null");
@@ -144,7 +144,7 @@ public abstract class Command {
     }
 
     /**
-     * Tests the given {@link CommandSender} to see if they can perform this
+     * Tests the given {@link ICommandSender} to see if they can perform this
      * command.
      * <p>
      * If they do not have permission, they will be informed that they cannot
@@ -153,7 +153,7 @@ public abstract class Command {
      * @param target User to test
      * @return true if they can use it, otherwise false
      */
-    public boolean testPermission(@NotNull CommandSender target) {
+    public boolean testPermission(@NotNull ICommandSender target) {
         if (testPermissionSilent(target)) {
             return true;
         }
@@ -170,7 +170,7 @@ public abstract class Command {
     }
 
     /**
-     * Tests the given {@link CommandSender} to see if they can perform this
+     * Tests the given {@link ICommandSender} to see if they can perform this
      * command.
      * <p>
      * No error is sent to the sender.
@@ -178,7 +178,7 @@ public abstract class Command {
      * @param target User to test
      * @return true if they can use it, otherwise false
      */
-    public boolean testPermissionSilent(@NotNull CommandSender target) {
+    public boolean testPermissionSilent(@NotNull ICommandSender target) {
         if ((permission == null) || (permission.length() == 0)) {
             return true;
         }
@@ -373,25 +373,25 @@ public abstract class Command {
         return this;
     }
 
-    public static void broadcastCommandMessage(@NotNull CommandSender source, @NotNull String message) {
+    public static void broadcastCommandMessage(@NotNull ICommandSender source, @NotNull String message) {
         broadcastCommandMessage(source, message, true);
     }
 
-    public static void broadcastCommandMessage(@NotNull CommandSender source, @NotNull String message, boolean sendToSource) {
+    public static void broadcastCommandMessage(@NotNull ICommandSender source, @NotNull String message, boolean sendToSource) {
         String result = source.getName() + ": " + message;
 
         Set<Permissible> users = Streamline.getInstance().getModuleManager().getPermissionSubscriptions(IPlugin.BROADCAST_CHANNEL_ADMINISTRATIVE);
         String colored = ChatColor.GRAY + "" + ChatColor.ITALIC + "[" + result + ChatColor.GRAY + ChatColor.ITALIC + "]";
 
-        if (sendToSource && !(source instanceof ConsoleCommandSender)) {
+        if (sendToSource && !(source instanceof IConsoleCommandSender)) {
             source.sendMessage(message);
         }
 
         for (Permissible user : users) {
-            if (user instanceof CommandSender && user.hasPermission(IPlugin.BROADCAST_CHANNEL_ADMINISTRATIVE)) {
-                CommandSender target = (CommandSender) user;
+            if (user instanceof ICommandSender && user.hasPermission(IPlugin.BROADCAST_CHANNEL_ADMINISTRATIVE)) {
+                ICommandSender target = (ICommandSender) user;
 
-                if (target instanceof ConsoleCommandSender) {
+                if (target instanceof IConsoleCommandSender) {
                     target.sendMessage(result);
                 } else if (target != source) {
                     target.sendMessage(colored);

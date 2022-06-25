@@ -5,11 +5,14 @@ import com.google.re2j.Pattern;
 import com.mongodb.lang.Nullable;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.streamline.api.command.ICommandSender;
+import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableUser;
@@ -41,15 +44,48 @@ public class MessagingUtils {
         to.sendMessage(codedText(message));
     }
 
-    public static void sendMessage(@Nullable SavableUser user, String message) {
-        if (user == null) return;
-        user.sendMessage(message);
+    public static void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
+        if (to == null) return;
+        to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
     }
 
-    public static void sendMessage(String uuid, String message) {
-        SavableUser user = UserManager.getOrGetUser(uuid);
+    public static void sendMessage(@Nullable ICommandSender to, String message) {
+        if (to == null) return;
+        to.sendMessage(codedString(message));
+    }
+
+    public static void sendMessage(@Nullable ICommandSender to, String otherUUID, String message) {
+        if (to == null) return;
+        to.sendMessage(replaceAllPlayerBungee(otherUUID, message));
+    }
+
+    public static void sendMessage(@Nullable SavableUser to, String message) {
+        if (to == null) return;
+        to.sendMessage(message);
+    }
+
+    public static void sendMessage(@Nullable SavableUser to, SavableUser other, String message) {
+        if (to == null) return;
+        to.sendMessage(replaceAllPlayerBungee(other, message));
+    }
+
+    public static void sendMessage(String to, String message) {
+        SavableUser user = UserManager.getOrGetUser(to);
 
         sendMessage(user, message);
+    }
+
+    public static void sendMessage(@Nullable String to, String otherUUID, String message) {
+        SavableUser user = UserManager.getOrGetUser(to);
+
+        sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
+    }
+
+    public static void sendTitle(SavablePlayer player, Title title) {
+        ProxiedPlayer p = Streamline.getInstance().getPlayer(player.uuid);
+        if (p == null) return;
+
+        p.sendTitle(title);
     }
 
     public static String removeExtraDot(String string){
@@ -405,18 +441,18 @@ public class MessagingUtils {
         return false;
     }
 
-    public static String replaceAllPlayerBungee(String of, SavableUser user) {
+    public static String replaceAllPlayerBungee(SavableUser user, String of) {
         if (user == null) return of;
 
         return Streamline.getRATAPI().parseAllPlaceholders(user, of);
     }
 
-    public static String replaceAllPlayerBungee(String of, String uuid) {
-        return replaceAllPlayerBungee(of, UserManager.getOrGetUser(uuid));
+    public static String replaceAllPlayerBungee(String uuid, String of) {
+        return replaceAllPlayerBungee(UserManager.getOrGetUser(uuid), of);
     }
 
-    public static String replaceAllPlayerBungee(String of, CommandSender sender) {
-        return replaceAllPlayerBungee(of, UserManager.getOrGetUser(sender));
+    public static String replaceAllPlayerBungee(CommandSender sender, String of) {
+        return replaceAllPlayerBungee(UserManager.getOrGetUser(sender), of);
     }
 
     public static Collection<ServerInfo> getServers() {

@@ -8,9 +8,9 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.streamline.api.command.CommandException;
-import net.streamline.api.command.ConsoleCommandSender;
-import net.streamline.api.command.ModuleCommand;
+import net.streamline.api.command.*;
+import net.streamline.api.scheduler.SimpleScheduler;
+import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainConfigHandler;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.entities.IPlayer;
@@ -64,6 +64,8 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         mainConfigHandler = new MainConfigHandler();
         mainMessagesHandler = new MainMessagesHandler();
 
+        scheduler = new SimpleScheduler();
+
         luckPerms = LuckPermsProvider.get();
 
         userFolder = new File(this.getDataFolder(), "users" + File.separator);
@@ -74,6 +76,7 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         mainCommandsFolder.mkdirs();
 
         helpMap = null;
+        moduleManager = new SimpleModuleManager(this, new SimpleCommandMap(this));
 
         registerListener(new BaseListener());
 
@@ -193,6 +196,23 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return 0;
     }
 
+    public static void flushCommands() {
+        getInstance().getProxy().getPluginManager().unregisterCommands(getInstance());
+    }
+
+    public static void registerProperCommand(net.md_5.bungee.api.plugin.Command command) {
+        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
+    }
+
+    public static void registerCommand(StreamlineCommand command) {
+        getInstance().getModuleManager().getCommandMap().register(command.getName(), command.getLabel(), command);
+        Streamline.registerProperCommand(new ProperCommandBuilder(command));
+    }
+
+    public static void unregisterCommand(StreamlineCommand command) {
+        command.unregister(getInstance().getModuleManager().getCommandMap());
+    }
+
     public static BasePlugin getInstance() {
         return instance;
     }
@@ -219,6 +239,16 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
 
     public ServicesManager getServicesManager() {
         return servicesManager;
+    }
+
+    public List<String> getOnlinePlayerNames() {
+        List<String> r = new ArrayList<>();
+
+        getOnlinePlayers().forEach(a -> {
+            r.add(a.getName());
+        });
+
+        return r;
     }
 
     @Override
@@ -278,6 +308,16 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     @Override
     public long getConnectionThrottle() {
         return getProxy().getConfig().getThrottle();
+    }
+
+    @Override
+    public @Nullable SavablePlayer getSavedPlayer(@NotNull String name) {
+        return UserManager.getOrGetPlayer(getUUIDFromName(name));
+    }
+
+    @Override
+    public @Nullable SavablePlayer getSavedPlayerByUUID(@NotNull String uuid) {
+        return UserManager.getOrGetPlayer(uuid);
     }
 
     public UnsafeValues getUnsafe() {
@@ -358,7 +398,7 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         this.loadedCommands.put(command.getName(), command);
     }
 
-    public boolean dispatchCommand(@NotNull net.streamline.api.command.CommandSender sender, @NotNull String commandLine) throws CommandException {
+    public boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {
         return getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getPlayer(sender.getUUID()), commandLine);
     }
 
@@ -470,8 +510,8 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     }
 
     @Override
-    public @NotNull ConsoleCommandSender getConsoleSender() {
-        return (ConsoleCommandSender) getProxy().getConsole();
+    public @NotNull IConsoleCommandSender getConsoleSender() {
+        return (IConsoleCommandSender) getProxy().getConsole();
     }
 
     @Override

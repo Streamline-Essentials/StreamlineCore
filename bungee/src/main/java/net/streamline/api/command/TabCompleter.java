@@ -14,5 +14,5 @@ public interface TabCompleter {
      * @return A List of possible completions for the final argument, or null
      * to default to the command executor
      */
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args);
+    public List<String> onTabComplete(ICommandSender sender, Command command, String alias, String[] args);
 }

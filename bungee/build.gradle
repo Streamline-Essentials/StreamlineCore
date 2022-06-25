@@ -18,9 +18,10 @@ dependencies {
     implementation shadow("net.objecthunter:exp4j:0.4.8")
     implementation shadow("com.zaxxer:HikariCP:5.0.1")
     implementation shadow("com.google.re2j:re2j:1.6")
-    implementation shadow("org.mongodb:mongo-java-driver:3.12.10")
+    implementation "org.mongodb:mongo-java-driver:3.12.11"
+    annotationProcessor("org.mongodb:mongo-java-driver:3.12.11")
     implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation 'org.eclipse.aether:aether:1.1.0'
+//    implementation 'org.eclipse.aether:aether:1.1.0'
 }
 
 blossom {

@@ -7,7 +7,7 @@ import net.streamline.base.Streamline;
 import java.io.File;
 import java.util.List;
 
-public abstract class CommandResource extends FlatFileResource<Yaml> {
+public class CommandResource extends FlatFileResource<Yaml> {
     public String identifier;
     public Command command;
 

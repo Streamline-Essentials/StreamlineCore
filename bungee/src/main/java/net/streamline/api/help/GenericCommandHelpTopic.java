@@ -3,8 +3,8 @@ package net.streamline.api.help;
 import com.google.common.base.Joiner;
 import net.md_5.bungee.api.ChatColor;
 import net.streamline.api.command.Command;
-import net.streamline.api.command.CommandSender;
-import net.streamline.api.command.ConsoleCommandSender;
+import net.streamline.api.command.ICommandSender;
+import net.streamline.api.command.IConsoleCommandSender;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,13 +60,13 @@ public class GenericCommandHelpTopic extends HelpTopic {
     }
 
     @Override
-    public boolean canSee(@NotNull CommandSender sender) {
+    public boolean canSee(@NotNull ICommandSender sender) {
         if (!command.isRegistered()) {
             // Unregistered commands should not show up in the help
             return false;
         }
 
-        if (sender instanceof ConsoleCommandSender) {
+        if (sender instanceof IConsoleCommandSender) {
             return true;
         }
 

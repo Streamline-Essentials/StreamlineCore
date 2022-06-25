@@ -1,13 +1,13 @@
 package net.streamline.api.entities;
 
-import net.streamline.api.command.CommandSender;
+import net.streamline.api.command.ICommandSender;
 import net.streamline.api.modules.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 
-public interface IPlayer extends CommandSender {
+public interface IPlayer extends ICommandSender {
 
     /**
      * Gets the "friendly" name to display of this player. This may include
@@ -412,7 +412,7 @@ public interface IPlayer extends CommandSender {
      * @deprecated draft API
      */
     @Deprecated
-    public void hideEntity(@NotNull Module module, @NotNull CommandSender entity);
+    public void hideEntity(@NotNull Module module, @NotNull ICommandSender entity);
 
     /**
      * Allows this player to see an entity that was previously hidden. If
@@ -424,7 +424,7 @@ public interface IPlayer extends CommandSender {
      * @deprecated draft API
      */
     @Deprecated
-    public void showEntity(@NotNull Module module, @NotNull CommandSender entity);
+    public void showEntity(@NotNull Module module, @NotNull ICommandSender entity);
 
     /**
      * Checks to see if an entity has been visually hidden from this player.
@@ -435,7 +435,7 @@ public interface IPlayer extends CommandSender {
      * @deprecated draft API
      */
     @Deprecated
-    public boolean canSee(@NotNull CommandSender entity);
+    public boolean canSee(@NotNull ICommandSender entity);
 
     /**
      * Request that the player's client download and switch texture packs.

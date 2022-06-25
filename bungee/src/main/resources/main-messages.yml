@@ -54,3 +54,25 @@ defaults:
     is-offline: "%streamline_offline%"
     # For when there is no player. Can be used with '%streamline_placeholders_offline%'.
     no-player: "&cNo Player Found"
+# Messages for savable player experience handling.
+experience:
+  # Messages for level handling.
+  level:
+    # Messages for when the savable player's level changes.
+    on-change:
+      # The title to be shown. Can be turned off in "main-config.yml" file!
+      title:
+        # The main title (big text).
+        main: "&bLEVEL UP"
+        # The subtitle.
+        subtitle: "&6You are now level &a%streamline_user_level%&8!"
+        # Ticks to fade in.
+        in: 20
+        # Ticks to stay on screen.
+        stay: 10
+        # Ticks to fade out.
+        out: 20
+      # The chat messages to be shown. Can be turned off in "main-config.yml" file!
+      chat:
+        - "&bLEVEL UP"
+        - "&6You are now level &a%streamline_user_level%&8!"

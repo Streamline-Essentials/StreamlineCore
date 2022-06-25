@@ -7,21 +7,21 @@ import java.util.TreeMap;
 public class MongoResource extends StorageResource<Document> {
     public DatabaseConfig databaseConfig;
     public String collectionName;
-    public Document sheet;
+    public Document sheet = new Document();
 
     public MongoResource(DatabaseConfig databaseConfig, String collectionName, String discriminatorKey,  Object discriminator) {
-        super(Document.class, discriminatorKey, discriminator);
+        super(Document.class, StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
         this.databaseConfig = databaseConfig;
         this.collectionName = collectionName;
-        this.sheet = new Document();
+        this.sheet = new Document(StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
     }
 
     public Document get() {
-        return this.databaseConfig.mongoConnection().get(this.collectionName, StorageUtils.getWhere(discriminatorKey, discriminator));
+        return this.databaseConfig.mongoConnection().get(this.collectionName, this.getWhere());
     }
 
     public void push() {
-        this.databaseConfig.mongoConnection().push(this.collectionName, StorageUtils.getWhere(discriminatorKey, discriminator), this.sheet);
+        this.databaseConfig.mongoConnection().push(this.collectionName, this.getWhere(), this.sheet);
     }
 
     @Override
@@ -31,23 +31,31 @@ public class MongoResource extends StorageResource<Document> {
 
     @Override
     public void write(String key, Object value) {
+        key = StorageUtils.parseDotsMongo(key);
+        if (this.sheet == null) this.sheet = new Document();
+
         this.sheet.put(key, value);
 
         this.sortDocument();
-
-        this.databaseConfig.mongoConnection().push(this.collectionName, this.getWhere(), this.sheet);
     }
 
     @Override
     public <O> O getOrSetDefault(String key, O value) {
-        O thing = (O) this.sheet.getOrDefault(key, value);
-        this.push();
+        key = StorageUtils.parseDotsMongo(key);
+        if (this.sheet == null) {
+            this.sheet = new Document();
+            write(key, value);
+        }
+        Object get = this.sheet.get(key);
+        if (get != null) return (O) get;
+        write(key, value);
+        O thing = (O) this.sheet.get(key);
         return thing;
     }
 
     @Override
     public void sync() {
-        this.databaseConfig.mongoConnection().update(this.collectionName, this.getWhere(), this.sheet);
+        this.databaseConfig.mongoConnection().push(this.collectionName, this.getWhere(), this.sheet);
     }
 
     public Document getWhere() {
