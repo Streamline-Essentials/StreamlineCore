@@ -147,6 +147,10 @@ public class SavablePlayer extends SavableUser {
         setPlaySeconds(playSeconds + amount);
     }
 
+    public void removePlaySecond(int amount){
+        setPlaySeconds(playSeconds - amount);
+    }
+
     public void setPlaySeconds(int amount){
         playSeconds = amount;
     }

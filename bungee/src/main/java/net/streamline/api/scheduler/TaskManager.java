@@ -1,5 +1,7 @@
 package net.streamline.api.scheduler;
 
+import net.streamline.api.modules.BundledModule;
+
 import java.util.Date;
 import java.util.TreeMap;
 
@@ -16,5 +18,11 @@ public class TaskManager {
 
     public int getNextIndex() {
         return currentRunnables.size();
+    }
+
+    public void tick() {
+        for (BaseRunnable runnable : currentRunnables.values()) {
+            runnable.tick();
+        }
     }
 }

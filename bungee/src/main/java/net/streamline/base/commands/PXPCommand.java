@@ -1,11 +1,10 @@
 package net.streamline.base.commands;
 
-import net.streamline.api.command.ICommandSender;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.utils.MessagingUtils;
 
@@ -13,60 +12,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PXPCommand extends StreamlineCommand {
-    private String messageLevelGet;
-    private String messageLevelSet;
-    private String messageLevelAdd;
-    private String messageLevelRemove;
-    private String messageXPGet;
-    private String messageXPSet;
-    private String messageXPAdd;
-    private String messageXPRemove;
+    private final String messageLevelGet;
+    private final String messageLevelSet;
+    private final String messageLevelAdd;
+    private final String messageLevelRemove;
+    private final String messageXPGet;
+    private final String messageXPSet;
+    private final String messageXPAdd;
+    private final String messageXPRemove;
 
     public PXPCommand() {
         super(
                 "proxyexperience",
-                "A command to update players' levels / experience for the proxy!",
-                "/proxyexperience <player> level [add|remove|set] [number]",
                 "streamline.command.proxyexperience.default",
                 "pexp", "proxyxp", "pxp", "px"
         );
 
-        this.messageLevelGet = this.commandResource.getOrSetDefault("messages.level.get",
+        this.messageLevelGet = this.getCommandResource().getOrSetDefault("messages.level.get",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es &clevel&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_level*/*%");
-        this.messageLevelSet = this.commandResource.getOrSetDefault("messages.level.set",
+        this.messageLevelSet = this.getCommandResource().getOrSetDefault("messages.level.set",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &clevel&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_level*/*%");
-        this.messageLevelAdd = this.commandResource.getOrSetDefault("messages.level.set",
+        this.messageLevelAdd = this.getCommandResource().getOrSetDefault("messages.level.add",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &clevel&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_level*/*%");
-        this.messageLevelRemove = this.commandResource.getOrSetDefault("messages.level.set",
+        this.messageLevelRemove = this.getCommandResource().getOrSetDefault("messages.level.remove",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &clevel&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_level*/*%");
 
-        this.messageXPGet = this.commandResource.getOrSetDefault("messages.xp.get",
+        this.messageXPGet = this.getCommandResource().getOrSetDefault("messages.xp.get",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es &cxp&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_xp_total*/*%");
-        this.messageXPSet = this.commandResource.getOrSetDefault("messages.xp.set",
+        this.messageXPSet = this.getCommandResource().getOrSetDefault("messages.xp.set",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &cxp&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_xp_total*/*%");
-        this.messageXPAdd = this.commandResource.getOrSetDefault("messages.xp.set",
+        this.messageXPAdd = this.getCommandResource().getOrSetDefault("messages.xp.add",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &cxp&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_xp_total*/*%");
-        this.messageXPRemove = this.commandResource.getOrSetDefault("messages.xp.set",
+        this.messageXPRemove = this.getCommandResource().getOrSetDefault("messages.xp.remove",
                 "&d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es new &cxp&8: " +
                         "&a%streamline_parse_%this_other%:::*/*streamline_user_xp_total*/*%");
     }
 
     @Override
-    public void run(ICommandSender sender, String[] args) {
+    public void run(SavableUser sender, String[] args) {
         if (args.length < 2) {
             MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        SavablePlayer player = Streamline.getInstance().getSavedPlayer(playerName);
+        SavablePlayer player = BasePlugin.getSavedPlayer(playerName);
 
         if (player == null) {
             MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_SELF.get());
@@ -78,7 +75,7 @@ public class PXPCommand extends StreamlineCommand {
         switch (type) {
             case "level" -> {
                 if (args.length == 2) {
-                    MessagingUtils.sendMessage(sender, Streamline.getInstance().getUUIDFromName(playerName),
+                    MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
                             getWithOther(sender, this.messageLevelGet, playerName));
                     return;
                 }
@@ -98,7 +95,7 @@ public class PXPCommand extends StreamlineCommand {
                     return;
                 }
 
-                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(Streamline.getInstance().getUUIDFromName(playerName));
+                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(BasePlugin.getUUIDFromName(playerName));
                 if (savablePlayer == null) {
                     MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
                     return;
@@ -124,7 +121,7 @@ public class PXPCommand extends StreamlineCommand {
             }
             case "xp" -> {
                 if (args.length == 2) {
-                    MessagingUtils.sendMessage(sender, Streamline.getInstance().getUUIDFromName(playerName),
+                    MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
                             getWithOther(sender, this.messageXPGet, playerName));
                     return;
                 }
@@ -144,7 +141,7 @@ public class PXPCommand extends StreamlineCommand {
                     return;
                 }
 
-                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(Streamline.getInstance().getUUIDFromName(playerName));
+                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(BasePlugin.getUUIDFromName(playerName));
                 if (savablePlayer == null) {
                     MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
                     return;
@@ -175,9 +172,9 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(ICommandSender sender, String[] args) {
+    public List<String> doTabComplete(SavableUser sender, String[] args) {
         if (args.length <= 1) {
-            return Streamline.getInstance().getOnlinePlayerNames();
+            return BasePlugin.getOnlinePlayerNames();
         }
         if (args.length == 2) {
             return List.of("level", "xp");

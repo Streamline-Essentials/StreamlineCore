@@ -7,27 +7,27 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
+import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.Event;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.command.*;
+import net.streamline.api.holders.GeyserHolder;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
-import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainConfigHandler;
 import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.api.entities.IPlayer;
-import net.streamline.api.entities.Player;
-import net.streamline.api.help.HelpMap;
-import net.streamline.api.modules.ServicesManager;
-import net.streamline.api.modules.SimpleModuleManager;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.listeners.BaseListener;
+import net.streamline.base.timers.UserSaveTimer;
 import net.streamline.utils.MessagingUtils;
+import net.streamline.utils.UUIDUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public abstract class BasePlugin extends Plugin implements IPlugin {
+public abstract class BasePlugin extends Plugin {
     public static class Runner implements Runnable {
         public Runner() {
             MessagingUtils.logInfo("Task Runner registered!");
@@ -43,16 +43,14 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
 
         @Override
         public void run() {
-            for (BaseRunnable runnable : getMainScheduler().currentRunnables.values()) {
-                runnable.tick();
-            }
+            getMainScheduler().tick();
         }
     }
 
     @Getter
     static TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
     @Getter
-    static TreeMap<String, StreamlineCommand> loadedCommands = new TreeMap<>();
+    static TreeMap<String, StreamlineCommand> loadedStreamlineCommands = new TreeMap<>();
 
     static String name;
     static String version;
@@ -65,15 +63,12 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     static String commandsFolderChild = "commands" + File.separator;
     static MainConfigHandler mainConfigHandler;
     static MainMessagesHandler mainMessagesHandler;
-    static SimpleModuleManager moduleManager;
     static LuckPerms luckPerms;
-    static UnsafeValues unsafeValues;
-    static Warning.WarningState warningState;
     static ModuleTaskManager moduleScheduler;
     @Getter
     static TaskManager mainScheduler;
-    static ServicesManager servicesManager;
-    static HelpMap helpMap;
+    @Getter
+    static GeyserHolder geyserHolder;
 
     @Override
     public void onEnable() {
@@ -97,19 +92,30 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         moduleFolder.mkdirs();
         mainCommandsFolder.mkdirs();
 
-        helpMap = null;
-        moduleManager = new SimpleModuleManager(this, new SimpleCommandMap(this));
+        geyserHolder = new GeyserHolder();
 
         registerListener(new BaseListener());
-        getProxy().getScheduler().schedule(this, new Runner(), 0, 50, TimeUnit.MILLISECONDS);
+        getInstance().getProxy().getScheduler().schedule(this, new Runner(), 0, 50, TimeUnit.MILLISECONDS);
 
         UserManager.loadUser(new SavableConsole());
+
+        try {
+            ModuleManager.unJarAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        new UserSaveTimer();
 
         this.enable();
     }
 
     @Override
     public void onDisable() {
+        for (SavableUser user : UserManager.getLoadedUsers()) {
+            user.saveAll();
+        }
+
         this.disable();
     }
 
@@ -126,12 +132,15 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
 
     abstract public void reload();
 
+    public static void fireEvent(Event event) {
+        getInstance().getProxy().getPluginManager().callEvent(event);
+    }
+
     public static void registerListener(Listener listener) {
         getInstance().getProxy().getPluginManager().registerListener(getInstance(), listener);
     }
 
-    @Override
-    public void reloadData() {
+    public static void reloadData() {
         mainConfigHandler.reloadResource();
         mainMessagesHandler.reloadResource();
         for (SavableUser user : UserManager.getLoadedUsers()) {
@@ -140,82 +149,69 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         }
     }
 
-    public @NotNull String getName() {
+    public static @NotNull String getName() {
         return name;
     }
 
-    public @NotNull String getVersion() {
+    public static @NotNull String getVersion() {
         return version;
     }
 
-    @Override
-    public @NotNull Collection<? extends IPlayer> getOnlinePlayers() {
-        List<Player> players = new ArrayList<>();
+    public static @NotNull Collection<SavablePlayer> getOnlinePlayers() {
+        List<SavablePlayer> players = new ArrayList<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
-            players.add(new Player(this, player.getName(), player.getUniqueId().toString()));
+            players.add(UserManager.getOrGetPlayer(player));
         }
 
         return players;
     }
 
-    @Override
-    public int getMaxPlayers() {
-        return getProxy().getConfig().getPlayerLimit();
+    public static int getMaxPlayers() {
+        return getInstance().getProxy().getConfig().getPlayerLimit();
     }
 
-    @Override
-    public @NotNull String getResourcePack() {
+    public static @NotNull String getResourcePack() {
         return "";
     }
 
-    @Override
-    public @NotNull String getResourcePackHash() {
+    public static @NotNull String getResourcePackHash() {
         return "";
     }
 
-    @Override
-    public @NotNull String getResourcePackPrompt() {
+    public static @NotNull String getResourcePackPrompt() {
         return "";
     }
 
-    @Override
-    public boolean isResourcePackRequired() {
+    public static boolean isResourcePackRequired() {
         return false;
     }
 
-    @Override
-    public boolean hasWhitelist() {
+    public static boolean hasWhitelist() {
         return false;
     }
 
-    @Override
-    public void setWhitelist(boolean value) {
+    public static void setWhitelist(boolean value) {
 
     }
 
-    @Override
-    public boolean isWhitelistEnforced() {
+    public static boolean isWhitelistEnforced() {
         return false;
     }
 
-    @Override
-    public void setWhitelistEnforced(boolean value) {
+    public static void setWhitelistEnforced(boolean value) {
 
     }
 
-    @Override
-    public @NotNull Set<SavablePlayer> getWhitelistedPlayers() {
+    public static @NotNull Set<SavablePlayer> getWhitelistedPlayers() {
         return null;
     }
 
-    @Override
-    public void reloadWhitelist() {
+    public static void reloadWhitelist() {
 
     }
 
-    @Override
-    public int broadcastMessage(@NotNull String message) {
+    public static int broadcastMessage(@NotNull String message) {
         return 0;
     }
 
@@ -223,19 +219,18 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         getInstance().getProxy().getPluginManager().unregisterCommands(getInstance());
     }
 
-    public static void registerProperCommand(net.md_5.bungee.api.plugin.Command command) {
+    public static void registerProperCommand(Command command) {
         getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
     }
 
-    public static void registerCommand(StreamlineCommand command) {
-        getInstance().getModuleManager().getCommandMap().register(command.getName(), command.getLabel(), command);
-        Streamline.registerProperCommand(new ProperCommandBuilder(command));
-        loadedCommands.put(command.getName(), command);
+    public static void registerStreamlineCommand(StreamlineCommand command) {
+        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
+        loadedStreamlineCommands.put(command.getName(), command);
     }
 
-    public static void unregisterCommand(StreamlineCommand command) {
-        command.unregister(getInstance().getModuleManager().getCommandMap());
-        loadedCommands.remove(command.getName());
+    public static void unregisterStreamlineCommand(StreamlineCommand command) {
+        getInstance().getProxy().getPluginManager().unregisterCommand(command);
+        loadedStreamlineCommands.remove(command.getName());
     }
 
     public static BasePlugin getInstance() {
@@ -254,19 +249,13 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return mainMessagesHandler;
     }
 
-    public SimpleModuleManager getModuleManager() {
-        return moduleManager;
-    }
 
     public static ModuleTaskManager getModuleScheduler() {
         return moduleScheduler;
     }
 
-    public ServicesManager getServicesManager() {
-        return servicesManager;
-    }
 
-    public List<String> getOnlinePlayerNames() {
+    public static List<String> getOnlinePlayerNames() {
         List<String> r = new ArrayList<>();
 
         getOnlinePlayers().forEach(a -> {
@@ -276,28 +265,23 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return r;
     }
 
-    @Override
-    public @NotNull List<ServerInfo> getServers() {
-        return new ArrayList<>(getProxy().getServers().values());
+    public static @NotNull List<ServerInfo> getServers() {
+        return new ArrayList<>(getInstance().getProxy().getServers().values());
     }
 
-    @Override
-    public boolean unloadServer(@NotNull String name, boolean save) {
+    public static boolean unloadServer(@NotNull String name, boolean save) {
         return false;
     }
 
-    @Override
-    public boolean unloadServer(@NotNull Server server, boolean save) {
+    public static boolean unloadServer(@NotNull Server server, boolean save) {
         return false;
     }
 
-    @Override
-    public @Nullable ServerInfo getServer(@NotNull String name) {
-        return getProxy().getServerInfo(name);
+    public static @Nullable ServerInfo getServer(@NotNull String name) {
+        return getInstance().getProxy().getServerInfo(name);
     }
 
-    @Override
-    public @Nullable Server getServer(@NotNull UUID uid) {
+    public static @Nullable Server getServer(@NotNull UUID uid) {
         return null;
     }
 
@@ -321,57 +305,35 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return commandsFolderChild;
     }
 
-    public @NotNull String getUpdateFolder() {
+    public static @NotNull String getUpdateFolder() {
         return updateFolder.getPath();
     }
 
-    @Override
-    public @NotNull File getUpdateFolderFile() {
+    public static @NotNull File getUpdateFolderFile() {
         return updateFolder;
     }
 
-    @Override
-    public long getConnectionThrottle() {
-        return getProxy().getConfig().getThrottle();
+    public static long getConnectionThrottle() {
+        return getInstance().getProxy().getConfig().getThrottle();
     }
 
-    @Override
-    public @Nullable SavablePlayer getSavedPlayer(@NotNull String name) {
+    public static @Nullable SavablePlayer getSavedPlayer(@NotNull String name) {
         return UserManager.getOrGetPlayer(getUUIDFromName(name));
     }
 
-    @Override
-    public @Nullable SavablePlayer getSavedPlayerByUUID(@NotNull String uuid) {
+    public static @Nullable SavablePlayer getSavedPlayerByUUID(@NotNull String uuid) {
         return UserManager.getOrGetPlayer(uuid);
     }
 
-    public UnsafeValues getUnsafe() {
-        return unsafeValues;
+    public static List<ProxiedPlayer> onlinePlayers() {
+        return new ArrayList<>(getInstance().getProxy().getPlayers());
     }
 
-    public Warning.WarningState getWarningState() {
-        return warningState;
+    public static List<ProxiedPlayer> playersOnServer(String serverName) {
+        return new ArrayList<>(getInstance().getProxy().getServerInfo(serverName).getPlayers());
     }
 
-    @Override
-    public @Nullable <T extends Keyed> Tag<T> getTag(@NotNull String registry, @NotNull NamespacedKey tag, @NotNull Class<T> clazz) {
-        return null;
-    }
-
-    @Override
-    public @NotNull <T extends Keyed> Iterable<Tag<T>> getTags(@NotNull String registry, @NotNull Class<T> clazz) {
-        return null;
-    }
-
-    public List<ProxiedPlayer> onlinePlayers() {
-        return new ArrayList<>(getProxy().getPlayers());
-    }
-
-    public List<ProxiedPlayer> playersOnServer(String serverName) {
-        return new ArrayList<>(getProxy().getServerInfo(serverName).getPlayers());
-    }
-
-    public ProxiedPlayer getPlayer(String uuid) {
+    public static ProxiedPlayer getPlayer(String uuid) {
         for (ProxiedPlayer player : onlinePlayers()) {
             if (player.getUniqueId().toString().equals(uuid)) return player;
         }
@@ -379,95 +341,75 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return null;
     }
 
-    public String getUUIDFromName(String name) {
-        for (ProxiedPlayer sender : getInstance().onlinePlayers()) {
-            if (sender.getName().equals(name)) return sender.getUniqueId().toString();
-        }
-
-        return null;
+    public static String getUUIDFromName(String name) {
+        return UUIDUtils.getCachedUUID(name);
     }
 
-    @Override
-    public @Nullable ProxiedPlayer getPlayerExact(@NotNull String name) {
+    public static String getNameFromUUID(String uuid) {
+        return UUIDUtils.getCachedName(uuid);
+    }
+
+    public static @Nullable ProxiedPlayer getPlayerExact(@NotNull String name) {
         return getPlayer(getUUIDFromName(name));
     }
 
-    @Override
-    public @NotNull List<ProxiedPlayer> matchPlayer(@NotNull String name) {
+    public static @NotNull List<ProxiedPlayer> matchPlayer(@NotNull String name) {
         ProxiedPlayer player = getPlayerExact(name);
         if (player == null) return new ArrayList<>();
         return List.of(player);
     }
 
-    @Override
-    public @Nullable ProxiedPlayer getPlayer(@NotNull UUID id) {
+    public static @Nullable ProxiedPlayer getPlayer(@NotNull UUID id) {
         return getPlayer(id.toString());
     }
 
-    public ProxiedPlayer getPlayer(CommandSender sender) {
-        return getProxy().getPlayer(sender.getName());
+    public static ProxiedPlayer getPlayer(CommandSender sender) {
+        return getInstance().getProxy().getPlayer(sender.getName());
     }
 
-    public ModuleCommand getModuleCommand(@NotNull String name) {
+    public static ModuleCommand getModuleCommand(@NotNull String name) {
         return loadedModuleCommands.get(name);
     }
 
-    @Override
-    public void savePlayers() {
+    public static void savePlayers() {
         for (SavableUser user : UserManager.getLoadedUsers()) {
             user.saveAll();
         }
     }
 
     public static void registerModuleCommand(ModuleCommand command) {
+        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
         loadedModuleCommands.put(command.getName(), command);
     }
 
     public static void unregisterModuleCommand(ModuleCommand command) {
+        getInstance().getProxy().getPluginManager().unregisterCommand(command);
         loadedModuleCommands.remove(command.getName());
     }
 
-    public boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {
-        return getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getPlayer(sender.getUUID()), commandLine);
-    }
+//    public static boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {
+//        return getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getPlayer(sender.getUUID()), commandLine);
+//    }
 
-    public Map<String, String[]> getCommandAliases() {
+    public static Map<String, String[]> getCommandAliases() {
         Map<String, String[]> r = new HashMap<>();
 
         for (ModuleCommand command : loadedModuleCommands.values()) {
-            r.put(command.getLabel(), command.getAliases().toArray(new String[0]));
+            r.put(command.getBase(), command.getAliases());
         }
 
         return r;
     }
 
-    @Override
-    public boolean shouldSendChatPreviews() {
-        return false;
+    public static boolean getOnlineMode() {
+        return getInstance().getProxy().getConfig().isOnlineMode();
     }
 
-    @Override
-    public boolean isEnforcingSecureProfiles() {
-        return false;
+    public static void shutdown() {
+        getInstance().getProxy().stop();
     }
 
-    @Override
-    public boolean getHideOnlinePlayers() {
-        return false;
-    }
-
-    @Override
-    public boolean getOnlineMode() {
-        return getProxy().getConfig().isOnlineMode();
-    }
-
-    @Override
-    public void shutdown() {
-        getProxy().stop();
-    }
-
-    @Override
-    public int broadcast(@NotNull String message, @NotNull String permission) {
+    public static int broadcast(@NotNull String message, @NotNull String permission) {
         int people = 0;
 
         for (ProxiedPlayer player : onlinePlayers()) {
@@ -479,18 +421,15 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return people;
     }
 
-    @Override
-    public @NotNull SavablePlayer getOfflinePlayer(@NotNull String name) {
+    public static @NotNull SavablePlayer getOfflinePlayer(@NotNull String name) {
         return UserManager.getOrGetPlayer(getUUIDFromName(name));
     }
 
-    @Override
-    public @NotNull SavablePlayer getOfflinePlayer(@NotNull UUID id) {
+    public static @NotNull SavablePlayer getOfflinePlayer(@NotNull UUID id) {
         return UserManager.getOrGetPlayer(id.toString());
     }
 
-    @Override
-    public @NotNull SavablePlayer createPlayerProfile(@Nullable UUID uniqueId, @Nullable String name) {
+    public static @NotNull SavablePlayer createPlayerProfile(@Nullable UUID uniqueId, @Nullable String name) {
         if (uniqueId != null) {
             return createPlayerProfile(uniqueId);
         } else {
@@ -498,73 +437,56 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         }
     }
 
-    @Override
-    public @NotNull SavablePlayer createPlayerProfile(@NotNull UUID uniqueId) {
+    public static @NotNull SavablePlayer createPlayerProfile(@NotNull UUID uniqueId) {
         return (SavablePlayer) UserManager.loadUser(new SavablePlayer(uniqueId.toString()));
     }
 
-    @Override
-    public @NotNull SavablePlayer createPlayerProfile(@NotNull String name) {
+    public static @NotNull SavablePlayer createPlayerProfile(@NotNull String name) {
         return (SavablePlayer) UserManager.loadUser(new SavablePlayer(getUUIDFromName(name)));
     }
 
-    @Override
-    public @NotNull Set<String> getIPBans() {
+    public static @NotNull Set<String> getIPBans() {
         return null;
     }
 
-    @Override
-    public void banIP(@NotNull String address) {
+    public static void banIP(@NotNull String address) {
 
     }
 
-    @Override
-    public void unbanIP(@NotNull String address) {
+    public static void unbanIP(@NotNull String address) {
 
     }
 
-    @Override
-    public @NotNull Set<SavablePlayer> getBannedPlayers() {
+    public static @NotNull Set<SavablePlayer> getBannedPlayers() {
         return null;
     }
 
-    @Override
-    public @NotNull BanList getBanList(BanList.@NotNull Type type) {
+
+//    public static @NotNull IConsoleCommandSender getConsoleSender() {
+//        return (IConsoleCommandSender) getInstance().getProxy().getConsole();
+//    }
+
+//    public static @NotNull BanList getBanList(BanList.@NotNull Type type) {
+//        return null;
+//    }
+
+    public static @NotNull Set<SavablePlayer> getOperators() {
         return null;
     }
 
-    @Override
-    public @NotNull Set<SavablePlayer> getOperators() {
-        return null;
-    }
-
-    @Override
-    public @NotNull IConsoleCommandSender getConsoleSender() {
-        return (IConsoleCommandSender) getProxy().getConsole();
-    }
-
-    @Override
-    public @NotNull SavablePlayer[] getOfflinePlayers() {
+    public static @NotNull SavablePlayer[] getOfflinePlayers() {
         return new SavablePlayer[0];
     }
 
-    @Override
-    public @NotNull HelpMap getHelpMap() {
-        return helpMap;
-    }
-
-    @Override
-    public boolean isPrimaryThread() {
+    public static boolean isPrimaryThread() {
         return false;
     }
 
-    @Override
-    public @NotNull String getMotd() {
+    public static @NotNull String getMotd() {
         return "";
     }
 
-    @Override
-    public @Nullable String getShutdownMessage() {
+    public static @Nullable String getShutdownMessage() {
         return null;
     }
 }

@@ -52,6 +52,8 @@ public class MainMessagesHandler extends FlatFileResource<Config> {
                 IS_ONLINE("defaults.placeholders.is-online"),
                 IS_OFFLINE("defaults.placeholders.is-offline"),
                 NO_PLAYER("defaults.placeholders.no-player"),
+                LISTS_LAST("defaults.placeholders.lists.last-values"),
+                LISTS_BASE("defaults.placeholders.lists.base-values"),
                 ;
 
                 public final String key;
