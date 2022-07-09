@@ -52,8 +52,14 @@ defaults:
     is-online: "%streamline_online%"
     # For falses. Can be used with '%streamline_placeholders_offline%'.
     is-offline: "%streamline_offline%"
-    # For when there is no player. Can be used with '%streamline_placeholders_offline%'.
+    # For when there is no player. Can be used with '%streamline_placeholders_no-player%'.
     no-player: "&cNo Player Found"
+    # For when displaying lists.
+    lists:
+      # The value to use for the last value in the list.
+      last-values: "&a%value%"
+      # The value to use for every other value except the last value in the list.
+      base-values: "&a%value%&8, "
 # Messages for savable player experience handling.
 experience:
   # Messages for level handling.

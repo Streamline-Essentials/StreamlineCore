@@ -11,7 +11,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.command.ICommandSender;
+import net.streamline.api.modules.BundledModule;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
@@ -23,20 +23,33 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MessagingUtils {
-    public static String loggedMessage(String message) {
-        return Streamline.getInstance().getName() + " > " + message;
-    }
 
     public static void logInfo(String message) {
-        Streamline.getInstance().getLogger().info(loggedMessage(message));
+        Streamline.getInstance().getLogger().info(message);
     }
 
     public static void logWarning(String message) {
-        Streamline.getInstance().getLogger().warning(loggedMessage(message));
+        Streamline.getInstance().getLogger().warning(message);
     }
 
     public static void logSevere(String message) {
-        Streamline.getInstance().getLogger().severe(loggedMessage(message));
+        Streamline.getInstance().getLogger().severe(message);
+    }
+
+    public static String loggedModulePrefix(BundledModule module) {
+        return "[" + module.getIdentifier() + "] ";
+    }
+
+    public static void logInfo(BundledModule module, String message) {
+        Streamline.getInstance().getLogger().info(loggedModulePrefix(module) + message);
+    }
+
+    public static void logWarning(BundledModule module, String message) {
+        Streamline.getInstance().getLogger().warning(loggedModulePrefix(module) + message);
+    }
+
+    public static void logSevere(BundledModule module, String message) {
+        Streamline.getInstance().getLogger().severe(loggedModulePrefix(module) + message);
     }
 
     public static void sendMessage(@Nullable CommandSender to, String message) {
@@ -49,19 +62,14 @@ public class MessagingUtils {
         to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
     }
 
-    public static void sendMessage(@Nullable ICommandSender to, String message) {
-        if (to == null) return;
-        to.sendMessage(codedString(message));
-    }
-
-    public static void sendMessage(@Nullable ICommandSender to, String otherUUID, String message) {
-        if (to == null) return;
-        to.sendMessage(replaceAllPlayerBungee(otherUUID, message));
-    }
-
     public static void sendMessage(@Nullable SavableUser to, String message) {
         if (to == null) return;
         to.sendMessage(message);
+    }
+
+    public static void sendMessage(@Nullable SavableUser to, String otherUUID, String message) {
+        if (to == null) return;
+        to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
     }
 
     public static void sendMessage(@Nullable SavableUser to, SavableUser other, String message) {

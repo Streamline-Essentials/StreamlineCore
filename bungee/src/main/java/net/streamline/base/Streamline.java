@@ -1,9 +1,8 @@
 package net.streamline.base;
 
 import net.streamline.api.BasePlugin;
-import net.streamline.api.placeholder.addons.StreamlineExpansion;
-import net.streamline.base.commands.PXPCommand;
-import net.streamline.base.commands.ParseCommand;
+import net.streamline.base.commands.*;
+import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
 import net.streamline.base.timers.PlayerExperienceTimer;
 
@@ -14,6 +13,10 @@ public class Streamline extends BasePlugin {
 
         new ParseCommand();
         new PXPCommand();
+        new ReloadCommand();
+        new BTagCommand();
+        new PointsCommand();
+        new PlaytimeCommand();
 
         new OneSecondTimer();
         new PlayerExperienceTimer();

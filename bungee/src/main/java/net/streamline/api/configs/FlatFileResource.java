@@ -60,7 +60,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
 
     @Override
     public void push() {
-        this.resource.write();
+//        this.resource.write();
     }
 
     public boolean exists() {
