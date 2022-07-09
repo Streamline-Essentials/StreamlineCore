@@ -21,9 +21,9 @@ public class PointsCommand extends StreamlineCommand {
 
     public PointsCommand() {
         super(
-                "btag",
-                "streamline.command.btag.default",
-                "pexp", "proxyxp", "pxp", "px"
+                "ppoints",
+                "streamline.command.points.default",
+                "proxypoints", "ppts"
         );
 
         this.messageGet = this.getCommandResource().getOrSetDefault("messages.points.get",

@@ -18,9 +18,9 @@ public class PlaytimeCommand extends StreamlineCommand {
 
     public PlaytimeCommand() {
         super(
-                "btag",
-                "streamline.command.btag.default",
-                "pexp", "proxyxp", "pxp", "px"
+                "proxyplaytime",
+                "streamline.command.playtime.default",
+                "pplaytime", "pplay", "proxyplay"
         );
 
         this.messageGet = this.getCommandResource().getOrSetDefault("messages.playtime.get",

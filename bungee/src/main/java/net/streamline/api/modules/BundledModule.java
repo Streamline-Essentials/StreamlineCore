@@ -29,15 +29,12 @@ public abstract class BundledModule {
     private ClassLoader classLoader;
 
     public BundledModule(String identifier, List<String> authors, List<String> softDepends, List<String> hardDepends) {
-        logInfo("Loading...");
         this.identifier = identifier;
         this.authors = authors;
         this.softDepends = softDepends;
         this.hardDepends = hardDepends;
         this.dataFolder = new File(Streamline.getModuleFolder(), identifier + File.separator);
-        if (ModuleManager.loadModule(this)) {
-            logInfo("Loaded!");
-        }
+        logInfo("Loaded!");
         onLoad();
     }
 
