@@ -2,7 +2,7 @@ package net.streamline.api.permissions;
 
 import com.google.common.base.Preconditions;
 import net.streamline.base.Streamline;
-import net.streamline.api.modules.ModuleManager;
+import net.streamline.api.module.ModuleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

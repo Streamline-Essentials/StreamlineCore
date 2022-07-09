@@ -1,6 +1,9 @@
 package net.streamline.api.command;
 
 import net.streamline.api.configs.CommandResource;
+import net.streamline.api.modules.Module;
+import net.streamline.api.savables.UserManager;
+import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +25,14 @@ public abstract class StreamlineCommand extends Command implements TabExecutor {
         this.aliases = aliases;
         this.commandResource = new CommandResource(this, parentDirectory);
         Streamline.registerCommand(this);
+    }
+
+    public StreamlineCommand(Module module, String base, String description, String usageMessage, String permission, String... aliases) {
+        this(base, description, usageMessage, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), aliases);
+    }
+
+    public StreamlineCommand(String base, String description, String usageMessage, String permission, String... aliases) {
+        this(base, description, usageMessage, permission, Streamline.getMainCommandsFolder(), aliases);
     }
 
     @Override
@@ -50,4 +61,17 @@ public abstract class StreamlineCommand extends Command implements TabExecutor {
     abstract public void run(ICommandSender sender, String[] args);
 
     abstract public List<String> doTabComplete(ICommandSender sender, String[] args);
+
+    public String getWithOther(ICommandSender sender, String base, SavableUser other) {
+        return MessagingUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.latestName));
+    }
+
+    public String getWithOther(ICommandSender sender, String base, String other) {
+        SavableUser user = UserManager.getOrGetUser(sender.getUUID());
+        return MessagingUtils.replaceAllPlayerBungee(user, getWithOther(base, other));
+    }
+
+    public String getWithOther(String base, String other) {
+        return base.replace("%this_other%", other);
+    }
 }

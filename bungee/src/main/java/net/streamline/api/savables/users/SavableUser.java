@@ -131,6 +131,7 @@ public abstract class SavableUser extends SavableResource {
         set("profile.points", points);
         // More.
         saveMore();
+        storageResource.push();
     }
 
     abstract public void saveMore();
@@ -173,9 +174,6 @@ public abstract class SavableUser extends SavableResource {
 
     public void setLatestName(String name) {
         latestName = name;
-        if (this instanceof SavablePlayer sp) {
-            sp.addName(name);
-        }
     }
 
     public void setDisplayName(String name) {

@@ -1,5 +1,7 @@
 package net.streamline.api.permissions;
 
+import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.scheduler.ModuleRunnable;
 import net.streamline.base.Streamline;
 import net.streamline.api.modules.Module;
 import org.jetbrains.annotations.NotNull;
@@ -229,13 +231,9 @@ public class PermissibleBase implements Permissible {
 
         PermissionAttachment result = addAttachment(module);
 
-        if (Streamline.getInstance().getScheduler().scheduleSyncDelayedTask(module, new RemoveAttachmentRunnable(result), ticks) == -1) {
-            Streamline.getInstance().getLogger().log(Level.WARNING, "Could not add PermissionAttachment to " + parent + " for module " + module.getDescription().getFullName() + ": Scheduler returned -1");
-            result.remove();
-            return null;
-        } else {
-            return result;
-        }
+        Streamline.getModuleScheduler().start(new RemoveAttachmentRunnable(result, module, 0, ticks));
+
+        return result;
     }
 
     @Override
@@ -244,16 +242,19 @@ public class PermissibleBase implements Permissible {
         return new HashSet<PermissionAttachmentInfo>(permissions.values());
     }
 
-    private static class RemoveAttachmentRunnable implements Runnable {
+    private static class RemoveAttachmentRunnable extends ModuleRunnable {
         private final PermissionAttachment attachment;
 
-        public RemoveAttachmentRunnable(@NotNull PermissionAttachment attachment) {
+        public RemoveAttachmentRunnable(@NotNull PermissionAttachment attachment, Module module, long delay, long period) {
+            super(module, delay, period);
             this.attachment = attachment;
         }
 
         @Override
         public void run() {
-            attachment.remove();
+            if (attachment.remove()) {
+                this.cancel();
+            }
         }
     }
 }

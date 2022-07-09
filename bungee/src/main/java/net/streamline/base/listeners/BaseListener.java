@@ -49,17 +49,18 @@ public class BaseListener implements Listener {
     public void onPlayerLevel(LevelChangePlayerEvent event) {
         if (Streamline.getMainConfig().announceLevelChangeChat()) {
             for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
-                MessagingUtils.sendMessage(event.user, message);
+                MessagingUtils.sendMessage(event.user, MessagingUtils.replaceAllPlayerBungee(event.player(),message));
             }
         }
 
         if (Streamline.getMainConfig().announceLevelChangeTitle()) {
-            Title title = ProxyServer.getInstance().createTitle();
-            title = title.title(MessagingUtils.codedText(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()));
-            title = title.subTitle(MessagingUtils.codedText(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get()));
-            title = title.fadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
-            title = title.stay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
-            title = title.fadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
+            Title title = ProxyServer.getInstance().createTitle()
+                    .reset()
+                    .title(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.player(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())))
+                    .subTitle(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.player(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())))
+                    .fadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt())
+                    .stay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt())
+                    .fadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
 
             MessagingUtils.sendTitle(event.player(), title);
         }

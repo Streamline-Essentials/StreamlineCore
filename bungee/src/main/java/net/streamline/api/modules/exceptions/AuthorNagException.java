@@ -1,4 +1,4 @@
-package net.streamline.api.modules;
+package net.streamline.api.modules.exceptions;
 
 @SuppressWarnings("serial")
 public class AuthorNagException extends RuntimeException {

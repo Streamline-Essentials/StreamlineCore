@@ -5,6 +5,7 @@ import net.streamline.api.placeholder.addons.StreamlineExpansion;
 import net.streamline.base.commands.PXPCommand;
 import net.streamline.base.commands.ParseCommand;
 import net.streamline.base.timers.OneSecondTimer;
+import net.streamline.base.timers.PlayerExperienceTimer;
 
 public class Streamline extends BasePlugin {
     @Override
@@ -14,7 +15,8 @@ public class Streamline extends BasePlugin {
         new ParseCommand();
         new PXPCommand();
 
-        getScheduler().scheduleAsyncRepeatingTask(null, new OneSecondTimer(), 0, 20);
+        new OneSecondTimer();
+        new PlayerExperienceTimer();
     }
 
     @Override

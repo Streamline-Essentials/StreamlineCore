@@ -94,14 +94,21 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("user_suffix")) return UserManager.getLuckPermsSuffix(user.latestName);
 
         if (params.equals("user_points")) return String.valueOf(user.points);
-        if (params.equals("user_level")) return (user instanceof SavablePlayer sp ? String.valueOf(sp.level) : null);
-        if (params.equals("user_xp_current")) return (user instanceof SavablePlayer sp ? String.valueOf(sp.currentXP) : null);
-        if (params.equals("user_xp_total")) return (user instanceof SavablePlayer sp ? String.valueOf(sp.totalXP) : null);
 
-        if (params.equals("user_play_seconds")) return (user instanceof SavablePlayer sp ? sp.getPlaySecondsAsString() : null);
-        if (params.equals("user_play_minutes")) return (user instanceof SavablePlayer sp ? sp.getPlayMinutesAsString() : null);
-        if (params.equals("user_play_hours")) return (user instanceof SavablePlayer sp ? sp.getPlayHoursAsString() : null);
-        if (params.equals("user_play_days")) return (user instanceof SavablePlayer sp ? sp.getPlayDaysAsString() : null);
+        if (user instanceof SavablePlayer sp) {
+            if (params.equals("user_level")) return String.valueOf(sp.level);
+            if (params.equals("user_xp_current")) return String.valueOf(sp.currentXP);
+            if (params.equals("user_xp_total")) return String.valueOf(sp.totalXP);
+
+            if (params.equals("user_play_seconds")) return sp.getPlaySecondsAsString();
+            if (params.equals("user_play_minutes")) return sp.getPlayMinutesAsString();
+            if (params.equals("user_play_hours")) return sp.getPlayHoursAsString();
+            if (params.equals("user_play_days")) return sp.getPlayDaysAsString();
+
+            if (params.equals("user_ip")) return sp.latestIP;
+        }
+
+        if (params.equals("user_server")) return user.latestServer;
 
         return null;
     }

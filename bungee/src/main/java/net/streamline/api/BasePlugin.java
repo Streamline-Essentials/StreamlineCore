@@ -1,5 +1,6 @@
 package net.streamline.api;
 
+import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.md_5.bungee.api.CommandSender;
@@ -9,7 +10,9 @@ import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.command.*;
-import net.streamline.api.scheduler.SimpleScheduler;
+import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.scheduler.ModuleTaskManager;
+import net.streamline.api.scheduler.TaskManager;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainConfigHandler;
 import net.streamline.base.configs.MainMessagesHandler;
@@ -23,7 +26,6 @@ import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
-import net.streamline.api.scheduler.StreamlineScheduler;
 import net.streamline.base.listeners.BaseListener;
 import net.streamline.utils.MessagingUtils;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +33,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin extends Plugin implements IPlugin {
-    TreeMap<String, ModuleCommand> loadedCommands = new TreeMap<>();
+    public static class Runner implements Runnable {
+        public Runner() {
+            MessagingUtils.logInfo("Task Runner registered!");
+        }
+
+        @Override
+        public void run() {
+            for (BaseRunnable runnable : getMainScheduler().currentRunnables.values()) {
+                runnable.tick();
+            }
+        }
+    }
+
+    @Getter
+    static TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
+    @Getter
+    static TreeMap<String, StreamlineCommand> loadedCommands = new TreeMap<>();
 
     static String name;
     static String version;
@@ -50,7 +69,9 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     static LuckPerms luckPerms;
     static UnsafeValues unsafeValues;
     static Warning.WarningState warningState;
-    static StreamlineScheduler scheduler;
+    static ModuleTaskManager moduleScheduler;
+    @Getter
+    static TaskManager mainScheduler;
     static ServicesManager servicesManager;
     static HelpMap helpMap;
 
@@ -64,7 +85,8 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         mainConfigHandler = new MainConfigHandler();
         mainMessagesHandler = new MainMessagesHandler();
 
-        scheduler = new SimpleScheduler();
+        moduleScheduler = new ModuleTaskManager();
+        mainScheduler = new TaskManager();
 
         luckPerms = LuckPermsProvider.get();
 
@@ -79,6 +101,7 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         moduleManager = new SimpleModuleManager(this, new SimpleCommandMap(this));
 
         registerListener(new BaseListener());
+        getProxy().getScheduler().schedule(this, new Runner(), 0, 50, TimeUnit.MILLISECONDS);
 
         UserManager.loadUser(new SavableConsole());
 
@@ -207,10 +230,12 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     public static void registerCommand(StreamlineCommand command) {
         getInstance().getModuleManager().getCommandMap().register(command.getName(), command.getLabel(), command);
         Streamline.registerProperCommand(new ProperCommandBuilder(command));
+        loadedCommands.put(command.getName(), command);
     }
 
     public static void unregisterCommand(StreamlineCommand command) {
         command.unregister(getInstance().getModuleManager().getCommandMap());
+        loadedCommands.remove(command.getName());
     }
 
     public static BasePlugin getInstance() {
@@ -233,8 +258,8 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return moduleManager;
     }
 
-    public StreamlineScheduler getScheduler() {
-        return scheduler;
+    public static ModuleTaskManager getModuleScheduler() {
+        return moduleScheduler;
     }
 
     public ServicesManager getServicesManager() {
@@ -383,8 +408,8 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         return getProxy().getPlayer(sender.getName());
     }
 
-    public ModuleCommand getModuleCommand(String name) {
-        return loadedCommands.get(name);
+    public ModuleCommand getModuleCommand(@NotNull String name) {
+        return loadedModuleCommands.get(name);
     }
 
     @Override
@@ -394,8 +419,12 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
         }
     }
 
-    public void registerModuleCommand(ModuleCommand command) {
-        this.loadedCommands.put(command.getName(), command);
+    public static void registerModuleCommand(ModuleCommand command) {
+        loadedModuleCommands.put(command.getName(), command);
+    }
+
+    public static void unregisterModuleCommand(ModuleCommand command) {
+        loadedModuleCommands.remove(command.getName());
     }
 
     public boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {
@@ -405,7 +434,7 @@ public abstract class BasePlugin extends Plugin implements IPlugin {
     public Map<String, String[]> getCommandAliases() {
         Map<String, String[]> r = new HashMap<>();
 
-        for (ModuleCommand command : loadedCommands.values()) {
+        for (ModuleCommand command : loadedModuleCommands.values()) {
             r.put(command.getLabel(), command.getAliases().toArray(new String[0]));
         }
 

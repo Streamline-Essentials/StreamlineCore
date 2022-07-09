@@ -83,7 +83,10 @@ public class MessagingUtils {
 
     public static void sendTitle(SavablePlayer player, Title title) {
         ProxiedPlayer p = Streamline.getInstance().getPlayer(player.uuid);
-        if (p == null) return;
+        if (p == null) {
+            logInfo("Could not send a title to a player because player is null!");
+            return;
+        }
 
         p.sendTitle(title);
     }

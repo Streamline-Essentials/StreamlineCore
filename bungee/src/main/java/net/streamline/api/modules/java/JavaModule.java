@@ -9,6 +9,7 @@ import net.streamline.api.modules.ModuleBase;
 import net.streamline.api.modules.ModuleDescriptionFile;
 import net.streamline.api.modules.ModuleLoader;
 import net.streamline.api.modules.ModuleLogger;
+import net.streamline.base.Streamline;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,10 @@ public abstract class JavaModule extends ModuleBase {
             throw new IllegalStateException("JavaModule requires " + ModuleClassLoader.class.getName());
         }
         ((ModuleClassLoader) classLoader).initialize(this);
+    }
+
+    public JavaModule(@NotNull final JavaModuleLoader loader, @NotNull final ModuleDescriptionFile description, @NotNull final File file) {
+        this(loader, description, new File(Streamline.getModuleFolder(), description.getName() + File.separator), file);
     }
 
     protected JavaModule(@NotNull final JavaModuleLoader loader, @NotNull final ModuleDescriptionFile description, @NotNull final File dataFolder, @NotNull final File file) {

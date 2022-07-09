@@ -24,12 +24,12 @@ public class ModuleCommandYamlParser {
                 MessagingUtils.logSevere("Could not load command " + entry.getKey() + " for module " + module.getName() + ": Illegal Characters");
                 continue;
             }
-            Command newCmd = new ModuleCommand(entry.getKey(), module);
             Object description = entry.getValue().get("description");
             Object usage = entry.getValue().get("usage");
             Object aliases = entry.getValue().get("aliases");
             Object permission = entry.getValue().get("permission");
             Object permissionMessage = entry.getValue().get("permission-message");
+            Command newCmd = new ModuleCommand(module, entry.getKey(), description, usage, permission, aliases);
 
             if (description != null) {
                 newCmd.setDescription(description.toString());

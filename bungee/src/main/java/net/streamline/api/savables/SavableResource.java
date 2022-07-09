@@ -12,7 +12,6 @@ public abstract class SavableResource {
         this.storageResource = storageResource;
 
         try {
-            reload();
             this.enabled = true;
         } catch (Exception e) {
             e.printStackTrace();

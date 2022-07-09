@@ -1,6 +1,5 @@
 package net.streamline.api;
 
-import net.streamline.api.modules.InvalidModuleException;
 import net.streamline.api.modules.ModuleDescriptionFile;
 
 /**

@@ -1,4 +1,4 @@
-package net.streamline.api.modules;
+package net.streamline.api.modules.exceptions;
 
 /**
  * Thrown when a plugin attempts to interact with the server when it is not

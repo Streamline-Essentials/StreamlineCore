@@ -26,7 +26,7 @@ public class MongoResource extends StorageResource<Document> {
 
     @Override
     public void continueReloadResource() {
-        this.sheet = get();
+        this.sheet = this.get();
     }
 
     @Override
@@ -42,20 +42,12 @@ public class MongoResource extends StorageResource<Document> {
     @Override
     public <O> O getOrSetDefault(String key, O value) {
         key = StorageUtils.parseDotsMongo(key);
-        if (this.sheet == null) {
-            this.sheet = new Document();
-            write(key, value);
+        Object t = this.sheet.get(key);
+        O thing = this.sheet.get(key, value);
+        if (t == null) {
+            write(key, thing);
         }
-        Object get = this.sheet.get(key);
-        if (get != null) return (O) get;
-        write(key, value);
-        O thing = (O) this.sheet.get(key);
         return thing;
-    }
-
-    @Override
-    public void sync() {
-        this.databaseConfig.mongoConnection().push(this.collectionName, this.getWhere(), this.sheet);
     }
 
     public Document getWhere() {
