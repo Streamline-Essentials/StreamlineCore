@@ -3,9 +3,7 @@ package net.streamline.base.commands;
 import net.streamline.api.BasePlugin;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.savables.UserManager;
-import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.utils.MessagingUtils;
 import net.streamline.utils.UUIDUtils;
@@ -14,16 +12,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BTagCommand extends StreamlineCommand {
+public class PTagCommand extends StreamlineCommand {
     private final String messageTagsGet;
     private final String messageTagsAdd;
     private final String messageTagsRemove;
 
-    public BTagCommand() {
+    public PTagCommand() {
         super(
-                "btag",
-                "streamline.command.btag.default",
-                "pexp", "proxyxp", "pxp", "px"
+                "ptag",
+                "streamline.command.tag.default",
+                "proxytag"
         );
 
         this.messageTagsGet = this.getCommandResource().getOrSetDefault("messages.tags.get",

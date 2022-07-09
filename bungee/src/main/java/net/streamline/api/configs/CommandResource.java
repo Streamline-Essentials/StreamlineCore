@@ -5,6 +5,7 @@ import net.streamline.api.command.StreamlineCommand;
 import net.streamline.base.Streamline;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 public class CommandResource extends FlatFileResource<Yaml> {
@@ -31,7 +32,7 @@ public class CommandResource extends FlatFileResource<Yaml> {
         write("basic.enabled", command.isEnabled());
         write("basic.label", command.getBase());
         write("basic.permissions.default", command.getPermission());
-        write("basic.aliases", command.getAliases());
+        write("basic.aliases", Arrays.stream(command.getAliases()).toList());
     }
 
     public void syncCommand() {

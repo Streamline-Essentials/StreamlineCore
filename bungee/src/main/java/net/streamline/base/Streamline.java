@@ -14,7 +14,7 @@ public class Streamline extends BasePlugin {
         new ParseCommand();
         new PXPCommand();
         new ReloadCommand();
-        new BTagCommand();
+        new PTagCommand();
         new PointsCommand();
         new PlaytimeCommand();
 
