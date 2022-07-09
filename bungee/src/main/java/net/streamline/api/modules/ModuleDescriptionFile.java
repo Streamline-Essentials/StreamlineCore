@@ -8,6 +8,7 @@ import net.streamline.api.command.Command;
 import net.streamline.api.command.CommandExecutor;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.TabCompleter;
+import net.streamline.api.module.ModuleManager;
 import net.streamline.api.modules.java.JavaModule;
 import net.streamline.api.permissions.Permissible;
 import net.streamline.api.permissions.Permission;

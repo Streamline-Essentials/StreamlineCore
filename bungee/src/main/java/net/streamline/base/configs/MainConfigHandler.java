@@ -106,31 +106,31 @@ public class MainConfigHandler extends FlatFileResource<Config> {
     public float playerPayoutExperienceAmount() {
         reloadResource();
 
-        return resource.getFloat("users.players.payout.amount");
+        return resource.getFloat("users.players.experience.payout.amount");
     }
 
     public int playerPayoutExperienceEvery() {
         reloadResource();
 
-        return resource.getInt("users.players.payout.every");
+        return resource.getInt("users.players.experience.payout.every");
     }
 
     public int playerStartingLevel() {
         reloadResource();
 
-        return resource.getInt("users.players.starting.level");
+        return resource.getInt("users.players.experience.starting.level");
     }
 
     public float playerStartingExperienceAmount() {
         reloadResource();
 
-        return resource.getFloat("users.players.starting.xp");
+        return resource.getFloat("users.players.experience.starting.xp");
     }
 
     public String playerLevelingEquation() {
         reloadResource();
 
-        return resource.getString("users.players.equation");
+        return resource.getString("users.players.experience.equation");
     }
 
     public List<String> playerTagsDefault() {

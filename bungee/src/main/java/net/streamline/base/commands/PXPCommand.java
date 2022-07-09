@@ -27,8 +27,7 @@ public class PXPCommand extends StreamlineCommand {
                 "proxyexperience",
                 "A command to update players' levels / experience for the proxy!",
                 "/proxyexperience <player> level [add|remove|set] [number]",
-                "streamline.command.parse.default",
-                Streamline.getMainCommandsFolder(),
+                "streamline.command.proxyexperience.default",
                 "pexp", "proxyxp", "pxp", "px"
         );
 
@@ -80,7 +79,7 @@ public class PXPCommand extends StreamlineCommand {
             case "level" -> {
                 if (args.length == 2) {
                     MessagingUtils.sendMessage(sender, Streamline.getInstance().getUUIDFromName(playerName),
-                            getWithOther(this.messageLevelGet, playerName));
+                            getWithOther(sender, this.messageLevelGet, playerName));
                     return;
                 }
 
@@ -108,15 +107,15 @@ public class PXPCommand extends StreamlineCommand {
                 switch (action) {
                     case "set" -> {
                         savablePlayer.setLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageLevelSet, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelSet, playerName));
                     }
                     case "add" -> {
                         savablePlayer.addLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageLevelAdd, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelAdd, playerName));
                     }
                     case "remove" -> {
                         savablePlayer.removeLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageLevelRemove, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelRemove, playerName));
                     }
                     default -> {
                         MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
@@ -126,7 +125,7 @@ public class PXPCommand extends StreamlineCommand {
             case "xp" -> {
                 if (args.length == 2) {
                     MessagingUtils.sendMessage(sender, Streamline.getInstance().getUUIDFromName(playerName),
-                            getWithOther(this.messageXPGet, playerName));
+                            getWithOther(sender, this.messageXPGet, playerName));
                     return;
                 }
 
@@ -154,15 +153,15 @@ public class PXPCommand extends StreamlineCommand {
                 switch (action) {
                     case "set" -> {
                         savablePlayer.setTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageXPSet, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPSet, playerName));
                     }
                     case "add" -> {
                         savablePlayer.addTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageXPAdd, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPAdd, playerName));
                     }
                     case "remove" -> {
                         savablePlayer.removeTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(this.messageXPRemove, playerName));
+                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPRemove, playerName));
                     }
                     default -> {
                         MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
@@ -191,9 +190,5 @@ public class PXPCommand extends StreamlineCommand {
         }
 
         return new ArrayList<>();
-    }
-
-    public String getWithOther(String base, String other) {
-        return base.replace("%this_other%", other);
     }
 }

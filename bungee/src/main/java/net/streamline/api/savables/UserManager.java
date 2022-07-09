@@ -34,6 +34,7 @@ public class UserManager {
 
     public static SavableUser loadUser(SavableUser user) {
         loadedUsers.put(user.uuid, user);
+        user.saveAll();
         return user;
     }
 

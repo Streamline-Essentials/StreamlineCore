@@ -38,6 +38,7 @@ public class MongoConnection {
     }
 
     public void push(String collectionName, Document where, Document toPush) {
+        toPush.remove("_id");
         if (exists(collectionName, where)) {
             update(collectionName, where, toPush);
         } else {
@@ -46,15 +47,27 @@ public class MongoConnection {
     }
 
     public void update(String collectionName, Document where, Document toUpdate) {
-        getCollection(collectionName).updateOne(where, toUpdate);
+        try {
+            getCollection(collectionName).updateOne(where, toUpdate);
+        } catch (IllegalArgumentException e) {
+            // do nothing
+        }
     }
 
     public void replaceOne(String collectionName, Document where, Document toUpdate) {
-        getCollection(collectionName).replaceOne(where, toUpdate);
+        try {
+            getCollection(collectionName).replaceOne(where, toUpdate);
+        } catch (IllegalArgumentException e) {
+            // do nothing
+        }
     }
 
     public void insert(String collectionName, Document toInsert) {
-        getCollection(collectionName).insertOne(toInsert);
+        try {
+            getCollection(collectionName).insertOne(toInsert);
+        } catch (IllegalArgumentException e) {
+            // do nothing
+        }
     }
 
     public void delete(String collectionName, Document where) {

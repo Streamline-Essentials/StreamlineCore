@@ -1,6 +1,6 @@
 package net.streamline.api.events.server;
 
-import net.streamline.api.modules.Module;
+import net.streamline.api.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**

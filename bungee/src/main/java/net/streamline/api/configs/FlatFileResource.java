@@ -59,7 +59,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     }
 
     @Override
-    public void sync() {
+    public void push() {
         this.resource.write();
     }
 

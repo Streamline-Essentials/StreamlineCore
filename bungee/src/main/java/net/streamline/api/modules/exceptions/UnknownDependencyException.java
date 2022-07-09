@@ -1,4 +1,4 @@
-package net.streamline.api.modules;
+package net.streamline.api.modules.exceptions;
 
 /**
  * Thrown when attempting to load an invalid Module file

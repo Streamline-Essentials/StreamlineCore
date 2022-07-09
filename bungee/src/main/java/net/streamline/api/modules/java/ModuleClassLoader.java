@@ -2,7 +2,6 @@ package net.streamline.api.modules.java;
 
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
-import net.streamline.api.modules.InvalidModuleException;
 import net.streamline.api.modules.ModuleDescriptionFile;
 import net.streamline.api.modules.SimpleModuleManager;
 import org.jetbrains.annotations.NotNull;

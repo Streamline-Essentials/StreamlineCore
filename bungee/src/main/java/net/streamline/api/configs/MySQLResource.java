@@ -26,7 +26,7 @@ public class MySQLResource extends StorageResource<SQLCollection> {
     }
 
     @Override
-    public void sync() {
-        this.databaseConfig.mySQLConnection().update(this.collection);
+    public void push() {
+        this.databaseConfig.mySQLConnection().push(this.collection);
     }
 }

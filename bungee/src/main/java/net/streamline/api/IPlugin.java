@@ -10,11 +10,10 @@ import net.streamline.api.command.IConsoleCommandSender;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.entities.IPlayer;
 import net.streamline.api.help.HelpMap;
-import net.streamline.api.modules.ModuleManager;
+import net.streamline.api.module.ModuleManager;
 import net.streamline.api.modules.ServicesManager;
 import net.streamline.api.permissions.Permissible;
 import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.scheduler.StreamlineScheduler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -279,14 +278,6 @@ public interface IPlugin {
      */
     @NotNull
     public ModuleManager getModuleManager();
-
-    /**
-     * Gets the scheduler for managing scheduled events.
-     *
-     * @return a scheduling service for this module
-     */
-    @NotNull
-    public StreamlineScheduler getScheduler();
 
     /**
      * Gets a services manager.

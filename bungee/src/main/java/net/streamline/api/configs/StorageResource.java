@@ -22,9 +22,15 @@ public abstract class StorageResource<T> {
     }
 
     public void reloadResource() {
-        if (this.lastReload != null) {
-            if (! MathUtils.isDateOlderThan(this.lastReload, this.hangingMillis, ChronoUnit.MILLIS)) {
-                return;
+        reloadResource(false);
+    }
+
+    public void reloadResource(boolean force) {
+        if (! force) {
+            if (this.lastReload != null) {
+                if (!MathUtils.isDateOlderThan(this.lastReload, this.hangingMillis, ChronoUnit.MILLIS)) {
+                    return;
+                }
             }
         }
 
@@ -38,7 +44,12 @@ public abstract class StorageResource<T> {
 
     public abstract <O> O getOrSetDefault(String key, O value);
 
-    public abstract void sync();
+    public void sync() {
+        this.push();
+        this.reloadResource();
+    }
+
+    public abstract void push();
 
     public void setHangingMillis(int setAs) {
         this.hangingMillis = setAs;

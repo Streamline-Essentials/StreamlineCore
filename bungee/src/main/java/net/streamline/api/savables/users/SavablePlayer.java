@@ -59,7 +59,7 @@ public class SavablePlayer extends SavableUser {
         latestIP = getOrSetDefault("player.ips.latest", getLatestIP());
         ipList = getOrSetDefault("player.ips.list", new ArrayList<>());
         // Names.
-        nameList = getOrSetDefault("player.names", new ArrayList<>());
+        nameList = getOrSetDefault("player.names", List.of(this.latestName));
         // Stats.
         level = getOrSetDefault("player.stats.level", Streamline.getMainConfig().playerStartingLevel());
         totalXP = getOrSetDefault("player.stats.experience.total", Streamline.getMainConfig().playerStartingExperienceAmount());
@@ -93,6 +93,12 @@ public class SavablePlayer extends SavableUser {
         set("player.stats.experience.total", totalXP);
         set("player.stats.experience.current", currentXP);
         set("player.stats.playtime.seconds", playSeconds);
+    }
+
+    @Override
+    public void setLatestName(String name) {
+        super.setLatestName(name);
+        addName(name);
     }
 
     public void addName(String name){

@@ -10,24 +10,28 @@ import net.streamline.api.command.Command;
 import net.streamline.api.command.ModuleCommandYamlParser;
 import net.streamline.api.command.SimpleCommandMap;
 import net.streamline.api.configs.StorageUtils;
+import ModuleDescriptionFile;
+import ModuleLoader;
+import net.streamline.api.module.Module;
+import net.streamline.api.module.ModuleDescriptionFile;
+import net.streamline.api.module.ModuleLoader;
+import net.streamline.api.module.ModuleManager;
 import net.streamline.api.permissions.Permissible;
 import net.streamline.api.permissions.Permission;
 import net.streamline.api.permissions.PermissionDefault;
-import net.streamline.base.Streamline;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Level;
 
 public class SimpleModuleManager implements ModuleManager {
     private final BasePlugin server;
-    private final Map<Pattern, ModuleLoader> fileAssociations = new HashMap<Pattern, ModuleLoader>();
-    private final List<Module> Modules = new ArrayList<Module>();
-    private final Map<String, Module> lookupNames = new HashMap<String, Module>();
+    private final Map<Pattern, net.streamline.api.module.ModuleLoader> fileAssociations = new HashMap<Pattern, net.streamline.api.module.ModuleLoader>();
+    private final List<net.streamline.api.module.Module> Modules = new ArrayList<net.streamline.api.module.Module>();
+    private final Map<String, net.streamline.api.module.Module> lookupNames = new HashMap<String, net.streamline.api.module.Module>();
 //    private MutableGraph<String> dependencyGraph = GraphBuilder.directed().build();
     private File updateDirectory;
     @Getter
@@ -54,11 +58,11 @@ public class SimpleModuleManager implements ModuleManager {
      *     valid ModuleLoader
      */
     @Override
-    public void registerInterface(@NotNull Class<? extends ModuleLoader> loader) throws IllegalArgumentException {
-        ModuleLoader instance;
+    public void registerInterface(@NotNull Class<? extends net.streamline.api.module.ModuleLoader> loader) throws IllegalArgumentException {
+        net.streamline.api.module.ModuleLoader instance;
 
-        if (ModuleLoader.class.isAssignableFrom(loader)) {
-            Constructor<? extends ModuleLoader> constructor;
+        if (net.streamline.api.module.ModuleLoader.class.isAssignableFrom(loader)) {
+            Constructor<? extends net.streamline.api.module.ModuleLoader> constructor;
 
             try {
                 constructor = loader.getConstructor(BasePlugin.class);
@@ -91,11 +95,11 @@ public class SimpleModuleManager implements ModuleManager {
      */
     @Override
     @NotNull
-    public Module[] loadModules(@NotNull File directory) {
+    public net.streamline.api.module.Module[] loadModules(@NotNull File directory) {
         Preconditions.checkArgument(directory != null, "Directory cannot be null");
         Preconditions.checkArgument(directory.isDirectory(), "Directory must be a directory");
 
-        List<Module> result = new ArrayList<Module>();
+        List<net.streamline.api.module.Module> result = new ArrayList<net.streamline.api.module.Module>();
         Set<Pattern> filters = fileAssociations.keySet();
 
         if (! (BasePlugin.getInstance().getUpdateFolderFile() == null)) {
@@ -110,7 +114,7 @@ public class SimpleModuleManager implements ModuleManager {
 
         // This is where it figures out all possible Modules
         for (File file : directory.listFiles()) {
-            ModuleLoader loader = null;
+            net.streamline.api.module.ModuleLoader loader = null;
             for (Pattern filter : filters) {
                 Matcher match = filter.matcher(file.getName());
                 if (match.find()) {
@@ -120,7 +124,7 @@ public class SimpleModuleManager implements ModuleManager {
 
             if (loader == null) continue;
 
-            ModuleDescriptionFile description = null;
+            net.streamline.api.module.ModuleDescriptionFile description = null;
             try {
                 description = loader.getModuleDescription(file);
                 String name = description.getName();
@@ -279,7 +283,7 @@ public class SimpleModuleManager implements ModuleManager {
                     missingDependency = false;
 
                     try {
-                        net.streamline.api.modules.Module loadedModule = loadModule(file);
+                        net.streamline.api.module.Module loadedModule = loadModule(file);
                         if (loadedModule != null) {
                             result.add(loadedModule);
                             loadedModules.add(loadedModule.getName());
@@ -310,7 +314,7 @@ public class SimpleModuleManager implements ModuleManager {
                         ModuleIterator.remove();
 
                         try {
-                            net.streamline.api.modules.Module loadedModule = loadModule(file);
+                            net.streamline.api.module.Module loadedModule = loadModule(file);
                             if (loadedModule != null) {
                                 result.add(loadedModule);
                                 loadedModules.add(loadedModule.getName());
@@ -339,7 +343,7 @@ public class SimpleModuleManager implements ModuleManager {
             }
         }
 
-        return result.toArray(new Module[result.size()]);
+        return result.toArray(new net.streamline.api.module.Module[result.size()]);
     }
 
     /**
@@ -356,13 +360,13 @@ public class SimpleModuleManager implements ModuleManager {
      */
     @Override
     @Nullable
-    public synchronized Module loadModule(@NotNull File file) throws InvalidModuleException, UnknownDependencyException {
+    public synchronized net.streamline.api.module.Module loadModule(@NotNull File file) throws InvalidModuleException, UnknownDependencyException {
         Preconditions.checkArgument(file != null, "File cannot be null");
 
         checkUpdate(file);
 
         Set<Pattern> filters = fileAssociations.keySet();
-        Module result = null;
+        net.streamline.api.module.Module result = null;
 
         for (Pattern filter : filters) {
             String name = file.getName();
@@ -407,14 +411,14 @@ public class SimpleModuleManager implements ModuleManager {
      */
     @Override
     @Nullable
-    public synchronized Module getModule(@NotNull String name) {
+    public synchronized net.streamline.api.module.Module getModule(@NotNull String name) {
         return lookupNames.get(name.replace(' ', '_'));
     }
 
     @Override
     @NotNull
-    public synchronized Module[] getModules() {
-        return Modules.toArray(new Module[Modules.size()]);
+    public synchronized net.streamline.api.module.Module[] getModules() {
+        return Modules.toArray(new net.streamline.api.module.Module[Modules.size()]);
     }
 
     /**
@@ -427,7 +431,7 @@ public class SimpleModuleManager implements ModuleManager {
      */
     @Override
     public boolean isModuleEnabled(@NotNull String name) {
-        Module Module = getModule(name);
+        net.streamline.api.module.Module Module = getModule(name);
 
         return isModuleEnabled(Module);
     }
@@ -439,7 +443,7 @@ public class SimpleModuleManager implements ModuleManager {
      * @return true if the Module is enabled, otherwise false
      */
     @Override
-    public boolean isModuleEnabled(@Nullable Module Module) {
+    public boolean isModuleEnabled(@Nullable net.streamline.api.module.Module Module) {
         if ((Module != null) && (Modules.contains(Module))) {
             return Module.isEnabled();
         } else {
@@ -448,7 +452,7 @@ public class SimpleModuleManager implements ModuleManager {
     }
 
     @Override
-    public void enableModule(@NotNull final Module Module) {
+    public void enableModule(@NotNull final net.streamline.api.module.Module Module) {
         if (!Module.isEnabled()) {
             List<Command> ModuleCommands = ModuleCommandYamlParser.parse(Module);
 
@@ -466,7 +470,7 @@ public class SimpleModuleManager implements ModuleManager {
 
     @Override
     public void disableModules() {
-        Module[] Modules = getModules();
+        net.streamline.api.module.Module[] Modules = getModules();
         for (int i = Modules.length - 1; i >= 0; i--) {
             disableModule(Modules[i]);
         }
@@ -482,7 +486,7 @@ public class SimpleModuleManager implements ModuleManager {
             }
 
             try {
-                server.getScheduler().cancelTasks(Module);
+                server.getModuleScheduler().cancelAll(Module);
             } catch (Throwable ex) {
                 server.getLogger().log(Level.SEVERE, "Error occurred (in the Module loader) while cancelling tasks for " + Module.getDescription().getFullName() + " (Is it up to date?)", ex);
             }
@@ -670,7 +674,7 @@ public class SimpleModuleManager implements ModuleManager {
         return new HashSet<Permission>(permissions.values());
     }
 
-    public boolean isTransitiveDepend(@NotNull ModuleDescriptionFile Module, @NotNull ModuleDescriptionFile depend) {
+    public boolean isTransitiveDepend(@NotNull net.streamline.api.module.ModuleDescriptionFile Module, @NotNull ModuleDescriptionFile depend) {
         Preconditions.checkArgument(Module != null, "Module");
         Preconditions.checkArgument(depend != null, "depend");
 

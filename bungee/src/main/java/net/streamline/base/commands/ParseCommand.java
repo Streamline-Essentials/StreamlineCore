@@ -19,7 +19,6 @@ public class ParseCommand extends StreamlineCommand {
                 "A command to parse thing in-game with the RAT API!",
                 "/parse <player> <things to parse>",
                 "streamline.command.parse.default",
-                Streamline.getMainCommandsFolder(),
                 "par", "rat-parse"
         );
 
@@ -36,8 +35,7 @@ public class ParseCommand extends StreamlineCommand {
         String playerName = args[0];
         SavablePlayer player = Streamline.getInstance().getSavedPlayer(playerName);
         MessagingUtils.sendMessage(sender, MessagingUtils.replaceAllPlayerBungee(sender.getUUID(),
-                this.messageResult
-                        .replace("%this_other%", playerName)
+                getWithOther(this.messageResult, playerName)
                         .replace("%this_parsed%", MessagingUtils.replaceAllPlayerBungee(player, MessagingUtils.argsToStringMinus(args, 0)))
         ));
     }
