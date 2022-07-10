@@ -14,7 +14,6 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.command.*;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.base.configs.MainConfigHandler;
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin extends Plugin {
@@ -51,6 +51,8 @@ public abstract class BasePlugin extends Plugin {
     static TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
     @Getter
     static TreeMap<String, StreamlineCommand> loadedStreamlineCommands = new TreeMap<>();
+    @Getter
+    static ConcurrentHashMap<String, ProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
 
     static String name;
     static String version;
@@ -101,6 +103,7 @@ public abstract class BasePlugin extends Plugin {
 
         try {
             ModuleManager.unJarAll();
+            ModuleManager.startModules();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -112,6 +115,8 @@ public abstract class BasePlugin extends Plugin {
 
     @Override
     public void onDisable() {
+        ModuleManager.stopModules();
+
         for (SavableUser user : UserManager.getLoadedUsers()) {
             user.saveAll();
         }
@@ -216,7 +221,7 @@ public abstract class BasePlugin extends Plugin {
     }
 
     public static void flushCommands() {
-        getInstance().getProxy().getPluginManager().unregisterCommands(getInstance());
+        getProperlyRegisteredCommands().forEach((command, properCommand) -> getInstance().getProxy().getPluginManager().unregisterCommand(properCommand));
     }
 
     public static void registerProperCommand(Command command) {
@@ -224,13 +229,39 @@ public abstract class BasePlugin extends Plugin {
     }
 
     public static void registerStreamlineCommand(StreamlineCommand command) {
-        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
-        loadedStreamlineCommands.put(command.getName(), command);
+        if (properlyRegisteredCommands.containsKey(command.getIdentifier())) {
+            MessagingUtils.logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered!");
+            return;
+        }
+        ProperCommand properCommand = new ProperCommand(command);
+        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), properCommand);
+        properlyRegisteredCommands.put(command.getIdentifier(), properCommand);
+        loadedStreamlineCommands.put(command.getBase(), command);
     }
 
     public static void unregisterStreamlineCommand(StreamlineCommand command) {
-        getInstance().getProxy().getPluginManager().unregisterCommand(command);
-        loadedStreamlineCommands.remove(command.getName());
+        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        getInstance().getProxy().getPluginManager().unregisterCommand(c);
+        properlyRegisteredCommands.remove(command.getIdentifier());
+        loadedStreamlineCommands.remove(command.getBase());
+    }
+
+    public static void registerModuleCommand(ModuleCommand command) {
+        if (properlyRegisteredCommands.containsKey(command.getIdentifier())) {
+            MessagingUtils.logWarning(command.getOwningModule(), "Command with identifier '" + command.getIdentifier() + "' is already registered!");
+            return;
+        }
+        ProperCommand properCommand = new ProperCommand(command);
+        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), properCommand);
+        properlyRegisteredCommands.put(command.getIdentifier(), properCommand);
+        loadedModuleCommands.put(command.getBase(), command);
+    }
+
+    public static void unregisterModuleCommand(ModuleCommand command) {
+        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        getInstance().getProxy().getPluginManager().unregisterCommand(c);
+        properlyRegisteredCommands.remove(command.getIdentifier());
+        loadedModuleCommands.remove(command.getBase());
     }
 
     public static BasePlugin getInstance() {
@@ -375,16 +406,6 @@ public abstract class BasePlugin extends Plugin {
         for (SavableUser user : UserManager.getLoadedUsers()) {
             user.saveAll();
         }
-    }
-
-    public static void registerModuleCommand(ModuleCommand command) {
-        getInstance().getProxy().getPluginManager().registerCommand(getInstance(), command);
-        loadedModuleCommands.put(command.getName(), command);
-    }
-
-    public static void unregisterModuleCommand(ModuleCommand command) {
-        getInstance().getProxy().getPluginManager().unregisterCommand(command);
-        loadedModuleCommands.remove(command.getName());
     }
 
 //    public static boolean dispatchCommand(@NotNull ICommandSender sender, @NotNull String commandLine) throws CommandException {

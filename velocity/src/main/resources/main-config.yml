@@ -1,0 +1,102 @@
+# Settings for users.
+users:
+  # Settings for saving users.
+  saving:
+    # The type of storage to use.
+    # Can be:
+    # YAML (Default) (Flat file)
+    # JSON (Flat file)
+    # TOML (Flat file)
+    # MONGO (NoSQL database)
+    # MYSQL (SQL database)
+    use: YAML
+    # Settings for only if using MONGO or MYSQL above.
+    databases:
+      # Connection URL for connecting to the database.
+      connection-uri: "mongodb://<user>:<pass>@<host>:<port>/?authSource=admin&readPreference=primary&appname=StreamlineAPI&ssl=false"
+      # The actual database to use.
+      database: "streamline_users"
+      # The table (MYSQL) or collection (MONGO) prefix.
+      prefix: "sl_"
+  # Settings for all users.
+  combined:
+    # Settings for points.
+    # Points are a sort of network-wide currency.
+    # Think of it like Hypixel gold.
+    points:
+      # The default amount a user will receive when their profile is first created.
+      default: 0.0
+  # Settings for the console user.
+  console:
+    # The server the console user will appear to be on. (Used when using the placeholder '%streamline_user_server%'.)
+    server: "space"
+    # Settings for the console user's name.
+    name:
+      # The name the console will have when using the placeholder '%streamline_user_name%'.
+      regular: "Console"
+      # The name the console will have when using the placeholder '%streamline_user_formatted%'.
+      formatted: "&c&lConsole&r"
+    # The symbol or name referring to the console user when doing user lookups. Can be any String.
+    # Please DO NOT change this unless you know what you are doing.
+    discriminator: "%"
+    # Settings for tags.
+    # Tags are a list of Strings ("this" and "this also" are Strings) that can be
+    # used when running scripts, events, or other features; as a way to distinguish
+    # between certain players. (Like that of actual Minecraft tags that Mojang
+    # introduced in 1.13.) --> (Link below for the Minecraft version -- NOT Streamline!)
+    # https://www.digminecraft.com/game_commands/tag_command.php#:~:text=You%20can%20add%2C%20list%20and,and%20manage%20tags%20for%20players.
+    tags:
+      # The default tags a user will receive when their profile is first created.
+      default:
+        - list
+        - of
+        - tags
+  # Settings for actual player users.
+  players:
+    # Settings for player user names.
+    name:
+      # Enables formatting player user names (with colors, nicks, etc.)
+      formatted: true
+      online: "&d%streamline_user_formatted% &a&l•&r"
+      offline: "&d%streamline_user_formatted% &c&l•&r"
+    # Settings for all things experience-based with player users.
+    experience:
+      # Settings for announcing things with experience.
+      announce:
+        # Settings for announcing level changes.
+        level-change:
+          # If we should tell them with a title.
+          title: true
+          # If we should tell them with a chat message.
+          chat: false
+      # Settings for the payout of experience. (Adding or removing experience to or from player users.)
+      payout:
+        # The amount to add every payout. Works with negative numbers!
+        # -10 = subtracts 10 xp every payout period.
+        # 10 = adds 10 xp every payout period.
+        amount: 1.0
+        # The amount of time (in server ticks; 20 ticks per second) to run a payout after. (Repeats.)
+        # 400 = every 20 seconds. (DEFAULT.)
+        every: 400
+      # Settings for the starting xp and level for when a player user profile is first created.
+      starting:
+        # The starting level.
+        # Leveling equation can be configured below.
+        level: 1
+        # The starting xp amount.
+        # Leveling equation can be configured below.
+        xp: 0
+      # The equation to use when calculating level up.
+      equation: "2500 + (2500 * (%streamline_user_level% - 1))"
+    # Settings for tags.
+    # Tags are a list of Strings ("this" and "this also" are Strings) that can be
+    # used when running scripts, events, or other features; as a way to distinguish
+    # between certain players. (Like that of actual Minecraft tags that Mojang
+    # introduced in 1.13.) --> (Link below for the Minecraft version -- NOT Streamline!)
+    # https://www.digminecraft.com/game_commands/tag_command.php#:~:text=You%20can%20add%2C%20list%20and,and%20manage%20tags%20for%20players.
+    tags:
+      # The default tags a user will receive when their profile is first created.
+      default:
+        - list
+        - of
+        - tags

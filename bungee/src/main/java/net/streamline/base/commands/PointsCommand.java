@@ -39,7 +39,7 @@ public class PointsCommand extends StreamlineCommand {
 
     @Override
     public void run(SavableUser sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 1) {
             MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
@@ -47,14 +47,9 @@ public class PointsCommand extends StreamlineCommand {
         String playerName = args[0];
         SavableUser other = UserManager.getOrGetUser(UUIDUtils.swapToUUID(playerName));
 
-        if (args.length == 2) {
+        if (args.length == 1) {
             MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
                     getWithOther(sender, this.messageGet, playerName));
-            return;
-        }
-
-        if (args.length < 4) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 

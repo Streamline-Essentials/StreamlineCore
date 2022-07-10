@@ -184,20 +184,6 @@ public abstract class SavableUser extends SavableResource {
         return latestName;
     }
 
-    public boolean hasPermission(String permission) {
-        return findSender().hasPermission(permission);
-    }
-
-    public void setPermission(String permission, boolean value) {
-        findSender().setPermission(permission, value);
-    }
-
-    public void sendMessage(BaseComponent message) {
-        if (this.findSenderOptional().isPresent()) {
-            this.findSenderOptional().get().sendMessage(message);
-        }
-    }
-
     public void sendMessage(String message) {
         if (this.findSenderOptional().isPresent()) {
             this.findSenderOptional().get().sendMessage(MessagingUtils.codedText(message));

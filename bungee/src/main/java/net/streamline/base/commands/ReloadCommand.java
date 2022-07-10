@@ -2,6 +2,7 @@ package net.streamline.base.commands;
 
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
@@ -27,19 +28,15 @@ public class ReloadCommand extends StreamlineCommand {
     public void run(SavableUser sender, String[] args) {
         Streamline.getMainConfig().reloadResource(true);
         Streamline.getMainMessages().reloadResource(true);
-        Streamline.flushCommands();
 
-        for (StreamlineCommand command : Streamline.getLoadedStreamlineCommands().values()) {
+        for (StreamlineCommand command : new ArrayList<>(Streamline.getLoadedStreamlineCommands().values())) {
+            Streamline.unregisterStreamlineCommand(command);
             command.getCommandResource().reloadResource(true);
             command.getCommandResource().syncCommand();
             Streamline.registerStreamlineCommand(command);
         }
 
-        for (ModuleCommand command : Streamline.getLoadedModuleCommands().values()) {
-            command.getCommandResource().reloadResource(true);
-            command.getCommandResource().syncCommand();
-            Streamline.registerModuleCommand(command);
-        }
+        ModuleManager.restartModules();
 
         MessagingUtils.sendMessage(sender, messageResult);
     }

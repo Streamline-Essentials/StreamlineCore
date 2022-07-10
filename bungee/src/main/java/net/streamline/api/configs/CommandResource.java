@@ -13,8 +13,8 @@ public class CommandResource extends FlatFileResource<Yaml> {
     public StreamlineCommand command;
 
     public CommandResource(StreamlineCommand command, File parentDirectory) {
-        super(Yaml.class, command.getName() + ".yml", parentDirectory, false);
-        this.identifier = command.getName();
+        super(Yaml.class, command.getIdentifier() + ".yml", parentDirectory, false);
+        this.identifier = command.getIdentifier();
         this.command = command;
 
         if (this.exists()) {

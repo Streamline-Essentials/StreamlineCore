@@ -107,16 +107,16 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         }
 
         if (this.resourceType.equals(Config.class)) {
-            return (T) LightningBuilder.fromFile(file).createConfig();
+            return (T) SimplixBuilder.fromFile(file).createConfig();
         }
         if (this.resourceType.equals(Yaml.class)) {
-            return (T) LightningBuilder.fromFile(file).createYaml();
+            return (T) SimplixBuilder.fromFile(file).createYaml();
         }
         if (this.resourceType.equals(Json.class)) {
-            return (T) LightningBuilder.fromFile(file).createJson();
+            return (T) SimplixBuilder.fromFile(file).createJson();
         }
         if (this.resourceType.equals(Toml.class)) {
-            return (T) LightningBuilder.fromFile(file).createToml();
+            return (T) SimplixBuilder.fromFile(file).createToml();
         }
         return null;
     }
@@ -132,16 +132,16 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         }
 
         if (this.resourceType.equals(Config.class)) {
-            return (T) LightningBuilder.fromFile(file).createConfig();
+            return (T) SimplixBuilder.fromFile(file).createConfig();
         }
         if (this.resourceType.equals(Yaml.class)) {
-            return (T) LightningBuilder.fromFile(file).createYaml();
+            return (T) SimplixBuilder.fromFile(file).createYaml();
         }
         if (this.resourceType.equals(Json.class)) {
-            return (T) LightningBuilder.fromFile(file).createJson();
+            return (T) SimplixBuilder.fromFile(file).createJson();
         }
         if (this.resourceType.equals(Toml.class)) {
-            return (T) LightningBuilder.fromFile(file).createToml();
+            return (T) SimplixBuilder.fromFile(file).createToml();
         }
         return null;
     }

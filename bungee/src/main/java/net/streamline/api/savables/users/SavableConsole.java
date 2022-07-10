@@ -1,14 +1,11 @@
 package net.streamline.api.savables.users;
 
-import net.md_5.bungee.api.ProxyServer;
 import net.streamline.base.Streamline;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SavableConsole extends SavableUser {
-    public ProxyServer server;
-
     public List<String> savedKeys = new ArrayList<>();
 
     public SavableConsole() {
@@ -16,8 +13,6 @@ public class SavableConsole extends SavableUser {
 
         if (this.uuid == null) return;
         if (this.uuid.equals("")) return;
-
-        this.server = Streamline.getInstance().getProxy();
     }
 
     @Override

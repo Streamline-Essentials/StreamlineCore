@@ -28,7 +28,7 @@ subprojects {
         // Apache Commons Lang
 
         //ViaVersion
-        maven { url 'https://repo.viaversion.com' }
+        maven {url 'https://repo.papermc.io/repository/maven-public/' }
     }
 
     jar.enabled = false

@@ -1,0 +1,7 @@
+name: StreamlineAPI
+version: ${project.version}
+main: net.streamline.base.Streamline
+authors: [ RedstonedLife, Quaint ]
+depends:
+  - LuckPerms
+softdepends: []

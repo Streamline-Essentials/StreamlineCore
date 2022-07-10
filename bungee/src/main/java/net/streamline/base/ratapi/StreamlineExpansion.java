@@ -2,6 +2,7 @@ package net.streamline.base.ratapi;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
@@ -20,8 +21,8 @@ public class StreamlineExpansion extends RATExpansion {
 
     @Override
     public String onLogic(String params) {
-        if (params.equals("version")) return Streamline.getInstance().getVersion();
-        if (params.equals("players_online")) return String.valueOf(Streamline.getInstance().onlinePlayers().size());
+        if (params.equals("version")) return BasePlugin.getVersion();
+        if (params.equals("players_online")) return String.valueOf(BasePlugin.onlinePlayers().size());
         if (params.equals("players_loaded")) return String.valueOf(UserManager.getLoadedUsers().size());
 
         if (params.matches("([a][u][t][h][o][r][\\[]([0-2])[\\]])")) {
@@ -66,7 +67,7 @@ public class StreamlineExpansion extends RATExpansion {
             try {
                 String p = params.substring("parse_".length());
                 String[] things = p.split(":::", 2);
-                SavableUser user = UserManager.getOrGetUser(Streamline.getInstance().getUUIDFromName(things[0]));
+                SavableUser user = UserManager.getOrGetUser(BasePlugin.getUUIDFromName(things[0]));
                 String parse = things[1].replace("*/*", "%");
                 return MessagingUtils.replaceAllPlayerBungee(user, parse);
             } catch (Exception e) {
@@ -83,7 +84,7 @@ public class StreamlineExpansion extends RATExpansion {
     @Override
     public String onRequest(SavableUser user, String params) {
         if (params.equals("user_ping")) {
-            if (user.updateOnline()) return String.valueOf(Streamline.getInstance().getPlayer(user.uuid).getPing());
+            if (user.updateOnline()) return String.valueOf(BasePlugin.getPlayer(user.uuid).getPing());
             else return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
         }
         if (params.equals("user_online")) return user.updateOnline() ?

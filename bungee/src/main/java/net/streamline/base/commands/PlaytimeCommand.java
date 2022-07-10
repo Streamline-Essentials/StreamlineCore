@@ -36,7 +36,7 @@ public class PlaytimeCommand extends StreamlineCommand {
 
     @Override
     public void run(SavableUser sender, String[] args) {
-        if (args.length < 2) {
+        if (args.length < 1) {
             MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
@@ -49,16 +49,9 @@ public class PlaytimeCommand extends StreamlineCommand {
             return;
         }
 
-        String type = args[1].toLowerCase();
-
-        if (args.length == 2) {
+        if (args.length == 1) {
             MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
                     getWithOther(sender, this.messageGet, playerName));
-            return;
-        }
-
-        if (args.length < 4) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 

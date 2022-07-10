@@ -1,9 +1,10 @@
 package net.streamline.api.modules;
 
 import lombok.Getter;
-import lombok.Setter;
+import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.server.ModuleDisableEvent;
 import net.streamline.api.events.server.ModuleEnableEvent;
+import net.streamline.api.modules.dependencies.Dependency;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
@@ -12,13 +13,7 @@ import java.util.List;
 
 public abstract class BundledModule {
     @Getter
-    private final String identifier;
-    @Getter
-    private final List<String> authors;
-    @Getter
-    private final List<String> softDepends;
-    @Getter
-    private final List<String> hardDepends;
+    private static BundledModule instance;
     @Getter
     private final File dataFolder;
     @Getter
@@ -28,42 +23,86 @@ public abstract class BundledModule {
     @Getter
     private ClassLoader classLoader;
 
-    public BundledModule(String identifier, List<String> authors, List<String> softDepends, List<String> hardDepends) {
-        this.identifier = identifier;
-        this.authors = authors;
-        this.softDepends = softDepends;
-        this.hardDepends = hardDepends;
-        this.dataFolder = new File(Streamline.getModuleFolder(), identifier + File.separator);
+    /**
+     * This allows you to set the {@link Module}'s identifier.
+     *
+     * @return The {@link Module}'s identifier;
+     */
+    public abstract String identifier();
+
+    /**
+     * This allows you to set the {@link Module}'s authors.
+     *
+     * @return The {@link Module}'s authors;
+     */
+    public abstract List<String> authors();
+
+    /**
+     * This allows you to set the {@link Module}'s dependencies.
+     *
+     * @return The {@link Module}'s dependencies;
+     */
+    public abstract List<Dependency> dependencies();
+
+    /**
+     * This allows you to set the {@link Module}'s commands.
+     *
+     * @return The {@link Module}'s commands;
+     */
+    public abstract List<ModuleCommand> commands();
+
+    public BundledModule() {
+        this.instance = this;
+        this.dataFolder = new File(Streamline.getModuleFolder(), identifier() + File.separator);
         logInfo("Loaded!");
         onLoad();
     }
 
     public void start() {
+        for (ModuleCommand command : this.commands()) {
+            command.register();
+        }
+
         Streamline.fireEvent(new ModuleEnableEvent(this));
         onEnable();
     }
 
     public void stop() {
+        for (ModuleCommand command : this.commands()) {
+            command.unregister();
+        }
+
         Streamline.fireEvent(new ModuleDisableEvent(this));
         onDisable();
     }
 
-    protected abstract void onLoad();
+    public void restart() {
+        stop();
+        start();
+    }
 
-    protected abstract void onEnable();
+    public void onLoad() {
+        /*
+        Nothing as of right now.
+        This is so that the developer might
+        be able to implement their own method.
+         */
+    }
 
-    protected abstract void onDisable();
+    public abstract void onEnable();
+
+    public abstract void onDisable();
 
     public String getAuthorsStringed() {
         StringBuilder builder = new StringBuilder();
 
-        for (int i = 0; i < this.authors.size(); i ++) {
-            String author = this.authors.get(i);
+        for (int i = 0; i < this.authors().size(); i ++) {
+            String author = this.authors().get(i);
             if (author == null) continue;
 
             builder.append(author);
 
-            if (i < this.authors.size() - 1) {
+            if (i < this.authors().size() - 1) {
                 builder.append(", ");
             }
         }
@@ -85,12 +124,12 @@ public abstract class BundledModule {
 
     public final void initModule() {
         if (initialized)
-            throw new RuntimeException("The module " + identifier + " was already initialized.");
+            throw new RuntimeException("The module " + identifier() + " was already initialized.");
 
         initialized = true;
 
         if (! dataFolder.exists() && ! dataFolder.mkdirs())
-            throw new RuntimeException("Cannot create module folder for " + identifier + ".");
+            throw new RuntimeException("Cannot create module folder for " + identifier() + ".");
 
 //        this.logger = new ModuleLogger(this);
 //
@@ -102,7 +141,7 @@ public abstract class BundledModule {
 
     public final void initModuleLoader(File moduleFile, ClassLoader classLoader) {
         if (initialized)
-            throw new RuntimeException("The module " + identifier + " was already initialized.");
+            throw new RuntimeException("The module " + identifier() + " was already initialized.");
 
         this.moduleFile = moduleFile;
         this.classLoader = classLoader;
