@@ -2,31 +2,28 @@ package net.streamline.api.modules;
 
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
-import net.streamline.api.events.server.ModuleEnableEvent;
+import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.server.ModuleLoadEvent;
+import net.streamline.api.modules.dependencies.Dependency;
 import net.streamline.base.Streamline;
 import net.streamline.utils.JarFiles;
 import net.streamline.utils.MessagingUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class ModuleManager {
     public static TreeMap<String, BundledModule> loadedModules = new TreeMap<>();
+    public static TreeMap<String, BundledModule> enabledModules = new TreeMap<>();
 
     public static boolean loadModule(@NonNull BundledModule module) {
-        if (loadedModules.containsKey(module.getIdentifier())) {
-            MessagingUtils.logWarning("Module '" + module.getIdentifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
+        if (loadedModules.containsKey(module.identifier())) {
+            MessagingUtils.logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
             return false;
         }
 
-        loadedModules.put(module.getIdentifier(), module);
+        loadedModules.put(module.identifier(), module);
         Streamline.fireEvent(new ModuleLoadEvent(module));
         return true;
     }
@@ -95,5 +92,77 @@ public class ModuleManager {
 
     public static void unJarAll() throws Exception {
         unJarAll(Streamline.getModuleFolder());
+    }
+
+    public static List<ModuleCommand> getCommandsForModule(BundledModule module) {
+        List<ModuleCommand> r = new ArrayList<>();
+
+        for (ModuleCommand command : Streamline.getLoadedModuleCommands().values()) {
+            if (command.getOwningModule().identifier().equals(module.identifier())) r.add(command);
+        }
+
+        return r;
+    }
+
+    public static void unloadCommandsForModule(BundledModule module) {
+        List<ModuleCommand> commands = getCommandsForModule(module);
+
+        for (ModuleCommand command : commands) {
+            if (command.isEnabled()) command.disable();
+        }
+    }
+
+    public static void restartModules() {
+        for (BundledModule module : enabledModules.values()) {
+            module.restart();
+        }
+    }
+
+    public static void startModules() {
+        for (BundledModule module : orderModules().values()) {
+            if (enabledModules.containsKey(module.identifier())) continue;
+            module.start();
+            enabledModules.put(module.identifier(), module);
+        }
+    }
+
+    public static void stopModules() {
+        for (BundledModule module : enabledModules.values()) {
+            module.stop();
+            enabledModules.remove(module.identifier());
+        }
+    }
+
+    public static TreeMap<Integer, BundledModule> orderModules() {
+        return orderModules(loadedModules.values().stream().toList());
+    }
+
+    public static TreeMap<Integer, BundledModule> orderModules(BundledModule... from) {
+        return orderModules(Arrays.stream(from).toList());
+    }
+
+    public static TreeMap<Integer, BundledModule> orderModules(List<BundledModule> from) {
+        TreeMap<Integer, BundledModule> r = new TreeMap<>();
+        List<BundledModule> independents = new ArrayList<>();
+
+        TreeSet<String> identified = new TreeSet<>();
+        from.forEach(a -> identified.add(a.identifier()));
+
+        for (BundledModule module : from) {
+            if (module.dependencies().size() <= 0) {
+                independents.add(module);
+                continue;
+            }
+            for (Dependency dependency : module.dependencies()) {
+                if (identified.contains(dependency.getDependency())) {
+                    break;
+                }
+
+            }
+        }
+
+        independents.forEach(a -> r.put(r.size(), a));
+
+        return r;
     }
 }

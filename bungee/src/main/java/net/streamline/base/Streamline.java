@@ -11,12 +11,12 @@ public class Streamline extends BasePlugin {
     public void enable() {
         new StreamlineExpansion();
 
-        new ParseCommand();
-        new PXPCommand();
-        new ReloadCommand();
-        new PTagCommand();
-        new PointsCommand();
-        new PlaytimeCommand();
+        new ParseCommand().register();
+        new PXPCommand().register();
+        new ReloadCommand().register();
+        new PTagCommand().register();
+        new PointsCommand().register();
+        new PlaytimeCommand().register();
 
         new OneSecondTimer();
         new PlayerExperienceTimer();

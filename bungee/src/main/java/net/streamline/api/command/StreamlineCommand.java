@@ -18,7 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class StreamlineCommand extends Command implements TabExecutor {
+public abstract class StreamlineCommand {
+    @Getter @Setter
+    private String identifier;
     @Getter @Setter
     private String base;
     @Getter @Setter
@@ -29,12 +31,11 @@ public abstract class StreamlineCommand extends Command implements TabExecutor {
     private final CommandResource commandResource;
 
     public StreamlineCommand(String base, String permission, File parentDirectory, String... aliases) {
-        super(base, permission, aliases);
+        this.identifier = base;
         this.base = base;
         this.permission = permission;
         this.aliases = aliases;
         this.commandResource = new CommandResource(this, parentDirectory);
-        Streamline.registerStreamlineCommand(this);
     }
 
     public StreamlineCommand(BundledModule module, String base, String permission, String... aliases) {
@@ -45,19 +46,12 @@ public abstract class StreamlineCommand extends Command implements TabExecutor {
         this(base, permission, Streamline.getMainCommandsFolder(), aliases);
     }
 
-    @Override
-    public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        run(UserManager.getOrGetUser(sender), args);
+    public void register() {
+        Streamline.registerStreamlineCommand(this);
     }
 
-    @Override
-    public List<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args == null) return new ArrayList<>();
-        if (args.length <= 0) return new ArrayList<>();
-
-        List<String> r = doTabComplete(UserManager.getOrGetUser(sender), args);
-
-        return r == null ? new ArrayList<>() : MessagingUtils.getCompletion(r, args[args.length - 1]).stream().toList();
+    public void unregister() {
+        Streamline.unregisterStreamlineCommand(this);
     }
 
     abstract public void run(SavableUser sender, String[] args);
@@ -83,5 +77,9 @@ public abstract class StreamlineCommand extends Command implements TabExecutor {
         }
 
         return false;
+    }
+
+    public void disable() {
+        Streamline.unregisterStreamlineCommand(this);
     }
 }

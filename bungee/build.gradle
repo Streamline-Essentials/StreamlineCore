@@ -3,8 +3,6 @@ plugins {
 }
 
 repositories {
-    //Velocity
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 }
 
 dependencies {
@@ -14,7 +12,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
     testCompileOnly 'org.projectlombok:lombok:1.18.24'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
-    implementation shadow("com.github.simplix-softworks:simplixstorage:3.2.4")
+    implementation shadow("com.github.simplix-softworks:SimplixStorage:3.2.5")
     implementation shadow("net.objecthunter:exp4j:0.4.8")
     implementation shadow("com.zaxxer:HikariCP:5.0.1")
     implementation shadow("com.google.re2j:re2j:1.6")

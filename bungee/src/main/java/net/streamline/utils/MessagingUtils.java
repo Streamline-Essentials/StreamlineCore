@@ -37,7 +37,7 @@ public class MessagingUtils {
     }
 
     public static String loggedModulePrefix(BundledModule module) {
-        return "[" + module.getIdentifier() + "] ";
+        return "[" + module.identifier() + "] ";
     }
 
     public static void logInfo(BundledModule module, String message) {
@@ -61,20 +61,24 @@ public class MessagingUtils {
         if (to == null) return;
         to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
     }
+    public static void sendMessage(@Nullable CommandSender to, SavableUser other, String message) {
+        if (to == null) return;
+        to.sendMessage(codedText(replaceAllPlayerBungee(other, message)));
+    }
 
     public static void sendMessage(@Nullable SavableUser to, String message) {
         if (to == null) return;
-        to.sendMessage(message);
+        sendMessage(Streamline.getPlayer(to.uuid), message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, String otherUUID, String message) {
         if (to == null) return;
-        to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
+        sendMessage(Streamline.getPlayer(to.uuid), otherUUID, message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, SavableUser other, String message) {
         if (to == null) return;
-        to.sendMessage(replaceAllPlayerBungee(other, message));
+        sendMessage(Streamline.getPlayer(to.uuid), other, message);
     }
 
     public static void sendMessage(String to, String message) {
