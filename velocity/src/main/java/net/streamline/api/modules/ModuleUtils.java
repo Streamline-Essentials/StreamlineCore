@@ -4,6 +4,7 @@ import com.mongodb.lang.Nullable;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
@@ -183,8 +184,8 @@ public class ModuleUtils {
         return UserManager.getOrGetUser(sender);
     }
 
-    public static StorageResource<?> newStorageResource(String uuid) {
-        return UserManager.newStorageResource(uuid);
+    public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
+        return UserManager.newStorageResource(uuid, clazz);
     }
 
     public static String getUsername(CommandSource sender) {

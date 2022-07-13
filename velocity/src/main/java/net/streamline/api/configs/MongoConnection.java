@@ -48,7 +48,8 @@ public class MongoConnection {
 
     public void update(String collectionName, Document where, Document toUpdate) {
         try {
-            getCollection(collectionName).updateOne(where, toUpdate);
+            Document update = new Document("$set", toUpdate);
+            getCollection(collectionName).updateOne(where, update);
         } catch (IllegalArgumentException e) {
             // do nothing
         }

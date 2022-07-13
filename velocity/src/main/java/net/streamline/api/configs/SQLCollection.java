@@ -13,6 +13,7 @@ public class SQLCollection {
         this.document = document;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
+        document.put(discriminatorKey, discriminator);
     }
 
     public SQLCollection(String collectionName, String discriminatorKey, Object discriminator) {

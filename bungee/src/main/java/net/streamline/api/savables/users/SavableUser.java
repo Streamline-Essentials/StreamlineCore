@@ -83,7 +83,7 @@ public abstract class SavableUser extends SavableResource {
     }
 
     public SavableUser(String uuid) {
-        super(uuid, UserManager.newStorageResource(uuid));
+        super(uuid, UserManager.newStorageResource(uuid, uuid.equals("%") ? SavableConsole.class : SavablePlayer.class));
 
         populateDefaults();
 

@@ -11,10 +11,8 @@ import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import net.streamline.api.configs.*;
 import net.streamline.base.Streamline;
-import net.streamline.api.configs.FlatFileResource;
-import net.streamline.api.configs.MongoResource;
-import net.streamline.api.configs.StorageResource;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -97,7 +95,7 @@ public class UserManager {
         }
     }
 
-    public static StorageResource<?> newStorageResource(String uuid) {
+    public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
         switch (Streamline.getMainConfig().userUseType()) {
             case YAML -> {
                 return new FlatFileResource<>(Config.class, uuid + ".yml", Streamline.getUserFolder(), false);
@@ -109,7 +107,10 @@ public class UserManager {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", Streamline.getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(Streamline.getMainConfig().getConfiguredDatabase(), "users", "uuid", uuid);
+                return new MongoResource(Streamline.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "uuid", uuid);
+            }
+            case MYSQL -> {
+                return new MySQLResource(Streamline.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
             }
         }
 
