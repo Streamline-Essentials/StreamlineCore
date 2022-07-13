@@ -27,7 +27,7 @@ public class MySQLConnection {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
 
-            this.config.setJdbcUrl(connectionUri);
+            this.config.setJdbcUrl("jdbc:" + connectionUri + "/" + database);
             this.config.addDataSourceProperty("cachePrepStmts", "true");
             this.config.addDataSourceProperty("prepStmtCacheSize", "250");
             this.config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -38,11 +38,15 @@ public class MySQLConnection {
         }
     }
 
-    public Connection getConnection() throws SQLException {
+    private Connection getConnection() throws SQLException {
         return this.dataSource.getConnection();
     }
 
     public Connection getOrGetConnection() throws SQLException {
+        if (this.connection == null) {
+            this.connection = getConnection();
+            return this.connection;
+        }
         if (this.connection.isClosed()) {
             this.connection = this.getConnection();
             return this.connection;
@@ -58,7 +62,7 @@ public class MySQLConnection {
             PreparedStatement statement = getOrGetConnection().prepareStatement("SHOW TABLES;");
             ResultSet set = statement.executeQuery();
             while (set.next()) {
-                collections.add(set.getString(0));
+                collections.add(set.getString(1));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -91,6 +95,7 @@ public class MySQLConnection {
         for (String key : sqlCollection.document.keySet()) {
             if (key.equals(sqlCollection.document.lastKey())) {
                 builder.append("`").append(key).append("` ").append(getSQLType(sqlCollection.document.get(key))).append(" ");
+                continue;
             }
             builder.append("`").append(key).append("` ").append(getSQLType(sqlCollection.document.get(key))).append(", ");
         }
@@ -205,8 +210,9 @@ public class MySQLConnection {
         StringBuilder builder = new StringBuilder();
 
         for (String key : collection.document.keySet()) {
+            builder.append("`");
             Object object = collection.document.get(key);
-            builder.append(key).append(" = ");
+            builder.append(key).append("` = ");
             if (object instanceof String string) builder.append("'").append(string).append("'");
             else builder.append(object);
             if (key.equals(collection.document.lastKey())) continue;
@@ -222,10 +228,10 @@ public class MySQLConnection {
 
         for (String key : collection.document.keySet()) {
             if (key.equals(collection.document.lastKey())) {
-                builder.append(key);
+                builder.append("`").append(key).append("`");
                 continue;
             }
-            builder.append(key).append(", ");
+            builder.append("`").append(key).append("`, ");
         }
 
         builder.append(")");
@@ -285,7 +291,7 @@ public class MySQLConnection {
         SQLCollection collection = new SQLCollection(collectionName, discriminatorKey, discriminator);
 
         try {
-            PreparedStatement statement = getConnection().prepareStatement("SELECT * FROM " + collection.collectionName + " WHERE " + collection.discriminatorKey + " = ?;");
+            PreparedStatement statement = getOrGetConnection().prepareStatement("SELECT * FROM " + collection.collectionName + " WHERE " + collection.discriminatorKey + " = ?;");
             switch (getSQLDataType(collection.discriminator)) {
                 case VARCHAR -> {
                     statement.setString(1, (String) collection.discriminator);
