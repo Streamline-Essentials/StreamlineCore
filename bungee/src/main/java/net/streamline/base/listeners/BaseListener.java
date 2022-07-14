@@ -8,6 +8,7 @@ import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -49,20 +50,25 @@ public class BaseListener implements Listener {
     public void onPlayerLevel(LevelChangePlayerEvent event) {
         if (Streamline.getMainConfig().announceLevelChangeChat()) {
             for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
-                MessagingUtils.sendMessage(event.user, MessagingUtils.replaceAllPlayerBungee(event.player(),message));
+                MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
             }
         }
 
         if (Streamline.getMainConfig().announceLevelChangeTitle()) {
             Title title = ProxyServer.getInstance().createTitle()
                     .reset()
-                    .title(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.player(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())))
-                    .subTitle(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.player(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())))
+                    .title(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())))
+                    .subTitle(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())))
                     .fadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt())
                     .stay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt())
                     .fadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
 
-            MessagingUtils.sendTitle(event.player(), title);
+            MessagingUtils.sendTitle(event.getResource(), title);
         }
+    }
+
+    @EventHandler
+    public void onStreamlineEvent(StreamlineEvent<?> event) {
+        Streamline.getStreamlineEventBus().notifyObservers(event);
     }
 }

@@ -6,10 +6,8 @@ import java.util.concurrent.CompletableFuture;
 
 public abstract class StreamlineEvent<T> extends CompletableFuture<T> {
     public Date firedAt;
-    public Class<T> type;
 
-    public StreamlineEvent(Class<T> type) {
+    public StreamlineEvent() {
         this.firedAt = new Date();
-        this.type = type;
     }
 }

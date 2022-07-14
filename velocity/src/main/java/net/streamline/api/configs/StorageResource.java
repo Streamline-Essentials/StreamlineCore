@@ -51,6 +51,10 @@ public abstract class StorageResource<T> {
 
     public abstract void push();
 
+    public abstract void delete();
+
+    public abstract boolean exists();
+
     public void setHangingMillis(int setAs) {
         this.hangingMillis = setAs;
     }

@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ModuleEvent<T> extends StreamlineEvent<T> {
     private final BundledModule module;
 
-    public ModuleEvent(Class<T> type, @NotNull final BundledModule module) {
-        super(type);
+    public ModuleEvent(@NotNull final BundledModule module) {
+        super();
         this.module = module;
     }
 

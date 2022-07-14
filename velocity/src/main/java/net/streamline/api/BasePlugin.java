@@ -15,6 +15,7 @@ import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATAPI;
@@ -85,6 +86,9 @@ public abstract class BasePlugin {
     @Getter
     private final File dataFolder;
 
+    @Getter
+    private static StreamlineEventBus streamlineEventBus;
+
     public BasePlugin(ProxyServer s, Logger l, Path dd) {
         this.proxy = s;
         this.logger = l;
@@ -97,6 +101,8 @@ public abstract class BasePlugin {
         name = "StreamlineAPI";
         version = "${project.version}";
         instance = this;
+
+        streamlineEventBus = new StreamlineEventBus();
 
         ratapi = new RATAPI();
         mainConfigHandler = new MainConfigHandler();

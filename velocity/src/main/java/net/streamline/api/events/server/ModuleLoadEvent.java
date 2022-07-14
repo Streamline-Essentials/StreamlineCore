@@ -8,6 +8,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ModuleLoadEvent extends ModuleEvent<Boolean> {
     public ModuleLoadEvent(@NotNull final BundledModule module) {
-        super(Boolean.class, module);
+        super(module);
     }
 }

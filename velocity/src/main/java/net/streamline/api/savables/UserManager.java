@@ -12,6 +12,7 @@ import net.luckperms.api.node.types.SuffixNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.configs.*;
+import net.streamline.api.savables.events.LoadSavableUserEvent;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.savables.users.SavableConsole;
@@ -34,6 +35,7 @@ public class UserManager {
     public static SavableUser loadUser(SavableUser user) {
         loadedUsers.put(user.uuid, user);
         user.saveAll();
+        Streamline.fireEvent(new LoadSavableUserEvent<>(user));
         return user;
     }
 

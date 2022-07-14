@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Called when a module is disabled.
  */
-public class ModuleDisableEvent extends ModuleEvent {
+public class ModuleDisableEvent extends ModuleEvent<Boolean> {
     public ModuleDisableEvent(@NotNull final BundledModule module) {
-        super(Boolean.class, module);
+        super(module);
     }
 }

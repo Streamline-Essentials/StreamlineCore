@@ -76,6 +76,12 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("modules_loaded")) {
             return String.valueOf(ModuleManager.loadedModules.size());
         }
+        if (params.equals("player_default_level")) {
+            return String.valueOf(Streamline.getMainConfig().playerStartingLevel());
+        }
+        if (params.equals("player_default_xp")) {
+            return String.valueOf(Streamline.getMainConfig().playerStartingExperienceAmount());
+        }
 
         return null;
     }

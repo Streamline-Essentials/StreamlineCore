@@ -5,10 +5,8 @@ import de.leonhard.storage.internal.FlatFile;
 import net.streamline.base.Streamline;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.Scanner;
 import java.util.TreeMap;
 
@@ -146,6 +144,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         return null;
     }
 
+    @Override
     public void delete() {
         this.file.delete();
     }

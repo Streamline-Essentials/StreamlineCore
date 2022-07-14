@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Called when a module is disabled.
  */
-public class ModuleLoadEvent extends ModuleEvent {
+public class ModuleLoadEvent extends ModuleEvent<Boolean> {
     public ModuleLoadEvent(@NotNull final BundledModule module) {
         super(module);
     }
