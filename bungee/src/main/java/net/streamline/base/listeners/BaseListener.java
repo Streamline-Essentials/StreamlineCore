@@ -9,6 +9,9 @@ import net.md_5.bungee.api.event.ServerConnectedEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.server.LoginEvent;
+import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -26,6 +29,8 @@ public class BaseListener implements Listener {
         ProxiedPlayer player = event.getPlayer();
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
+
+        Streamline.fireEvent(new LoginEvent(savablePlayer));
     }
 
     @EventHandler
@@ -33,6 +38,8 @@ public class BaseListener implements Listener {
         String uuid = event.getPlayer().getUniqueId().toString();
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(uuid);
         if (savablePlayer == null) return;
+
+        Streamline.fireEvent(new LogoutEvent(savablePlayer));
 
         savablePlayer.storageResource.sync();
         UserManager.unloadUser(savablePlayer);
@@ -55,13 +62,13 @@ public class BaseListener implements Listener {
         }
 
         if (Streamline.getMainConfig().announceLevelChangeTitle()) {
-            Title title = ProxyServer.getInstance().createTitle()
-                    .reset()
-                    .title(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())))
-                    .subTitle(MessagingUtils.codedText(MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())))
-                    .fadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt())
-                    .stay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt())
-                    .fadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
+            StreamlineTitle title = new StreamlineTitle(
+                    MessagingUtils.replaceAllPlayerBungee(event.getResource(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
+                    MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())
+            );
+            title.setFadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
+            title.setStay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
+            title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
 
             MessagingUtils.sendTitle(event.getResource(), title);
         }

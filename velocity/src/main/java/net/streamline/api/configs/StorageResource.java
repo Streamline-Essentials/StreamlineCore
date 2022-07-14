@@ -4,6 +4,7 @@ import net.streamline.utils.MathUtils;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.TreeMap;
 
 public abstract class StorageResource<T> {
     public StorageUtils.StorageType type;
@@ -12,6 +13,7 @@ public abstract class StorageResource<T> {
     public Object discriminator;
     public int hangingMillis;
     public Date lastReload;
+    public TreeMap<String, Object> map;
 
     public StorageResource(Class<T> resourceType, String discriminatorKey, Object discriminator) {
         this.resourceType = resourceType;
@@ -19,6 +21,7 @@ public abstract class StorageResource<T> {
         this.discriminator = discriminator;
         this.type = StorageUtils.getStorageType(resourceType);
         this.hangingMillis = 5000;
+        this.map = new TreeMap<>();
     }
 
     public void reloadResource() {

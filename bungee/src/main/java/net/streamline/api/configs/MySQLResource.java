@@ -13,6 +13,7 @@ public class MySQLResource extends StorageResource<SQLCollection> {
     @Override
     public void continueReloadResource() {
         this.databaseConfig.mySQLConnection().update(this.collection);
+        this.map.putAll(this.collection.document);
     }
 
     @Override

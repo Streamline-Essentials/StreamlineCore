@@ -37,6 +37,7 @@ public class MongoResource extends StorageResource<Document> {
     @Override
     public void continueReloadResource() {
         this.sheet = this.get();
+        this.map.putAll(this.sheet);
     }
 
     @Override

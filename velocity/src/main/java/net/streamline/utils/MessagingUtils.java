@@ -11,14 +11,19 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.modules.BundledModule;
+import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableUser;
 import net.kyori.adventure.text.TextComponent;
+import net.streamline.base.configs.MainMessagesHandler;
 
 import java.awt.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -96,14 +101,43 @@ public class MessagingUtils {
         sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
 
-    public static void sendTitle(SavablePlayer player, Title title) {
-        Player p = Streamline.getInstance().getPlayer(player.uuid);
+    public static void sendTitle(SavablePlayer player, StreamlineTitle title) {
+        Player p = BasePlugin.getPlayer(player.uuid);
         if (p == null) {
             logInfo("Could not send a title to a player because player is null!");
             return;
         }
 
-        p.showTitle(title);
+        Title t = Title.title(
+                MessagingUtils.codedText(
+                        MessagingUtils.replaceAllPlayerBungee(player, title.getMain())
+                ),
+                MessagingUtils.codedText(
+                        MessagingUtils.replaceAllPlayerBungee(player, title.getSub())
+                ), Title.Times.of(
+                        Duration.of(title.getFadeIn() * 50L, ChronoUnit.MILLIS),
+                        Duration.of(title.getStay() * 50L, ChronoUnit.MILLIS),
+                        Duration.of(title.getFadeOut() * 50L, ChronoUnit.MILLIS)
+                )
+        );
+
+        p.showTitle(t);
+    }
+
+    public static String getListAsFormattedString(List<?> list) {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < list.size(); i ++) {
+            String tag = String.valueOf(list.get(i));
+
+            if (i < list.size() - 1) {
+                builder.append(MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.LISTS_BASE.get().replace("%value%", tag));
+            } else {
+                builder.append(MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.LISTS_LAST.get().replace("%value%", tag));
+            }
+        }
+
+        return builder.toString();
     }
 
     public static String removeExtraDot(String string){
