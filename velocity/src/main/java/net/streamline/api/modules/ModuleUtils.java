@@ -6,7 +6,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.StreamlineEventBus;
-import net.streamline.api.events.server.ModuleEvent;
+import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -52,6 +52,14 @@ public class ModuleUtils {
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
         MessagingUtils.sendMessage(to, otherUUID, message);
+    }
+
+    public static void sendTitle(SavablePlayer user, StreamlineTitle title) {
+        MessagingUtils.sendTitle(user, title);
+    }
+
+    public static String getListAsFormattedString(List<?> list) {
+        return MessagingUtils.getListAsFormattedString(list);
     }
 
     public static String removeExtraDot(String string){

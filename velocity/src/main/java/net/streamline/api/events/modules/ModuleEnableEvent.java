@@ -1,4 +1,4 @@
-package net.streamline.api.events.server;
+package net.streamline.api.events.modules;
 
 import net.streamline.api.modules.BundledModule;
 import org.jetbrains.annotations.NotNull;

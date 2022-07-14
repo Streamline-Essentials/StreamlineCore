@@ -2,8 +2,8 @@ package net.streamline.api.modules;
 
 import lombok.Getter;
 import net.streamline.api.command.ModuleCommand;
-import net.streamline.api.events.server.ModuleDisableEvent;
-import net.streamline.api.events.server.ModuleEnableEvent;
+import net.streamline.api.events.modules.ModuleDisableEvent;
+import net.streamline.api.events.modules.ModuleEnableEvent;
 import net.streamline.api.modules.dependencies.Dependency;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;

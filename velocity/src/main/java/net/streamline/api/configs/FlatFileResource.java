@@ -46,6 +46,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     @Override
     public void continueReloadResource() {
         reload(this.selfContained);
+        this.map.putAll(this.resource.getData());
     }
 
     @Override
