@@ -11,6 +11,7 @@ import net.luckperms.api.node.types.SuffixNode;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.configs.*;
+import net.streamline.api.savables.events.LoadSavableUserEvent;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.savables.users.SavableConsole;
@@ -33,6 +34,7 @@ public class UserManager {
     public static SavableUser loadUser(SavableUser user) {
         loadedUsers.put(user.uuid, user);
         user.saveAll();
+        Streamline.fireEvent(new LoadSavableUserEvent<>(user));
         return user;
     }
 

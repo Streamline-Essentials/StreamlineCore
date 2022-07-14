@@ -6,6 +6,7 @@ import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import net.kyori.adventure.title.Title;
 import com.velocitypowered.api.proxy.Player;
+import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -50,17 +51,17 @@ public class BaseListener {
     public void onPlayerLevel(LevelChangePlayerEvent event) {
         if (Streamline.getMainConfig().announceLevelChangeChat()) {
             for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
-                MessagingUtils.sendMessage(event.user, MessagingUtils.replaceAllPlayerBungee(event.player(),message));
+                MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
             }
         }
 
         if (Streamline.getMainConfig().announceLevelChangeTitle()) {
             Title title = Title.title(
                     MessagingUtils.codedText(
-                            MessagingUtils.replaceAllPlayerBungee(event.player(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())
+                            MessagingUtils.replaceAllPlayerBungee(event.getResource(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get())
                     ),
                             MessagingUtils.codedText(
-                                    MessagingUtils.replaceAllPlayerBungee(event.player(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get()))
+                                    MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get()))
                     , Title.Times.of(
                             Duration.of(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt() * 50L, ChronoUnit.MILLIS),
                             Duration.of(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt() * 50L, ChronoUnit.MILLIS),
@@ -68,7 +69,12 @@ public class BaseListener {
                             )
                     );
 
-            MessagingUtils.sendTitle(event.player(), title);
+            MessagingUtils.sendTitle(event.getResource(), title);
         }
+    }
+
+    @Subscribe
+    public void onStreamlineEvent(StreamlineEvent<?> event) {
+        Streamline.getStreamlineEventBus().notifyObservers(event);
     }
 }

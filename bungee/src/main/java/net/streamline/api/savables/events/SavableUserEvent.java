@@ -2,10 +2,8 @@ package net.streamline.api.savables.events;
 
 import net.streamline.api.savables.users.SavableUser;
 
-public class SavableUserEvent extends SavableEvent {
-    public SavableUser user;
-
-    public SavableUserEvent(SavableUser user) {
-        this.user = user;
+public class SavableUserEvent<T extends SavableUser> extends SavableEvent<T> {
+    public SavableUserEvent(T user) {
+        super(user);
     }
 }

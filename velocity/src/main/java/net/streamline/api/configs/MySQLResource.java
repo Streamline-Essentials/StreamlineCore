@@ -29,4 +29,14 @@ public class MySQLResource extends StorageResource<SQLCollection> {
     public void push() {
         this.databaseConfig.mySQLConnection().push(this.collection);
     }
+
+    @Override
+    public void delete() {
+        this.databaseConfig.mySQLConnection().delete(this.collection);
+    }
+
+    @Override
+    public boolean exists() {
+        return this.databaseConfig.mySQLConnection().exists(this.collection);
+    }
 }

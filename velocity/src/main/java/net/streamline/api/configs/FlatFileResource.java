@@ -146,6 +146,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         return null;
     }
 
+    @Override
     public void delete() {
         this.file.delete();
     }

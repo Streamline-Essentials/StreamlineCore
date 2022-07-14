@@ -25,6 +25,16 @@ public class MongoResource extends StorageResource<Document> {
     }
 
     @Override
+    public void delete() {
+        this.databaseConfig.mongoConnection().delete(this.collectionName, this.getWhere());
+    }
+
+    @Override
+    public boolean exists() {
+        return this.databaseConfig.mongoConnection().exists(this.collectionName, this.getWhere());
+    }
+
+    @Override
     public void continueReloadResource() {
         this.sheet = this.get();
     }

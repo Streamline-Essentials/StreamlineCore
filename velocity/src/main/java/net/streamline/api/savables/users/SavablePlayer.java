@@ -193,7 +193,6 @@ public class SavablePlayer extends SavableUser {
    9 × current_level – 158 (for levels 31+)
     */
 
-
     public void setLevel(int amount) {
         int oldL = this.level;
 

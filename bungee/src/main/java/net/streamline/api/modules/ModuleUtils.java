@@ -4,10 +4,14 @@ import com.mongodb.lang.Nullable;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.StreamlineEventBus;
+import net.streamline.api.events.server.ModuleEvent;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
+import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
 import java.util.*;
@@ -234,5 +238,13 @@ public class ModuleUtils {
 
     public static String getDisplayName(String username, String nickName) {
         return UserManager.getDisplayName(username, nickName);
+    }
+
+    public static void fireEvent(StreamlineEvent<?> event) {
+        Streamline.getInstance().getProxy().getPluginManager().callEvent(event);
+    }
+
+    public static void listen(StreamlineEventBus.StreamlineObserver observer) {
+        Streamline.getStreamlineEventBus().addObserver(observer);
     }
 }
