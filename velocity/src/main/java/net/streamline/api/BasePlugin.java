@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
@@ -25,6 +26,7 @@ import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
+import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainConfigHandler;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.base.listeners.BaseListener;
@@ -559,5 +561,11 @@ public abstract class BasePlugin {
 
     public InputStream getResourceAsStream(String filename) {
         return getClass().getClassLoader().getResourceAsStream(filename);
+    }
+
+    public static boolean hasPermission(SavableUser user, String permission) {
+        User u = getLuckPerms().getUserManager().getUser(user.latestName);
+        if (u == null) return false;
+        return u.getNodes().stream().anyMatch(a -> a.getKey().equals(permission) && a.getValue());
     }
 }

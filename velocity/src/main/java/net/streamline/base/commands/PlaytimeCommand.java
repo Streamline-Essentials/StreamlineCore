@@ -68,7 +68,7 @@ public class PlaytimeCommand extends StreamlineCommand {
         switch (action) {
             case "set" -> {
                 other.setPlaySeconds(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageSet, playerName));
             }
             case "add" -> {
                 other.addPlaySecond(amount);
