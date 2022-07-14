@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import net.kyori.adventure.title.Title;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.events.server.LoginEvent;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.objects.StreamlineTitle;
@@ -54,24 +55,28 @@ public class BaseListener {
         savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
     }
 
-    @Subscribe
-    public void onPlayerLevel(LevelChangePlayerEvent event) {
-        if (Streamline.getMainConfig().announceLevelChangeChat()) {
-            for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
-                MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
+    public static class Observer extends StreamlineEventBus.StreamlineObserver {
+        @Override
+        public void update(StreamlineEvent<?> e) {
+            if (e instanceof LevelChangePlayerEvent event) {
+                if (Streamline.getMainConfig().announceLevelChangeChat()) {
+                    for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
+                        MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
+                    }
+                }
+
+                if (Streamline.getMainConfig().announceLevelChangeTitle()) {
+                    StreamlineTitle title = new StreamlineTitle(
+                            MessagingUtils.replaceAllPlayerBungee(event.getResource(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
+                            MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())
+                    );
+                    title.setFadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
+                    title.setStay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
+                    title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
+
+                    MessagingUtils.sendTitle(event.getResource(), title);
+                }
             }
-        }
-
-        if (Streamline.getMainConfig().announceLevelChangeTitle()) {
-            StreamlineTitle title = new StreamlineTitle(
-                    MessagingUtils.replaceAllPlayerBungee(event.getResource(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
-                    MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())
-            );
-            title.setFadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
-            title.setStay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
-            title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
-
-            MessagingUtils.sendTitle(event.getResource(), title);
         }
     }
 

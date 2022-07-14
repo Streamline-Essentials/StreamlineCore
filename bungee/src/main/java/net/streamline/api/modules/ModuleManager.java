@@ -10,6 +10,7 @@ import net.streamline.utils.JarFiles;
 import net.streamline.utils.MessagingUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
@@ -17,62 +18,57 @@ public class ModuleManager {
     public static TreeMap<String, BundledModule> loadedModules = new TreeMap<>();
     public static TreeMap<String, BundledModule> enabledModules = new TreeMap<>();
 
-    public static boolean loadModule(@NonNull BundledModule module) {
+    public static void loadModule(@NonNull BundledModule module) {
         if (loadedModules.containsKey(module.identifier())) {
             MessagingUtils.logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
-            return false;
+            return;
         }
 
         loadedModules.put(module.identifier(), module);
-        Streamline.fireEvent(new ModuleLoadEvent(module));
-        return true;
+        ModuleUtils.fireEvent(new ModuleLoadEvent(module));
     }
 
-    public static void unJarAll(File folder) throws Exception {
-        if (! folder.isDirectory()) return;
+    public static void registerExternalModules() {
+        File[] folderFiles = Streamline.getModuleFolder().listFiles();
 
-        File[] files = folder.listFiles();
-        if (files == null) return;
-
-        List<File> toUnJar = new ArrayList<>();
-
-        for (File file : files) {
-            if (file == null) continue;
-            if (file.isFile()) if (file.getName().endsWith(".jar")) toUnJar.add(file);
+        if (folderFiles != null) {
+            for (File file : folderFiles) {
+                if (! file.isDirectory() && file.getName().endsWith(".jar")) {
+                    try {
+                        registerModule(file);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
         }
+    }
 
-        for (int i = 0; i < toUnJar.size(); i ++) {
-            File file = toUnJar.get(i);
-//            JarFile jarFile = new JarFile(file);
-//            Enumeration<JarEntry> e = jarFile.entries();
-//
-//            URL[] urls = { new URL("jar:file:" + file.getPath() + "!/") };
-//            URLClassLoader cl = URLClassLoader.newInstance(urls);
-//
-//            while (e.hasMoreElements()) {
-//                JarEntry je = e.nextElement();
-//                if(je.isDirectory() || !je.getName().endsWith(".class")){
-//                    continue;
-//                }
-//                // -6 because of .class
-//                String className = je.getName().substring(0,je.getName().length()-6);
-//                className = className.replace('/', '.');
-//                Class c = cl.loadClass(className);
-//            }
+    public static void registerModule(BundledModule module) {
+        Preconditions.checkNotNull(module, "module parameter cannot be null.");
+        loadModule(module);
+    }
 
-            ModuleClassLoader moduleClassLoader = new ModuleClassLoader(file);
+    public static BundledModule registerModule(File moduleFile) throws IOException, ReflectiveOperationException {
+        if (!moduleFile.getName().endsWith(".jar"))
+            throw new IllegalArgumentException("The given file is not a valid jar file.");
 
-            //noinspection deprecation
-            Optional<Class<?>> moduleClass = JarFiles.getClasses(file.toURL(), BundledModule.class, moduleClassLoader).stream().findFirst();
+        String moduleName = moduleFile.getName().replace(".jar", "");
 
-            if (! moduleClass.isPresent())
-                throw new IllegalArgumentException("The file " + file.getName() + " is not a valid module.");
+        ModuleClassLoader moduleClassLoader = new ModuleClassLoader(moduleFile);
 
-            BundledModule module = createInstance(moduleClass.get());
-            module.initModuleLoader(file, moduleClassLoader);
+        //noinspection deprecation
+        Optional<Class<?>> moduleClass = JarFiles.getClasses(moduleFile.toURL(), BundledModule.class, moduleClassLoader).stream().findFirst();
 
-            loadModule(module);
-        }
+        if (moduleClass.isEmpty())
+            throw new IllegalArgumentException("The file " + moduleName + " is not a valid module.");
+
+        BundledModule module = createInstance(moduleClass.get());
+        module.initModuleLoader(moduleFile, moduleClassLoader);
+
+        registerModule(module);
+
+        return module;
     }
 
     private static BundledModule createInstance(Class<?> clazz) throws ReflectiveOperationException {
@@ -88,10 +84,6 @@ public class ModuleManager {
         }
 
         throw new IllegalArgumentException("Class " + clazz + " has no valid constructors.");
-    }
-
-    public static void unJarAll() throws Exception {
-        unJarAll(Streamline.getModuleFolder());
     }
 
     public static List<ModuleCommand> getCommandsForModule(BundledModule module) {

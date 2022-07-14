@@ -2,21 +2,15 @@ package net.streamline.api.command;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.api.plugin.TabExecutor;
 import net.streamline.api.configs.CommandResource;
 import net.streamline.api.modules.BundledModule;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public abstract class StreamlineCommand {
     @Getter @Setter
@@ -39,7 +33,11 @@ public abstract class StreamlineCommand {
     }
 
     public StreamlineCommand(BundledModule module, String base, String permission, String... aliases) {
-        this(base, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), aliases);
+        this.identifier = base;
+        this.base = base;
+        this.permission = permission;
+        this.aliases = aliases;
+        this.commandResource = new CommandResource(module, this, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()));
     }
 
     public StreamlineCommand(String base, String permission, String... aliases) {
@@ -72,8 +70,8 @@ public abstract class StreamlineCommand {
     }
 
     public boolean isEnabled() {
-        for (Map.Entry<String, Command> entry : Streamline.getInstance().getProxy().getPluginManager().getCommands()) {
-            if (entry.getKey().equals(this.base)) return true;
+        for (String identifier : Streamline.getProperlyRegisteredCommands().keySet()) {
+            if (identifier.equals(this.getIdentifier())) return true;
         }
 
         return false;

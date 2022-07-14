@@ -1,10 +1,9 @@
 package net.streamline.api.modules;
 
 import com.mongodb.lang.Nullable;
-import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.proxy.Player;
-import net.luckperms.api.model.user.User;
+import net.luckperms.api.LuckPerms;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.events.ProperEvent;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.objects.StreamlineTitle;
@@ -15,8 +14,10 @@ import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ModuleUtils {
     public static String loggedModulePrefix(BundledModule module) {
@@ -185,28 +186,12 @@ public class ModuleUtils {
         return UserManager.getOrGetUser(uuid);
     }
 
-    public static SavablePlayer getOrGetPlayer(Player player) {
-        return UserManager.getOrGetPlayer(player);
-    }
-
     public static SavablePlayer getOrGetPlayer(String uuid) {
         return UserManager.getOrGetPlayer(uuid);
     }
 
-    public static SavableUser getOrGetUser(CommandSource sender) {
-        return UserManager.getOrGetUser(sender);
-    }
-
     public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
         return UserManager.newStorageResource(uuid, clazz);
-    }
-
-    public static String getUsername(CommandSource sender) {
-        return UserManager.getUsername(sender);
-    }
-
-    public static boolean isConsole(CommandSource sender) {
-        return UserManager.isConsole(sender);
     }
 
     public static boolean isConsole(String uuid) {
@@ -215,10 +200,6 @@ public class ModuleUtils {
 
     public static boolean isOnline(String uuid) {
         return UserManager.isOnline(uuid);
-    }
-
-    public static String parsePlayerIP(Player player) {
-        return UserManager.parsePlayerIP(player);
     }
 
     public static String getOffOnFormatted(SavableUser stat){
@@ -250,7 +231,7 @@ public class ModuleUtils {
     }
 
     public static void fireEvent(StreamlineEvent<?> event) {
-        Streamline.getInstance().getProxy().getEventManager().fire(event);
+        Streamline.getInstance().getProxy().getEventManager().fire(new ProperEvent<>(event));
     }
 
     public static void listen(StreamlineEventBus.StreamlineObserver observer) {
@@ -263,5 +244,9 @@ public class ModuleUtils {
 
     public static boolean hasPermission(SavableUser user, String permission) {
         return Streamline.hasPermission(user, permission);
+    }
+
+    public static LuckPerms getLuckPerms() {
+        return Streamline.getLuckPerms();
     }
 }

@@ -1,20 +1,16 @@
 package net.streamline.api.savables.users;
 
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.player.PlayerSettings;
-import com.velocitypowered.api.proxy.player.SkinParts;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.base.Streamline;
-import net.streamline.api.savables.UserManager;
 import net.streamline.utils.MathUtils;
 import net.streamline.utils.MessagingUtils;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class SavablePlayer extends SavableUser {
     public float totalXP;
@@ -24,19 +20,11 @@ public class SavablePlayer extends SavableUser {
     public String latestIP;
     public List<String> ipList;
     public List<String> nameList;
-    public Player player;
 
     public int defaultLevel;
 
     public String getLatestIP() {
-        return UserManager.parsePlayerIP(this.player);
-    }
-
-    public SavablePlayer(Player player) {
-        super(player.getUniqueId().toString());
-        this.player = player;
-        setLatestIP(getLatestIP());
-        setLatestName(player.getUsername());
+        return UserManager.parsePlayerIP(Streamline.getPlayer(this.uuid));
     }
 
     public SavablePlayer(String uuid){
@@ -118,28 +106,16 @@ public class SavablePlayer extends SavableUser {
         saveAll();
     }
 
-    public void setLatestIP(Player player) {
-        setLatestIP(UserManager.parsePlayerIP(player));
-    }
-
     public void addIP(String ip){
         if (ipList.contains(ip)) return;
 
         ipList.add(ip);
     }
 
-    public void addIP(Player player){
-        addIP(UserManager.parsePlayerIP(player));
-    }
-
     public void removeIP(String ip){
         if (! ipList.contains(ip)) return;
 
         ipList.remove(ip);
-    }
-
-    public void removeIP(Player player){
-        removeIP(UserManager.parsePlayerIP(player));
     }
 
     public void addPlaySecond(int amount){
@@ -193,12 +169,13 @@ public class SavablePlayer extends SavableUser {
    9 × current_level – 158 (for levels 31+)
     */
 
+
     public void setLevel(int amount) {
         int oldL = this.level;
 
         this.level = amount;
 
-        Streamline.getInstance().getProxy().getEventManager().fire(new LevelChangePlayerEvent(this, oldL));
+        ModuleUtils.fireEvent(new LevelChangePlayerEvent(this, oldL));
     }
 
     public void addLevel(int amount) {
@@ -243,7 +220,7 @@ public class SavablePlayer extends SavableUser {
 
         this.currentXP = getCurrentXP();
 
-        Streamline.getInstance().getProxy().getEventManager().fire(new XPChangePlayerEvent(this, old));
+        ModuleUtils.fireEvent(new XPChangePlayerEvent(this, old));
     }
 
     public float getCurrentLevelXP(){
@@ -265,7 +242,7 @@ public class SavablePlayer extends SavableUser {
     public String getDisplayName() {
         return this.displayName;
     }
-    
+
     public boolean isConnected() {
         return online;
     }
