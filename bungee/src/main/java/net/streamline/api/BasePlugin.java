@@ -3,6 +3,7 @@ package net.streamline.api;
 import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -515,5 +516,11 @@ public abstract class BasePlugin extends Plugin {
 
     public static @Nullable String getShutdownMessage() {
         return null;
+    }
+
+    public static boolean hasPermission(SavableUser user, String permission) {
+        User u = getLuckPerms().getUserManager().getUser(user.latestName);
+        if (u == null) return false;
+        return u.getNodes().stream().anyMatch(a -> a.getKey().equals(permission) && a.getValue());
     }
 }

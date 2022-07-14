@@ -255,4 +255,12 @@ public class ModuleUtils {
     public static void listen(StreamlineEventBus.StreamlineObserver observer) {
         Streamline.getStreamlineEventBus().addObserver(observer);
     }
+
+    public static List<String> getOnlinePlayerNames() {
+        return Streamline.getOnlinePlayerNames();
+    }
+
+    public static boolean hasPermission(SavableUser user, String permission) {
+        return Streamline.hasPermission(user, permission);
+    }
 }

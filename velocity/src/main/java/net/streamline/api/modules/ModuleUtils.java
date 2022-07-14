@@ -3,6 +3,7 @@ package net.streamline.api.modules;
 import com.mongodb.lang.Nullable;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import net.luckperms.api.model.user.User;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.StreamlineEventBus;
@@ -254,5 +255,13 @@ public class ModuleUtils {
 
     public static void listen(StreamlineEventBus.StreamlineObserver observer) {
         Streamline.getStreamlineEventBus().addObserver(observer);
+    }
+
+    public static List<String> getOnlinePlayerNames() {
+        return Streamline.getOnlinePlayerNames();
+    }
+
+    public static boolean hasPermission(SavableUser user, String permission) {
+        return Streamline.hasPermission(user, permission);
     }
 }
