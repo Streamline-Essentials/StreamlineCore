@@ -9,6 +9,7 @@ import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 public abstract class BundledModule {
@@ -52,7 +53,7 @@ public abstract class BundledModule {
     public abstract List<ModuleCommand> commands();
 
     public BundledModule() {
-        this.instance = this;
+        instance = this;
         this.dataFolder = new File(Streamline.getModuleFolder(), identifier() + File.separator);
         logInfo("Loaded!");
         onLoad();
@@ -63,7 +64,7 @@ public abstract class BundledModule {
             command.register();
         }
 
-        Streamline.fireEvent(new ModuleEnableEvent(this));
+        ModuleUtils.fireEvent(new ModuleEnableEvent(this));
         onEnable();
     }
 
@@ -72,7 +73,7 @@ public abstract class BundledModule {
             command.unregister();
         }
 
-        Streamline.fireEvent(new ModuleDisableEvent(this));
+        ModuleUtils.fireEvent(new ModuleDisableEvent(this));
         onDisable();
     }
 
@@ -145,5 +146,9 @@ public abstract class BundledModule {
 
         this.moduleFile = moduleFile;
         this.classLoader = classLoader;
+    }
+
+    public InputStream getResourceAsStream(String filename) {
+        return getClassLoader().getResourceAsStream(filename);
     }
 }

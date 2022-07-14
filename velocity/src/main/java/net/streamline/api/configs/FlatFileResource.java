@@ -2,13 +2,12 @@ package net.streamline.api.configs;
 
 import de.leonhard.storage.*;
 import de.leonhard.storage.internal.FlatFile;
+import net.streamline.api.modules.BundledModule;
 import net.streamline.base.Streamline;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.Scanner;
 import java.util.TreeMap;
 
@@ -19,6 +18,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     public File parentDirectory;
     public File file;
     public boolean selfContained;
+    public BundledModule module;
 
     public FlatFileResource(Class<T> resourceType, String fileName, File parentDirectory, boolean selfContained) {
         super(resourceType, "name", fileName);
@@ -27,8 +27,37 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         this.parentDirectory = parentDirectory;
         this.file = new File(parentDirectory, fileName);
         this.selfContained = selfContained;
+        this.module = null;
 
         reloadResource();
+    }
+
+    public FlatFileResource(BundledModule module, Class<T> resourceType, String fileName, File parentDirectory, boolean selfContained) {
+        super(resourceType, "name", fileName);
+        this.resourceType = resourceType;
+        this.name = fileName;
+        this.parentDirectory = parentDirectory;
+        this.file = new File(parentDirectory, fileName);
+        this.selfContained = selfContained;
+        this.module = module;
+
+        reloadResource();
+    }
+
+    public FlatFileResource(BundledModule module, Class<T> resourceType, String fileName, boolean selfContained) {
+        super(resourceType, "name", fileName);
+        this.resourceType = resourceType;
+        this.name = fileName;
+        this.parentDirectory = module.getDataFolder();
+        this.file = new File(module.getDataFolder(), fileName);
+        this.selfContained = selfContained;
+        this.module = module;
+
+        reloadResource();
+    }
+
+    public boolean isFromModule() {
+        return this.module != null;
     }
 
     public T load(boolean selfContained) {
@@ -93,14 +122,27 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     }
 
     public T loadConfigFromSelf(File file, String fileString) {
+        return loadConfigFromSelf(file, fileString, isFromModule());
+    }
+
+    public T loadConfigFromSelf(File file, String fileString, boolean isFromModule) {
         if (! file.exists()) {
             try {
                 this.parentDirectory.mkdirs();
-                try (InputStream in = Streamline.getInstance().getResourceAsStream(fileString)) {
-                    assert in != null;
-                    Files.copy(in, file.toPath());
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (! isFromModule) {
+                    try (InputStream in = Streamline.getInstance().getResourceAsStream(fileString)) {
+                        assert in != null;
+                        Files.copy(in, file.toPath());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    try (InputStream in = module.getResourceAsStream(fileString)) {
+                        assert in != null;
+                        Files.copy(in, file.toPath());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();

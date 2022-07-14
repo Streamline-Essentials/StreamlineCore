@@ -35,7 +35,11 @@ public abstract class StreamlineCommand {
     }
 
     public StreamlineCommand(BundledModule module, String base, String permission, String... aliases) {
-        this(base, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), aliases);
+        this.identifier = base;
+        this.base = base;
+        this.permission = permission;
+        this.aliases = aliases;
+        this.commandResource = new CommandResource(module, this, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()));
     }
 
     public StreamlineCommand(String base, String permission, String... aliases) {

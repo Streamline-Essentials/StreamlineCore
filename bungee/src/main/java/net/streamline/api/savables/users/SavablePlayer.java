@@ -6,6 +6,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.base.Streamline;
@@ -200,7 +201,7 @@ public class SavablePlayer extends SavableUser {
 
         this.level = amount;
 
-        Streamline.getInstance().getProxy().getPluginManager().callEvent(new LevelChangePlayerEvent(this, oldL));
+        ModuleUtils.fireEvent(new LevelChangePlayerEvent(this, oldL));
     }
 
     public void addLevel(int amount) {
@@ -245,7 +246,7 @@ public class SavablePlayer extends SavableUser {
 
         this.currentXP = getCurrentXP();
 
-        Streamline.getInstance().getProxy().getPluginManager().callEvent(new XPChangePlayerEvent(this, old));
+        ModuleUtils.fireEvent(new XPChangePlayerEvent(this, old));
     }
 
     public float getCurrentLevelXP(){

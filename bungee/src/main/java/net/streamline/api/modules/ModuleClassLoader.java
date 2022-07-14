@@ -69,7 +69,7 @@ public class ModuleClassLoader extends URLClassLoader {
                 int dot = name.lastIndexOf('.');
                 if (dot != -1) {
                     String pkgName = name.substring(0, dot);
-                    if (getPackage(pkgName) == null) {
+                    if (getDefinedPackage(pkgName) == null) {
                         try {
                             if (manifest != null) {
                                 definePackage(pkgName, manifest, url);
@@ -77,7 +77,7 @@ public class ModuleClassLoader extends URLClassLoader {
                                 definePackage(pkgName, null, null, null, null, null, null, null);
                             }
                         } catch (IllegalArgumentException ex) {
-                            if (getPackage(pkgName) == null) {
+                            if (getDefinedPackage(pkgName) == null) {
                                 throw new IllegalStateException("Cannot find package " + pkgName);
                             }
                         }
