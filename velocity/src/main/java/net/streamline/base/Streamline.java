@@ -6,6 +6,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.api.BasePlugin;
 import net.streamline.base.commands.*;
+import net.streamline.base.listeners.BaseListener;
 import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
 import net.streamline.base.timers.PlayerExperienceTimer;
@@ -47,6 +48,8 @@ public class Streamline extends BasePlugin {
 
         new OneSecondTimer();
         new PlayerExperienceTimer();
+
+        new BaseListener.Observer();
     }
 
     @Override
