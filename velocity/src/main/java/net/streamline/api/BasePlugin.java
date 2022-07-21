@@ -564,8 +564,8 @@ public abstract class BasePlugin {
     }
 
     public static boolean hasPermission(SavableUser user, String permission) {
-        User u = getLuckPerms().getUserManager().getUser(user.latestName);
-        if (u == null) return false;
-        return u.getNodes().stream().anyMatch(a -> a.getKey().equals(permission) && a.getValue());
+        Player player = getPlayer(user.uuid);
+        if (player == null) return false;
+        return player.hasPermission(permission);
     }
 }

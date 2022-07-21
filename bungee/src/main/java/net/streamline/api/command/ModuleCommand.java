@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.streamline.api.modules.BundledModule;
 import net.streamline.base.Streamline;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,7 @@ public abstract class ModuleCommand extends StreamlineCommand {
     private final BundledModule owningModule;
 
     public ModuleCommand(BundledModule module, String base, String permission, String... aliases) {
-        super(module, base, permission, withLabel(module, base, aliases));
+        super(base, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), withLabel(module, base, aliases));
         this.owningModule = module;
     }
 

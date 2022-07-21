@@ -28,6 +28,8 @@ public abstract class StorageResource<T> {
         reloadResource(false);
     }
 
+    public abstract <O> O get(String key, Class<O> def);
+
     public void reloadResource(boolean force) {
         if (! force) {
             if (this.lastReload != null) {

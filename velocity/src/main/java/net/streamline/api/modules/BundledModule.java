@@ -1,6 +1,7 @@
 package net.streamline.api.modules;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.modules.ModuleDisableEvent;
 import net.streamline.api.events.modules.ModuleEnableEvent;
@@ -13,8 +14,6 @@ import java.io.InputStream;
 import java.util.List;
 
 public abstract class BundledModule {
-    @Getter
-    private static BundledModule instance;
     @Getter
     private final File dataFolder;
     @Getter
@@ -53,7 +52,6 @@ public abstract class BundledModule {
     public abstract List<ModuleCommand> commands();
 
     public BundledModule() {
-        instance = this;
         this.dataFolder = new File(Streamline.getModuleFolder(), identifier() + File.separator);
         logInfo("Loaded!");
         onLoad();

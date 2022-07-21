@@ -24,6 +24,19 @@ public class SQLCollection {
         this.document.put(key, value);
     }
 
+    public <O> O get(String key, Class<O> def) {
+        try {
+            O object = (O) this.document.get(key);
+
+            if (! def.isInstance(object)) return null;
+
+            return object;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public <O> O getOrSetDefault(String key, O value) {
         try {
             O object = (O) this.document.get(key);

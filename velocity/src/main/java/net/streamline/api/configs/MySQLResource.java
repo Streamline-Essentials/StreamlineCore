@@ -11,6 +11,11 @@ public class MySQLResource extends StorageResource<SQLCollection> {
     }
 
     @Override
+    public <O> O get(String key, Class<O> def) {
+        return this.collection.get(key, def);
+    }
+
+    @Override
     public void continueReloadResource() {
         this.databaseConfig.mySQLConnection().update(this.collection);
         this.map.putAll(this.collection.document);

@@ -20,6 +20,7 @@ import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.utils.MathUtils;
 import net.streamline.utils.MessagingUtils;
+import net.streamline.utils.UUIDUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +123,15 @@ public class UserManager {
     public static String getUsername(CommandSource sender) {
         if (isConsole(sender)) return Streamline.getMainConfig().userConsoleNameRegular();
         else return ((Player) sender).getUsername();
+    }
+
+    public static String getUsername(String uuid) {
+        if (uuid.equals(Streamline.getMainConfig().userConsoleDiscriminator())) return Streamline.getMainConfig().userConsoleNameRegular();
+        else {
+            Player player = Streamline.getPlayer(uuid);
+            if (player == null) return null;
+            return getUsername(player);
+        }
     }
 
     public static boolean isConsole(CommandSource sender) {

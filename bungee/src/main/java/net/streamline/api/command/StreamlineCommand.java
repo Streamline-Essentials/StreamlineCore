@@ -3,7 +3,6 @@ package net.streamline.api.command;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.configs.CommandResource;
-import net.streamline.api.modules.BundledModule;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
@@ -30,14 +29,6 @@ public abstract class StreamlineCommand {
         this.permission = permission;
         this.aliases = aliases;
         this.commandResource = new CommandResource(this, parentDirectory);
-    }
-
-    public StreamlineCommand(BundledModule module, String base, String permission, String... aliases) {
-        this.identifier = base;
-        this.base = base;
-        this.permission = permission;
-        this.aliases = aliases;
-        this.commandResource = new CommandResource(module, this, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()));
     }
 
     public StreamlineCommand(String base, String permission, String... aliases) {

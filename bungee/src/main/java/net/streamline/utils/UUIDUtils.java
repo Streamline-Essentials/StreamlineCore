@@ -115,7 +115,7 @@ public class UUIDUtils {
             Object job = new JsonParser().parse(last);
             JsonObject njo = (JsonObject) job;
 
-            return njo.get("name").toString();
+            return njo.get("name").toString().toString().replace("\"", "");
         } catch (Exception e){
             e.printStackTrace();
         }
