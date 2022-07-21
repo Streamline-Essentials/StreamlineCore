@@ -7,6 +7,7 @@ import net.streamline.api.events.ProperEvent;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.objects.StreamlineTitle;
+import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.users.SavablePlayer;
@@ -246,5 +247,9 @@ public class ModuleUtils {
 
     public static LuckPerms getLuckPerms() {
         return Streamline.getLuckPerms();
+    }
+
+    public static RATAPI getRATAPI() {
+        return Streamline.getRATAPI();
     }
 }
