@@ -25,14 +25,4 @@ public class MatcherUtils {
 
         return groups;
     }
-
-    public static String getMatched(List<String[]> groups) {
-        StringBuilder builder = new StringBuilder();
-
-        for (String[] match : groups) {
-            builder.append(match[0]);
-        }
-
-        return builder.toString();
-    }
 }
