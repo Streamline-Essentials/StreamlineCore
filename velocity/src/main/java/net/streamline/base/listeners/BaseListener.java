@@ -73,7 +73,9 @@ public class BaseListener {
     public static class Observer extends StreamlineEventBus.StreamlineObserver {
         @Override
         public void update(StreamlineEvent<?> e) {
+            MessagingUtils.logInfo("Received ping!");
             if (e instanceof LevelChangePlayerEvent event) {
+                MessagingUtils.logInfo("Is of LevelChange!");
                 if (Streamline.getMainConfig().announceLevelChangeChat()) {
                     for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
                         MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
