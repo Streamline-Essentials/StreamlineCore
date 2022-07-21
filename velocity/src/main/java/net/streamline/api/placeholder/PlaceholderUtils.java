@@ -6,6 +6,7 @@ import net.streamline.api.savables.users.SavableUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public class PlaceholderUtils {
@@ -94,6 +95,17 @@ public class PlaceholderUtils {
         }
 
         return found;
+    }
+
+    public static RATResult parseCustomPlaceholder(String key, String value, String from) {
+        int count = 0;
+        String temp;
+        do {
+            temp = from;
+            from = from.replaceFirst(key, value);
+            count ++;
+        } while (! Objects.equals(from, temp));
+        return new RATResult(from, count);
     }
 
     public static RATResult parsePlaceholder(RATExpansion expansion, SavableUser on, String from) {
