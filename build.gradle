@@ -15,7 +15,7 @@ subprojects {
     apply plugin: 'com.github.johnrengelman.shadow'
 
     group = 'net.streamline'
-    version = '1.0.1.0-ht1'
+    version = '2.0.0.0'
 
     repositories {
         mavenCentral()
