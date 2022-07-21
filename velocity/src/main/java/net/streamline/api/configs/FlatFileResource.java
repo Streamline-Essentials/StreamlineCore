@@ -72,10 +72,30 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         this.resource = load(selfContained);
     }
 
+    public void syncMap() {
+        for (String key : this.resource.keySet()) {
+            this.map.put(key, this.resource.get(key));
+        }
+    }
+
+    @Override
+    public <O> O get(String key, Class<O> def) {
+        try {
+            O object = this.resource.get(key, def.newInstance());
+
+            if (! def.isInstance(object)) return null;
+
+            return object;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @Override
     public void continueReloadResource() {
         reload(this.selfContained);
-        this.map.putAll(this.resource.getData());
+        syncMap();
     }
 
     @Override

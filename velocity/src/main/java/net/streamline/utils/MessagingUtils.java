@@ -62,7 +62,7 @@ public class MessagingUtils {
 
     public static void sendMessage(@Nullable CommandSource to, String message) {
         if (to == null) return;
-        to.sendMessage(codedText(message));
+        to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
     }
 
     public static void sendMessage(@Nullable CommandSource to, String otherUUID, String message) {

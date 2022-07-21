@@ -35,6 +35,20 @@ public class MongoResource extends StorageResource<Document> {
     }
 
     @Override
+    public <O> O get(String key, Class<O> def) {
+        try {
+            O object = this.sheet.get(key, def);
+
+            if (! def.isInstance(object)) return null;
+
+            return object;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
     public void continueReloadResource() {
         this.sheet = this.get();
         this.map.putAll(this.sheet);

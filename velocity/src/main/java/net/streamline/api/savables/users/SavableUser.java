@@ -1,20 +1,14 @@
 package net.streamline.api.savables.users;
 
 import de.leonhard.storage.internal.FlatFile;
-import com.velocitypowered.api.command.CommandSource;
-import net.kyori.adventure.text.Component;
-import com.velocitypowered.api.proxy.Player;
-import net.streamline.api.BasePlugin;
 import net.streamline.base.Streamline;
 import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.configs.StorageUtils;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
-import net.streamline.utils.MessagingUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 public abstract class SavableUser extends SavableResource {
     private SavableUser savableUser;
@@ -28,52 +22,6 @@ public abstract class SavableUser extends SavableResource {
 
     public SavableUser getSavableUser() {
         return this.savableUser;
-    }
-
-    public String findServer() {
-        if (this.uuid.equals("%")) {
-            return Streamline.getMainConfig().userConsoleServer();
-        } else {
-            try {
-                Player player = Streamline.getInstance().getPlayer(this.uuid);
-
-                if (player == null) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
-
-                if (player.getCurrentServer().isEmpty()) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
-
-                return player.getCurrentServer().get().getServerInfo().getName();
-            } catch (Exception e) {
-                return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
-            }
-        }
-    }
-
-    public Optional<CommandSource> findSenderOptional() {
-        if (this.uuid == null) return Optional.empty();
-        if (this.uuid.equals("")) return Optional.empty();
-        if (this.uuid.equals("%")) return Optional.ofNullable(Streamline.getInstance().getProxy().getConsoleCommandSource());
-        else return Optional.ofNullable(BasePlugin.getPlayer(this.uuid));
-    }
-
-    public CommandSource findSender() {
-        if (findSenderOptional().isPresent()) {
-            return findSenderOptional().get();
-        }
-        return null;
-    }
-
-    public String grabServer() {
-        if (this.uuid.equals("%")) return Streamline.getMainConfig().userConsoleServer();
-        else {
-            if (findSenderOptional().isPresent()) {
-                Player player = (Player) (findSenderOptional().get());
-                if (player.getCurrentServer().isPresent()) {
-                    return player.getCurrentServer().get().getServerInfo().getName();
-                }
-            }
-        }
-
-        return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
     }
 
     public boolean updateOnline() {
@@ -92,7 +40,8 @@ public abstract class SavableUser extends SavableResource {
     @Override
     public void populateDefaults() {
         // Profile.
-        latestName = getOrSetDefault("profile.latest.name", UserManager.getUsername(findSender()));
+        String username = UserManager.getUsername(this.uuid);
+        latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
         tagList = getOrSetDefault("profile.tags", getTagsFromConfig());

@@ -34,14 +34,6 @@ public abstract class StreamlineCommand {
         this.commandResource = new CommandResource(this, parentDirectory);
     }
 
-    public StreamlineCommand(BundledModule module, String base, String permission, String... aliases) {
-        this.identifier = base;
-        this.base = base;
-        this.permission = permission;
-        this.aliases = aliases;
-        this.commandResource = new CommandResource(module, this, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()));
-    }
-
     public StreamlineCommand(String base, String permission, String... aliases) {
         this(base, permission, Streamline.getMainCommandsFolder(), aliases);
     }
