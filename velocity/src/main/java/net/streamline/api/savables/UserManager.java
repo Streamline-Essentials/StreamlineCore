@@ -6,6 +6,7 @@ import de.leonhard.storage.Json;
 import de.leonhard.storage.Toml;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
@@ -13,6 +14,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.configs.*;
 import net.streamline.api.savables.events.LoadSavableUserEvent;
+import net.streamline.api.savables.users.OperatorUser;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.api.savables.users.SavableConsole;
@@ -328,5 +330,53 @@ public class UserManager {
         }
 
         return (SavableConsole) loadUser(new SavableConsole());
+    }
+
+    public static void addPermission(User user, String permission) {
+        // Add the permission
+        user.data().add(Node.builder(permission).build());
+
+        // Now we need to save changes.
+        Streamline.getLuckPerms().getUserManager().saveUser(user);
+    }
+
+    public static void removePermission(User user, String permission) {
+        // Add the permission
+        user.data().remove(Node.builder(permission).build());
+
+        // Now we need to save changes.
+        Streamline.getLuckPerms().getUserManager().saveUser(user);
+    }
+
+    public static boolean runAs(OperatorUser user, String command) {
+        return runAs(user.getParent(), true, command);
+    }
+
+    public static boolean runAs(SavableUser user, String command) {
+        return runAs(user, user.isBypassPermissions(), command);
+    }
+
+    public static boolean runAs(SavableUser user, boolean bypass, String command) {
+        CommandSource source;
+        if (user instanceof SavablePlayer player) source = Streamline.getPlayer(player.uuid);
+        else {
+            source = Streamline.getInstance().getProxy().getConsoleCommandSource();
+            Streamline.getInstance().getProxy().getCommandManager().executeAsync(source, command);
+            return true;
+        }
+        if (source == null) return false;
+        boolean already = source.hasPermission("*");
+        if (bypass && !already) {
+            User u = Streamline.getLuckPerms().getUserManager().getUser(player.uuid);
+            if (u == null) return false;
+            addPermission(u, "*");
+        }
+        Streamline.getInstance().getProxy().getCommandManager().executeAsync(source, command);
+        if (bypass && !already) {
+            User u = Streamline.getLuckPerms().getUserManager().getUser(player.uuid);
+            if (u == null) return false;
+            removePermission(u, "*");
+        }
+        return true;
     }
 }
