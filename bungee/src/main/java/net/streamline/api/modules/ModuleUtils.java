@@ -16,8 +16,10 @@ import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ModuleUtils {
     public static String loggedModulePrefix(BundledModule module) {
@@ -160,7 +162,7 @@ public class ModuleUtils {
         return MessagingUtils.equalsAnyServer(servername);
     }
 
-    public static java.util.List<String> getStringListFromString(String string) {
+    public static List<String> getStringListFromString(String string) {
         return MessagingUtils.getStringListFromString(string);
     }
 
@@ -231,7 +233,7 @@ public class ModuleUtils {
     }
 
     public static void fireEvent(StreamlineEvent<?> event) {
-        Streamline.getInstance().getProxy().getPluginManager().callEvent(new ProperEvent<>(event));
+        Streamline.fireEvent(new ProperEvent<>(event));
     }
 
     public static void listen(StreamlineEventBus.StreamlineObserver observer) {
@@ -243,6 +245,7 @@ public class ModuleUtils {
     }
 
     public static boolean hasPermission(SavableUser user, String permission) {
+        if (user.isBypassPermissions()) return true;
         return Streamline.hasPermission(user, permission);
     }
 

@@ -1,6 +1,8 @@
 package net.streamline.api.savables.users;
 
 import de.leonhard.storage.internal.FlatFile;
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.base.Streamline;
 import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.configs.StorageUtils;
@@ -11,7 +13,7 @@ import net.streamline.api.savables.UserManager;
 import java.util.List;
 
 public abstract class SavableUser extends SavableResource {
-    private SavableUser savableUser;
+    private final SavableUser savableUser;
     public String latestName;
     public String displayName;
     public List<String> tagList;
@@ -19,8 +21,10 @@ public abstract class SavableUser extends SavableResource {
     public String lastMessage;
     public boolean online;
     public String latestServer;
+    @Getter @Setter
+    private boolean bypassPermissions = false;
 
-    public SavableUser getSavableUser() {
+    public SavableUser asSavableUser() {
         return this.savableUser;
     }
 
