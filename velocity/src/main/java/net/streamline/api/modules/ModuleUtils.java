@@ -233,7 +233,7 @@ public class ModuleUtils {
     }
 
     public static void fireEvent(StreamlineEvent<?> event) {
-        Streamline.getInstance().getProxy().getEventManager().fire(new ProperEvent<>(event));
+        Streamline.fireEvent(new ProperEvent<>(event));
     }
 
     public static void listen(StreamlineEventBus.StreamlineObserver observer) {
@@ -245,6 +245,7 @@ public class ModuleUtils {
     }
 
     public static boolean hasPermission(SavableUser user, String permission) {
+        if (user.isBypassPermissions()) return true;
         return Streamline.hasPermission(user, permission);
     }
 
