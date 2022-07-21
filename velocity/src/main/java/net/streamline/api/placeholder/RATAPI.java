@@ -2,30 +2,49 @@ package net.streamline.api.placeholder;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.modules.BundledModule;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.utils.MessagingUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RATAPI {
     public RATAPI api;
     public List<RATExpansion> loadedExpansions = new ArrayList<>();
     @Getter @Setter
-    private TreeMap<String, String> customPlaceholders = new TreeMap<>();
+    private List<CustomPlaceholder> customPlaceholders = new ArrayList<>();
+    @Getter @Setter
+    private ConcurrentHashMap<BundledModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentHashMap<>();
 
     public RATAPI() {
         this.api = this;
         MessagingUtils.logInfo("Replace A Thing (RAT) API Loaded... (A Placeholder API for Proxies.)");
     }
 
-    public void addCustomPlaceholder(String key, String value) {
-        getCustomPlaceholders().put(key, value);
+    public void registerCustomPlaceholder(CustomPlaceholder placeholder) {
+        getCustomPlaceholders().add(placeholder);
     }
 
-    public void removeCustomPlaceholder(String key) {
-        getCustomPlaceholders().remove(key);
+    public void unregisterCustomPlaceholder(CustomPlaceholder placeholder) {
+        getCustomPlaceholders().remove(placeholder);
+    }
+
+    public void registerModularizedPlaceholder(ModularizedPlaceholder placeholder) {
+        registerCustomPlaceholder(placeholder);
+        List<CustomPlaceholder> placeholders = getModularizedPlaceholders().get(placeholder.getModule());
+        if (placeholders == null) placeholders = new ArrayList<>();
+        placeholders.add(placeholder);
+        getModularizedPlaceholders().put(placeholder.getModule(), placeholders);
+    }
+
+    public void unregisterModularizedPlaceholder(ModularizedPlaceholder placeholder) {
+        unregisterCustomPlaceholder(placeholder);
+        List<CustomPlaceholder> placeholders = getModularizedPlaceholders().get(placeholder.getModule());
+        if (placeholders == null) placeholders = new ArrayList<>();
+        placeholders.remove(placeholder);
+        getModularizedPlaceholders().put(placeholder.getModule(), placeholders);
     }
 
     public void registerExpansion(RATExpansion expansion) {
@@ -53,8 +72,8 @@ public class RATAPI {
     }
 
     public String parseAllPlaceholders(SavableUser of, String from) {
-        for (String search : getCustomPlaceholders().keySet()) {
-            RATResult result = PlaceholderUtils.parseCustomPlaceholder(search, getCustomPlaceholders().get(search), from);
+        for (CustomPlaceholder placeholder : getCustomPlaceholders()) {
+            RATResult result = PlaceholderUtils.parseCustomPlaceholder(placeholder.getKey(), placeholder.getValue(), from);
             from = result.string;
             if (result.didReplacement()) {
                 from = parseAllPlaceholders(of, from);
