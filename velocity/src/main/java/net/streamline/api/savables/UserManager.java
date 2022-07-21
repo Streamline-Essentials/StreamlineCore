@@ -321,4 +321,12 @@ public class UserManager {
     public static String getDisplayName(String username, String nickName) {
         return getLuckPermsPrefix(username) + nickName + getLuckPermsSuffix(username);
     }
+
+    public static SavableConsole getConsole() {
+        for (SavableUser user : getLoadedUsers()) {
+            if (user instanceof SavableConsole console) return console;
+        }
+
+        return (SavableConsole) loadUser(new SavableConsole());
+    }
 }

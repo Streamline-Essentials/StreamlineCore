@@ -10,6 +10,7 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
+import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
@@ -253,5 +254,9 @@ public class ModuleUtils {
 
     public static RATAPI getRATAPI() {
         return Streamline.getRATAPI();
+    }
+
+    public static SavableConsole getConsole() {
+        return UserManager.getConsole();
     }
 }
