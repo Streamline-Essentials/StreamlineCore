@@ -3,6 +3,7 @@ package net.streamline.api.events;
 import lombok.Getter;
 import net.streamline.api.modules.BundledModule;
 import net.streamline.base.Streamline;
+import net.streamline.utils.MessagingUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,10 @@ public class StreamlineEventBus {
         }
 
         protected abstract void update(StreamlineEvent<?> event);
+
+        public void disable() {
+            Streamline.getStreamlineEventBus().removeObserver(this);
+        }
     }
 
     public abstract static class ModularizedObserver extends StreamlineObserver {
@@ -34,6 +39,10 @@ public class StreamlineEventBus {
     }
 
     public void addObserver(StreamlineObserver streamlineObserver) {
+        if (streamlineObservers.contains(streamlineObserver)) return;
         streamlineObservers.add(streamlineObserver);
+    }
+    public void removeObserver(StreamlineObserver streamlineObserver) {
+        streamlineObservers.remove(streamlineObserver);
     }
 }

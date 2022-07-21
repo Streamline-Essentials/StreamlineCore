@@ -290,4 +290,8 @@ public class ModuleUtils {
     public static SavableUser getOrGetUserByName(String name) {
         return UserManager.getOrGetUserByName(name);
     }
+
+    public static StreamlineEventBus getEventBus() {
+        return Streamline.getStreamlineEventBus();
+    }
 }
