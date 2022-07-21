@@ -2,6 +2,8 @@ package net.streamline.api.modules;
 
 import com.mongodb.lang.Nullable;
 import net.luckperms.api.LuckPerms;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.events.ProperEvent;
 import net.streamline.api.events.StreamlineEvent;
@@ -10,6 +12,7 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.UserManager;
+import net.streamline.api.savables.users.OperatorUser;
 import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
@@ -259,5 +262,25 @@ public class ModuleUtils {
 
     public static SavableConsole getConsole() {
         return UserManager.getConsole();
+    }
+
+    public static void addPermission(User user, String permission) {
+        UserManager.addPermission(user, permission);
+    }
+
+    public static void removePermission(User user, String permission) {
+        UserManager.removePermission(user, permission);
+    }
+
+    public static boolean runAs(OperatorUser user, String command) {
+        return UserManager.runAs(user, command);
+    }
+
+    public static boolean runAs(SavableUser user, String command) {
+        return UserManager.runAs(user, command);
+    }
+
+    public static boolean runAs(SavableUser user, boolean bypass, String command) {
+        return UserManager.runAs(user, bypass, command);
     }
 }
