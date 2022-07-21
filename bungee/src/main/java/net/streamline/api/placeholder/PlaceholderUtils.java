@@ -99,12 +99,18 @@ public class PlaceholderUtils {
 
     public static RATResult parseCustomPlaceholder(String key, String value, String from) {
         int count = 0;
-        String temp;
-        do {
-            temp = from;
+
+        boolean isDone = false;
+        String temp = from;
+        while (! isDone) {
             from = from.replaceFirst(key, value);
+            if (from.equals(temp)) {
+                isDone = true;
+                continue;
+            }
+            temp = from;
             count ++;
-        } while (! Objects.equals(from, temp));
+        }
         return new RATResult(from, count);
     }
 

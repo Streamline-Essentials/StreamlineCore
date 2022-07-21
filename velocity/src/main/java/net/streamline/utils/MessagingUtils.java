@@ -102,7 +102,7 @@ public class MessagingUtils {
     }
 
     public static void sendTitle(SavablePlayer player, StreamlineTitle title) {
-        Player p = BasePlugin.getPlayer(player.uuid);
+        Player p = Streamline.getPlayer(player.uuid);
         if (p == null) {
             logInfo("Could not send a title to a player because player is null!");
             return;

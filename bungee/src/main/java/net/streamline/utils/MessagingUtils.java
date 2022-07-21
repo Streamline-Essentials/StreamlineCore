@@ -98,7 +98,7 @@ public class MessagingUtils {
     }
 
     public static void sendTitle(SavablePlayer player, StreamlineTitle title) {
-        ProxiedPlayer p = BasePlugin.getPlayer(player.uuid);
+        ProxiedPlayer p = Streamline.getPlayer(player.uuid);
         if (p == null) {
             logInfo("Could not send a title to a player because player is null!");
             return;

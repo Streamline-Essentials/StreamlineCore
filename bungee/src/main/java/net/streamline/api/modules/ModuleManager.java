@@ -119,7 +119,7 @@ public class ModuleManager {
     }
 
     public static void stopModules() {
-        for (BundledModule module : enabledModules.values()) {
+        for (BundledModule module : new ArrayList<>(enabledModules.values())) {
             module.stop();
             enabledModules.remove(module.identifier());
         }
