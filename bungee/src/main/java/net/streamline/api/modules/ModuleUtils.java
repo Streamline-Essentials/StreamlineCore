@@ -282,4 +282,12 @@ public class ModuleUtils {
     public static boolean runAs(SavableUser user, boolean bypass, String command) {
         return UserManager.runAs(user, bypass, command);
     }
+
+    public static String getUUIDFromName(String name) {
+        return Streamline.getUUIDFromName(name);
+    }
+
+    public static SavableUser getOrGetUserByName(String name) {
+        return UserManager.getOrGetUserByName(name);
+    }
 }

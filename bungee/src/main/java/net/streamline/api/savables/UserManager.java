@@ -372,4 +372,14 @@ public class UserManager {
         }
         return true;
     }
+
+    public static SavableUser getOrGetUserByName(String name) {
+        String uuid = Streamline.getUUIDFromName(name);
+        if (uuid == null) {
+            if (name.equals(Streamline.getMainConfig().userConsoleNameRegular())) return getConsole();
+            return null;
+        }
+
+        return getOrGetUser(uuid);
+    }
 }

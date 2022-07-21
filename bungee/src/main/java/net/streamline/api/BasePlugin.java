@@ -379,8 +379,18 @@ public abstract class BasePlugin extends Plugin {
         return null;
     }
 
+    public static Optional<ProxiedPlayer> getPlayerByName(String name) {
+        return Optional.ofNullable(getInstance().getProxy().getPlayer(name));
+    }
+
     public static String getUUIDFromName(String name) {
-        return UUIDUtils.getCachedUUID(name);
+        if (getPlayerByName(name).isPresent()) return getPlayerByName(name).get().getUniqueId().toString();
+        try {
+            return UUIDUtils.getCachedUUID(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static String getNameFromUUID(String uuid) {
@@ -388,7 +398,8 @@ public abstract class BasePlugin extends Plugin {
     }
 
     public static @Nullable ProxiedPlayer getPlayerExact(@NotNull String name) {
-        return getPlayer(getUUIDFromName(name));
+        if (getPlayerByName(name).isEmpty()) return null;
+        return getPlayerByName(name).get();
     }
 
     public static @NotNull List<ProxiedPlayer> matchPlayer(@NotNull String name) {

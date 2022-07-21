@@ -418,8 +418,18 @@ public abstract class BasePlugin {
         return null;
     }
 
+    public static Optional<Player> getPlayerByName(String name) {
+        return getInstance().getProxy().getPlayer(name);
+    }
+
     public static String getUUIDFromName(String name) {
-        return UUIDUtils.getCachedUUID(name);
+        if (getPlayerByName(name).isPresent()) return getPlayerByName(name).get().getUniqueId().toString();
+        try {
+            return UUIDUtils.getCachedUUID(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static String getNameFromUUID(String uuid) {
@@ -427,7 +437,8 @@ public abstract class BasePlugin {
     }
 
     public static @Nullable Player getPlayerExact(@NotNull String name) {
-        return getPlayer(getUUIDFromName(name));
+        if (getPlayerByName(name).isEmpty()) return null;
+        return getPlayerByName(name).get();
     }
 
     public static @NotNull List<Player> matchPlayer(@NotNull String name) {
