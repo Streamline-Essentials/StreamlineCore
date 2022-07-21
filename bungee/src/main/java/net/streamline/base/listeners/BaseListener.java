@@ -3,6 +3,7 @@ package net.streamline.base.listeners;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectedEvent;
@@ -20,6 +21,7 @@ import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
+import net.streamline.base.events.StreamlineChatEvent;
 import net.streamline.utils.MessagingUtils;
 
 public class BaseListener implements Listener {
@@ -54,6 +56,23 @@ public class BaseListener implements Listener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getInfo().getName());
+    }
+
+    @EventHandler
+    public void onChat(ChatEvent event) {
+        try {
+            ProxiedPlayer player = (ProxiedPlayer) event.getSender();
+
+            SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
+            StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
+            Streamline.getStreamlineEventBus().notifyObservers(chatEvent);
+            if (chatEvent.isCanceled()) {
+                event.setCancelled(true);
+            }
+            event.setMessage(chatEvent.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static class Observer extends StreamlineEventBus.StreamlineObserver {

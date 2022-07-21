@@ -3,6 +3,7 @@ package net.streamline.base.listeners;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
+import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import net.kyori.adventure.title.Title;
 import com.velocitypowered.api.proxy.Player;
@@ -16,6 +17,7 @@ import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
+import net.streamline.base.events.StreamlineChatEvent;
 import net.streamline.utils.MessagingUtils;
 
 import java.time.Duration;
@@ -53,6 +55,19 @@ public class BaseListener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
+    }
+
+    @Subscribe
+    public void onChat(PlayerChatEvent event) {
+        Player player = event.getPlayer();
+
+        SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
+        Streamline.getStreamlineEventBus().notifyObservers(chatEvent);
+        if (chatEvent.isCanceled()) {
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+        }
+        event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
     }
 
     public static class Observer extends StreamlineEventBus.StreamlineObserver {
