@@ -1,6 +1,7 @@
 package net.streamline.api.events;
 
 import lombok.Getter;
+import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
 import java.util.concurrent.CompletableFuture;

@@ -25,7 +25,7 @@ public class ModuleClassLoader extends URLClassLoader {
     private final URL url;
 
     public ModuleClassLoader(File file) throws IOException {
-        super(new URL[]{file.toURI().toURL()}, BundledModule.class.getClassLoader());
+        super(new URL[]{file.toURI().toURL()}, StreamlineModule.class.getClassLoader());
 
         this.jar = new JarFile(file);
         this.manifest = jar.getManifest();

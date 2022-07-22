@@ -2,7 +2,7 @@ package net.streamline.api.placeholder;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.utils.MessagingUtils;
 
@@ -16,7 +16,7 @@ public class RATAPI {
     @Getter @Setter
     private List<CustomPlaceholder> customPlaceholders = new ArrayList<>();
     @Getter @Setter
-    private ConcurrentHashMap<BundledModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<StreamlineModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentHashMap<>();
 
     public RATAPI() {
         this.api = this;

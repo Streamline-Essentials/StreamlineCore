@@ -5,12 +5,14 @@ import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
-import net.kyori.adventure.title.Title;
 import com.velocitypowered.api.proxy.Player;
+import net.streamline.api.events.EventProcessor;
+import net.streamline.api.events.ProperEvent;
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.events.StreamlineEventBus;
+import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.events.server.LoginEvent;
 import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
@@ -19,9 +21,6 @@ import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.base.events.StreamlineChatEvent;
 import net.streamline.utils.MessagingUtils;
-
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 public class BaseListener {
     public BaseListener() {
@@ -63,42 +62,39 @@ public class BaseListener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
-        Streamline.getStreamlineEventBus().notifyObservers(chatEvent);
+        ModuleManager.fireEvent(chatEvent);
         if (chatEvent.isCanceled()) {
             event.setResult(PlayerChatEvent.ChatResult.denied());
         }
         event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
     }
 
-    public static class Observer extends StreamlineEventBus.StreamlineObserver {
-        @Override
-        public void update(StreamlineEvent<?> e) {
-            MessagingUtils.logInfo("Received ping!");
-            if (e instanceof LevelChangePlayerEvent event) {
-                MessagingUtils.logInfo("Is of LevelChange!");
-                if (Streamline.getMainConfig().announceLevelChangeChat()) {
-                    for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
-                        MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(),message));
-                    }
-                }
-
-                if (Streamline.getMainConfig().announceLevelChangeTitle()) {
-                    StreamlineTitle title = new StreamlineTitle(
-                            MessagingUtils.replaceAllPlayerBungee(event.getResource(),MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
-                            MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())
-                    );
-                    title.setFadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
-                    title.setStay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
-                    title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
-
-                    MessagingUtils.sendTitle(event.getResource(), title);
-                }
-            }
-        }
+    @Subscribe
+    public void onProperEvent(ProperEvent<?> event) {
+        ModuleManager.fireEvent(event.getEvent());
     }
 
-    @Subscribe
-    public void onStreamlineEvent(StreamlineEvent<?> event) {
-        Streamline.getStreamlineEventBus().notifyObservers(event);
+    public static class Observer implements StreamlineListener {
+        @EventProcessor
+        public void onPlayerLevelChange(LevelChangePlayerEvent event) {
+            MessagingUtils.logInfo("Is of LevelChange!");
+            if (Streamline.getMainConfig().announceLevelChangeChat()) {
+                for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
+                    MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(), message));
+                }
+            }
+
+            if (Streamline.getMainConfig().announceLevelChangeTitle()) {
+                StreamlineTitle title = new StreamlineTitle(
+                        MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
+                        MessagingUtils.replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())
+                );
+                title.setFadeIn(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_IN.getInt());
+                title.setStay(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_STAY.getInt());
+                title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
+
+                MessagingUtils.sendTitle(event.getResource(), title);
+            }
+        }
     }
 }

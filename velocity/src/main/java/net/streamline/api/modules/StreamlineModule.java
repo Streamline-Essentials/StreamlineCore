@@ -13,11 +13,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
-public abstract class BundledModule {
+public abstract class StreamlineModule {
     @Getter
     private final File dataFolder;
     @Getter
     private boolean initialized;
+    @Getter @Setter
+    private boolean enabled;
     @Getter
     private File moduleFile;
     @Getter
@@ -51,7 +53,7 @@ public abstract class BundledModule {
      */
     public abstract List<ModuleCommand> commands();
 
-    public BundledModule() {
+    public StreamlineModule() {
         this.dataFolder = new File(Streamline.getModuleFolder(), identifier() + File.separator);
         logInfo("Loaded!");
         onLoad();
@@ -64,6 +66,7 @@ public abstract class BundledModule {
 
         ModuleUtils.fireEvent(new ModuleEnableEvent(this));
         onEnable();
+        setEnabled(true);
     }
 
     public void stop() {
@@ -73,6 +76,7 @@ public abstract class BundledModule {
 
         ModuleUtils.fireEvent(new ModuleDisableEvent(this));
         onDisable();
+        setEnabled(false);
     }
 
     public void restart() {

@@ -3,22 +3,27 @@ package net.streamline.api.modules;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import net.streamline.api.command.ModuleCommand;
+import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.modules.dependencies.Dependency;
 import net.streamline.base.Streamline;
 import net.streamline.utils.JarFiles;
 import net.streamline.utils.MessagingUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 public class ModuleManager {
-    public static TreeMap<String, BundledModule> loadedModules = new TreeMap<>();
-    public static TreeMap<String, BundledModule> enabledModules = new TreeMap<>();
+    public static TreeMap<String, StreamlineModule> loadedModules = new TreeMap<>();
+    public static TreeMap<String, StreamlineModule> enabledModules = new TreeMap<>();
 
-    public static void loadModule(@NonNull BundledModule module) {
+    public static void loadModule(@NonNull StreamlineModule module) {
         if (loadedModules.containsKey(module.identifier())) {
             MessagingUtils.logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
             return;
@@ -44,12 +49,12 @@ public class ModuleManager {
         }
     }
 
-    public static void registerModule(BundledModule module) {
+    public static void registerModule(StreamlineModule module) {
         Preconditions.checkNotNull(module, "module parameter cannot be null.");
         loadModule(module);
     }
 
-    public static BundledModule registerModule(File moduleFile) throws IOException, ReflectiveOperationException {
+    public static StreamlineModule registerModule(File moduleFile) throws IOException, ReflectiveOperationException {
         if (!moduleFile.getName().endsWith(".jar"))
             throw new IllegalArgumentException("The given file is not a valid jar file.");
 
@@ -58,12 +63,12 @@ public class ModuleManager {
         ModuleClassLoader moduleClassLoader = new ModuleClassLoader(moduleFile);
 
         //noinspection deprecation
-        Optional<Class<?>> moduleClass = JarFiles.getClasses(moduleFile.toURL(), BundledModule.class, moduleClassLoader).stream().findFirst();
+        Optional<Class<?>> moduleClass = JarFiles.getClasses(moduleFile.toURL(), StreamlineModule.class, moduleClassLoader).stream().findFirst();
 
         if (moduleClass.isEmpty())
             throw new IllegalArgumentException("The file " + moduleName + " is not a valid module.");
 
-        BundledModule module = createInstance(moduleClass.get());
+        StreamlineModule module = createInstance(moduleClass.get());
         module.initModuleLoader(moduleFile, moduleClassLoader);
 
         registerModule(module);
@@ -71,22 +76,22 @@ public class ModuleManager {
         return module;
     }
 
-    private static BundledModule createInstance(Class<?> clazz) throws ReflectiveOperationException {
-        Preconditions.checkArgument(BundledModule.class.isAssignableFrom(clazz), "Class " + clazz + " is not a BundledModule.");
+    private static StreamlineModule createInstance(Class<?> clazz) throws ReflectiveOperationException {
+        Preconditions.checkArgument(StreamlineModule.class.isAssignableFrom(clazz), "Class " + clazz + " is not a BundledModule.");
 
         for (Constructor<?> constructor : clazz.getConstructors()) {
             if (constructor.getParameterCount() == 0) {
                 if (!constructor.isAccessible())
                     constructor.setAccessible(true);
 
-                return (BundledModule) constructor.newInstance();
+                return (StreamlineModule) constructor.newInstance();
             }
         }
 
         throw new IllegalArgumentException("Class " + clazz + " has no valid constructors.");
     }
 
-    public static List<ModuleCommand> getCommandsForModule(BundledModule module) {
+    public static List<ModuleCommand> getCommandsForModule(StreamlineModule module) {
         List<ModuleCommand> r = new ArrayList<>();
 
         for (ModuleCommand command : Streamline.getLoadedModuleCommands().values()) {
@@ -96,7 +101,7 @@ public class ModuleManager {
         return r;
     }
 
-    public static void unloadCommandsForModule(BundledModule module) {
+    public static void unloadCommandsForModule(StreamlineModule module) {
         List<ModuleCommand> commands = getCommandsForModule(module);
 
         for (ModuleCommand command : commands) {
@@ -105,13 +110,13 @@ public class ModuleManager {
     }
 
     public static void restartModules() {
-        for (BundledModule module : enabledModules.values()) {
+        for (StreamlineModule module : enabledModules.values()) {
             module.restart();
         }
     }
 
     public static void startModules() {
-        for (BundledModule module : orderModules().values()) {
+        for (StreamlineModule module : orderModules().values()) {
             if (enabledModules.containsKey(module.identifier())) continue;
             module.start();
             enabledModules.put(module.identifier(), module);
@@ -119,28 +124,28 @@ public class ModuleManager {
     }
 
     public static void stopModules() {
-        for (BundledModule module : new ArrayList<>(enabledModules.values())) {
+        for (StreamlineModule module : new ArrayList<>(enabledModules.values())) {
             module.stop();
             enabledModules.remove(module.identifier());
         }
     }
 
-    public static TreeMap<Integer, BundledModule> orderModules() {
+    public static TreeMap<Integer, StreamlineModule> orderModules() {
         return orderModules(loadedModules.values().stream().toList());
     }
 
-    public static TreeMap<Integer, BundledModule> orderModules(BundledModule... from) {
+    public static TreeMap<Integer, StreamlineModule> orderModules(StreamlineModule... from) {
         return orderModules(Arrays.stream(from).toList());
     }
 
-    public static TreeMap<Integer, BundledModule> orderModules(List<BundledModule> from) {
-        TreeMap<Integer, BundledModule> r = new TreeMap<>();
-        List<BundledModule> independents = new ArrayList<>();
+    public static TreeMap<Integer, StreamlineModule> orderModules(List<StreamlineModule> from) {
+        TreeMap<Integer, StreamlineModule> r = new TreeMap<>();
+        List<StreamlineModule> independents = new ArrayList<>();
 
         TreeSet<String> identified = new TreeSet<>();
         from.forEach(a -> identified.add(a.identifier()));
 
-        for (BundledModule module : from) {
+        for (StreamlineModule module : from) {
             if (module.dependencies().size() <= 0) {
                 independents.add(module);
                 continue;
@@ -156,5 +161,139 @@ public class ModuleManager {
         independents.forEach(a -> r.put(r.size(), a));
 
         return r;
+    }
+
+    public static void fireEvent(@NotNull StreamlineEvent<?> event) {
+        HandlerList handlers = event.getHandlerList();
+        RegisteredListener[] listeners = handlers.getRegisteredListeners();
+
+        for (RegisteredListener registration : listeners) {
+            if (! registration.getModule().isEnabled()) {
+                continue;
+            }
+
+            try {
+                registration.callEvent(event);
+            } catch (Throwable ex) {
+                MessagingUtils.logSevere("Could not pass event '" + event.getEventName() + "' to '" + registration.getModule().identifier() + "' for reason: " + ex.getMessage());
+            }
+        }
+    }
+
+    private static Class<? extends StreamlineEvent<?>> getRegistrationClass(@NotNull Class<? extends StreamlineEvent<?>> clazz) {
+        try {
+            clazz.getDeclaredMethod("getHandlerList");
+            return clazz;
+        } catch (NoSuchMethodException e) {
+            if (clazz.getSuperclass() != null
+                    && !clazz.getSuperclass().equals(StreamlineEvent.class)
+                    && StreamlineEvent.class.isAssignableFrom(clazz.getSuperclass())) {
+                return getRegistrationClass((Class<? extends StreamlineEvent<?>>) clazz.getSuperclass().asSubclass(StreamlineEvent.class));
+            } else {
+                MessagingUtils.logSevere("Unable to find handler list for event '" + clazz.getName() + "'. Static getHandlerList method required!");
+            }
+            return null;
+        }
+    }
+
+    private static HandlerList getEventListeners(@NotNull Class<? extends StreamlineEvent<?>> type) {
+        try {
+            Method method = getRegistrationClass(type).getDeclaredMethod("getHandlerList");
+            method.setAccessible(true);
+
+            if (!Modifier.isStatic(method.getModifiers())) {
+                throw new IllegalAccessException("getHandlerList must be static");
+            }
+
+            return (HandlerList) method.invoke(null);
+        } catch (Exception e) {
+            MessagingUtils.logSevere("Error while registering listener for event type '" + type + "': " + e);
+            return null;
+        }
+    }
+
+    public static void registerEvents(@NotNull StreamlineListener listener, @NotNull StreamlineModule module) {
+        if (! module.isEnabled()) {
+            module.logWarning("Module attempted to register '" + listener + "' while not enabled!");
+        }
+
+        for (Map.Entry<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> entry : createRegisteredListeners(listener, module).entrySet()) {
+            Class<? extends StreamlineEvent<?>> clazz = getRegistrationClass(entry.getKey());
+            if (clazz == null) continue;
+            HandlerList list = getEventListeners(clazz);
+            if (list == null) continue;
+            list.registerAll(entry.getValue());
+        }
+
+    }
+
+    public static Map<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> createRegisteredListeners(StreamlineListener listener, StreamlineModule module) {
+        Preconditions.checkArgument(module != null, "Plugin can not be null");
+        Preconditions.checkArgument(listener != null, "Listener can not be null");
+
+//        boolean useTimings = server.getPluginManager().useTimings();
+        Map<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> ret = new HashMap<>();
+        Set<Method> methods;
+        try {
+            Method[] publicMethods = listener.getClass().getMethods();
+            Method[] privateMethods = listener.getClass().getDeclaredMethods();
+            methods = new HashSet<Method>(publicMethods.length + privateMethods.length, 1.0f);
+            methods.addAll(Arrays.asList(publicMethods));
+            methods.addAll(Arrays.asList(privateMethods));
+        } catch (NoClassDefFoundError e) {
+            module.logSevere("Module '" + module.identifier() + "' has failed to register events for '" + listener.getClass() + "' because '" + e.getMessage() + "' does not exist.");
+            return ret;
+        }
+
+        for (final Method method : methods) {
+            final EventProcessor eh = method.getAnnotation(EventProcessor.class);
+            if (eh == null) continue;
+            // Do not register bridge or synthetic methods to avoid event duplication
+            // Fixes SPIGOT-893
+            if (method.isBridge() || method.isSynthetic()) {
+                continue;
+            }
+            final Class<?> checkClass;
+            if (method.getParameterTypes().length != 1 || !StreamlineEvent.class.isAssignableFrom(checkClass = method.getParameterTypes()[0])) {
+                module.logSevere("Module '" + module.identifier() + "' attempted to register an invalid EventProcessor method signature \"" + method.toGenericString() + "\" in '" + listener.getClass() + "'");
+                continue;
+            }
+            final Class<? extends StreamlineEvent<?>> eventClass = (Class<? extends StreamlineEvent<?>>) checkClass.asSubclass(StreamlineEvent.class);
+            method.setAccessible(true);
+            Set<RegisteredListener> eventSet = ret.computeIfAbsent(eventClass, k -> new HashSet<RegisteredListener>());
+
+            for (Class<?> clazz = eventClass; StreamlineEvent.class.isAssignableFrom(clazz); clazz = clazz.getSuperclass()) {
+                // This loop checks for extending deprecated events
+                if (clazz.getAnnotation(Deprecated.class) != null) {
+                    module.logInfo(
+                            String.format(
+                                    "'%s' has registered a listener for '%s' on method '%s', but the event is Deprecated. Please notify these authors: %s.",
+                                    module.identifier(),
+                                    clazz.getName(),
+                                    method.toGenericString(),
+                                    module.getAuthorsStringed()));
+                    break;
+                }
+            }
+
+            EventExecutor executor = new EventExecutor() {
+                @Override
+                public void execute(@NotNull StreamlineListener listener, @NotNull StreamlineEvent<?> event) throws EventException {
+                    try {
+                        if (!eventClass.isAssignableFrom(event.getClass())) {
+                            return;
+                        }
+                        method.invoke(listener, event);
+                    } catch (InvocationTargetException ex) {
+                        throw new EventException(ex.getCause());
+                    } catch (Throwable t) {
+                        throw new EventException(t);
+                    }
+                }
+            };
+
+            eventSet.add(new RegisteredListener(listener, executor, eh.priority(), module, eh.ignoreCancelled()));
+        }
+        return ret;
     }
 }

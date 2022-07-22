@@ -1,9 +1,8 @@
 package net.streamline.api.configs;
 
 import de.leonhard.storage.Config;
-import de.leonhard.storage.Yaml;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.base.Streamline;
 
 import java.io.File;
@@ -30,7 +29,7 @@ public class CommandResource extends FlatFileResource<Config> {
         syncCommand();
     }
 
-    public CommandResource(BundledModule module, StreamlineCommand command, File parentDirectory) {
+    public CommandResource(StreamlineModule module, StreamlineCommand command, File parentDirectory) {
         super(module, Config.class, command.getIdentifier() + ".yml", parentDirectory, false);
     }
 

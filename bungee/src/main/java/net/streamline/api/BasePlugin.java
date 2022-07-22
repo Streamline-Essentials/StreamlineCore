@@ -3,7 +3,6 @@ package net.streamline.api;
 import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -13,7 +12,6 @@ import net.md_5.bungee.api.plugin.Event;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.command.*;
-import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.scheduler.ModuleTaskManager;
@@ -74,16 +72,11 @@ public abstract class BasePlugin extends Plugin {
     @Getter
     static GeyserHolder geyserHolder;
 
-    @Getter
-    private static StreamlineEventBus streamlineEventBus;
-
     @Override
     public void onEnable() {
         name = "StreamlineAPI";
         version = "${project.version}";
         instance = this;
-
-        streamlineEventBus = new StreamlineEventBus();
 
         ratapi = new RATAPI();
         mainConfigHandler = new MainConfigHandler();

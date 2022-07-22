@@ -1,8 +1,5 @@
 package net.streamline.api.scheduler;
 
-import net.streamline.api.modules.BundledModule;
-
-import java.util.Date;
 import java.util.TreeMap;
 
 public class TaskManager {
