@@ -13,6 +13,4 @@ public abstract class StreamlineEvent<T> extends CompletableFuture<T> {
     public String getEventName() {
         return getClass().getSimpleName();
     }
-
-    abstract HandlerList getHandlerList();
 }
