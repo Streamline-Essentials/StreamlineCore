@@ -186,19 +186,19 @@ public class ModuleManager {
     @Getter @Setter
     private static ConcurrentHashMap<Class<? extends StreamlineEvent<?>>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
 
-    private static HandlerList getEventListeners(@NotNull Class<? extends StreamlineEvent<?>> type) {
-        return getRegisteredHandlers().get(type);
+    private static <O extends StreamlineEvent<?>> HandlerList getEventListeners(@NotNull Class<O> type) {
+        HandlerList list = getRegisteredHandlers().get(type);
+        if (list == null) list = new HandlerList();
+        return list;
     }
 
-    private static HandlerList getEventListeners(StreamlineEvent<?> event) {
-        return getRegisteredHandlers().get(event.getClass());
+    private static <O extends StreamlineEvent<?>> HandlerList getEventListeners(O event) {
+        HandlerList list = getRegisteredHandlers().get(event.getClass());
+        if (list == null) list = new HandlerList();
+        return list;
     }
 
     public static void registerEvents(@NotNull StreamlineListener listener, @NotNull StreamlineModule module) {
-        if (! module.isEnabled()) {
-            module.logWarning("Module attempted to register '" + listener + "' while not enabled!");
-        }
-
         for (Map.Entry<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> entry : createRegisteredListeners(listener, module).entrySet()) {
             Class<? extends StreamlineEvent<?>> clazz = entry.getKey();
             if (clazz == null) continue;
