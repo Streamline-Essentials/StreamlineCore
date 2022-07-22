@@ -12,11 +12,9 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.events.StreamlineEventBus;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATAPI;
@@ -26,7 +24,6 @@ import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
-import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainConfigHandler;
 import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.base.listeners.BaseListener;
@@ -88,9 +85,6 @@ public abstract class BasePlugin {
     @Getter
     private final File dataFolder;
 
-    @Getter
-    private static StreamlineEventBus streamlineEventBus;
-
     public BasePlugin(ProxyServer s, Logger l, Path dd) {
         this.proxy = s;
         this.logger = l;
@@ -103,8 +97,6 @@ public abstract class BasePlugin {
         name = "StreamlineAPI";
         version = "${project.version}";
         instance = this;
-
-        streamlineEventBus = new StreamlineEventBus();
 
         ratapi = new RATAPI();
         mainConfigHandler = new MainConfigHandler();

@@ -1,14 +1,14 @@
 package net.streamline.api.placeholder;
 
 import lombok.Getter;
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.base.Streamline;
 
 public class ModularizedPlaceholder extends CustomPlaceholder {
     @Getter
-    private final BundledModule module;
+    private final StreamlineModule module;
 
-    public ModularizedPlaceholder(BundledModule module, String key, String value) {
+    public ModularizedPlaceholder(StreamlineModule module, String key, String value) {
         super(key, value);
         this.module = module;
     }

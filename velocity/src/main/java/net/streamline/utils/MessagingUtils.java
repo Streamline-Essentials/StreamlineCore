@@ -8,11 +8,9 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
-import net.streamline.api.BasePlugin;
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
@@ -21,7 +19,6 @@ import net.streamline.api.savables.users.SavableUser;
 import net.kyori.adventure.text.TextComponent;
 import net.streamline.base.configs.MainMessagesHandler;
 
-import java.awt.*;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -44,19 +41,19 @@ public class MessagingUtils {
         Streamline.getInstance().getLogger().error(message);
     }
 
-    public static String loggedModulePrefix(BundledModule module) {
+    public static String loggedModulePrefix(StreamlineModule module) {
         return "[" + module.identifier() + "] ";
     }
 
-    public static void logInfo(BundledModule module, String message) {
+    public static void logInfo(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().info(loggedModulePrefix(module) + message);
     }
 
-    public static void logWarning(BundledModule module, String message) {
+    public static void logWarning(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().warn(loggedModulePrefix(module) + message);
     }
 
-    public static void logSevere(BundledModule module, String message) {
+    public static void logSevere(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().error(loggedModulePrefix(module) + message);
     }
 

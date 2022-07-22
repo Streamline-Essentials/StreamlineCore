@@ -3,11 +3,10 @@ package net.streamline.api.modules;
 import com.mongodb.lang.Nullable;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.Node;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.events.ProperEvent;
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.events.StreamlineEventBus;
+import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.SavableResource;
@@ -25,19 +24,19 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class ModuleUtils {
-    public static String loggedModulePrefix(BundledModule module) {
+    public static String loggedModulePrefix(StreamlineModule module) {
         return MessagingUtils.loggedModulePrefix(module);
     }
 
-    public static void logInfo(BundledModule module, String message) {
+    public static void logInfo(StreamlineModule module, String message) {
         MessagingUtils.logInfo(module, message);
     }
 
-    public static void logWarning(BundledModule module, String message) {
+    public static void logWarning(StreamlineModule module, String message) {
         MessagingUtils.logWarning(module, message);
     }
 
-    public static void logSevere(BundledModule module, String message) {
+    public static void logSevere(StreamlineModule module, String message) {
         MessagingUtils.logSevere(module, message);
     }
 
@@ -239,8 +238,8 @@ public class ModuleUtils {
         Streamline.fireEvent(new ProperEvent<>(event));
     }
 
-    public static void listen(StreamlineEventBus.StreamlineObserver observer) {
-        Streamline.getStreamlineEventBus().addObserver(observer);
+    public static void listen(StreamlineListener listener, StreamlineModule module) {
+        ModuleManager.registerEvents(listener, module);
     }
 
     public static List<String> getOnlinePlayerNames() {
@@ -290,9 +289,5 @@ public class ModuleUtils {
 
     public static SavableUser getOrGetUserByName(String name) {
         return UserManager.getOrGetUserByName(name);
-    }
-
-    public static StreamlineEventBus getEventBus() {
-        return Streamline.getStreamlineEventBus();
     }
 }

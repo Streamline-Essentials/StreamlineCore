@@ -11,8 +11,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.BasePlugin;
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
@@ -21,8 +20,6 @@ import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.configs.MainMessagesHandler;
 
 import java.awt.*;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,19 +37,19 @@ public class MessagingUtils {
         Streamline.getInstance().getLogger().severe(message);
     }
 
-    public static String loggedModulePrefix(BundledModule module) {
+    public static String loggedModulePrefix(StreamlineModule module) {
         return "[" + module.identifier() + "] ";
     }
 
-    public static void logInfo(BundledModule module, String message) {
+    public static void logInfo(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().info(loggedModulePrefix(module) + message);
     }
 
-    public static void logWarning(BundledModule module, String message) {
+    public static void logWarning(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().warning(loggedModulePrefix(module) + message);
     }
 
-    public static void logSevere(BundledModule module, String message) {
+    public static void logSevere(StreamlineModule module, String message) {
         Streamline.getInstance().getLogger().severe(loggedModulePrefix(module) + message);
     }
 

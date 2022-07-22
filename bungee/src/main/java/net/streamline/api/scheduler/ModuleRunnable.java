@@ -1,12 +1,12 @@
 package net.streamline.api.scheduler;
 
-import net.streamline.api.modules.BundledModule;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.base.Streamline;
 
 public abstract class ModuleRunnable extends BaseRunnable {
-    public BundledModule module;
+    public StreamlineModule module;
 
-    public ModuleRunnable(BundledModule module, long delay, long period) {
+    public ModuleRunnable(StreamlineModule module, long delay, long period) {
         super(delay, period);
         this.module = module;
         Streamline.getModuleScheduler().start(this);

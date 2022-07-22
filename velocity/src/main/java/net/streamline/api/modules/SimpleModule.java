@@ -1,6 +1,6 @@
 package net.streamline.api.modules;
 
-public abstract class SimpleModule extends BundledModule {
+public abstract class SimpleModule extends StreamlineModule {
     @Override
     public void onLoad() {
 
