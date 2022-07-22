@@ -1,7 +1,9 @@
 package net.streamline.api.modules;
 
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
@@ -18,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ModuleManager {
     public static TreeMap<String, StreamlineModule> loadedModules = new TreeMap<>();
@@ -164,7 +167,7 @@ public class ModuleManager {
     }
 
     public static void fireEvent(@NotNull StreamlineEvent<?> event) {
-        HandlerList handlers = event.getHandlerList();
+        HandlerList handlers = getEventListeners(event);
         RegisteredListener[] listeners = handlers.getRegisteredListeners();
 
         for (RegisteredListener registration : listeners) {
@@ -180,36 +183,15 @@ public class ModuleManager {
         }
     }
 
-    private static Class<? extends StreamlineEvent<?>> getRegistrationClass(@NotNull Class<? extends StreamlineEvent<?>> clazz) {
-        try {
-            clazz.getDeclaredMethod("getHandlerList");
-            return clazz;
-        } catch (NoSuchMethodException e) {
-            if (clazz.getSuperclass() != null
-                    && !clazz.getSuperclass().equals(StreamlineEvent.class)
-                    && StreamlineEvent.class.isAssignableFrom(clazz.getSuperclass())) {
-                return getRegistrationClass((Class<? extends StreamlineEvent<?>>) clazz.getSuperclass().asSubclass(StreamlineEvent.class));
-            } else {
-                MessagingUtils.logSevere("Unable to find handler list for event '" + clazz.getName() + "'. Static getHandlerList method required!");
-            }
-            return null;
-        }
-    }
+    @Getter @Setter
+    private static ConcurrentHashMap<Class<? extends StreamlineEvent<?>>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
 
     private static HandlerList getEventListeners(@NotNull Class<? extends StreamlineEvent<?>> type) {
-        try {
-            Method method = getRegistrationClass(type).getDeclaredMethod("getHandlerList");
-            method.setAccessible(true);
+        return getRegisteredHandlers().get(type);
+    }
 
-            if (!Modifier.isStatic(method.getModifiers())) {
-                throw new IllegalAccessException("getHandlerList must be static");
-            }
-
-            return (HandlerList) method.invoke(null);
-        } catch (Exception e) {
-            MessagingUtils.logSevere("Error while registering listener for event type '" + type + "': " + e);
-            return null;
-        }
+    private static HandlerList getEventListeners(StreamlineEvent<?> event) {
+        return getRegisteredHandlers().get(event.getClass());
     }
 
     public static void registerEvents(@NotNull StreamlineListener listener, @NotNull StreamlineModule module) {
@@ -218,7 +200,7 @@ public class ModuleManager {
         }
 
         for (Map.Entry<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> entry : createRegisteredListeners(listener, module).entrySet()) {
-            Class<? extends StreamlineEvent<?>> clazz = getRegistrationClass(entry.getKey());
+            Class<? extends StreamlineEvent<?>> clazz = entry.getKey();
             if (clazz == null) continue;
             HandlerList list = getEventListeners(clazz);
             if (list == null) continue;
