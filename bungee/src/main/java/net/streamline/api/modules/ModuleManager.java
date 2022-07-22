@@ -183,8 +183,7 @@ public class ModuleManager {
         }
     }
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private static ConcurrentHashMap<Class<? extends StreamlineEvent<?>>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
 
     private static HandlerList getEventListeners(@NotNull Class<? extends StreamlineEvent<?>> type) {
@@ -204,8 +203,9 @@ public class ModuleManager {
             Class<? extends StreamlineEvent<?>> clazz = entry.getKey();
             if (clazz == null) continue;
             HandlerList list = getEventListeners(clazz);
-            if (list == null) continue;
+            if (list == null) list = new HandlerList();
             list.registerAll(entry.getValue());
+            getRegisteredHandlers().put(entry.getKey(), list);
         }
 
     }

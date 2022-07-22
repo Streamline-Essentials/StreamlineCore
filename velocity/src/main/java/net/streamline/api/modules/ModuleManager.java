@@ -203,8 +203,9 @@ public class ModuleManager {
             Class<? extends StreamlineEvent<?>> clazz = entry.getKey();
             if (clazz == null) continue;
             HandlerList list = getEventListeners(clazz);
-            if (list == null) continue;
+            if (list == null) list = new HandlerList();
             list.registerAll(entry.getValue());
+            getRegisteredHandlers().put(entry.getKey(), list);
         }
 
     }
