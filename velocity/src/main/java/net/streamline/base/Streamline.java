@@ -5,11 +5,14 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.api.BasePlugin;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.commands.*;
 import net.streamline.base.listeners.BaseListener;
+import net.streamline.base.module.BaseModule;
 import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
 import net.streamline.base.timers.PlayerExperienceTimer;
+import net.streamline.base.timers.UserSaveTimer;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -49,7 +52,16 @@ public class Streamline extends BasePlugin {
         new OneSecondTimer();
         new PlayerExperienceTimer();
 
-        new BaseListener.Observer();
+        ModuleManager.registerModule(new BaseModule());
+
+        try {
+            ModuleManager.registerExternalModules();
+            ModuleManager.startModules();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        new UserSaveTimer();
     }
 
     @Override

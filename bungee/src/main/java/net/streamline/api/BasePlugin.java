@@ -101,15 +101,6 @@ public abstract class BasePlugin extends Plugin {
 
         UserManager.loadUser(new SavableConsole());
 
-        try {
-            ModuleManager.registerExternalModules();
-            ModuleManager.startModules();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        new UserSaveTimer();
-
         this.enable();
     }
 
