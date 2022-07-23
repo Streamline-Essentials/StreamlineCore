@@ -63,7 +63,7 @@ public class BaseListener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
-        ModuleUtils.fireEvent(chatEvent);
+        ModuleManager.fireEvent(chatEvent);
         if (chatEvent.isCanceled()) {
             event.setResult(PlayerChatEvent.ChatResult.denied());
         }
@@ -73,7 +73,6 @@ public class BaseListener {
     @Subscribe
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getEvent());
-        event.voidComplete();
     }
 
     public static class Observer implements StreamlineListener {
