@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.savables.users.SavablePlayer;
 
-public class StreamlineChatEvent extends StreamlineEvent<Boolean> {
+public class StreamlineChatEvent extends StreamlineEvent {
     @Getter
     private final SavablePlayer sender;
     @Getter

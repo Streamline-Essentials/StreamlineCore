@@ -65,17 +65,16 @@ public class BaseListener implements Listener {
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
         ModuleUtils.fireEvent(chatEvent);
-        chatEvent.whenCompleteAsync((aBoolean, throwable) -> {
-            if (chatEvent.isCanceled()) {
-                event.setCancelled(true);
-            }
-            event.setMessage(chatEvent.getMessage());
-        });
+        if (chatEvent.isCanceled()) {
+            event.setCancelled(true);
+        }
+        event.setMessage(chatEvent.getMessage());
     }
 
     @EventHandler
-    public void onProperEvent(ProperEvent<?> event) {
+    public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getEvent());
+        event.voidComplete();
     }
 
     public static class Observer implements StreamlineListener {
