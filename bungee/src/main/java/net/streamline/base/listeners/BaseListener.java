@@ -65,8 +65,10 @@ public class BaseListener implements Listener {
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
+        chatEvent.complete();
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
+            return;
         }
         event.setMessage(chatEvent.getMessage());
     }

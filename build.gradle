@@ -19,15 +19,13 @@ subprojects {
 
     repositories {
         mavenCentral()
-        //OpenCollab
+        // OpenCollab
         maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
         maven { url 'https://repo.opencollab.dev/maven-releases/'}
-        //JitPack
+        // JitPack
         maven { url 'https://jitpack.io' }
         maven { url 'https://mvnrepository.com/artifact' }
-        // Apache Commons Lang
-
-        //ViaVersion
+        // Velocity
         maven {url 'https://repo.papermc.io/repository/maven-public/' }
     }
 
