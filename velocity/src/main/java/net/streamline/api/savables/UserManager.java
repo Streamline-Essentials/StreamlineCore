@@ -1,6 +1,7 @@
 package net.streamline.api.savables;
 
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import de.leonhard.storage.Config;
 import de.leonhard.storage.Json;
 import de.leonhard.storage.Toml;
@@ -388,5 +389,24 @@ public class UserManager {
         }
 
         return getOrGetUser(uuid);
+    }
+
+    public static List<Player> getPlayersOn(String server) {
+        RegisteredServer s = Streamline.getServer(server);
+        if (s == null) return new ArrayList<>();
+
+        return new ArrayList<>(s.getPlayersConnected());
+    }
+
+    public static List<SavableUser> getUsersOn(String server) {
+        List<SavableUser> r = new ArrayList<>();
+
+        getPlayersOn(server).forEach(a -> {
+            SavablePlayer player = getOrGetPlayer(a);
+            player.setLatestServer(server);
+            r.add(player);
+        });
+
+        return r;
     }
 }

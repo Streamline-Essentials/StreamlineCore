@@ -10,6 +10,7 @@ import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.configs.*;
 import net.streamline.api.modules.ModuleUtils;
@@ -381,5 +382,24 @@ public class UserManager {
         }
 
         return getOrGetUser(uuid);
+    }
+
+    public static List<ProxiedPlayer> getPlayersOn(String server) {
+        ServerInfo s = Streamline.getServer(server);
+        if (s == null) return new ArrayList<>();
+
+        return new ArrayList<>(s.getPlayers());
+    }
+
+    public static List<SavableUser> getUsersOn(String server) {
+        List<SavableUser> r = new ArrayList<>();
+
+        getPlayersOn(server).forEach(a -> {
+            SavablePlayer player = getOrGetPlayer(a);
+            player.setLatestServer(server);
+            r.add(player);
+        });
+
+        return r;
     }
 }

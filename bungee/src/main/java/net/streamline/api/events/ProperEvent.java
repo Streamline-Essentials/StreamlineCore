@@ -8,16 +8,13 @@ import net.streamline.utils.MessagingUtils;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ProperEvent extends AsyncEvent<Void> {
+public class ProperEvent extends AsyncEvent<ProperEvent> {
         @Getter
         private final StreamlineEvent event;
 
         public ProperEvent(StreamlineEvent event) {
-                super(new Callback<Void>() {
-                        @Override
-                        public void done(Void result, Throwable error) {
-                                MessagingUtils.logWarning("A module tried to run a callback on an event when it is disabled!");
-                        }
+                super((result, error) -> {
+                        if (error != null) MessagingUtils.logWarning("ProperEvent of '" + event.getEventName() + "' threw an error: " + error.getMessage());
                 });
                 this.event = event;
         }
