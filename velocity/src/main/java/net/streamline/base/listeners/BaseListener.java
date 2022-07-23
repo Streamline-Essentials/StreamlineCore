@@ -13,6 +13,7 @@ import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.events.server.LoginEvent;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.modules.ModuleManager;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
@@ -62,11 +63,13 @@ public class BaseListener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
-        ModuleManager.fireEvent(chatEvent);
-        if (chatEvent.isCanceled()) {
-            event.setResult(PlayerChatEvent.ChatResult.denied());
-        }
-        event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+        ModuleUtils.fireEvent(chatEvent);
+        chatEvent.whenCompleteAsync((aBoolean, throwable) -> {
+            if (chatEvent.isCanceled()) {
+                event.setResult(PlayerChatEvent.ChatResult.denied());
+            }
+            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+        });
     }
 
     @Subscribe
@@ -77,7 +80,6 @@ public class BaseListener {
     public static class Observer implements StreamlineListener {
         @EventProcessor
         public void onPlayerLevelChange(LevelChangePlayerEvent event) {
-            MessagingUtils.logInfo("Is of LevelChange!");
             if (Streamline.getMainConfig().announceLevelChangeChat()) {
                 for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
                     MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(), message));
