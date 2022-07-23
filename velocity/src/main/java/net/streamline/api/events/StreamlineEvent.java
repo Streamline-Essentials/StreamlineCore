@@ -3,7 +3,7 @@ package net.streamline.api.events;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class StreamlineEvent<T> extends CompletableFuture<T> {
+public abstract class StreamlineEvent {
     public Date firedAt;
 
     public StreamlineEvent() {

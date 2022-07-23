@@ -234,8 +234,8 @@ public class ModuleUtils {
         return UserManager.getDisplayName(username, nickName);
     }
 
-    public static void fireEvent(StreamlineEvent<?> event) {
-        Streamline.fireEvent(new ProperEvent<>(event));
+    public static void fireEvent(StreamlineEvent event) {
+        Streamline.fireEvent(new ProperEvent(event));
     }
 
     public static void listen(StreamlineListener listener, StreamlineModule module) {

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Used for module enable and disable events
  */
-public abstract class ModuleEvent<T> extends StreamlineEvent<T> {
+public abstract class ModuleEvent extends StreamlineEvent {
     private final StreamlineModule module;
 
     public ModuleEvent(@NotNull final StreamlineModule module) {

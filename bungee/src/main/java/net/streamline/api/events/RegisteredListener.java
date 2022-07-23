@@ -57,7 +57,7 @@ public class RegisteredListener {
      * @param event The event
      * @throws EventException If an event handler throws an exception.
      */
-    public void callEvent(@NotNull final StreamlineEvent<?> event) throws EventException {
+    public void callEvent(@NotNull final StreamlineEvent event) throws EventException {
         executor.execute(listener, event);
     }
 

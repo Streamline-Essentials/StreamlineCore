@@ -3,19 +3,26 @@ package net.streamline.api.events;
 import lombok.Getter;
 import net.md_5.bungee.api.Callback;
 import net.md_5.bungee.api.event.AsyncEvent;
+import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
 
-public class ProperEvent<T> extends AsyncEvent<T> {
-        @Getter
-        private final StreamlineEvent<T> event;
+import java.util.concurrent.CompletableFuture;
 
-        public ProperEvent(StreamlineEvent<T> event) {
-                super(new Callback<T>() {
+public class ProperEvent extends AsyncEvent<Void> {
+        @Getter
+        private final StreamlineEvent event;
+
+        public ProperEvent(StreamlineEvent event) {
+                super(new Callback<Void>() {
                         @Override
-                        public void done(T result, Throwable error) {
+                        public void done(Void result, Throwable error) {
                                 MessagingUtils.logWarning("A module tried to run a callback on an event when it is disabled!");
                         }
                 });
                 this.event = event;
+        }
+
+        public void voidComplete() {
+                this.completeIntent(Streamline.getInstance());
         }
 }

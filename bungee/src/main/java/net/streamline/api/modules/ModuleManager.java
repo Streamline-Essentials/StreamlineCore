@@ -166,7 +166,7 @@ public class ModuleManager {
         return r;
     }
 
-    public static void fireEvent(@NotNull StreamlineEvent<?> event) {
+    public static void fireEvent(@NotNull StreamlineEvent event) {
         HandlerList handlers = getEventListeners(event);
         RegisteredListener[] listeners = handlers.getRegisteredListeners();
 
@@ -184,23 +184,23 @@ public class ModuleManager {
     }
 
     @Getter @Setter
-    private static ConcurrentHashMap<Class<? extends StreamlineEvent<?>>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Class<? extends StreamlineEvent>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
 
-    private static <O extends StreamlineEvent<?>> HandlerList getEventListeners(@NotNull Class<O> type) {
+    private static <O extends StreamlineEvent> HandlerList getEventListeners(@NotNull Class<O> type) {
         HandlerList list = getRegisteredHandlers().get(type);
         if (list == null) list = new HandlerList();
         return list;
     }
 
-    private static <O extends StreamlineEvent<?>> HandlerList getEventListeners(O event) {
+    private static <O extends StreamlineEvent> HandlerList getEventListeners(O event) {
         HandlerList list = getRegisteredHandlers().get(event.getClass());
         if (list == null) list = new HandlerList();
         return list;
     }
 
     public static void registerEvents(@NotNull StreamlineListener listener, @NotNull StreamlineModule module) {
-        for (Map.Entry<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> entry : createRegisteredListeners(listener, module).entrySet()) {
-            Class<? extends StreamlineEvent<?>> clazz = entry.getKey();
+        for (Map.Entry<Class<? extends StreamlineEvent>, Set<RegisteredListener>> entry : createRegisteredListeners(listener, module).entrySet()) {
+            Class<? extends StreamlineEvent> clazz = entry.getKey();
             if (clazz == null) continue;
             HandlerList list = getEventListeners(clazz);
             if (list == null) list = new HandlerList();
@@ -210,12 +210,12 @@ public class ModuleManager {
 
     }
 
-    public static Map<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> createRegisteredListeners(StreamlineListener listener, StreamlineModule module) {
+    public static Map<Class<? extends StreamlineEvent>, Set<RegisteredListener>> createRegisteredListeners(StreamlineListener listener, StreamlineModule module) {
         Preconditions.checkArgument(module != null, "Plugin can not be null");
         Preconditions.checkArgument(listener != null, "Listener can not be null");
 
 //        boolean useTimings = server.getPluginManager().useTimings();
-        Map<Class<? extends StreamlineEvent<?>>, Set<RegisteredListener>> ret = new HashMap<>();
+        Map<Class<? extends StreamlineEvent>, Set<RegisteredListener>> ret = new HashMap<>();
         Set<Method> methods;
         try {
             Method[] publicMethods = listener.getClass().getMethods();
@@ -241,7 +241,7 @@ public class ModuleManager {
                 module.logSevere("Module '" + module.identifier() + "' attempted to register an invalid EventProcessor method signature \"" + method.toGenericString() + "\" in '" + listener.getClass() + "'");
                 continue;
             }
-            final Class<? extends StreamlineEvent<?>> eventClass = (Class<? extends StreamlineEvent<?>>) checkClass.asSubclass(StreamlineEvent.class);
+            final Class<? extends StreamlineEvent> eventClass = (Class<? extends StreamlineEvent>) checkClass.asSubclass(StreamlineEvent.class);
             method.setAccessible(true);
             Set<RegisteredListener> eventSet = ret.computeIfAbsent(eventClass, k -> new HashSet<RegisteredListener>());
 

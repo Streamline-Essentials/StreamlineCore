@@ -6,11 +6,11 @@ import net.streamline.utils.MessagingUtils;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ProperEvent<T> extends CompletableFuture<T> {
+public class ProperEvent extends CompletableFuture<String> {
         @Getter
-        private final StreamlineEvent<T> event;
+        private final StreamlineEvent event;
 
-        public ProperEvent(StreamlineEvent<T> event) {
+        public ProperEvent(StreamlineEvent event) {
 //                super(new Callback<T>() {
 //                        @Override
 //                        public void done(T result, Throwable error) {
@@ -18,5 +18,9 @@ public class ProperEvent<T> extends CompletableFuture<T> {
 //                        }
 //                });
                 this.event = event;
+        }
+
+        public void voidComplete() {
+                this.complete(null);
         }
 }
