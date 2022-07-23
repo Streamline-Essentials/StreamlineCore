@@ -59,15 +59,26 @@ public class BaseListener {
 
     @Subscribe
     public void onChat(PlayerChatEvent event) {
+        if (! event.getResult().isAllowed()) return;
+
         Player player = event.getPlayer();
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
+        chatEvent.complete();
         if (chatEvent.isCanceled()) {
             event.setResult(PlayerChatEvent.ChatResult.denied());
+            return;
         }
+        // TODO: Change back once Velocity fixes it.
         event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+        if (event.getResult().getMessage().isPresent()) {
+            if (! event.getMessage().equals(event.getResult().getMessage().get())) {
+                event.setResult(PlayerChatEvent.ChatResult.denied());
+                player.spoofChatInput(event.getResult().getMessage().get());
+            }
+        }
     }
 
     @Subscribe

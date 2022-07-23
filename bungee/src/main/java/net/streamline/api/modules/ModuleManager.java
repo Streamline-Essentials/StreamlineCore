@@ -265,11 +265,14 @@ public class ModuleManager {
                         return;
                     }
                     method.invoke(listener1, event);
+                    event.complete(null);
                 } catch (InvocationTargetException ex) {
                     throw new EventException(ex.getCause());
                 } catch (Throwable t) {
                     throw new EventException(t);
                 }
+
+                event.setCompleted(true);
             };
 
             eventSet.add(new RegisteredListener(listener, executor, eh.priority(), module, eh.ignoreCancelled()));
