@@ -64,11 +64,13 @@ public class BaseListener implements Listener {
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
-        ModuleManager.fireEvent(chatEvent);
-        if (chatEvent.isCanceled()) {
-            event.setCancelled(true);
-        }
-        event.setMessage(chatEvent.getMessage());
+        ModuleUtils.fireEvent(chatEvent);
+        chatEvent.whenCompleteAsync((aBoolean, throwable) -> {
+            if (chatEvent.isCanceled()) {
+                event.setCancelled(true);
+            }
+            event.setMessage(chatEvent.getMessage());
+        });
     }
 
     @EventHandler
@@ -79,7 +81,6 @@ public class BaseListener implements Listener {
     public static class Observer implements StreamlineListener {
         @EventProcessor
         public void onPlayerLevelChange(LevelChangePlayerEvent event) {
-            MessagingUtils.logInfo("Is of LevelChange!");
             if (Streamline.getMainConfig().announceLevelChangeChat()) {
                 for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
                     MessagingUtils.sendMessage(event.getResource(), MessagingUtils.replaceAllPlayerBungee(event.getResource(), message));

@@ -259,19 +259,16 @@ public class ModuleManager {
                 }
             }
 
-            EventExecutor executor = new EventExecutor() {
-                @Override
-                public void execute(@NotNull StreamlineListener listener, @NotNull StreamlineEvent<?> event) throws EventException {
-                    try {
-                        if (!eventClass.isAssignableFrom(event.getClass())) {
-                            return;
-                        }
-                        method.invoke(listener, event);
-                    } catch (InvocationTargetException ex) {
-                        throw new EventException(ex.getCause());
-                    } catch (Throwable t) {
-                        throw new EventException(t);
+            EventExecutor executor = (listener1, event) -> {
+                try {
+                    if (!eventClass.isAssignableFrom(event.getClass())) {
+                        return;
                     }
+                    method.invoke(listener1, event);
+                } catch (InvocationTargetException ex) {
+                    throw new EventException(ex.getCause());
+                } catch (Throwable t) {
+                    throw new EventException(t);
                 }
             };
 
