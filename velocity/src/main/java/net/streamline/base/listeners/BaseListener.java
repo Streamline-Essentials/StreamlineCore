@@ -74,9 +74,10 @@ public class BaseListener {
         // TODO: Change back once Velocity fixes it.
         event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
         if (event.getResult().getMessage().isPresent()) {
-            if (! event.getMessage().equals(event.getResult().getMessage().get())) {
+            String newMessage = event.getResult().getMessage().get();
+            if (! event.getMessage().equals(newMessage)) {
                 event.setResult(PlayerChatEvent.ChatResult.denied());
-                player.spoofChatInput(event.getResult().getMessage().get());
+                player.spoofChatInput(newMessage);
             }
         }
     }
