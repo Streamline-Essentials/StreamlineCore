@@ -290,4 +290,16 @@ public class ModuleUtils {
     public static SavableUser getOrGetUserByName(String name) {
         return UserManager.getOrGetUserByName(name);
     }
+
+    public static void chatAs(SavableUser as, String message) {
+        Streamline.chatAs(as, message);
+    }
+
+    public static void runAsStrictly(SavableUser as, String message) {
+        Streamline.runAs(as, message);
+    }
+
+    public static List<SavableUser> getUsersOn(String server) {
+        return UserManager.getUsersOn(server);
+    }
 }

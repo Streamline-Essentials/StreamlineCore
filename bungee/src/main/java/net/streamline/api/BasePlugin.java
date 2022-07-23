@@ -519,4 +519,28 @@ public abstract class BasePlugin extends Plugin {
         if (player == null) return false;
         return player.hasPermission(permission);
     }
+
+    public static void chatAs(SavableUser as, String message) {
+        if (as instanceof SavableConsole) {
+            runAs(as, message);
+        }
+        if (as instanceof SavablePlayer) {
+            if (MessagingUtils.isCommand(message)) runAs(as, message.substring("/".length()));
+            ProxiedPlayer player = getPlayer(as.uuid);
+            if (player == null) return;
+            player.chat(message);
+        }
+    }
+
+    public static void runAs(SavableUser as, String command) {
+        if (as instanceof SavableConsole) {
+            getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getProxy().getConsole(), command);
+        }
+        if (as instanceof SavablePlayer) {
+            if (MessagingUtils.isCommand(command)) runAs(as, command.substring("/".length()));
+            ProxiedPlayer player = getPlayer(as.uuid);
+            if (player == null) return;
+            getInstance().getProxy().getPluginManager().dispatchCommand(player, command);
+        }
+    }
 }
