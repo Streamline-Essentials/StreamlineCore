@@ -33,6 +33,7 @@ public class BaseListener {
         Player player = event.getPlayer();
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
+        savablePlayer.setLatestIP(UserManager.parsePlayerIP(player));
 
         Streamline.fireEvent(new LoginEvent(savablePlayer));
     }

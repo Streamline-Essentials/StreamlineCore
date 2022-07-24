@@ -307,6 +307,16 @@ public abstract class BasePlugin extends Plugin {
         return null;
     }
 
+    public static List<String> getServerNames() {
+        List<String> r = new ArrayList<>();
+
+        getServers().forEach(a -> {
+            r.add(a.getName());
+        });
+
+        return r;
+    }
+
     public static LuckPerms getLuckPerms() {
         return luckPerms;
     }
