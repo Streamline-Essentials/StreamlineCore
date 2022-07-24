@@ -302,4 +302,8 @@ public class ModuleUtils {
     public static List<SavableUser> getUsersOn(String server) {
         return UserManager.getUsersOn(server);
     }
+
+    public static List<String> getServerNames() {
+        return Streamline.getServerNames();
+    }
 }

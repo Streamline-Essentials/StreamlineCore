@@ -34,6 +34,7 @@ public class BaseListener implements Listener {
         ProxiedPlayer player = event.getPlayer();
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
+        savablePlayer.setLatestIP(UserManager.parsePlayerIP(player));
 
         ModuleUtils.fireEvent(new LoginEvent(savablePlayer));
     }

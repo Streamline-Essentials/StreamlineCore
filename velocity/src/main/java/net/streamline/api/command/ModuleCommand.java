@@ -13,7 +13,12 @@ public abstract class ModuleCommand extends StreamlineCommand {
     private final StreamlineModule owningModule;
 
     public ModuleCommand(StreamlineModule module, String base, String permission, String... aliases) {
-        super(base, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), withLabel(module, base, aliases));
+        this(module, base, permission, new File(module.getDataFolder(), Streamline.getCommandsFolderChild()), withLabel(module, base, aliases));
+    }
+
+
+    public ModuleCommand(StreamlineModule module, String base, String permission, File parentDirectory, String... aliases) {
+        super(base, permission, parentDirectory, withLabel(module, base, aliases));
         this.owningModule = module;
     }
 

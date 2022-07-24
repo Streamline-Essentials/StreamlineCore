@@ -13,7 +13,7 @@ public class MongoResource extends StorageResource<Document> {
         super(Document.class, StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
         this.databaseConfig = databaseConfig;
         this.collectionName = collectionName;
-        this.sheet = new Document(StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
+        this.reloadResource(true);
     }
 
     public Document get() {
