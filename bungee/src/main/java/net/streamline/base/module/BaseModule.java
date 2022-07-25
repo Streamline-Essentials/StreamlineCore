@@ -30,11 +30,6 @@ public class BaseModule extends SimpleModule {
     }
 
     @Override
-    public List<ModuleCommand> commands() {
-        return Collections.emptyList();
-    }
-
-    @Override
     public void onLoad() {
         instance = this;
     }

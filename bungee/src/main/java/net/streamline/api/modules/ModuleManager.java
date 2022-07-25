@@ -9,6 +9,7 @@ import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.modules.dependencies.Dependency;
 import net.streamline.base.Streamline;
+import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.utils.JarFiles;
 import net.streamline.utils.MessagingUtils;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -79,6 +79,20 @@ public class ModuleManager {
         return module;
     }
 
+    public static void unregisterModule(StreamlineModule module) {
+        try {
+            module.stop();
+            unregisterHandlersOf(module);
+            loadedModules.remove(module.identifier());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static StreamlineModule getModule(String identifier) {
+        return loadedModules.get(identifier);
+    }
+
     private static StreamlineModule createInstance(Class<?> clazz) throws ReflectiveOperationException {
         Preconditions.checkArgument(StreamlineModule.class.isAssignableFrom(clazz), "Class " + clazz + " is not a BundledModule.");
 
@@ -112,6 +126,17 @@ public class ModuleManager {
         }
     }
 
+    public static void reapplyModule(StreamlineModule module) {
+        ModuleManager.unregisterModule(module);
+        try {
+            module = ModuleManager.registerModule(module.getModuleFile());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        module.restart();
+    }
+
     public static void restartModules() {
         for (StreamlineModule module : enabledModules.values()) {
             module.restart();
@@ -122,14 +147,12 @@ public class ModuleManager {
         for (StreamlineModule module : orderModules().values()) {
             if (enabledModules.containsKey(module.identifier())) continue;
             module.start();
-            enabledModules.put(module.identifier(), module);
         }
     }
 
     public static void stopModules() {
         for (StreamlineModule module : new ArrayList<>(enabledModules.values())) {
             module.stop();
-            enabledModules.remove(module.identifier());
         }
     }
 
@@ -185,6 +208,13 @@ public class ModuleManager {
 
     @Getter @Setter
     private static ConcurrentHashMap<Class<? extends StreamlineEvent>, HandlerList> registeredHandlers = new ConcurrentHashMap<>();
+
+    public static void unregisterHandlersOf(StreamlineModule module) {
+        new ArrayList<>(getRegisteredHandlers().keySet()).forEach(a -> {
+            HandlerList list = getRegisteredHandlers().get(a);
+            list.unregister(module);
+        });
+    }
 
     private static <O extends StreamlineEvent> HandlerList getEventListeners(@NotNull Class<O> type) {
         HandlerList list = getRegisteredHandlers().get(type);

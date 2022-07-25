@@ -71,7 +71,12 @@ public class BaseListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        event.setMessage(chatEvent.getMessage());
+//        event.setMessage(chatEvent.getMessage());
+//        if (event.getMessage() != null) {
+//            String newMessage = event.getMessage();
+//            event.setCancelled(true);
+//            player.chat(newMessage);
+//        }
     }
 
     @EventHandler

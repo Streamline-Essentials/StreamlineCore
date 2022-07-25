@@ -1,6 +1,7 @@
 package net.streamline.api.modules;
 
 public abstract class SimpleModule extends StreamlineModule {
+
     @Override
     public void onLoad() {
 
@@ -13,6 +14,11 @@ public abstract class SimpleModule extends StreamlineModule {
 
     @Override
     public void onDisable() {
+
+    }
+
+    @Override
+    public void registerCommands() {
 
     }
 }

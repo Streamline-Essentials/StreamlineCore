@@ -7,7 +7,6 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.api.BasePlugin;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.commands.*;
-import net.streamline.base.listeners.BaseListener;
 import net.streamline.base.module.BaseModule;
 import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
@@ -48,6 +47,7 @@ public class Streamline extends BasePlugin {
         new PTagCommand().register();
         new PointsCommand().register();
         new PlaytimeCommand().register();
+        new ModulesCommand().register();
 
         new OneSecondTimer();
         new PlayerExperienceTimer();
@@ -66,7 +66,7 @@ public class Streamline extends BasePlugin {
 
     @Override
     public void disable() {
-
+        ModuleManager.stopModules();
     }
 
     @Override

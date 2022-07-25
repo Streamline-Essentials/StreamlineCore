@@ -1,44 +1,30 @@
 package net.streamline.api.savables.users;
 
-import net.md_5.bungee.api.SkinConfiguration;
-import net.md_5.bungee.api.Title;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.config.ServerInfo;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.connection.Server;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.UserManager;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.base.Streamline;
-import net.streamline.api.savables.UserManager;
 import net.streamline.utils.MathUtils;
 import net.streamline.utils.MessagingUtils;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class SavablePlayer extends SavableUser {
-    public float totalXP;
-    public float currentXP;
+    public double totalXP;
+    public double currentXP;
     public int level;
     public int playSeconds;
     public String latestIP;
     public List<String> ipList;
     public List<String> nameList;
-    public ProxiedPlayer player;
 
     public int defaultLevel;
 
     public String getLatestIP() {
-        return UserManager.parsePlayerIP(this.player);
-    }
-
-    public SavablePlayer(ProxiedPlayer player) {
-        super(player.getUniqueId().toString());
-        this.player = player;
-        setLatestIP(getLatestIP());
-        setLatestName(player.getName());
+        return UserManager.parsePlayerIP(Streamline.getPlayer(this.uuid));
     }
 
     public SavablePlayer(String uuid){
@@ -120,28 +106,16 @@ public class SavablePlayer extends SavableUser {
         saveAll();
     }
 
-    public void setLatestIP(ProxiedPlayer player) {
-        setLatestIP(UserManager.parsePlayerIP(player));
-    }
-
     public void addIP(String ip){
         if (ipList.contains(ip)) return;
 
         ipList.add(ip);
     }
 
-    public void addIP(ProxiedPlayer player){
-        addIP(UserManager.parsePlayerIP(player));
-    }
-
     public void removeIP(String ip){
         if (! ipList.contains(ip)) return;
 
         ipList.remove(ip);
-    }
-
-    public void removeIP(ProxiedPlayer player){
-        removeIP(UserManager.parsePlayerIP(player));
     }
 
     public void addPlaySecond(int amount){
@@ -216,27 +190,27 @@ public class SavablePlayer extends SavableUser {
         float needed = 0;
 
         String function = MessagingUtils.replaceAllPlayerBungee(this, Streamline.getMainConfig().playerLevelingEquation())
-                        .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
+                .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 
         return needed;
     }
 
-    public float xpUntilNextLevel(){
+    public double xpUntilNextLevel(){
         return getNeededXp() - this.totalXP;
     }
 
-    public void addTotalXP(float amount){
+    public void addTotalXP(double amount){
         setTotalXP(this.totalXP + amount);
     }
 
-    public void removeTotalXP(float amount){
+    public void removeTotalXP(double amount){
         setTotalXP(this.totalXP - amount);
     }
 
-    public void setTotalXP(float amount){
-        float old = this.totalXP;
+    public void setTotalXP(double amount){
+        double old = this.totalXP;
 
         this.totalXP = amount;
 
@@ -260,7 +234,7 @@ public class SavablePlayer extends SavableUser {
         return needed;
     }
 
-    public float getCurrentXP(){
+    public double getCurrentXP(){
         //        loadValues();
         return this.totalXP - getCurrentLevelXP();
     }

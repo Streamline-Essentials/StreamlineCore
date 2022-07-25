@@ -106,8 +106,6 @@ public abstract class BasePlugin extends Plugin {
 
     @Override
     public void onDisable() {
-        ModuleManager.stopModules();
-
         for (SavableUser user : UserManager.getLoadedUsers()) {
             user.saveAll();
         }
@@ -232,6 +230,7 @@ public abstract class BasePlugin extends Plugin {
 
     public static void unregisterStreamlineCommand(StreamlineCommand command) {
         ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        if (c == null) return;
         getInstance().getProxy().getPluginManager().unregisterCommand(c);
         properlyRegisteredCommands.remove(command.getIdentifier());
         loadedStreamlineCommands.remove(command.getBase());
@@ -250,6 +249,7 @@ public abstract class BasePlugin extends Plugin {
 
     public static void unregisterModuleCommand(ModuleCommand command) {
         ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        if (c == null) return;
         getInstance().getProxy().getPluginManager().unregisterCommand(c);
         properlyRegisteredCommands.remove(command.getIdentifier());
         loadedModuleCommands.remove(command.getBase());
