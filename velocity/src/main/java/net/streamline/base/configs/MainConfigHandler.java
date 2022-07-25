@@ -103,10 +103,10 @@ public class MainConfigHandler extends FlatFileResource<Config> {
         return resource.getBoolean("users.players.experience.announce.level-change.chat");
     }
 
-    public float playerPayoutExperienceAmount() {
+    public double playerPayoutExperienceAmount() {
         reloadResource();
 
-        return resource.getFloat("users.players.experience.payout.amount");
+        return resource.getDouble("users.players.experience.payout.amount");
     }
 
     public int playerPayoutExperienceEvery() {
@@ -121,10 +121,10 @@ public class MainConfigHandler extends FlatFileResource<Config> {
         return resource.getInt("users.players.experience.starting.level");
     }
 
-    public float playerStartingExperienceAmount() {
+    public double playerStartingExperienceAmount() {
         reloadResource();
 
-        return resource.getFloat("users.players.experience.starting.xp");
+        return resource.getDouble("users.players.experience.starting.xp");
     }
 
     public String playerLevelingEquation() {

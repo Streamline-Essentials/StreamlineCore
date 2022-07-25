@@ -73,7 +73,7 @@ public class UserManager {
         SavablePlayer user = getPlayer(player);
         if (user != null) return user;
 
-        user = new SavablePlayer(player);
+        user = new SavablePlayer(player.getUniqueId());
 
         loadUser(user);
         return user;

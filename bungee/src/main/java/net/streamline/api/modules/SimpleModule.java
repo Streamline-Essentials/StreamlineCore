@@ -16,4 +16,9 @@ public abstract class SimpleModule extends StreamlineModule {
     public void onDisable() {
 
     }
+
+    @Override
+    public void registerCommands() {
+
+    }
 }

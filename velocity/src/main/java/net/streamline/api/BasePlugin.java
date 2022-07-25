@@ -130,8 +130,6 @@ public abstract class BasePlugin {
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
-        ModuleManager.stopModules();
-
         for (SavableUser user : UserManager.getLoadedUsers()) {
             user.saveAll();
         }
@@ -258,6 +256,7 @@ public abstract class BasePlugin {
 
     public static void unregisterStreamlineCommand(StreamlineCommand command) {
         ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        if (c == null) return;
         getInstance().getProxy().getCommandManager().unregister(getCommandMeta(c.getParent()));
         properlyRegisteredCommands.remove(command.getIdentifier());
         loadedStreamlineCommands.remove(command.getBase());
@@ -276,6 +275,7 @@ public abstract class BasePlugin {
 
     public static void unregisterModuleCommand(ModuleCommand command) {
         ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        if (c == null) return;
         getInstance().getProxy().getCommandManager().unregister(getCommandMeta(c.getParent()));
         properlyRegisteredCommands.remove(command.getIdentifier());
         loadedModuleCommands.remove(command.getBase());

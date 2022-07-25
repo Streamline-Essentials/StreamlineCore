@@ -11,6 +11,7 @@ import net.streamline.utils.MessagingUtils;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StreamlineModule {
@@ -24,6 +25,9 @@ public abstract class StreamlineModule {
     private File moduleFile;
     @Getter
     private ClassLoader classLoader;
+
+    @Getter @Setter
+    private List<ModuleCommand> commands = new ArrayList<>();
 
     /**
      * This allows you to set the {@link Module}'s identifier.
@@ -46,12 +50,7 @@ public abstract class StreamlineModule {
      */
     public abstract List<Dependency> dependencies();
 
-    /**
-     * This allows you to set the {@link Module}'s commands.
-     *
-     * @return The {@link Module}'s commands;
-     */
-    public abstract List<ModuleCommand> commands();
+    protected abstract void registerCommands();
 
     public StreamlineModule() {
         this.dataFolder = new File(Streamline.getModuleFolder(), identifier() + File.separator);
@@ -60,23 +59,30 @@ public abstract class StreamlineModule {
     }
 
     public void start() {
-        for (ModuleCommand command : this.commands()) {
+        if (isEnabled()) return;
+        if (getCommands().isEmpty()) registerCommands();
+
+        for (ModuleCommand command : this.getCommands()) {
             command.register();
         }
 
         ModuleUtils.fireEvent(new ModuleEnableEvent(this));
         onEnable();
         setEnabled(true);
+        ModuleManager.enabledModules.put(identifier(), this);
     }
 
     public void stop() {
-        for (ModuleCommand command : this.commands()) {
+        if (! isEnabled()) return;
+        for (ModuleCommand command : this.getCommands()) {
+            ModuleUtils.logInfo(this, "Unregistering command: " + command.getIdentifier());
             command.unregister();
         }
 
         ModuleUtils.fireEvent(new ModuleDisableEvent(this));
         onDisable();
         setEnabled(false);
+        ModuleManager.enabledModules.remove(identifier());
     }
 
     public void restart() {

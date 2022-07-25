@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class SavablePlayer extends SavableUser {
-    public float totalXP;
-    public float currentXP;
+    public double totalXP;
+    public double currentXP;
     public int level;
     public int playSeconds;
     public String latestIP;
@@ -197,20 +197,20 @@ public class SavablePlayer extends SavableUser {
         return needed;
     }
 
-    public float xpUntilNextLevel(){
+    public double xpUntilNextLevel(){
         return getNeededXp() - this.totalXP;
     }
 
-    public void addTotalXP(float amount){
+    public void addTotalXP(double amount){
         setTotalXP(this.totalXP + amount);
     }
 
-    public void removeTotalXP(float amount){
+    public void removeTotalXP(double amount){
         setTotalXP(this.totalXP - amount);
     }
 
-    public void setTotalXP(float amount){
-        float old = this.totalXP;
+    public void setTotalXP(double amount){
+        double old = this.totalXP;
 
         this.totalXP = amount;
 
@@ -234,7 +234,7 @@ public class SavablePlayer extends SavableUser {
         return needed;
     }
 
-    public float getCurrentXP(){
+    public double getCurrentXP(){
         //        loadValues();
         return this.totalXP - getCurrentLevelXP();
     }

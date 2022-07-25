@@ -7,12 +7,13 @@ import java.util.TreeMap;
 public class MongoResource extends StorageResource<Document> {
     public DatabaseConfig databaseConfig;
     public String collectionName;
-    public Document sheet = new Document();
+    public Document sheet;
 
     public MongoResource(DatabaseConfig databaseConfig, String collectionName, String discriminatorKey,  Object discriminator) {
         super(Document.class, StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
         this.databaseConfig = databaseConfig;
         this.collectionName = collectionName;
+        this.sheet = new Document(StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
         this.reloadResource(true);
     }
 
@@ -51,13 +52,14 @@ public class MongoResource extends StorageResource<Document> {
     @Override
     public void continueReloadResource() {
         this.sheet = this.get();
+        if (this.sheet == null) return;
         this.map.putAll(this.sheet);
     }
 
     @Override
     public void write(String key, Object value) {
         key = StorageUtils.parseDotsMongo(key);
-        if (this.sheet == null) this.sheet = new Document();
+        if (this.sheet == null) this.sheet = new Document(StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
 
         this.sheet.put(key, value);
 
@@ -67,6 +69,9 @@ public class MongoResource extends StorageResource<Document> {
     @Override
     public <O> O getOrSetDefault(String key, O value) {
         key = StorageUtils.parseDotsMongo(key);
+        if (this.sheet == null) {
+            write(key, value);
+        }
         Object t = this.sheet.get(key);
         O thing = this.sheet.get(key, value);
         if (t == null) {
