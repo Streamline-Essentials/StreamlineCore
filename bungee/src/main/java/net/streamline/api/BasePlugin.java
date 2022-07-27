@@ -284,6 +284,8 @@ public abstract class BasePlugin extends Plugin {
             r.add(a.getName());
         });
 
+//        r.add(UserManager.getConsole().latestName);
+
         return r;
     }
 

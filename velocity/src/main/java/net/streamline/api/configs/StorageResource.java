@@ -5,6 +5,7 @@ import net.streamline.utils.MathUtils;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class StorageResource<T> {
     public StorageUtils.StorageType type;
@@ -59,6 +60,27 @@ public abstract class StorageResource<T> {
     public abstract void delete();
 
     public abstract boolean exists();
+
+    public ConcurrentSkipListSet<String> singleLayerKeySet() {
+        return singleLayerKeySet("");
+    }
+
+    public ConcurrentSkipListSet<String> singleLayerKeySet(String section) {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        this.map.keySet().forEach(a -> {
+            if (a.startsWith(section)) {
+                int start = a.substring(section.length()).lastIndexOf(".") + 1;
+                String k = a.substring(start);
+                int end = k.indexOf(".");
+                if (end == -1) end = k.length();
+                k = k.substring(0, end);
+                r.add(k);
+            }
+        });
+
+        return r;
+    }
 
     public void setHangingMillis(int setAs) {
         this.hangingMillis = setAs;

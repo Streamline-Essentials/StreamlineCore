@@ -12,6 +12,7 @@ import net.luckperms.api.node.types.SuffixNode;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.configs.*;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LoadSavableUserEvent;
@@ -139,7 +140,8 @@ public class UserManager {
     }
 
     public static boolean isOnline(String uuid) {
-        for (ProxiedPlayer player : Streamline.getInstance().onlinePlayers()) {
+        if (isConsole(uuid)) return true;
+        for (ProxiedPlayer player : BasePlugin.onlinePlayers()) {
             if (player.getUniqueId().toString().equals(uuid)) return true;
         }
 
@@ -401,5 +403,15 @@ public class UserManager {
         });
 
         return r;
+    }
+
+    public static void connect(SavableUser user, String server) {
+        if (! user.online) return;
+        if (user instanceof SavableConsole) return;
+
+        ProxiedPlayer player = Streamline.getPlayer(user.uuid);
+        if (player == null) return;
+        ServerInfo s = Streamline.getServer(server);
+        player.connect(s);
     }
 }
