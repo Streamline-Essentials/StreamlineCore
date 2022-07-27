@@ -310,6 +310,8 @@ public abstract class BasePlugin {
             r.add(a.getName());
         });
 
+//        r.add(UserManager.getConsole().latestName);
+
         return r;
     }
 

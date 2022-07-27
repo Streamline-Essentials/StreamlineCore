@@ -12,6 +12,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
+import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
@@ -72,16 +73,19 @@ public class MessagingUtils {
     }
 
     public static void sendMessage(@Nullable SavableUser to, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, String otherUUID, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), otherUUID, message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, SavableUser other, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), other, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), other, message);
     }

@@ -1,5 +1,7 @@
 package net.streamline.api.configs;
 
+import java.util.concurrent.ConcurrentSkipListSet;
+
 public class MySQLResource extends StorageResource<SQLCollection> {
     public DatabaseConfig databaseConfig;
     public SQLCollection collection;

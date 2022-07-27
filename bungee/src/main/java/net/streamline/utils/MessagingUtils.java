@@ -13,6 +13,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
+import net.streamline.api.savables.users.SavableConsole;
 import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.savables.UserManager;
@@ -68,16 +69,19 @@ public class MessagingUtils {
     }
 
     public static void sendMessage(@Nullable SavableUser to, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, String otherUUID, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), otherUUID, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), otherUUID, message);
     }
 
     public static void sendMessage(@Nullable SavableUser to, SavableUser other, String message) {
+        if (to instanceof SavableConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), other, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.uuid), other, message);
     }

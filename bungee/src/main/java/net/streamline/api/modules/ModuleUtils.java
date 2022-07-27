@@ -306,4 +306,8 @@ public class ModuleUtils {
     public static List<String> getServerNames() {
         return Streamline.getServerNames();
     }
+
+    public static void connect(SavableUser user, String server) {
+        UserManager.connect(user, server);
+    }
 }

@@ -13,6 +13,7 @@ import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.configs.*;
 import net.streamline.api.savables.events.LoadSavableUserEvent;
 import net.streamline.api.savables.users.OperatorUser;
@@ -146,7 +147,8 @@ public class UserManager {
     }
 
     public static boolean isOnline(String uuid) {
-        for (Player player : Streamline.getInstance().onlinePlayers()) {
+        if (isConsole(uuid)) return true;
+        for (Player player : BasePlugin.onlinePlayers()) {
             if (player.getUniqueId().toString().equals(uuid)) return true;
         }
 
@@ -408,5 +410,19 @@ public class UserManager {
         });
 
         return r;
+    }
+
+    public static void connect(SavableUser user, String server) {
+        if (! user.online) return;
+        if (user instanceof SavableConsole) return;
+
+        Player player = Streamline.getPlayer(user.uuid);
+        if (player == null) return;
+        RegisteredServer s = Streamline.getServer(server);
+        if (s == null) {
+            MessagingUtils.logWarning("Could not send user with name of '" + user.latestName + "' to server '" + server + "' because that server is 'null'");
+            return;
+        }
+        player.createConnectionRequest(s).connect();
     }
 }

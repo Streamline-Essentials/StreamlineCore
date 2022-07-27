@@ -138,7 +138,7 @@ public class ModuleManager {
     }
 
     public static void restartModules() {
-        for (StreamlineModule module : enabledModules.values()) {
+        for (StreamlineModule module : new ArrayList<>(enabledModules.values())) {
             module.restart();
         }
     }
@@ -201,7 +201,8 @@ public class ModuleManager {
             try {
                 registration.callEvent(event);
             } catch (Throwable ex) {
-                MessagingUtils.logSevere("Could not pass event '" + event.getEventName() + "' to '" + registration.getModule().identifier() + "' for reason: " + ex.getMessage());
+                MessagingUtils.logSevere("Could not pass event '" + event.getEventName() + "' to '" + registration.getModule().identifier() + "' for reason: ");
+                ex.printStackTrace();
             }
         }
     }
