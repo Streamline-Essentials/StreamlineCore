@@ -27,15 +27,15 @@ import java.util.stream.Collectors;
 
 public class MessagingUtils {
     public static void logInfo(String message) {
-        Streamline.getInstance().getLogger().info(message);
+        sendMessage(UserManager.getConsole(), message);
     }
 
     public static void logWarning(String message) {
-        Streamline.getInstance().getLogger().warning(message);
+        sendMessage(UserManager.getConsole(), "&6" + message);
     }
 
     public static void logSevere(String message) {
-        Streamline.getInstance().getLogger().severe(message);
+        sendMessage(UserManager.getConsole(), "&c" + message);
     }
 
     public static String loggedModulePrefix(StreamlineModule module) {
