@@ -2,6 +2,7 @@ package net.streamline.base.ratapi;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
+import net.streamline.api.BasePlugin;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.Streamline;
 import net.streamline.base.configs.MainMessagesHandler;
@@ -66,7 +67,7 @@ public class StreamlineExpansion extends RATExpansion {
             try {
                 String p = params.substring("parse_".length());
                 String[] things = p.split(":::", 2);
-                SavableUser user = UserManager.getOrGetUser(Streamline.getInstance().getUUIDFromName(things[0]));
+                SavableUser user = UserManager.getOrGetUser(BasePlugin.getUUIDFromName(things[0]));
                 String parse = things[1].replace("*/*", "%");
                 return MessagingUtils.replaceAllPlayerBungee(user, parse);
             } catch (Exception e) {
