@@ -69,13 +69,32 @@ public class BaseListener implements Listener {
         chatEvent.complete();
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
-            return;
+//            return;
         }
 //        event.setMessage(chatEvent.getMessage());
 //        if (event.getMessage() != null) {
 //            String newMessage = event.getMessage();
 //            event.setCancelled(true);
 //            player.chat(newMessage);
+//        }
+
+//        if (player.getProtocolVersion().getProtocol() > 759) {
+//            if (chatEvent.isCanceled()) {
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+////                return;
+//            }
+//        } else {
+//            if (chatEvent.isCanceled()) {
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+//                return;
+//            }
+//            // TODO: Change back once Velocity fixes it.
+//            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+//            if (event.getResult().getMessage().isPresent()) {
+//                String newMessage = event.getResult().getMessage().get();
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+//                player.spoofChatInput(newMessage);
+//            }
 //        }
     }
 
