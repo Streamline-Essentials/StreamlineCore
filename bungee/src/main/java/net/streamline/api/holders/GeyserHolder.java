@@ -86,7 +86,11 @@ public class GeyserHolder extends AbstractHolder<GeyserApiBase> {
 
     public String getUUID(String name) {
         for (Connection connection : getOnline()) {
-            if (connection.name().equals(name)) return connection.uuid().toString();
+            if (connection.name().equals(name)) {
+                String uuid = connection.uuid().toString();
+                saver.put(uuid, name);
+                return uuid;
+            }
         }
 
         return saver.getUUID(name);
@@ -94,7 +98,11 @@ public class GeyserHolder extends AbstractHolder<GeyserApiBase> {
 
     public String getName(String uuid) {
         for (Connection connection : getOnline()) {
-            if (connection.uuid().toString().equals(uuid)) return connection.name();
+            if (connection.uuid().toString().equals(uuid)) {
+                String name = connection.name();
+                saver.put(uuid, name);
+                return name;
+            }
         }
 
         return saver.getName(uuid);
