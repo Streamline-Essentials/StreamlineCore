@@ -17,11 +17,9 @@ import net.streamline.api.savables.users.SavablePlayer;
 import net.streamline.api.savables.users.SavableUser;
 import net.streamline.base.Streamline;
 import net.streamline.utils.MessagingUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 public class ModuleUtils {
     public static String loggedModulePrefix(StreamlineModule module) {
@@ -240,6 +238,10 @@ public class ModuleUtils {
 
     public static void listen(StreamlineListener listener, StreamlineModule module) {
         ModuleManager.registerEvents(listener, module);
+    }
+
+    public static @NotNull Collection<SavablePlayer> getOnlinePlayers() {
+        return Streamline.getOnlinePlayers();
     }
 
     public static List<String> getOnlinePlayerNames() {
