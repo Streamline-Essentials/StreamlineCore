@@ -98,9 +98,10 @@ public abstract class BasePlugin {
         version = "${project.version}";
         instance = this;
 
-        ratapi = new RATAPI();
         mainConfigHandler = new MainConfigHandler();
         mainMessagesHandler = new MainMessagesHandler();
+
+        ratapi = new RATAPI();
 
         moduleScheduler = new ModuleTaskManager();
         mainScheduler = new TaskManager();
