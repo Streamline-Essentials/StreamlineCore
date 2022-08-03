@@ -59,16 +59,28 @@ public class MessagingUtils {
 
     public static void sendMessage(@Nullable CommandSource to, String message) {
         if (to == null) return;
-        to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
+        if (Streamline.getRATAPI() == null) {
+            to.sendMessage(codedText(message));
+        } else {
+            to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
+        }
     }
 
     public static void sendMessage(@Nullable CommandSource to, String otherUUID, String message) {
         if (to == null) return;
-        to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
+        if (Streamline.getRATAPI() == null) {
+            to.sendMessage(codedText(message));
+        } else {
+            to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
+        }
     }
     public static void sendMessage(@Nullable CommandSource to, SavableUser other, String message) {
         if (to == null) return;
-        to.sendMessage(codedText(replaceAllPlayerBungee(other, message)));
+        if (Streamline.getRATAPI() == null) {
+            to.sendMessage(codedText(message));
+        } else {
+            to.sendMessage(codedText(replaceAllPlayerBungee(other, message)));
+        }
     }
 
     public static void sendMessage(@Nullable SavableUser to, String message) {
