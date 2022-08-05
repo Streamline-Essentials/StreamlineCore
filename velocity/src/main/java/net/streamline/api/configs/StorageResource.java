@@ -70,6 +70,9 @@ public abstract class StorageResource<T> {
 
         this.map.keySet().forEach(a -> {
             if (a.startsWith(section)) {
+//                a = a.substring(section.length());
+//                if (a.equals("")) return;
+
                 int start = a.substring(section.length()).lastIndexOf(".") + 1;
                 String k = a.substring(start);
                 int end = k.indexOf(".");
