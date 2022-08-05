@@ -69,24 +69,29 @@ public class BaseListener {
         ModuleManager.fireEvent(chatEvent);
         chatEvent.complete();
 
-        if (player.getProtocolVersion().getProtocol() > 759) {
-            if (chatEvent.isCanceled()) {
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-//                return;
-            }
-        } else {
-            if (chatEvent.isCanceled()) {
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-                return;
-            }
-            // TODO: Change back once Velocity fixes it.
-            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
-            if (event.getResult().getMessage().isPresent()) {
-                String newMessage = event.getResult().getMessage().get();
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-                player.spoofChatInput(newMessage);
-            }
+        if (chatEvent.isCanceled()) {
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+//            return;
         }
+
+//        if (player.getProtocolVersion().getProtocol() > 759) {
+//            if (chatEvent.isCanceled()) {
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+////                return;
+//            }
+//        } else {
+//            if (chatEvent.isCanceled()) {
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+//                return;
+//            }
+//            // TODO: Change back once Velocity fixes it.
+//            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+//            if (event.getResult().getMessage().isPresent()) {
+//                String newMessage = event.getResult().getMessage().get();
+//                event.setResult(PlayerChatEvent.ChatResult.denied());
+//                player.spoofChatInput(newMessage);
+//            }
+//        }
     }
 
     @Subscribe
