@@ -222,6 +222,6 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
 
     @Override
     public ConcurrentSkipListSet<String> singleLayerKeySet(String key) {
-        return new ConcurrentSkipListSet<>(resource.singleLayerKeySet());
+        return new ConcurrentSkipListSet<>(resource.singleLayerKeySet(key));
     }
 }
