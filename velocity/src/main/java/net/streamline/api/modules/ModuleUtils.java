@@ -184,6 +184,10 @@ public class ModuleUtils {
         UserManager.unloadUser(user);
     }
 
+    public static boolean userExists(String uuid) {
+        return UserManager.userExists(uuid);
+    }
+
     public static SavableUser getOrGetUser(String uuid) {
         return UserManager.getOrGetUser(uuid);
     }
