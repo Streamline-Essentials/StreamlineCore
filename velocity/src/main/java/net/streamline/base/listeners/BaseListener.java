@@ -23,6 +23,8 @@ import net.streamline.base.configs.MainMessagesHandler;
 import net.streamline.base.events.StreamlineChatEvent;
 import net.streamline.utils.MessagingUtils;
 
+import java.util.Optional;
+
 public class BaseListener {
     public BaseListener() {
         MessagingUtils.logInfo("BaseListener registered!");
@@ -65,12 +67,16 @@ public class BaseListener {
         Player player = event.getPlayer();
 
         SavablePlayer savablePlayer = UserManager.getOrGetPlayer(player);
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, event.getMessage());
+        Optional<String> message = event.getResult().getMessage();
+        if (message.isEmpty()) return;
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(savablePlayer, message.get());
         ModuleManager.fireEvent(chatEvent);
         chatEvent.complete();
 
         if (chatEvent.isCanceled()) {
+            
             event.setResult(PlayerChatEvent.ChatResult.denied());
+            PlayerChatEvent.ChatResult.message("s");
 //            return;
         }
 

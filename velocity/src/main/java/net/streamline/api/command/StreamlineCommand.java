@@ -48,10 +48,14 @@ public abstract class StreamlineCommand {
     abstract public List<String> doTabComplete(SavableUser sender, String[] args);
 
     public String getWithOther(SavableUser sender, String base, SavableUser other) {
+        base = base.replace("%this_other%", other.getName());
+        base = base.replace("%this_other_uuid%", other.uuid);
         return MessagingUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.latestName));
     }
 
     public String getWithOther(SavableUser sender, String base, String other) {
+        base = base.replace("%this_sender%", sender.getName());
+        base = base.replace("%this_sender_uuid%", sender.uuid);
         SavableUser user = UserManager.getOrGetUser(sender.uuid);
         return MessagingUtils.replaceAllPlayerBungee(user, getWithOther(base, other));
     }
