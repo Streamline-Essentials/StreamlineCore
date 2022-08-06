@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.Scanner;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     public T resource;
@@ -212,5 +213,15 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     @Override
     public void delete() {
         this.file.delete();
+    }
+
+    @Override
+    public ConcurrentSkipListSet<String> singleLayerKeySet() {
+        return new ConcurrentSkipListSet<>(resource.singleLayerKeySet());
+    }
+
+    @Override
+    public ConcurrentSkipListSet<String> singleLayerKeySet(String key) {
+        return new ConcurrentSkipListSet<>(resource.singleLayerKeySet());
     }
 }
