@@ -25,7 +25,9 @@ import net.streamline.api.savables.users.SavableUser;
 import net.streamline.utils.MathUtils;
 import net.streamline.utils.MessagingUtils;
 import net.streamline.utils.UUIDUtils;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -56,8 +58,76 @@ public class UserManager {
         return (SavablePlayer) loadedUsers.get(player.getUniqueId().toString());
     }
 
+    public static boolean userExists(String uuid) {
+        if (uuid.equals(Streamline.getMainConfig().userConsoleDiscriminator())) return getLoadedUsers().contains(getConsole());
+        StorageUtils.StorageType type = Streamline.getMainConfig().userUseType();
+        File userFolder = Streamline.getUserFolder();
+        switch (type) {
+            case YAML -> {
+                File[] files = userFolder.listFiles();
+                if (files == null) return false;
+
+                for (File file : files) {
+                    if (file.getName().equals(uuid + ".yml")) return true;
+                }
+                return false;
+            }
+            case JSON -> {
+                File[] files = userFolder.listFiles();
+                if (files == null) return false;
+
+                for (File file : files) {
+                    if (file.getName().equals(uuid + ".json")) return true;
+                }
+                return false;
+            }
+            case TOML -> {
+                File[] files = userFolder.listFiles();
+                if (files == null) return false;
+
+                for (File file : files) {
+                    if (file.getName().equals(uuid + ".toml")) return true;
+                }
+                return false;
+            }
+            case MONGO -> {
+                return Streamline.getMainConfig().getConfiguredDatabase().mongoConnection().exists(
+                        SavablePlayer.class.getSimpleName(),
+                        StorageUtils.getWhere("uuid", uuid)
+                );
+            }
+            case MYSQL -> {
+                return Streamline.getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
+                        new SQLCollection(SavablePlayer.class.getSimpleName(),
+                                "uuid",
+                                uuid
+                        )
+                );
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+
     public static SavableUser getOrGetUser(String uuid) {
         SavableUser user = getUser(uuid);
+        if (user != null) return user;
+
+        if (isConsole(uuid)) {
+            user = new SavableConsole();
+        } else {
+            if (! userExists(uuid)) return null;
+            user = new SavablePlayer(uuid);
+        }
+
+        loadUser(user);
+        return user;
+    }
+
+    @NotNull
+    public static SavableUser getOrGetOrGetUser(String uuid) {
+        SavableUser user = getOrGetUser(uuid);
         if (user != null) return user;
 
         if (isConsole(uuid)) {
