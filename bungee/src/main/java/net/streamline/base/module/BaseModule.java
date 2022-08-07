@@ -1,7 +1,6 @@
 package net.streamline.base.module;
 
 import lombok.Getter;
-import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.modules.SimpleModule;
 import net.streamline.api.modules.dependencies.Dependency;
@@ -36,6 +35,11 @@ public class BaseModule extends SimpleModule {
 
     @Override
     public void onEnable() {
-        ModuleUtils.listen(new BaseListener.Observer(), this);
+        ModuleUtils.listen(new BaseListener(), this);
+    }
+
+    @Override
+    public void onDisable() {
+//        ModuleUtils.unl
     }
 }

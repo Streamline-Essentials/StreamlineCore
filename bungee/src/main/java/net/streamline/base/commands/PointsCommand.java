@@ -1,16 +1,12 @@
 package net.streamline.base.commands;
 
-import net.streamline.api.BasePlugin;
+import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.savables.UserManager;
-import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.utils.MessagingUtils;
-import net.streamline.utils.UUIDUtils;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UUIDUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PointsCommand extends StreamlineCommand {
@@ -38,17 +34,17 @@ public class PointsCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(SavableUser sender, String[] args) {
+    public void run(StreamlineUser sender, String[] args) {
         if (args.length < 1) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        SavableUser other = UserManager.getOrGetUser(UUIDUtils.swapToUUID(playerName));
+        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUser(UUIDUtils.swapToUUID(playerName));
 
         if (args.length == 1) {
-            MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
+            SLAPI.getInstance().getMessenger().sendMessage(sender, UUIDUtils.getUUID(playerName),
                     getWithOther(sender, this.messageGet, playerName));
             return;
         }
@@ -59,33 +55,33 @@ public class PointsCommand extends StreamlineCommand {
             amount = Integer.parseInt(args[2]);
         } catch (Exception e) {
             e.printStackTrace();
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
             return;
         }
 
         switch (action) {
             case "set" -> {
                 other.setPoints(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, playerName));
             }
             case "add" -> {
                 other.addPoints(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
             }
             case "remove" -> {
                 other.removePoints(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
             }
             default -> {
-                MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
             }
         }
     }
 
     @Override
-    public List<String> doTabComplete(SavableUser sender, String[] args) {
+    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
-            return BasePlugin.getOnlinePlayerNames();
+            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
             return List.of("set", "add", "remove");
