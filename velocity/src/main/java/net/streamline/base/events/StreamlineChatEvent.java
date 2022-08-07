@@ -3,11 +3,11 @@ package net.streamline.base.events;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.savables.users.SavablePlayer;
+import net.streamline.api.savables.users.StreamlinePlayer;
 
 public class StreamlineChatEvent extends StreamlineEvent {
     @Getter
-    private final SavablePlayer sender;
+    private final StreamlinePlayer sender;
     @Getter
     private final String originalMessage;
     @Getter @Setter
@@ -15,7 +15,7 @@ public class StreamlineChatEvent extends StreamlineEvent {
     @Getter @Setter
     private boolean canceled;
 
-    public StreamlineChatEvent(SavablePlayer sender, String message) {
+    public StreamlineChatEvent(StreamlinePlayer sender, String message) {
         this.sender = sender;
         this.originalMessage = message;
         this.message = message;

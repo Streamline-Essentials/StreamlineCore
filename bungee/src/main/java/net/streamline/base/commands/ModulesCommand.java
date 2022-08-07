@@ -1,11 +1,11 @@
 package net.streamline.base.commands;
 
+import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.StreamlineModule;
-import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.utils.MessagingUtils;
+import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,9 +37,9 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(SavableUser sender, String[] args) {
+    public void run(StreamlineUser sender, String[] args) {
         if (args.length < 1) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
@@ -48,12 +48,12 @@ public class ModulesCommand extends StreamlineCommand {
                 if (args.length == 1) {
                     new ArrayList<>(ModuleManager.loadedModules.values()).forEach(ModuleManager::unregisterModule);
                     ModuleManager.registerExternalModules();
-                    MessagingUtils.sendMessage(sender, messageResultReapplyAll);
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyAll);
                 } else {
-                    Arrays.stream(MessagingUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(SLAPI.getInstance().getMessenger().argsMinus(args, 0)).forEach(a -> {
                         StreamlineModule module = ModuleManager.getModule(a);
                         ModuleManager.reapplyModule(module);
-                        MessagingUtils.sendMessage(sender, messageResultReapplyOne
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyOne
                                 .replace("%this_identifier%", a)
                         );
                     });
@@ -62,11 +62,11 @@ public class ModulesCommand extends StreamlineCommand {
             case "reload" -> {
                 if (args.length == 1) {
                     new ArrayList<>(ModuleManager.loadedModules.values()).forEach(StreamlineModule::restart);
-                    MessagingUtils.sendMessage(sender, messageResultReloadAll);
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadAll);
                 } else {
-                    Arrays.stream(MessagingUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(SLAPI.getInstance().getMessenger().argsMinus(args, 0)).forEach(a -> {
                         ModuleManager.getModule(a).restart();
-                        MessagingUtils.sendMessage(sender, messageResultReloadOne
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadOne
                                 .replace("%this_identifier%", a)
                         );
                     });
@@ -76,7 +76,7 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(SavableUser sender, String[] args) {
+    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
             return List.of(
                     "reapply",

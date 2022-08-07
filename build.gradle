@@ -11,8 +11,9 @@ apply plugin: 'java-library'
 jar.enabled = false
 
 subprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: "java-library"
+    apply plugin: "com.github.johnrengelman.shadow"
+    apply from: "$rootDir/dependencies.gradle"
 
     group = 'net.streamline'
     version = '2.0.0.2'

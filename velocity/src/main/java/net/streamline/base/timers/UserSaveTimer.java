@@ -1,11 +1,9 @@
 package net.streamline.base.timers;
 
 
-import net.streamline.api.savables.UserManager;
-import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.savables.users.SavableUser;
+import net.streamline.api.SLAPI;
+import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.base.Streamline;
 
 public class UserSaveTimer extends BaseRunnable {
     public int cooldown;
@@ -26,7 +24,7 @@ public class UserSaveTimer extends BaseRunnable {
     }
 
     public void done() {
-        for (SavableUser user : UserManager.getLoadedUsers()) {
+        for (StreamlineUser user : SLAPI.getInstance().getUserManager().getLoadedUsers()) {
             user.saveAll();
         }
     }

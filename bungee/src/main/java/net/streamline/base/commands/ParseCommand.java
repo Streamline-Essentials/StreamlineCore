@@ -1,12 +1,10 @@
 package net.streamline.base.commands;
 
-import net.streamline.api.BasePlugin;
+import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.Streamline;
-import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.utils.MessagingUtils;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,24 +23,24 @@ public class ParseCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(SavableUser sender, String[] args) {
+    public void run(StreamlineUser sender, String[] args) {
         if (args.length < 2) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        SavablePlayer player = BasePlugin.getSavedPlayer(playerName);
-        MessagingUtils.sendMessage(sender, MessagingUtils.replaceAllPlayerBungee(sender.uuid,
+        StreamlinePlayer player = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
+        SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(sender.getUUID(),
                 getWithOther(this.messageResult, playerName)
-                        .replace("%this_parsed%", MessagingUtils.replaceAllPlayerBungee(player, MessagingUtils.argsToStringMinus(args, 0)))
+                        .replace("%this_parsed%", SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(player, SLAPI.getInstance().getMessenger().argsToStringMinus(args, 0)))
         ));
     }
 
     @Override
-    public List<String> doTabComplete(SavableUser sender, String[] args) {
+    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
-            return BasePlugin.getOnlinePlayerNames();
+            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
 
         return new ArrayList<>();

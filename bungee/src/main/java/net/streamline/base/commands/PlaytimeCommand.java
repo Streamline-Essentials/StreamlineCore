@@ -1,11 +1,10 @@
 package net.streamline.base.commands;
 
-import net.streamline.api.BasePlugin;
+import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.utils.MessagingUtils;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,22 +34,22 @@ public class PlaytimeCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(SavableUser sender, String[] args) {
+    public void run(StreamlineUser sender, String[] args) {
         if (args.length < 1) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        SavablePlayer other = BasePlugin.getSavedPlayer(playerName);
+        StreamlinePlayer other = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
 
         if (other == null) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
         if (args.length == 1) {
-            MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
+            SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
                     getWithOther(sender, this.messageGet, playerName));
             return;
         }
@@ -61,33 +60,33 @@ public class PlaytimeCommand extends StreamlineCommand {
             amount = Integer.parseInt(args[3]);
         } catch (Exception e) {
             e.printStackTrace();
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
             return;
         }
 
         switch (action) {
             case "set" -> {
                 other.setPlaySeconds(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, playerName));
             }
             case "add" -> {
                 other.addPlaySecond(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
             }
             case "remove" -> {
                 other.removePlaySecond(amount);
-                MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
             }
             default -> {
-                MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
             }
         }
     }
 
     @Override
-    public List<String> doTabComplete(SavableUser sender, String[] args) {
+    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
-            return BasePlugin.getOnlinePlayerNames();
+            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
             return List.of("set", "add", "remove");

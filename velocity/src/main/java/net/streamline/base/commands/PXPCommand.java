@@ -1,12 +1,10 @@
 package net.streamline.base.commands;
 
-import net.streamline.api.BasePlugin;
+import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.savables.UserManager;
-import net.streamline.api.savables.users.SavablePlayer;
-import net.streamline.api.savables.users.SavableUser;
-import net.streamline.base.configs.MainMessagesHandler;
-import net.streamline.utils.MessagingUtils;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,17 +54,17 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(SavableUser sender, String[] args) {
+    public void run(StreamlineUser sender, String[] args) {
         if (args.length < 2) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        SavablePlayer player = BasePlugin.getSavedPlayer(playerName);
+        StreamlinePlayer player = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
 
         if (player == null) {
-            MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_SELF.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_SELF.get());
             return;
         }
 
@@ -75,13 +73,13 @@ public class PXPCommand extends StreamlineCommand {
         switch (type) {
             case "level" -> {
                 if (args.length == 2) {
-                    MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
                             getWithOther(sender, this.messageLevelGet, playerName));
                     return;
                 }
 
                 if (args.length < 4) {
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
                     return;
                 }
 
@@ -91,43 +89,43 @@ public class PXPCommand extends StreamlineCommand {
                     amount = Integer.parseInt(args[3]);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
                     return;
                 }
 
-                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(BasePlugin.getUUIDFromName(playerName));
-                if (savablePlayer == null) {
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+                StreamlinePlayer StreamlinePlayer = SLAPI.getInstance().getUserManager().getOrGetPlayer(SLAPI.getInstance().getPlatform().getUUIDFromName(playerName));
+                if (StreamlinePlayer == null) {
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
                     return;
                 }
 
                 switch (action) {
                     case "set" -> {
-                        savablePlayer.setLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelSet, playerName));
+                        StreamlinePlayer.setLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelSet, playerName));
                     }
                     case "add" -> {
-                        savablePlayer.addLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelAdd, playerName));
+                        StreamlinePlayer.addLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelAdd, playerName));
                     }
                     case "remove" -> {
-                        savablePlayer.removeLevel(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageLevelRemove, playerName));
+                        StreamlinePlayer.removeLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelRemove, playerName));
                     }
                     default -> {
-                        MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                     }
                 }
             }
             case "xp" -> {
                 if (args.length == 2) {
-                    MessagingUtils.sendMessage(sender, BasePlugin.getUUIDFromName(playerName),
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
                             getWithOther(sender, this.messageXPGet, playerName));
                     return;
                 }
 
                 if (args.length < 4) {
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
                     return;
                 }
 
@@ -137,44 +135,44 @@ public class PXPCommand extends StreamlineCommand {
                     amount = Integer.parseInt(args[3]);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
                     return;
                 }
 
-                SavablePlayer savablePlayer = UserManager.getOrGetPlayer(BasePlugin.getUUIDFromName(playerName));
-                if (savablePlayer == null) {
-                    MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+                StreamlinePlayer StreamlinePlayer = SLAPI.getInstance().getUserManager().getOrGetPlayer(SLAPI.getInstance().getPlatform().getUUIDFromName(playerName));
+                if (StreamlinePlayer == null) {
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
                     return;
                 }
 
                 switch (action) {
                     case "set" -> {
-                        savablePlayer.setTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPSet, playerName));
+                        StreamlinePlayer.setTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, playerName));
                     }
                     case "add" -> {
-                        savablePlayer.addTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPAdd, playerName));
+                        StreamlinePlayer.addTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, playerName));
                     }
                     case "remove" -> {
-                        savablePlayer.removeTotalXP(amount);
-                        MessagingUtils.sendMessage(sender, getWithOther(sender, this.messageXPRemove, playerName));
+                        StreamlinePlayer.removeTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, playerName));
                     }
                     default -> {
-                        MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                     }
                 }
             }
             default -> {
-                MessagingUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
             }
         }
     }
 
     @Override
-    public List<String> doTabComplete(SavableUser sender, String[] args) {
+    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
-            return BasePlugin.getOnlinePlayerNames();
+            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
             return List.of("level", "xp");
