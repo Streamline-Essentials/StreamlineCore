@@ -178,4 +178,6 @@ public interface IStreamline {
     String getVersion();
 
     void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player);
+
+    void sendResourcePack(StreamlineResourcePack resourcePack, String uuid);
 }

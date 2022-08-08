@@ -1,6 +1,7 @@
 package net.streamline.platform.messaging;
 
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageOut;
@@ -23,14 +24,14 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
         if (message.getServer().equals("")) {
             Streamline.getInstance().getServerNames().forEach(a -> {
-                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.asWrite());
+                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
             });
             return;
         }
 
-        Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.asWrite());
-
-//        Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID()).sendData(message.getChannel(), message.asWrite());
+        ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
+        if (player == null) return;
+        player.sendData(message.getChannel(), message.getMessages());
     }
 
     @Override

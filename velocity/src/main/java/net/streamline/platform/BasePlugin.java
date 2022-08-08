@@ -572,14 +572,24 @@ public abstract class BasePlugin implements IStreamline {
     @Override
     public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
         Player p = getPlayer(player.getUUID());
-        if (p == null) return;
+        sendResourcePack(resourcePack, p);
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
+        Player p = getPlayer(uuid);
+        sendResourcePack(resourcePack, p);
+    }
+
+    public void sendResourcePack(StreamlineResourcePack resourcePack, Player player) {
+        if (player == null) return;
         try {
             ResourcePackInfo.Builder infoBuilder = getInstance().getProxy().createResourcePackBuilder(resourcePack.getUrl()).setShouldForce(resourcePack.isForce());
             if (resourcePack.getHash().length > 0) infoBuilder.setHash(resourcePack.getHash());
             if (! resourcePack.getPrompt().equals("")) infoBuilder.setPrompt(Messenger.getInstance().codedText(resourcePack.getPrompt()));
-            p.sendResourcePackOffer(infoBuilder.build());
+            player.sendResourcePackOffer(infoBuilder.build());
         } catch (Exception e) {
-            Messenger.getInstance().logWarning("Sent '" + player.getLatestName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+            Messenger.getInstance().logWarning("Sent '" + player.getUsername() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
         }
     }
 }

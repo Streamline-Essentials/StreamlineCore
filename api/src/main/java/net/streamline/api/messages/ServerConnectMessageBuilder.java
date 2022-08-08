@@ -1,6 +1,7 @@
 package net.streamline.api.messages;
 
 import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
@@ -24,30 +25,28 @@ public class ServerConnectMessageBuilder {
     );
 
     public static ProxyMessageOut build(StreamlineServerInfo serverInfo, StreamlineUser user) {
-        List<String> l = new ArrayList<>(getLines());
-        l.set(0, l.get(0).replace("%this_identifier%", serverInfo.getIdentifier()));
-        l.set(1, l.get(1).replace("%this_user_uuid%", user.getUUID()));
-        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), l);
+        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+
+        output.writeUTF(getSubChannel());
+        output.writeUTF(lines.get(0).replace("%this_identifier%", serverInfo.getIdentifier()));
+        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUUID()));
+
+        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
     }
 
     public static SingleSet<String, String> unbuild(ProxyMessageIn messageIn) {
         List<StreamlineUser> users = new ArrayList<>();
         ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
+        if (! messageIn.getSubChannel().equals(input.readUTF())) {
+            SLAPI.getInstance().getMessenger().logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+        }
 
         List<String> l = new ArrayList<>();
         l.add(input.readUTF());
 
-        String identifier = extrapolate(l.get(0)).value;
-        String uuid = extrapolate(l.get(1)).value;
+        String identifier = ProxyMessageHelper.extrapolate(l.get(0)).value;
+        String uuid = ProxyMessageHelper.extrapolate(l.get(1)).value;
 
         return new SingleSet<>(identifier, uuid);
-    }
-
-    public static SingleSet<String, String> extrapolate(String from) {
-        List<String[]> groups = MatcherUtils.getGroups(MatcherUtils.matcherBuilder("(.+)[=](.+)[;]", from), 2);
-        if (groups.isEmpty()) return new SingleSet<>("", "");
-
-        String[] strings = groups.get(0);
-        return new SingleSet<>(strings[0], strings[1]);
     }
 }

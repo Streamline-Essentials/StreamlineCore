@@ -25,6 +25,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class PlatformListener implements Listener {
     public PlatformListener() {
         Messenger.getInstance().logInfo("BaseListener registered!");
@@ -123,10 +125,7 @@ public class PlatformListener implements Listener {
             ByteArrayDataInput input = ByteStreams.newDataInput(message);
             String subChannel = input.readUTF();
 
-            byte[] data = new byte[message.length - 1];
-            System.arraycopy(message, 1, data, 0, message.length - 1);
-
-            ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, data);
+            ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, message);
             SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
         }
     }

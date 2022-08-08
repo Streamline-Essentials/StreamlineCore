@@ -16,62 +16,12 @@ public class ProxyMessageOut {
     @Getter @Setter
     private String server;
     @Getter @Setter
-    private ConcurrentSkipListMap<Integer, Object> messages = new ConcurrentSkipListMap<>();
+    private byte[] messages;
 
-    public ProxyMessageOut(String channel, String subChannel, Object... objects) {
+    public ProxyMessageOut(String channel, String subChannel, byte... messages) {
         this.channel = channel;
         this.subChannel = subChannel;
         this.server = "";
-        this.messages = new ConcurrentSkipListMap<>();
-        for (Object o : objects) {
-            this.messages.put(this.messages.size(), o);
-        }
-    }
-
-    public ProxyMessageOut(String channel, String subChannel, List<Object> objects) {
-        this.channel = channel;
-        this.subChannel = subChannel;
-        this.messages = new ConcurrentSkipListMap<>();
-        for (Object o : objects) {
-            this.messages.put(this.messages.size(), o);
-        }
-    }
-
-    public byte[] asWrite() {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
-        output.writeUTF(getSubChannel());
-
-        for (int i : getMessages().keySet()) {
-            Object object = getMessages().get(i);
-
-            if (object instanceof Boolean thing) {
-                output.writeBoolean(thing);
-            }
-            if (object instanceof Byte thing) {
-                output.writeByte(thing);
-            }
-            if (object instanceof Character thing) {
-                output.writeChar(thing);
-            }
-            if (object instanceof Double thing) {
-                output.writeDouble(thing);
-            }
-            if (object instanceof Float thing) {
-                output.writeFloat(thing);
-            }
-            if (object instanceof Integer thing) {
-                output.writeInt(thing);
-            }
-            if (object instanceof Long thing) {
-                output.writeLong(thing);
-            }
-            if (object instanceof Short thing) {
-                output.writeShort(thing);
-            }
-            if (object instanceof String thing) {
-                output.writeUTF(thing);
-            }
-        }
-        return output.toByteArray();
+        this.messages = messages;
     }
 }

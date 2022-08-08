@@ -10,9 +10,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
 import net.streamline.api.events.server.LogoutEvent;
-import net.streamline.api.messages.ProxyMessageEvent;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ResourcePackMessageBuilder;
+import net.streamline.api.messages.*;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -80,6 +78,8 @@ public class PlatformListener implements Listener {
 
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getInfo().getName());
+
+        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer));
     }
 
     @EventHandler
@@ -135,12 +135,8 @@ public class PlatformListener implements Listener {
             ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
             String subChannel = input.readUTF();
 
-
-            byte[] data = new byte[event.getData().length - 1];
-            System.arraycopy(event.getData(), 1, data, 0, event.getData().length - 1);
-
-            ProxyMessageIn message = new ProxyMessageIn(tag, subChannel, data);
-            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(message));
+            ProxyMessageIn messageIn = new ProxyMessageIn(tag, subChannel, event.getData());
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
         } catch (Exception e) {
             // do nothing.
         }
