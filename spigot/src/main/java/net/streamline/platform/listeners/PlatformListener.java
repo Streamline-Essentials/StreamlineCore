@@ -1,6 +1,10 @@
 package net.streamline.platform.listeners;
 
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
 import net.streamline.api.SLAPI;
+import net.streamline.api.messages.ProxyMessageEvent;
+import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.modules.ModuleManager;
@@ -8,9 +12,8 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.base.events.LoginCompletedEvent;
-import net.streamline.base.events.LoginReceivedEvent;
-import net.streamline.base.events.StreamlineChatEvent;
+import net.streamline.api.events.server.LoginReceivedEvent;
+import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.platform.Messenger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,6 +22,8 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.jetbrains.annotations.NotNull;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
@@ -44,11 +49,13 @@ public class PlatformListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        StreamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
-
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamlinePlayer);
-        ModuleUtils.fireEvent(loginCompletedEvent);
+//        if (UserManager.getInstance().userExists(player.getUniqueId().toString())) {
+//            StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+//            StreamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+//
+//            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamlinePlayer);
+//            ModuleUtils.fireEvent(loginCompletedEvent);
+//        }
     }
 
     @EventHandler
@@ -104,5 +111,23 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getStreamlineEvent());
+    }
+
+    public static class ProxyMessagingListener implements PluginMessageListener {
+        public ProxyMessagingListener() {
+            Messenger.getInstance().logInfo("Registered " + getClass().getSimpleName() + "!");
+        }
+
+        @Override
+        public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
+            ByteArrayDataInput input = ByteStreams.newDataInput(message);
+            String subChannel = input.readUTF();
+
+            byte[] data = new byte[message.length - 1];
+            System.arraycopy(message, 1, data, 0, message.length - 1);
+
+            ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, data);
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
+        }
     }
 }

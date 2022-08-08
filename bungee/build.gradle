@@ -1,7 +1,3 @@
-plugins {
-    id "net.kyori.blossom" version "1.2.0" //For replacing version in Streamline.java
-}
-
 repositories {
 }
 
@@ -19,11 +15,5 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(':Streamline-API')
-    shadow project(':Streamline-API')
-}
-
-blossom {
-    replaceToken '${project.version}', project.version, './src/main/resources/bungee.yml'
-    replaceToken '${project.version}', project.version, './src/main/java/net/streamline/api/BasePlugin.java'
+    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }

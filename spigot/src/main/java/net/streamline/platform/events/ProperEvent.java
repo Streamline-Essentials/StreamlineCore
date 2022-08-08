@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
+import net.streamline.platform.commands.ProperCommand;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +20,16 @@ public class ProperEvent extends Event implements IProperEvent<Event> {
         @Getter @Setter
         private static ConcurrentHashMap<StreamlineEvent, HandlerList> handlerMap = new ConcurrentHashMap<>();
 
+        public static HandlerList getHandlerList() {
+                return new HandlerList();
+        }
+
         public static void addHandler(StreamlineEvent event, HandlerList list) {
                 handlerMap.put(event, list);
         }
 
         public ProperEvent(StreamlineEvent streamlineEvent) {
-                super(true);
+                super(false);
                 setEvent(this);
                 setStreamlineEvent(streamlineEvent);
         }
@@ -32,6 +37,11 @@ public class ProperEvent extends Event implements IProperEvent<Event> {
         @NotNull
         @Override
         public HandlerList getHandlers() {
-                return ProperEvent.getHandlerMap().get(this.getStreamlineEvent());
+                HandlerList list = ProperEvent.getHandlerMap().get(this.getStreamlineEvent());
+                if (list == null) {
+                        list = new HandlerList();
+                        ProperEvent.getHandlerMap().put(this.getStreamlineEvent(), list);
+                }
+                return list;
         }
 }

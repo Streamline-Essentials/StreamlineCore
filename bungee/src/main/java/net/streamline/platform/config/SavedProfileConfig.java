@@ -34,10 +34,13 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
 
     @Getter @Setter
     private APIProfile cachedProfile;
+    @Getter @Setter
+    private Ticker ticker;
 
     public SavedProfileConfig() {
         super(Json.class, "saved-profile.json", Streamline.getInstance().getDataFolder(), false);
         setCachedProfile(getProfile());
+        ticker = new Ticker(this);
     }
 
     private APIProfile getProfile() {

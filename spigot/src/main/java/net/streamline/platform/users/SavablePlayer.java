@@ -2,12 +2,16 @@ package net.streamline.platform.users;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.messages.ProxiedStreamlinePlayer;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.base.Streamline;
 import net.streamline.api.utils.MathUtils;
+import net.streamline.api.events.server.LoginCompletedEvent;
+import net.streamline.platform.Messenger;
+import net.streamline.platform.savables.UserManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +35,32 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     private int defaultLevel;
 
     public String getLatestIP() {
-        return Streamline.getSlapi().getUserManager().parsePlayerIP(Streamline.getPlayer(this.uuid));
+        return UserManager.getInstance().parsePlayerIP(Streamline.getPlayer(this.uuid));
+    }
+
+    public SavablePlayer(ProxiedStreamlinePlayer player){
+        super(player.getUuid());
+
+        setLatestName(player.getLatestName());
+        setDisplayName(player.getDisplayName());
+        setTagList(player.getTagList());
+        setPoints(player.getPoints());
+        setLastMessage(player.getLastMessage());
+        setOnline(player.isOnline());
+        setLatestServer(player.getLatestServer());
+        setBypassPermissions(player.isBypassPermissions());
+        setTotalXP(player.getTotalXP());
+        setCurrentXP(player.getCurrentXP());
+        setLevel(player.getLevel());
+        setPlaySeconds(player.getPlaySeconds());
+        setLatestIP(player.getLatestIP());
+        setIpList(player.getIpList());
+        setNameList(player.getNameList());
+//        setDefaultLevel(player.getDefaultLevel());
+
+
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(this);
+        ModuleUtils.fireEvent(loginCompletedEvent);
     }
 
     public SavablePlayer(String uuid){
@@ -44,7 +73,7 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
 
     @Override
     public List<String> getTagsFromConfig() {
-        return Streamline.getMainConfig().playerTagsDefault();
+        return Streamline.getInstance().getMainConfig().playerTagsDefault();
     }
 
     @Override
@@ -55,9 +84,9 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
         // Names.
         nameList = getOrSetDefault("player.names", List.of(this.getLatestName()));
         // Stats.
-        level = getOrSetDefault("player.stats.level", Streamline.getMainConfig().playerStartingLevel());
-        totalXP = getOrSetDefault("player.stats.experience.total", Streamline.getMainConfig().playerStartingExperienceAmount());
-        currentXP = getOrSetDefault("player.stats.experience.current", Streamline.getMainConfig().playerStartingExperienceAmount());
+        level = getOrSetDefault("player.stats.level", Streamline.getInstance().getMainConfig().playerStartingLevel());
+        totalXP = getOrSetDefault("player.stats.experience.total", Streamline.getInstance().getMainConfig().playerStartingExperienceAmount());
+        currentXP = getOrSetDefault("player.stats.experience.current", Streamline.getInstance().getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
     }
 
@@ -151,22 +180,22 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     }
 
     public String getPlaySecondsAsString(){
-        return Streamline.getSlapi().getMessenger().truncate(String.valueOf(this.playSeconds), 2);
+        return Messenger.getInstance().truncate(String.valueOf(this.playSeconds), 2);
     }
 
     public String getPlayMinutesAsString(){
         //        loadValues();
-        return Streamline.getSlapi().getMessenger().truncate(String.valueOf(getPlayMinutes()), 2);
+        return Messenger.getInstance().truncate(String.valueOf(getPlayMinutes()), 2);
     }
 
     public String getPlayHoursAsString(){
         //        loadValues();
-        return Streamline.getSlapi().getMessenger().truncate(String.valueOf(getPlayHours()), 2);
+        return Messenger.getInstance().truncate(String.valueOf(getPlayHours()), 2);
     }
 
     public String getPlayDaysAsString(){
         //        loadValues();
-        return Streamline.getSlapi().getMessenger().truncate(String.valueOf(getPlayDays()), 2);
+        return Messenger.getInstance().truncate(String.valueOf(getPlayDays()), 2);
     }
 
     /*
@@ -196,8 +225,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getNeededXp(){
         float needed = 0;
 
-        String function = Streamline.getSlapi().getMessenger().replaceAllPlayerBungee(this, Streamline.getMainConfig().playerLevelingEquation())
-                .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
+        String function = Messenger.getInstance().replaceAllPlayerBungee(this, Streamline.getInstance().getMainConfig().playerLevelingEquation())
+                .replace("%default_level%", String.valueOf(Streamline.getInstance().getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 
@@ -233,8 +262,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getCurrentLevelXP(){
         float needed = 0;
 
-        String function = Streamline.getSlapi().getMessenger().replaceAllPlayerBungee(this, Streamline.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
-                .replace("%default_level%", String.valueOf(Streamline.getMainConfig().playerStartingLevel()));
+        String function = Messenger.getInstance().replaceAllPlayerBungee(this, Streamline.getInstance().getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
+                .replace("%default_level%", String.valueOf(Streamline.getInstance().getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 

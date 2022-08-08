@@ -2,11 +2,9 @@ package net.streamline.api.command;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.SLAPI;
 import net.streamline.api.configs.CommandResource;
-import net.streamline.platform.savables.UserManager;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.base.Streamline;
-import net.streamline.utils.MessagingUtils;
 
 import java.io.File;
 import java.util.List;
@@ -32,15 +30,15 @@ public abstract class StreamlineCommand {
     }
 
     public StreamlineCommand(String base, String permission, String... aliases) {
-        this(base, permission, Streamline.getMainCommandsFolder(), aliases);
+        this(base, permission, SLAPI.getInstance().getPlatform().getMainCommandsFolder(), aliases);
     }
 
     public void register() {
-        Streamline.registerStreamlineCommand(this);
+        SLAPI.getInstance().getPlatform().registerStreamlineCommand(this);
     }
 
     public void unregister() {
-        Streamline.unregisterStreamlineCommand(this);
+        SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this);
     }
 
     abstract public void run(StreamlineUser sender, String[] args);
@@ -49,15 +47,15 @@ public abstract class StreamlineCommand {
 
     public String getWithOther(StreamlineUser sender, String base, StreamlineUser other) {
         base = base.replace("%this_other%", other.getName());
-        base = base.replace("%this_other_uuid%", other.uuid);
-        return MessagingUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.latestName));
+        base = base.replace("%this_other_uuid%", other.getUUID());
+        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(other, getWithOther(sender, base, other.getLatestName()));
     }
 
     public String getWithOther(StreamlineUser sender, String base, String other) {
         base = base.replace("%this_sender%", sender.getName());
-        base = base.replace("%this_sender_uuid%", sender.uuid);
-        StreamlineUser user = UserManager.getOrGetUser(sender.uuid);
-        return MessagingUtils.replaceAllPlayerBungee(user, getWithOther(base, other));
+        base = base.replace("%this_sender_uuid%", sender.getUUID());
+        StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(sender.getUUID());
+        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, getWithOther(base, other));
     }
 
     public String getWithOther(String base, String other) {
@@ -65,7 +63,7 @@ public abstract class StreamlineCommand {
     }
 
     public boolean isEnabled() {
-        for (String identifier : Streamline.getProperlyRegisteredCommands().keySet()) {
+        for (String identifier : SLAPI.getInstance().getPlatform().getLoadedStreamlineCommands().keySet()) {
             if (identifier.equals(this.getIdentifier())) return true;
         }
 
@@ -73,6 +71,6 @@ public abstract class StreamlineCommand {
     }
 
     public void disable() {
-        Streamline.unregisterStreamlineCommand(this);
+        SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this);
     }
 }

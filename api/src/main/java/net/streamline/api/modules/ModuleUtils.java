@@ -5,8 +5,10 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ProxyMessageOut;
+import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.events.StreamlineEvent;
@@ -347,5 +349,17 @@ public class ModuleUtils {
 
     public static TaskManager getMainScheduler() {
         return SLAPI.getInstance().getPlatform().getMainScheduler();
+    }
+
+    public static IStreamline.PlatformType getPlatformType() {
+        return SLAPI.getInstance().getPlatform().getPlatformType();
+    }
+
+    public static IStreamline.ServerType getServerType() {
+        return SLAPI.getInstance().getPlatform().getServerType();
+    }
+
+    public static void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+        SLAPI.getInstance().getPlatform().sendResourcePack(resourcePack, player);
     }
 }

@@ -11,8 +11,6 @@ import net.streamline.api.savables.users.StreamlineUser;
 import java.util.List;
 
 public interface IUserManager {
-    IUserManager getInstance();
-
     List<StreamlineUser> getLoadedUsers();
 
     StreamlineUser loadUser(StreamlineUser user);

@@ -1,5 +1,5 @@
 plugins {
-    id "net.kyori.blossom" version "1.2.0" //For replacing version in Streamline.java
+    id 'net.minecrell.plugin-yml.bukkit' version '0.3.0'
 }
 
 repositories {
@@ -40,11 +40,15 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(':Streamline-API')
-    shadow project(':Streamline-API')
+    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 
-blossom {
-    replaceToken '${project.version}', project.version, './src/main/resources/bungee.yml'
-    replaceToken '${project.version}', project.version, './src/main/java/net/streamline/api/BasePlugin.java'
+bukkit {
+    name = 'StreamlineAPI'
+    main = 'net.streamline.base.Streamline'
+    authors = ['Quaint', 'RedstonedLife']
+    website = 'https://github.com/Streamline-Essentials'
+    version = "${project.version}"
+    depend = ['LuckPerms']
+    softDepend = ['Geyser']
 }

@@ -1,4 +1,4 @@
-package net.streamline.base.events;
+package net.streamline.api.events.server;
 
 import lombok.Getter;
 import lombok.Setter;

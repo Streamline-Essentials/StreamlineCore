@@ -5,6 +5,7 @@ import com.velocitypowered.api.command.SimpleCommand;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 
@@ -13,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ProperCommand implements SimpleCommand {
+public class ProperCommand implements SimpleCommand, IProperCommand {
     @Getter
     private final StreamlineCommand parent;
     @Getter

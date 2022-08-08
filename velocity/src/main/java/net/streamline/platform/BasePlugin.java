@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
+import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.LuckPerms;
@@ -18,6 +19,7 @@ import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.holders.GeyserHolder;
+import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -35,7 +37,7 @@ import net.streamline.platform.config.SavedProfileConfig;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
-import net.streamline.platform.profile.SpigotProfiler;
+import net.streamline.platform.profile.VelocityProfiler;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.platform.users.SavableConsole;
 import net.streamline.platform.users.SavablePlayer;
@@ -63,11 +65,16 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Getter
+    private final PlatformType platformType = PlatformType.VELOCITY;
+    @Getter
+    private final ServerType serverType = ServerType.PROXY;
+
+    @Getter
     private TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
     @Getter
     private TreeMap<String, StreamlineCommand> loadedStreamlineCommands = new TreeMap<>();
     @Getter
-    private ConcurrentHashMap<String, ProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, IProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
 
     @Getter
     private String name;
@@ -107,7 +114,7 @@ public abstract class BasePlugin implements IStreamline {
     private Messenger messenger;
 
     @Setter
-    private SpigotProfiler profiler;
+    private VelocityProfiler profiler;
     @Setter @Getter
     private SavedProfileConfig profileConfig;
 
@@ -126,6 +133,17 @@ public abstract class BasePlugin implements IStreamline {
         this.logger = l;
         this.dataFolder = dd.toFile();
         onLoad();
+    }
+
+    public void onLoad() {
+        userFolder = new File(this.getDataFolder(), "users" + File.separator);
+        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
+        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
+        userFolder.mkdirs();
+        moduleFolder.mkdirs();
+        mainCommandsFolder.mkdirs();
+
+        this.load();
     }
 
     @Subscribe
@@ -148,15 +166,8 @@ public abstract class BasePlugin implements IStreamline {
 
         luckPerms = LuckPermsProvider.get();
 
-        profiler = new SpigotProfiler();
+        profiler = new VelocityProfiler();
         profileConfig = new SavedProfileConfig();
-
-        userFolder = new File(this.getDataFolder(), "users" + File.separator);
-        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
-        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
-        userFolder.mkdirs();
-        moduleFolder.mkdirs();
-        mainCommandsFolder.mkdirs();
 
         geyserHolder = new GeyserHolder();
 
@@ -179,10 +190,6 @@ public abstract class BasePlugin implements IStreamline {
         getProxy().getChannelRegistrar().unregister(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
 
         this.disable();
-    }
-
-    public void onLoad() {
-        this.load();
     }
 
     abstract public void enable();
@@ -269,7 +276,7 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     public void unregisterStreamlineCommand(StreamlineCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -288,7 +295,7 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     public void unregisterModuleCommand(ModuleCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -560,5 +567,19 @@ public abstract class BasePlugin implements IStreamline {
     @Override
     public List<String> getServerNames() {
         return null;
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+        Player p = getPlayer(player.getUUID());
+        if (p == null) return;
+        try {
+            ResourcePackInfo.Builder infoBuilder = getInstance().getProxy().createResourcePackBuilder(resourcePack.getUrl()).setShouldForce(resourcePack.isForce());
+            if (resourcePack.getHash().length > 0) infoBuilder.setHash(resourcePack.getHash());
+            if (! resourcePack.getPrompt().equals("")) infoBuilder.setPrompt(Messenger.getInstance().codedText(resourcePack.getPrompt()));
+            p.sendResourcePackOffer(infoBuilder.build());
+        } catch (Exception e) {
+            Messenger.getInstance().logWarning("Sent '" + player.getLatestName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+        }
     }
 }

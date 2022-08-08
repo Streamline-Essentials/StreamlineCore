@@ -3,6 +3,7 @@ package net.streamline.platform.commands;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.base.Streamline;
 import org.bukkit.command.*;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ProperCommand implements CommandExecutor, TabExecutor {
+public class ProperCommand implements CommandExecutor, TabExecutor, IProperCommand {
     @Getter
     private final StreamlineCommand parent;
 

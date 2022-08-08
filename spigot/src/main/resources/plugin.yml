@@ -1,3 +1,0 @@
-name: StreamlineAPI
-version: '${version}'
-main: net.streamline.base.Streamline

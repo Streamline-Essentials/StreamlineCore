@@ -522,6 +522,6 @@ public class UserManager implements IUserManager {
         Player p = Streamline.getPlayer(user.getUUID());
         if (p == null) return;
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(pack));
+        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, pack));
     }
 }
