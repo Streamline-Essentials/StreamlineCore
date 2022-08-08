@@ -549,6 +549,25 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
-        // bungee cannot do anything...
+        ProxiedPlayer p = getPlayer(player.getUUID());
+        sendResourcePack(resourcePack, p);
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
+        ProxiedPlayer p = getPlayer(uuid);
+        sendResourcePack(resourcePack, p);
+    }
+
+    public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
+//        if (player == null) return;
+//        try {
+//            ResourcePackInfo.Builder infoBuilder = getInstance().getProxy().createResourcePackBuilder(resourcePack.getUrl()).setShouldForce(resourcePack.isForce());
+//            if (resourcePack.getHash().length > 0) infoBuilder.setHash(resourcePack.getHash());
+//            if (! resourcePack.getPrompt().equals("")) infoBuilder.setPrompt(Messenger.getInstance().codedText(resourcePack.getPrompt()));
+//            player.sendResourcePackOffer(infoBuilder.build());
+//        } catch (Exception e) {
+//            Messenger.getInstance().logWarning("Sent '" + player.getUsername() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+//        }
     }
 }

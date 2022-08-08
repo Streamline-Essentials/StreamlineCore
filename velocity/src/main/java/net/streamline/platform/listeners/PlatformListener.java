@@ -16,6 +16,7 @@ import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ResourcePackMessageBuilder;
+import net.streamline.api.messages.SavablePlayerMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -82,6 +83,8 @@ public class PlatformListener {
 
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
+
+        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer));
     }
 
     @Subscribe
@@ -131,10 +134,7 @@ public class PlatformListener {
         ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
         String subChannel = input.readUTF();
 
-        byte[] data = new byte[event.getData().length - 1];
-        System.arraycopy(event.getData(), 1, data, 0, event.getData().length - 1);
-
-        ProxyMessageIn message = new ProxyMessageIn(tag, subChannel, data);
-        SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(message));
+        ProxyMessageIn messageIn = new ProxyMessageIn(tag, subChannel, event.getData());
+        SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
     }
 }

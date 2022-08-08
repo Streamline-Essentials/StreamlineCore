@@ -558,19 +558,35 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
         Player p = getPlayer(player.getUUID());
-        if (p == null) return;
+        sendResourcePack(resourcePack, p);
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
+        Player p = getPlayer(uuid);
+        sendResourcePack(resourcePack, p);
+    }
+
+    public void sendResourcePack(StreamlineResourcePack resourcePack, Player player) {
+        if (player == null) {
+            Messenger.getInstance().logWarning("Tried to send a player a resource pack, but could not find their player!");
+            return;
+        }
         try {
             if (resourcePack.getHash().length > 0) {
                 if (! resourcePack.getPrompt().equals("")) {
-                    p.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
+                    player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
+                    Messenger.getInstance().logInfo("Sent whole pack!");
                     return;
                 }
-                p.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
+                player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
+                Messenger.getInstance().logInfo("Sent just url and hash!");
                 return;
             }
-            p.setResourcePack(resourcePack.getUrl());
+            player.setResourcePack(resourcePack.getUrl());
+            Messenger.getInstance().logInfo("Sent just url!");
         } catch (Exception e) {
-            Messenger.getInstance().logWarning("Sent '" + player.getLatestName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+            Messenger.getInstance().logWarning("Sent '" + player.getName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
         }
     }
 }
