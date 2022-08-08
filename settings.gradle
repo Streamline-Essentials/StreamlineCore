@@ -1,11 +1,11 @@
-rootProject.name = 'Streamline'
+rootProject.name = 'StreamlineCore'
 include(
         'bungee',
         'velocity',
         'spigot',
         'api'
 )
-findProject(':bungee')?.name = 'Streamline-Bungee'
-findProject(':velocity')?.name = 'Streamline-Velocity'
-findProject(':spigot')?.name = 'Streamline-Spigot'
-findProject(':api')?.name = 'Streamline-API'
+findProject(':bungee')?.setName('StreamlineCore-Bungee')
+findProject(':velocity')?.setName('StreamlineCore-Velocity')
+findProject(':spigot')?.setName('StreamlineCore-Spigot')
+findProject(':api')?.setName('StreamlineCore-API')

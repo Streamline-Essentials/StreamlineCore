@@ -1,4 +1,4 @@
-package net.streamline.base.events;
+package net.streamline.api.events.server;
 
 import net.streamline.api.events.server.LoginEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;

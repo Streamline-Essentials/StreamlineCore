@@ -9,8 +9,10 @@ import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.platform.commands.ProperCommand;
@@ -58,16 +60,22 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Getter
+    private final PlatformType platformType = PlatformType.SPIGOT;
+    @Getter
+    private final ServerType serverType = ServerType.BACKEND;
+
+    @Getter
     private TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
     @Getter
     private TreeMap<String, StreamlineCommand> loadedStreamlineCommands = new TreeMap<>();
     @Getter
-    private ConcurrentHashMap<String, ProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, IProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
+
+    @Getter @Setter
+    private StreamlineResourcePack resourcePack;
 
     @Getter
-    private String name;
-    @Getter
-    private String version;
+    private final String version = "${project.version}";
     @Getter
     private static BasePlugin instance;
     private RATAPI ratapi;
@@ -111,10 +119,20 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private SavedProfileConfig profileConfig;
 
     @Override
-    public void onEnable() {
-        name = "StreamlineAPI";
-        version = "${project.version}";
+    public void onLoad() {
         instance = this;
+        userFolder = new File(this.getDataFolder(), "users" + File.separator);
+        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
+        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
+        userFolder.mkdirs();
+        moduleFolder.mkdirs();
+        mainCommandsFolder.mkdirs();
+
+        this.load();
+    }
+
+    @Override
+    public void onEnable() {
         userManager = new UserManager();
         messenger = new Messenger();
         slapi = new SLAPI<>(this, userManager, messenger, getDataFolder());
@@ -133,13 +151,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         profiler = new SpigotProfiler();
         profileConfig = new SavedProfileConfig();
 
-        userFolder = new File(this.getDataFolder(), "users" + File.separator);
-        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
-        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
-        userFolder.mkdirs();
-        moduleFolder.mkdirs();
-        mainCommandsFolder.mkdirs();
-
         geyserHolder = new GeyserHolder();
 
         registerListener(new PlatformListener());
@@ -147,7 +158,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
         getInstance().userManager.loadUser(new SavableConsole());
 
-//        getProxy().registerChannel(SLAPI.getApiChannel());
+        getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
+        getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
 
         this.enable();
     }
@@ -159,11 +171,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         }
 
         this.disable();
-    }
-
-    @Override
-    public void onLoad() {
-        this.load();
     }
 
     abstract public void enable();
@@ -200,22 +207,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     public int getMaxPlayers() {
         return getInstance().getProxy().getMaxPlayers();
-    }
-
-    public @NotNull String getResourcePack() {
-        return getInstance().getProxy().getResourcePack();
-    }
-
-    public @NotNull String getResourcePackHash() {
-        return getInstance().getProxy().getResourcePackHash();
-    }
-
-    public @NotNull String getResourcePackPrompt() {
-        return getInstance().getProxy().getResourcePackPrompt();
-    }
-
-    public boolean isResourcePackRequired() {
-        return getInstance().getProxy().isResourcePackRequired();
     }
 
     public boolean hasWhitelist() {
@@ -273,7 +264,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     public void unregisterStreamlineCommand(StreamlineCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -292,7 +283,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     public void unregisterModuleCommand(ModuleCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -561,6 +552,25 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public List<String> getServerNames() {
-        return null;
+        return new ArrayList<>(getProfileConfig().getCachedProfile().getServers().keySet());
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+        Player p = getPlayer(player.getUUID());
+        if (p == null) return;
+        try {
+            if (resourcePack.getHash().length > 0) {
+                if (! resourcePack.getPrompt().equals("")) {
+                    p.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
+                    return;
+                }
+                p.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
+                return;
+            }
+            p.setResourcePack(resourcePack.getUrl());
+        } catch (Exception e) {
+            Messenger.getInstance().logWarning("Sent '" + player.getLatestName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+        }
     }
 }

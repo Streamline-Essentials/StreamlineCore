@@ -16,6 +16,7 @@ import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.holders.GeyserHolder;
+import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -58,11 +59,16 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Getter
+    private final PlatformType platformType = PlatformType.BUNGEE;
+    @Getter
+    private final ServerType serverType = ServerType.PROXY;
+
+    @Getter
     private TreeMap<String, ModuleCommand> loadedModuleCommands = new TreeMap<>();
     @Getter
     private TreeMap<String, StreamlineCommand> loadedStreamlineCommands = new TreeMap<>();
     @Getter
-    private ConcurrentHashMap<String, ProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, IProperCommand> properlyRegisteredCommands = new ConcurrentHashMap<>();
 
     @Getter
     private String name;
@@ -110,6 +116,19 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     private StreamlineResourcePack resourcePack;
 
     @Override
+    public void onLoad() {
+        instance = this;
+        userFolder = new File(this.getDataFolder(), "users" + File.separator);
+        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
+        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
+        userFolder.mkdirs();
+        moduleFolder.mkdirs();
+        mainCommandsFolder.mkdirs();
+
+        this.load();
+    }
+
+    @Override
     public void onEnable() {
         name = "StreamlineAPI";
         version = "${project.version}";
@@ -132,13 +151,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         profiler = new SpigotProfiler();
         profileConfig = new SavedProfileConfig();
 
-        userFolder = new File(this.getDataFolder(), "users" + File.separator);
-        moduleFolder = new File(this.getDataFolder(), "modules" + File.separator);
-        mainCommandsFolder = new File(this.getDataFolder(), commandsFolderChild);
-        userFolder.mkdirs();
-        moduleFolder.mkdirs();
-        mainCommandsFolder.mkdirs();
-
         geyserHolder = new GeyserHolder();
 
         registerListener(new PlatformListener());
@@ -158,11 +170,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         }
 
         this.disable();
-    }
-
-    @Override
-    public void onLoad() {
-        this.load();
     }
 
     abstract public void enable();
@@ -249,7 +256,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     public void unregisterStreamlineCommand(StreamlineCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -268,7 +275,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     public void unregisterModuleCommand(ModuleCommand command) {
-        ProperCommand c = properlyRegisteredCommands.get(command.getIdentifier());
+        ProperCommand c = (ProperCommand) properlyRegisteredCommands.get(command.getIdentifier());
         if (c == null) return;
         c.unregister();
         properlyRegisteredCommands.remove(command.getIdentifier());
@@ -537,6 +544,11 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public List<String> getServerNames() {
-        return null;
+        return new ArrayList<>(getInstance().getProxy().getServers().keySet());
+    }
+
+    @Override
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+        // bungee cannot do anything...
     }
 }

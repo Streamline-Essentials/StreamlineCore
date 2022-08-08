@@ -4,15 +4,23 @@ import de.leonhard.storage.internal.FlatFile;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.configs.FlatFileResource;
+import net.streamline.api.configs.StorageResource;
 import net.streamline.api.configs.StorageUtils;
+import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
+import net.streamline.platform.savables.UserManager;
 
 import java.util.List;
 import java.util.UUID;
 
 public abstract class SavableUser extends SavableResource implements StreamlineUser {
+    @Override
+    public StorageResource<?> getStorageResource() {
+        return storageResource;
+    }
+
     @Override
     public String getUUID() {
         return this.uuid;
@@ -54,12 +62,12 @@ public abstract class SavableUser extends SavableResource implements StreamlineU
     public boolean updateOnline() {
         if (uuid.equals("%")) this.online = false;
 
-        this.online = Streamline.getSlapi().getUserManager().isOnline(this.uuid);
+        this.online = UserManager.getInstance().isOnline(this.uuid);
         return this.online;
     }
 
     public SavableUser(String uuid) {
-        super(uuid, Streamline.getSlapi().getUserManager().newStorageResource(uuid, uuid.equals("%") ? SavableConsole.class : SavablePlayer.class));
+        super(uuid, UserManager.getInstance().newStorageResource(uuid, uuid.equals("%") ? SavableConsole.class : SavablePlayer.class));
 
         this.savableUser = this;
     }
@@ -67,12 +75,12 @@ public abstract class SavableUser extends SavableResource implements StreamlineU
     @Override
     public void populateDefaults() {
         // Profile.
-        String username = Streamline.getSlapi().getUserManager().getUsername(this.uuid);
+        String username = UserManager.getInstance().getUsername(this.uuid);
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
         tagList = getOrSetDefault("profile.tags", getTagsFromConfig());
-        points = getOrSetDefault("profile.points", Streamline.getMainConfig().userCombinedPointsDefault());
+        points = getOrSetDefault("profile.points", Streamline.getInstance().getMainConfig().userCombinedPointsDefault());
 
         populateMoreDefaults();
     }
@@ -161,7 +169,7 @@ public abstract class SavableUser extends SavableResource implements StreamlineU
 
     public void dispose() throws Throwable {
         try {
-            Streamline.getSlapi().getUserManager().unloadUser(this);
+            UserManager.getInstance().unloadUser(this);
             this.uuid = null;
             if (StorageUtils.areUsersFlatFiles()) {
                 FlatFileResource<? extends FlatFile> resource = (FlatFileResource<? extends FlatFile>) this.storageResource;

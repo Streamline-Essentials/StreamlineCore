@@ -12,8 +12,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 public interface IMessenger {
-    IMessenger getInstance();
-
     void logInfo(String message);
 
     void logWarning(String message);

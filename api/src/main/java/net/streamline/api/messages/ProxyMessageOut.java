@@ -39,6 +39,7 @@ public class ProxyMessageOut {
 
     public byte[] asWrite() {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        output.writeUTF(getSubChannel());
 
         for (int i : getMessages().keySet()) {
             Object object = getMessages().get(i);

@@ -21,23 +21,24 @@ public class ResourcePackMessageBuilder {
 
     @Getter
     private static final List<String> lines = List.of(
-            "identifier=%this_url%;",
-            "identifier=%this_prompt%;",
-            "identifier=%this_hash%;",
-            "identifier=%this_force%;"
+            "user_uuid=%this_user_uuid%;",
+            "url=%this_url%;",
+            "prompt=%this_prompt%;",
+            "hash=%this_hash%;",
+            "force=%this_force%;"
     );
 
-    public static ProxyMessageOut build(StreamlineResourcePack resourcePack) {
+    public static ProxyMessageOut build(StreamlineUser user, StreamlineResourcePack resourcePack) {
         List<String> l = new ArrayList<>(getLines());
-        l.set(0, l.get(0).replace("%this_url%", resourcePack.getUrl()));
-        l.set(1, l.get(1).replace("%this_identifier%", resourcePack.getPrompt()));
-        l.set(2, l.get(2).replace("%this_hash%",  getBytes(resourcePack.getHash())));
-        l.set(3, l.get(3).replace("%this_force%", String.valueOf(resourcePack.isForce())));
+        l.set(0, l.get(0).replace("%this_user_uuid%", user.getUUID()));
+        l.set(1, l.get(1).replace("%this_url%", resourcePack.getUrl()));
+        l.set(2, l.get(2).replace("%this_identifier%", resourcePack.getPrompt()));
+        l.set(3, l.get(3).replace("%this_hash%",  getBytes(resourcePack.getHash())));
+        l.set(4, l.get(4).replace("%this_force%", String.valueOf(resourcePack.isForce())));
         return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), l);
     }
 
-    public static StreamlineResourcePack unbuild(ProxyMessageIn messageIn) {
-        List<StreamlineUser> users = new ArrayList<>();
+    public static SingleSet<String, StreamlineResourcePack> unbuild(ProxyMessageIn messageIn) {
         ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
 
         List<String> l = new ArrayList<>();
@@ -45,13 +46,15 @@ public class ResourcePackMessageBuilder {
         l.add(input.readUTF());
         l.add(input.readUTF());
         l.add(input.readUTF());
+        l.add(input.readUTF());
 
-        String url = extrapolate(l.get(0)).value;
-        String prompt = extrapolate(l.get(1)).value;
-        byte[] hash = extrapolateBytes(extrapolate(l.get(2)).value);
-        boolean force = Boolean.parseBoolean(extrapolate(l.get(3)).value);
+        String uuid = extrapolate(l.get(0)).value;
+        String url = extrapolate(l.get(1)).value;
+        String prompt = extrapolate(l.get(2)).value;
+        byte[] hash = extrapolateBytes(extrapolate(l.get(3)).value);
+        boolean force = Boolean.parseBoolean(extrapolate(l.get(4)).value);
 
-        return new StreamlineResourcePack(url, hash, prompt, force);
+        return new SingleSet<>(uuid, new StreamlineResourcePack(url, hash, prompt, force));
     }
 
     public static byte[] extrapolateBytes(String from) {

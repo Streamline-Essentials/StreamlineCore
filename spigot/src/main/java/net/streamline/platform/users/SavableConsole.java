@@ -19,13 +19,13 @@ public class SavableConsole extends SavableUser implements StreamlineConsole {
 
     @Override
     public List<String> getTagsFromConfig(){
-        return Streamline.getMainConfig().userConsoleDefaultTags();
+        return Streamline.getInstance().getMainConfig().userConsoleDefaultTags();
     }
 
     @Override
     public void populateMoreDefaults() {
-        setLatestName(getOrSetDefault("profile.latest.name", Streamline.getMainConfig().userConsoleNameRegular()));
-        setDisplayName(getOrSetDefault("profile.display-name", Streamline.getMainConfig().userConsoleNameFormatted()));
+        setLatestName(getOrSetDefault("profile.latest.name", Streamline.getInstance().getMainConfig().userConsoleNameRegular()));
+        setDisplayName(getOrSetDefault("profile.display-name", Streamline.getInstance().getMainConfig().userConsoleNameFormatted()));
     }
 
     @Override

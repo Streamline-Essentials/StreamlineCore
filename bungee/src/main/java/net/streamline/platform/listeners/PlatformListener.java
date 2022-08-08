@@ -1,5 +1,7 @@
 package net.streamline.platform.listeners;
 
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
 import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -8,15 +10,18 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
 import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.messages.ProxyMessageEvent;
+import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.base.events.LoginCompletedEvent;
-import net.streamline.base.events.LoginReceivedEvent;
-import net.streamline.base.events.StreamlineChatEvent;
+import net.streamline.api.events.server.LoginReceivedEvent;
+import net.streamline.api.events.server.LoginCompletedEvent;
+import net.streamline.api.events.server.StreamlineChatEvent;
+import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -49,7 +54,7 @@ public class PlatformListener implements Listener {
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player.getUniqueId().toString());
+        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamlinePlayer);
@@ -75,10 +80,6 @@ public class PlatformListener implements Listener {
 
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getInfo().getName());
-        StreamlineResourcePack resourcePack = SLAPI.getInstance().getPlatform().getResourcePack();
-        if (resourcePack != null) {
-            SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(resourcePack));
-        }
     }
 
     @EventHandler
@@ -121,5 +122,27 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getStreamlineEvent());
+    }
+
+    @EventHandler
+    public void onPluginMessage(PluginMessageEvent event) {
+        if (event.getReceiver() instanceof ProxiedPlayer) return;
+
+        String tag = event.getTag();
+        if (event.getData() == null) return;
+
+        try {
+            ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
+            String subChannel = input.readUTF();
+
+
+            byte[] data = new byte[event.getData().length - 1];
+            System.arraycopy(event.getData(), 1, data, 0, event.getData().length - 1);
+
+            ProxyMessageIn message = new ProxyMessageIn(tag, subChannel, data);
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(message));
+        } catch (Exception e) {
+            // do nothing.
+        }
     }
 }

@@ -1,7 +1,10 @@
 package net.streamline.platform.listeners;
 
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
+import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
@@ -10,15 +13,17 @@ import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.SLAPI;
 import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.messages.ProxyMessageEvent;
+import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.base.events.LoginCompletedEvent;
-import net.streamline.base.events.LoginReceivedEvent;
-import net.streamline.base.events.StreamlineChatEvent;
+import net.streamline.api.events.server.LoginReceivedEvent;
+import net.streamline.api.events.server.LoginCompletedEvent;
+import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -77,10 +82,6 @@ public class PlatformListener {
 
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
-        StreamlineResourcePack resourcePack = SLAPI.getInstance().getPlatform().getResourcePack();
-        if (resourcePack != null) {
-            SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(resourcePack));
-        }
     }
 
     @Subscribe
@@ -121,5 +122,19 @@ public class PlatformListener {
     @Subscribe
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getStreamlineEvent());
+    }
+
+    @Subscribe
+    public void onPluginMessage(PluginMessageEvent event) {
+        String tag = event.getIdentifier().getId();
+
+        ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
+        String subChannel = input.readUTF();
+
+        byte[] data = new byte[event.getData().length - 1];
+        System.arraycopy(event.getData(), 1, data, 0, event.getData().length - 1);
+
+        ProxyMessageIn message = new ProxyMessageIn(tag, subChannel, data);
+        SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(message));
     }
 }

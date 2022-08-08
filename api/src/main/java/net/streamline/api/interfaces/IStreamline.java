@@ -20,8 +20,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface IStreamline {
+    enum PlatformType {
+        BUNGEE,
+        SPIGOT,
+        VELOCITY,
+        ;
+    }
+    enum ServerType {
+        PROXY,
+        BACKEND
+        ;
+    }
+
+    PlatformType getPlatformType();
+
+    ServerType getServerType();
+
     void fireEvent(IProperEvent<?> event);
 
     void fireEvent(StreamlineEvent event);
@@ -154,7 +171,11 @@ public interface IStreamline {
 
     TreeMap<String, StreamlineCommand> getLoadedStreamlineCommands();
 
+    ConcurrentHashMap<String, IProperCommand> getProperlyRegisteredCommands();
+
     GeyserHolder getGeyserHolder();
 
     String getVersion();
+
+    void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player);
 }
