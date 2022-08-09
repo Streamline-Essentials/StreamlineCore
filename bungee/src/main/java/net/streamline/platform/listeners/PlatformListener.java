@@ -89,7 +89,6 @@ public class PlatformListener implements Listener {
         StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
-        chatEvent.complete();
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
             return;
@@ -136,7 +135,10 @@ public class PlatformListener implements Listener {
             String subChannel = input.readUTF();
 
             ProxyMessageIn messageIn = new ProxyMessageIn(tag, subChannel, event.getData());
-            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
+            ProxyMessageEvent e = new ProxyMessageEvent(messageIn, null);
+            ModuleUtils.fireEvent(e);
+            if (e.isCancelled()) return;
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
         } catch (Exception e) {
             // do nothing.
         }

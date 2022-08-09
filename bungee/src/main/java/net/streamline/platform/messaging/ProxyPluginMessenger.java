@@ -29,9 +29,11 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-        ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
-        if (player == null) return;
-        player.sendData(message.getChannel(), message.getMessages());
+        Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.getMessages());
+
+//        ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
+//        if (player == null) return;
+//        player.sendData(message.getChannel(), message.getMessages());
     }
 
     @Override

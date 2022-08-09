@@ -6,11 +6,13 @@ import lombok.Setter;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 
-public abstract class StreamlineEvent extends CompletableFuture<Void> {
+public abstract class StreamlineEvent {
     @Getter
     private final Date firedAt;
     @Getter @Setter
     private boolean completed;
+    @Getter @Setter
+    private boolean cancelled;
 
     public StreamlineEvent() {
         this.firedAt = new Date();
@@ -19,13 +21,5 @@ public abstract class StreamlineEvent extends CompletableFuture<Void> {
 
     public String getEventName() {
         return getClass().getSimpleName();
-    }
-
-    public void complete() {
-        try {
-            get();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

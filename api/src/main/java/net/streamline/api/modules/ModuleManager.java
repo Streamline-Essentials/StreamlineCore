@@ -294,7 +294,6 @@ public class ModuleManager {
                         return;
                     }
                     method.invoke(listener1, event);
-                    event.complete(null);
                 } catch (InvocationTargetException ex) {
                     throw new EventException(ex.getCause());
                 } catch (Throwable t) {
