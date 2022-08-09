@@ -31,10 +31,11 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
         Optional<RegisteredServer> server = Streamline.getInstance().getProxy().getServer(message.getServer());
         if (server.isEmpty()) return;
+        server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
 
-        Player player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
-        if (player == null) return;
-        player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
+//        Player player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
+//        if (player == null) return;
+//        player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
     }
 
     @Override

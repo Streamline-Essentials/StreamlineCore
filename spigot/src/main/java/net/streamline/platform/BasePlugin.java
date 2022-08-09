@@ -587,6 +587,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             Messenger.getInstance().logInfo("Sent just url!");
         } catch (Exception e) {
             Messenger.getInstance().logWarning("Sent '" + player.getName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+            e.printStackTrace();
         }
     }
 }

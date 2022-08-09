@@ -10,6 +10,7 @@ import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MatcherUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class ResourcePackMessageBuilder {
         output.writeUTF(lines.get(0).replace("%this_user_uuid%", user.getUUID()));
         output.writeUTF(lines.get(1).replace("%this_url%", resourcePack.getUrl()));
         output.writeUTF(lines.get(2).replace("%this_prompt%", resourcePack.getPrompt()));
-        output.writeUTF(lines.get(3).replace("%this_hash%",  getBytes(resourcePack.getHash())));
+        output.writeUTF(lines.get(3).replace("%this_hash%",  Hex.encodeHexString(resourcePack.getHash())));
         output.writeUTF(lines.get(4).replace("%this_force%", String.valueOf(resourcePack.isForce())));
 
         return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
@@ -59,25 +60,19 @@ public class ResourcePackMessageBuilder {
         String uuid = ProxyMessageHelper.extrapolate(l.get(0)).value;
         String url = ProxyMessageHelper.extrapolate(l.get(1)).value;
         String prompt = ProxyMessageHelper.extrapolate(l.get(2)).value;
-        byte[] hash = DigestUtils.sha1(ProxyMessageHelper.extrapolate(l.get(3)).value);
+        byte[] hash;
+        try {
+            if (l.get(3).equals("")) {
+                hash = new byte[0];
+            } else {
+                hash = Hex.decodeHex(ProxyMessageHelper.extrapolate(l.get(3)).value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            hash = new byte[0];
+        }
         boolean force = Boolean.parseBoolean(ProxyMessageHelper.extrapolate(l.get(4)).value);
 
         return new SingleSet<>(uuid, new StreamlineResourcePack(url, hash, prompt, force));
-    }
-
-    public static String getBytes(byte[] bytes) {
-        StringBuilder builder = new StringBuilder();
-
-        AtomicInteger integer = new AtomicInteger(0);
-        for (byte b : bytes) {
-            if (integer.get() < bytes.length) {
-                builder.append(b).append(",");
-            } else {
-                builder.append(b);
-            }
-            integer.incrementAndGet();
-        }
-
-        return builder.toString();
     }
 }

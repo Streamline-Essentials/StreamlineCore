@@ -18,10 +18,7 @@ import net.streamline.platform.Messenger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,13 +71,12 @@ public class PlatformListener implements Listener {
     }
 
     @EventHandler
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
 
         StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
-        chatEvent.complete();
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
             return;
@@ -126,7 +122,10 @@ public class PlatformListener implements Listener {
             String subChannel = input.readUTF();
 
             ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, message);
-            SLAPI.getInstance().getProxyMessenger().receiveMessage(new ProxyMessageEvent(messageIn));
+            ProxyMessageEvent event = new ProxyMessageEvent(messageIn, null);
+            ModuleUtils.fireEvent(event);
+            if (event.isCancelled()) return;
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(event);
         }
     }
 }
