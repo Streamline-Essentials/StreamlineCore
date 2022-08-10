@@ -43,6 +43,10 @@ public interface IStreamline {
 
     void fireEvent(StreamlineEvent event);
 
+    void fireEvent(StreamlineEvent event, boolean async);
+
+    void handleMisSync(StreamlineEvent event, boolean async);
+
     @NotNull Collection<StreamlinePlayer> getOnlinePlayers();
 
     List<String> getOnlinePlayerNames();

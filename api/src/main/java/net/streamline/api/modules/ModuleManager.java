@@ -24,6 +24,25 @@ public class ModuleManager {
     public static TreeMap<String, StreamlineModule> loadedModules = new TreeMap<>();
     public static TreeMap<String, StreamlineModule> enabledModules = new TreeMap<>();
 
+    @Getter
+    private static final String noModulesMessage =
+            "&a&m&l                                                 %newline%" +
+                    "               &c&lStreamline &5&lCore%newline%" +
+                    "&eWe noticed you do not have any modules&7... &eThis%newline%" +
+                    "&eplugin works best by having modules&7. &eModules%newline%" +
+                    "&eare installable content &b(&7you can create your own&5!&b)%newline%" +
+                    "&ethat either expand upon the core plugin or add%newline%" +
+                    "&ecompletely new content to your server&b(&es&b)&7. &eYou %newline%" +
+                    "&ecan check them out on our &9&lDiscord &eor on our%newline%" +
+                    "&epublic folder&7! &eThank you&7!%newline%" +
+                    "&a&m&l                                                 %newline%" +
+                    "&cDisable &ethis message in your &bmain-config.yml%newline%" +
+                    "&a&m&l                                                 %newline%" +
+                    "&7Streamline &9&lDiscord&7: &bhttps://discord.gg/tny494zXfn%newline%" +
+                    "&7Streamline &5&lModules&7: &bhttps://www.mediafire.com/folder/fmduksvzxqlcu/modules" +
+                    "&a&m&l                                                 "
+            ;
+
     public static void loadModule(@NonNull StreamlineModule module) {
         if (loadedModules.containsKey(module.identifier())) {
             SLAPI.getInstance().getMessenger().logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
@@ -46,6 +65,10 @@ public class ModuleManager {
                         ex.printStackTrace();
                     }
                 }
+            }
+
+            if (SLAPI.getInstance().getPlatform().getMainConfig().debugNotifyNoModules() && folderFiles.length <= 0) {
+                SLAPI.getInstance().getMessenger().logInfo(getNoModulesMessage());
             }
         }
     }

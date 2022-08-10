@@ -5,6 +5,7 @@ import com.google.common.io.ByteStreams;
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
+import net.streamline.base.Streamline;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.modules.ModuleManager;
@@ -15,6 +16,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.platform.Messenger;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -35,7 +37,7 @@ public class PlatformListener implements Listener {
         if (! (user instanceof StreamlinePlayer player)) return;
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
-        ModuleUtils.fireEvent(loginReceivedEvent);
+        Streamline.getInstance().fireEvent(loginReceivedEvent, true);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
             loginReceivedEvent.getResult().validate();
@@ -71,20 +73,18 @@ public class PlatformListener implements Listener {
     }
 
     @EventHandler
-    public void onChat(PlayerChatEvent event) {
+    public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
         StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
-        ModuleManager.fireEvent(chatEvent);
+        Streamline.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
             return;
         }
         event.setMessage(chatEvent.getMessage());
-        String newMessage = event.getMessage();
-        event.setCancelled(true);
-        player.chat(newMessage);
+//        event.setCancelled(true);
 
 //        if (player.getProtocolVersion().getProtocol() > 759) {
 //            if (chatEvent.isCanceled()) {
@@ -119,12 +119,16 @@ public class PlatformListener implements Listener {
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
             ByteArrayDataInput input = ByteStreams.newDataInput(message);
+
             String subChannel = input.readUTF();
 
             ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, message);
             ProxyMessageEvent event = new ProxyMessageEvent(messageIn, null);
             ModuleUtils.fireEvent(event);
-            if (event.isCancelled()) return;
+            if (event.isCancelled()) {
+                Messenger.getInstance().logInfo("Cancelled.");
+                return;
+            }
             SLAPI.getInstance().getProxyMessenger().receiveMessage(event);
         }
     }

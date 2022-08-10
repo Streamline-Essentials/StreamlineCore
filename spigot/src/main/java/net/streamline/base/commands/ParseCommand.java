@@ -14,9 +14,9 @@ public class ParseCommand extends StreamlineCommand {
 
     public ParseCommand() {
         super(
-                "parse",
-                "streamline.command.parse.default",
-                "par", "rat-parse"
+                "spigotparse",
+                "streamline.command.spigot.parse.default",
+                "spar", "srat-parse"
         );
 
         this.messageResult = this.getCommandResource().getOrSetDefault("messages.result", "&eRan parser on &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8: &r%this_parsed%");

@@ -20,9 +20,9 @@ public class ModulesCommand extends StreamlineCommand {
 
     public ModulesCommand() {
         super(
-                "streamlinemodule",
-                "streamline.command.streamlinemodule.default",
-                "module", "pmodule", "slm"
+                "spigotstreamlinemodule",
+                "streamline.command.spigot.streamlinemodule.default",
+                "smodule", "sslm", "smodules"
         );
 
         this.messageResultReapplyAll = this.getCommandResource().getOrSetDefault("messages.result.reapply.all",

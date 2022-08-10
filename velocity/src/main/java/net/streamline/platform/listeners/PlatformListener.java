@@ -25,6 +25,8 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
+import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.scheduler.ModuleRunnable;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -84,7 +86,13 @@ public class PlatformListener {
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer));
+        new BaseRunnable(20, 1) {
+            @Override
+            public void run() {
+                SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer));
+                this.cancel();
+            }
+        };
     }
 
     @Subscribe

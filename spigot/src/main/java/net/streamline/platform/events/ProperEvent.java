@@ -29,7 +29,11 @@ public class ProperEvent extends Event implements IProperEvent<Event> {
         }
 
         public ProperEvent(StreamlineEvent streamlineEvent) {
-                super(false);
+                this(streamlineEvent, false);
+        }
+
+        public ProperEvent(StreamlineEvent streamlineEvent, boolean async) {
+                super(async);
                 setEvent(this);
                 setStreamlineEvent(streamlineEvent);
         }

@@ -16,127 +16,127 @@ public class MainConfigHandler extends FlatFileResource<Config> {
     public StorageUtils.StorageType userUseType() {
         reloadResource();
 
-        return resource.getEnum("users.saving.use", StorageUtils.StorageType.class);
+        return StorageUtils.StorageType.valueOf(resource.getOrSetDefault("users.saving.use", StorageUtils.StorageType.YAML.toString()));
     }
 
     public String userDatabaseConnectionUri() {
         reloadResource();
 
-        return resource.getString("users.saving.databases.connection-uri");
+        return resource.getOrSetDefault("users.saving.databases.connection-uri", "mongodb://<user>:<pass>@<host>:<port>/?authSource=admin&readPreference=primary&appname=StreamlineAPI&ssl=false");
     }
 
     public String userDatabaseDatabase() {
         reloadResource();
 
-        return resource.getString("users.saving.databases.database");
+        return resource.getOrSetDefault("users.saving.databases.database", "streamline_users");
     }
 
     public String userDatabasePrefix() {
         reloadResource();
 
-        return resource.getString("users.saving.databases.prefix");
+        return resource.getOrSetDefault("users.saving.databases.prefix", "sl_");
     }
 
     public double userCombinedPointsDefault() {
         reloadResource();
 
-        return resource.getDouble("users.combined.points.default");
+        return resource.getOrSetDefault("users.combined.points.default", 0.0);
     }
 
     public String userConsoleServer() {
         reloadResource();
 
-        return resource.getString("users.console.server");
+        return resource.getOrSetDefault("users.console.server", "space");
     }
 
     public String userConsoleNameRegular() {
         reloadResource();
 
-        return resource.getString("users.console.name.regular");
+        return resource.getOrSetDefault("users.console.name.regular", "Console");
     }
 
     public String userConsoleNameFormatted() {
         reloadResource();
 
-        return resource.getString("users.console.name.display");
+        return resource.getOrSetDefault("users.console.name.display", "&c&lConsole&r");
     }
 
     public String userConsoleDiscriminator() {
         reloadResource();
 
-        return resource.getString("users.console.discriminator");
+        return resource.getOrSetDefault("users.console.discriminator", "%");
     }
 
     public List<String> userConsoleDefaultTags() {
         reloadResource();
 
-        return resource.getStringList("users.console.tags.default");
+        return resource.getOrSetDefault("users.console.tags.default", List.of("list", "of", "tags"));
     }
 
     public boolean updatePlayerFormattedNames() {
         reloadResource();
 
-        return resource.getBoolean("users.players.name.formatted");
+        return resource.getOrSetDefault("users.players.name.formatted", true);
     }
 
     public String playerOnlineName() {
         reloadResource();
 
-        return resource.getString("users.players.name.online");
+        return resource.getOrSetDefault("users.players.name.online", "&d%streamline_user_formatted% &a&l•&r");
     }
 
     public String playerOfflineName() {
         reloadResource();
 
-        return resource.getString("users.players.name.offline");
+        return resource.getOrSetDefault("users.players.name.offline", "&d%streamline_user_formatted% &c&l•&r");
     }
 
     public boolean announceLevelChangeTitle() {
         reloadResource();
 
-        return resource.getBoolean("users.players.experience.announce.level-change.title");
+        return resource.getOrSetDefault("users.players.experience.announce.level-change.title", true);
     }
 
     public boolean announceLevelChangeChat() {
         reloadResource();
 
-        return resource.getBoolean("users.players.experience.announce.level-change.chat");
+        return resource.getOrSetDefault("users.players.experience.announce.level-change.chat", false);
     }
 
     public double playerPayoutExperienceAmount() {
         reloadResource();
 
-        return resource.getDouble("users.players.experience.payout.amount");
+        return resource.getOrSetDefault("users.players.experience.payout.amount", 1.0);
     }
 
     public int playerPayoutExperienceEvery() {
         reloadResource();
 
-        return resource.getInt("users.players.experience.payout.every");
+        return resource.getOrSetDefault("users.players.experience.payout.every", 400);
     }
 
     public int playerStartingLevel() {
         reloadResource();
 
-        return resource.getInt("users.players.experience.starting.level");
+        return resource.getOrSetDefault("users.players.experience.starting.level", 1);
     }
 
     public double playerStartingExperienceAmount() {
         reloadResource();
 
-        return resource.getDouble("users.players.experience.starting.xp");
+        return resource.getOrSetDefault("users.players.experience.starting.xp", 0);
     }
 
     public String playerLevelingEquation() {
         reloadResource();
 
-        return resource.getString("users.players.experience.equation");
+        return resource.getOrSetDefault("users.players.experience.equation", "2500 + (2500 * (%streamline_user_level% - 1))");
     }
 
     public List<String> playerTagsDefault() {
         reloadResource();
 
-        return resource.getStringList("users.players.tags.default");
+        return resource.getOrSetDefault("users.players.tags.default", List.of("list", "of", "tags"));
     }
 
     public DatabaseConfig getConfiguredDatabase() {
@@ -146,5 +146,11 @@ public class MainConfigHandler extends FlatFileResource<Config> {
         if (databaseType == null) return null;
 
         return new DatabaseConfig(userDatabaseConnectionUri(), userDatabaseDatabase(), userDatabasePrefix(), databaseType);
+    }
+
+    public boolean debugNotifyNoModules() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.notify-on.no-modules", true);
     }
 }

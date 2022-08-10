@@ -14,9 +14,9 @@ public class ReloadCommand extends StreamlineCommand {
 
     public ReloadCommand() {
         super(
-                "streamlinereload",
-                "streamline.command.streamlinereload.default",
-                "slrl", "slreload", "slr"
+                "spigotstreamlinereload",
+                "streamline.command.spigot.streamlinereload.default",
+                "sslrl", "sslreload", "sslr"
         );
 
         this.messageResult = this.getCommandResource().getOrSetDefault("messages.result",

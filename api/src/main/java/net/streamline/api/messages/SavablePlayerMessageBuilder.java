@@ -76,7 +76,22 @@ public class SavablePlayerMessageBuilder {
 
         ProxiedStreamlinePlayer player = new ProxiedStreamlinePlayer();
 
-        player.setLatestName(input.readUTF());
+        player.setLatestName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setDisplayName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setTagList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
+        player.setPoints(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setLastMessage(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setOnline(Boolean.parseBoolean(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setLatestServer(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setBypassPermissions(Boolean.parseBoolean(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setTotalXP(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setCurrentXP(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setLevel(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setPlaySeconds(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
+        player.setLatestIP(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setIpList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
+        player.setNameList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
+        player.setUuid(ProxyMessageHelper.extrapolate(input.readUTF()).value);
 
         return player;
     }

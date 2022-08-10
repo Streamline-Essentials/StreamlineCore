@@ -94,9 +94,9 @@ public class PlatformListener implements Listener {
             return;
         }
         event.setMessage(chatEvent.getMessage());
-        String newMessage = event.getMessage();
-        event.setCancelled(true);
-        player.chat(newMessage);
+//        String newMessage = event.getMessage();
+//        event.setCancelled(true);
+//        player.chat(newMessage);
 
 //        if (player.getProtocolVersion().getProtocol() > 759) {
 //            if (chatEvent.isCanceled()) {
@@ -137,7 +137,10 @@ public class PlatformListener implements Listener {
             ProxyMessageIn messageIn = new ProxyMessageIn(tag, subChannel, event.getData());
             ProxyMessageEvent e = new ProxyMessageEvent(messageIn, null);
             ModuleUtils.fireEvent(e);
-            if (e.isCancelled()) return;
+            if (e.isCancelled()) {
+                Messenger.getInstance().logInfo("Cancelled.");
+                return;
+            }
             SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
         } catch (Exception e) {
             // do nothing.

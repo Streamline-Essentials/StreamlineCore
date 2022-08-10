@@ -539,6 +539,16 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void fireEvent(StreamlineEvent event) {
+        fireEvent(event, true);
+    }
+
+    @Override
+    public void fireEvent(StreamlineEvent event, boolean async) {
+        fireEvent(new ProperEvent(event));
+    }
+
+    @Override
+    public void handleMisSync(StreamlineEvent event, boolean async) {
         fireEvent(new ProperEvent(event));
     }
 

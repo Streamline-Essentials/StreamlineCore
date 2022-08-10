@@ -17,9 +17,9 @@ public class PointsCommand extends StreamlineCommand {
 
     public PointsCommand() {
         super(
-                "ppoints",
-                "streamline.command.points.default",
-                "proxypoints", "ppts"
+                "spoints",
+                "streamline.command.spigot.points.default",
+                "spigotpoints", "spts"
         );
 
         this.messageGet = this.getCommandResource().getOrSetDefault("messages.points.get",
