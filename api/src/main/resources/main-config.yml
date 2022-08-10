@@ -100,3 +100,10 @@ users:
         - list
         - of
         - tags
+
+# The settings for debugging the plugin.
+debug:
+  # Notifications for...
+  notify-on:
+    # Whether we should notify you about how to get modules if your 'modules' folder is empty.
+    no-modules: true

@@ -12,6 +12,7 @@ import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
+import net.streamline.platform.Messenger;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.platform.users.SavablePlayer;
 
@@ -22,18 +23,38 @@ public class ProxyPluginMessenger implements ProxyMessenger {
     public void sendMessage(ProxyMessageOut message) {
         if (Streamline.getInstance().getOnlinePlayers().size() <= 0) return;
 
-        if (message.getServer().equals("")) {
+        if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
             Streamline.getInstance().getServerNames().forEach(a -> {
                 Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
+
+//                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
+//                    Messenger.getInstance().logInfo(a + " server is empty...");
+//                    return;
+//                }
+//                ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(a).get(0).getUUID());
+//                if (player == null) {
+//                    Messenger.getInstance().logInfo("Player = null...");
+//                    return;
+//                }
+//                player.sendData(message.getChannel(), message.getMessages());
+//                Messenger.getInstance().logInfo("Finished...");
             });
             return;
         }
 
         Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.getMessages());
 
+//        if (ModuleUtils.getUsersOn(message.getServer()).size() <= 0) {
+//            Messenger.getInstance().logInfo(message.getServer() + " server is empty...");
+//            return;
+//        }
 //        ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
-//        if (player == null) return;
+//        if (player == null) {
+//            Messenger.getInstance().logInfo("Player = null...");
+//            return;
+//        }
 //        player.sendData(message.getChannel(), message.getMessages());
+//        Messenger.getInstance().logInfo("Finished...");
     }
 
     @Override

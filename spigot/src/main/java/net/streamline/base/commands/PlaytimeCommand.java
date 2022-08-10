@@ -17,9 +17,9 @@ public class PlaytimeCommand extends StreamlineCommand {
 
     public PlaytimeCommand() {
         super(
-                "proxyplaytime",
-                "streamline.command.playtime.default",
-                "pplaytime", "pplay", "proxyplay"
+                "spigotplaytime",
+                "streamline.command.spigot.playtime.default",
+                "splaytime", "splay", "spigotplay"
         );
 
         this.messageGet = this.getCommandResource().getOrSetDefault("messages.playtime.get",

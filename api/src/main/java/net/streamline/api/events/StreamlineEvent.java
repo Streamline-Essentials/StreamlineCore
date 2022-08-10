@@ -17,6 +17,7 @@ public abstract class StreamlineEvent {
     public StreamlineEvent() {
         this.firedAt = new Date();
         this.completed = false;
+        this.cancelled = false;
     }
 
     public String getEventName() {

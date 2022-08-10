@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import com.google.common.collect.ConcurrentHashMultiset;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -50,6 +51,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin implements IStreamline {
@@ -527,7 +529,7 @@ public abstract class BasePlugin implements IStreamline {
 
     @Override
     public boolean serverHasPlugin(String plugin) {
-        return getInstance().getProxy().getPluginManager().getPlugin(plugin) != null;
+        return getInstance().getProxy().getPluginManager().getPlugin(plugin).isPresent();
     }
 
     public StreamlineServerInfo getStreamlineServer(String server) {
@@ -561,12 +563,31 @@ public abstract class BasePlugin implements IStreamline {
 
     @Override
     public void fireEvent(StreamlineEvent event) {
+        fireEvent(event, true);
+    }
+
+    @Override
+    public void fireEvent(StreamlineEvent event, boolean async) {
+        try {
+            fireEvent(new ProperEvent(event));
+        } catch (Exception e) {
+            handleMisSync(event, async);
+        }
+    }
+
+    @Override
+    public void handleMisSync(StreamlineEvent event, boolean async) {
         fireEvent(new ProperEvent(event));
     }
 
     @Override
     public List<String> getServerNames() {
-        return null;
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+        getInstance().getProxy().getAllServers().forEach(a -> {
+            r.add(a.getServerInfo().getName());
+        });
+
+        return r.stream().toList();
     }
 
     @Override

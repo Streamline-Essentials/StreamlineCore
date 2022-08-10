@@ -21,9 +21,9 @@ public class PXPCommand extends StreamlineCommand {
 
     public PXPCommand() {
         super(
-                "proxyexperience",
-                "streamline.command.proxyexperience.default",
-                "pexp", "proxyxp", "pxp", "px"
+                "spigotexperience",
+                "streamline.command.spigot.proxyexperience.default",
+                "sexp", "spigotxp", "sxp", "sx"
         );
 
         this.messageLevelGet = this.getCommandResource().getOrSetDefault("messages.level.get",

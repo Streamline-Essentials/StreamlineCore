@@ -490,9 +490,10 @@ public class UserManager implements IUserManager {
     public List<StreamlineUser> getUsersOn(String server) {
         List<StreamlineUser> r = new ArrayList<>();
 
-        getLoadedUsers().forEach(a -> {
-            if (! a.isOnline()) return;
-            if (a.getLatestServer().equals(server)) r.add(a);
+        Streamline.getInstance().getProxy().getAllServers().forEach(a -> {
+            a.getPlayersConnected().forEach(b -> {
+                r.add(getOrGetUser(b));
+            });
         });
 
         return r;

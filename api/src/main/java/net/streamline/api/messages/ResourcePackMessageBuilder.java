@@ -4,6 +4,7 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
+import net.luckperms.api.messenger.Messenger;
 import net.streamline.api.SLAPI;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -13,6 +14,7 @@ import net.streamline.api.utils.MatcherUtils;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,12 +62,14 @@ public class ResourcePackMessageBuilder {
         String uuid = ProxyMessageHelper.extrapolate(l.get(0)).value;
         String url = ProxyMessageHelper.extrapolate(l.get(1)).value;
         String prompt = ProxyMessageHelper.extrapolate(l.get(2)).value;
+        String unparsed = ProxyMessageHelper.extrapolate(l.get(3)).value;
+        SLAPI.getInstance().getMessenger().logInfo("Unparsed: " + unparsed);
         byte[] hash;
         try {
-            if (l.get(3).equals("")) {
+            if (unparsed.equals("")) {
                 hash = new byte[0];
             } else {
-                hash = Hex.decodeHex(ProxyMessageHelper.extrapolate(l.get(3)).value);
+                hash = Hex.decodeHex(unparsed);
             }
         } catch (Exception e) {
             e.printStackTrace();

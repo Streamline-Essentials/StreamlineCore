@@ -17,9 +17,9 @@ public class PTagCommand extends StreamlineCommand {
 
     public PTagCommand() {
         super(
-                "ptag",
-                "streamline.command.tag.default",
-                "proxytag"
+                "stag",
+                "streamline.command.spigot.tag.default",
+                "spigottag"
         );
 
         this.messageTagsGet = this.getCommandResource().getOrSetDefault("messages.tags.get",
