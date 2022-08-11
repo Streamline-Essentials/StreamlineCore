@@ -578,6 +578,9 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
         Player p = getPlayer(uuid);
+
+        Messenger.getInstance().logInfo("Attempting to send a resource pack to a uuid of '" + uuid + "'...");
+
         sendResourcePack(resourcePack, p);
     }
 
@@ -586,21 +589,20 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             Messenger.getInstance().logWarning("Tried to send a player a resource pack, but could not find their player!");
             return;
         }
+
+        Messenger.getInstance().logInfo("Sending resource pack to '" + player.getName() + "'.");
+
         try {
             if (resourcePack.getHash().length > 0) {
                 if (! resourcePack.getPrompt().equals("")) {
                     player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
-                    Messenger.getInstance().logInfo("Sent whole pack!");
                     return;
                 }
                 player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
-                Messenger.getInstance().logInfo("Sent just url and hash!");
                 return;
             }
             player.setResourcePack(resourcePack.getUrl());
-            Messenger.getInstance().logInfo("Sent just url!");
         } catch (Exception e) {
-            Messenger.getInstance().logWarning("Sent '" + player.getName() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
             e.printStackTrace();
         }
     }
