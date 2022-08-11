@@ -14,12 +14,12 @@ public abstract class BaseRunnable implements Runnable {
     /**
      * Constructor for all Streamline API-ed Runnables.
      *
-     * @param delay the delay of the task (in milliseconds)
-     * @param period the period of the task (in milliseconds)
+     * @param delay the delay of the task (in ticks)
+     * @param period the period of the task (in ticks)
      */
     public BaseRunnable(long delay, long period) {
         this.startedAt = new Date();
-        this.currentTickCount = - delay;
+        this.currentTickCount = delay * -1;
         this.period = period;
         this.index = ModuleUtils.getMainScheduler().getNextIndex();
 

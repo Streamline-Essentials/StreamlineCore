@@ -63,7 +63,6 @@ public class ResourcePackMessageBuilder {
         String url = ProxyMessageHelper.extrapolate(l.get(1)).value;
         String prompt = ProxyMessageHelper.extrapolate(l.get(2)).value;
         String unparsed = ProxyMessageHelper.extrapolate(l.get(3)).value;
-        SLAPI.getInstance().getMessenger().logInfo("Unparsed: " + unparsed);
         byte[] hash;
         try {
             if (unparsed.equals("")) {

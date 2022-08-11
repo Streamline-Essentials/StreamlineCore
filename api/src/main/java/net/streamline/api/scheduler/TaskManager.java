@@ -1,9 +1,10 @@
 package net.streamline.api.scheduler;
 
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class TaskManager {
-    public TreeMap<Integer, BaseRunnable> currentRunnables = new TreeMap<>();
+    public ConcurrentSkipListMap<Integer, BaseRunnable> currentRunnables = new ConcurrentSkipListMap<>();
 
     public void start(BaseRunnable runnable) {
         currentRunnables.put(runnable.index, runnable);
