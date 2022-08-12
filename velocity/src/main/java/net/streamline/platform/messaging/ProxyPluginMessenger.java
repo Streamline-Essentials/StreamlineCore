@@ -29,17 +29,16 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                 }
                 server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
 
-//                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
+                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
 //                    Messenger.getInstance().logInfo(a + " server is empty...");
-//                    return;
-//                }
-//                Player player = Streamline.getPlayer(ModuleUtils.getUsersOn(a).get(0).getUUID());
-//                if (player == null) {
+                    return;
+                }
+                Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).get(0).getUUID());
+                if (player == null) {
 //                    Messenger.getInstance().logInfo("Player = null...");
-//                    return;
-//                }
-//                player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
-//                Messenger.getInstance().logInfo("Finished...");
+                    return;
+                }
+                player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
             });
             return;
         }
@@ -50,17 +49,16 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         }
         server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
 
-//        if (ModuleUtils.getUsersOn(message.getServer()).size() <= 0) {
-//            Messenger.getInstance().logInfo(message.getServer() + " server is empty...");
-//            return;
-//        }
-//        Player player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
-//        if (player == null) {
-//            Messenger.getInstance().logInfo("Player = null...");
-//            return;
-//        }
-//        player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
-//        Messenger.getInstance().logInfo("Finished...");
+        if (UserManager.getInstance().getUsersOn(message.getServer()).size() <= 0) {
+//                    Messenger.getInstance().logInfo(a + " server is empty...");
+            return;
+        }
+        Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUUID());
+        if (player == null) {
+//                    Messenger.getInstance().logInfo("Player = null...");
+            return;
+        }
+        player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
     }
 
     @Override

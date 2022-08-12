@@ -25,18 +25,18 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
         if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
             Streamline.getInstance().getServerNames().forEach(a -> {
-                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
+//                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
 
-//                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
+                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
 //                    Messenger.getInstance().logInfo(a + " server is empty...");
-//                    return;
-//                }
-//                ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(a).get(0).getUUID());
-//                if (player == null) {
+                    return;
+                }
+                ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).get(0).getUUID());
+                if (player == null) {
 //                    Messenger.getInstance().logInfo("Player = null...");
-//                    return;
-//                }
-//                player.sendData(message.getChannel(), message.getMessages());
+                    return;
+                }
+                player.sendData(message.getChannel(), message.getMessages());
 //                Messenger.getInstance().logInfo("Finished...");
             });
             return;
@@ -44,17 +44,16 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
         Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.getMessages());
 
-//        if (ModuleUtils.getUsersOn(message.getServer()).size() <= 0) {
-//            Messenger.getInstance().logInfo(message.getServer() + " server is empty...");
-//            return;
-//        }
-//        ProxiedPlayer player = Streamline.getPlayer(ModuleUtils.getUsersOn(message.getServer()).get(0).getUUID());
-//        if (player == null) {
-//            Messenger.getInstance().logInfo("Player = null...");
-//            return;
-//        }
-//        player.sendData(message.getChannel(), message.getMessages());
-//        Messenger.getInstance().logInfo("Finished...");
+        if (UserManager.getInstance().getUsersOn(message.getServer()).size() <= 0) {
+//                    Messenger.getInstance().logInfo(a + " server is empty...");
+            return;
+        }
+        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUUID());
+        if (player == null) {
+//                    Messenger.getInstance().logInfo("Player = null...");
+            return;
+        }
+        player.sendData(message.getChannel(), message.getMessages());
     }
 
     @Override

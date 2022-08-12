@@ -21,35 +21,28 @@ public class UUIDUtils {
 
     public static String getCachedUUID(String username) {
         if (username.equals("%")) return username;
-        if (username.contains("-")) return username;
+        if (! username.contains("-")) return username;
 
-        try {
-            String finalUsername = username.replace("\"", "").toLowerCase(Locale.ROOT);
-            String uuid = cachedUUIDs.get(finalUsername);
-            if (uuid != null && (uuid.contains("-") || uuid.equals("%"))) return uuid;
-            cachedUUIDs.put(finalUsername, getUUID(finalUsername));
-            return cachedUUIDs.get(finalUsername);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (cachedUUIDs.containsKey(username)) {
+            return cachedUUIDs.get(username);
+        } else {
+            String name = getName(username);
+            cachedUUIDs.put(username, name);
+            return name;
         }
-
-        return "error";
     }
 
     public static String getCachedName(String uuid) {
         if (uuid.equals("%")) return uuid;
         if (! uuid.contains("-")) return uuid;
 
-        try {
-            String name = cachedNames.get(uuid);
-            if (name != null && name.length() > 0) return name;
-            cachedNames.put(uuid, getName(uuid));
-            return cachedUUIDs.get(uuid);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (cachedNames.containsKey(uuid)) {
+            return cachedNames.get(uuid);
+        } else {
+            String name = getName(uuid);
+            cachedNames.put(uuid, name);
+            return name;
         }
-
-        return "error";
     }
 
     static public String getUUID(String username) {
@@ -84,7 +77,7 @@ public class UUIDUtils {
         } catch (Exception e){
             e.printStackTrace();
         }
-        return UUID.randomUUID().toString();
+        return "error";
     }
 
     public static String getName(String uuid) {
