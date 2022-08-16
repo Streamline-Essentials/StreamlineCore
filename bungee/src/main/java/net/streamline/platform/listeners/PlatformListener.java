@@ -52,10 +52,11 @@ public class PlatformListener implements Listener {
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        StreamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        streamlinePlayer.setLatestName(event.getPlayer().getName());
 
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamlinePlayer);
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
     }
 

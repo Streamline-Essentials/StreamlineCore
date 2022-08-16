@@ -48,7 +48,7 @@ public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
     public Saver saver;
 
     public GeyserHolder() {
-        super("Geyser");
+        super("Geyser", "Geyser-BungeeCord", "Geyser-Velocity", "Geyser-Spigot");
         if (super.isPresent()) {
             try {
                 setApi(Geyser.api());
@@ -57,6 +57,8 @@ public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
             } catch (Exception e) {
                 SLAPI.getInstance().getMessenger().logSevere("Error hooking into Geyser! Disabling Geyser support!");
             }
+        } else {
+            SLAPI.getInstance().getMessenger().logInfo("Did not detect a '" + getIdentifier() + "' plugin... Disabling support for '" + getIdentifier() + "'...");
         }
     }
 
