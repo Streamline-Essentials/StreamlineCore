@@ -579,7 +579,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
         Player p = getPlayer(uuid);
 
-        Messenger.getInstance().logInfo("Attempting to send a resource pack to a uuid of '" + uuid + "'...");
+//        Messenger.getInstance().logInfo("Attempting to send a resource pack to a uuid of '" + uuid + "'...");
 
         sendResourcePack(resourcePack, p);
     }
@@ -590,7 +590,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             return;
         }
 
-        Messenger.getInstance().logInfo("Sending resource pack to '" + player.getName() + "'.");
+//        Messenger.getInstance().logInfo("Sending resource pack to '" + player.getName() + "'.");
 
         try {
             if (resourcePack.getHash().length > 0) {

@@ -3,10 +3,7 @@ package net.streamline.platform.messaging;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import net.streamline.api.messages.ProxyMessageEvent;
-import net.streamline.api.messages.ProxyMessageOut;
-import net.streamline.api.messages.ProxyMessenger;
-import net.streamline.api.messages.ServerConnectMessageBuilder;
+import net.streamline.api.messages.*;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -38,19 +35,20 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 //                    Messenger.getInstance().logInfo("Player = null...");
                     return;
                 }
-                player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
+                player.getCurrentServer().get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
             });
             return;
         }
 
-        Optional<RegisteredServer> server = Streamline.getInstance().getProxy().getServer(message.getServer());
-        if (server.isEmpty()) {
-            return;
-        }
-        server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
+//        Optional<RegisteredServer> server = Streamline.getInstance().getProxy().getServer(message.getServer());
+//        if (server.isEmpty()) {
+//            return;
+//        }
+//        server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
 
         if (UserManager.getInstance().getUsersOn(message.getServer()).size() <= 0) {
 //                    Messenger.getInstance().logInfo(a + " server is empty...");
+            MessageQueue.queue(message);
             return;
         }
         Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUUID());
@@ -58,7 +56,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 //                    Messenger.getInstance().logInfo("Player = null...");
             return;
         }
-        player.sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
+        player.getCurrentServer().get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
     }
 
     @Override
