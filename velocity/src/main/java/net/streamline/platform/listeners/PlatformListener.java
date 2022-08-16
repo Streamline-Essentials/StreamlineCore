@@ -59,10 +59,11 @@ public class PlatformListener {
     public void onJoin(PostLoginEvent event) {
         Player player = event.getPlayer();
 
-        StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        savablePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        streamlinePlayer.setLatestName(event.getPlayer().getUsername());
 
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(savablePlayer);
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
     }
 
