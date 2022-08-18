@@ -6,6 +6,7 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
@@ -94,10 +95,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Getter
     private String commandsFolderChild = "commands" + File.separator;
     @Getter
-    private MainConfigHandler mainConfig;
-    @Getter
-    private MainMessagesHandler mainMessages;
-    @Getter
     private LuckPerms luckPerms;
     @Getter
     private ModuleTaskManager moduleScheduler;
@@ -139,9 +136,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, userManager, messenger, getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-
-        mainConfig = new MainConfigHandler();
-        mainMessages = new MainMessagesHandler();
 
         ratapi = new RATAPI();
 
@@ -188,8 +182,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     public static void reloadData() {
-        getInstance().getMainConfig().reloadResource();
-        getInstance().getMainMessages().reloadResource();
+        GivenConfigs.getMainConfig().reloadResource();
+        GivenConfigs.getMainMessages().reloadResource();
         for (StreamlineUser user : getInstance().userManager.getLoadedUsers()) {
             user.saveAll();
             user.reload();

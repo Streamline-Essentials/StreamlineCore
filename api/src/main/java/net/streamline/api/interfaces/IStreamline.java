@@ -103,10 +103,6 @@ public interface IStreamline {
 
     void unregisterModuleCommand(ModuleCommand command);
 
-    MainConfigHandler getMainConfig();
-
-    MainMessagesHandler getMainMessages();
-
     File getUserFolder();
 
     File getModuleFolder();

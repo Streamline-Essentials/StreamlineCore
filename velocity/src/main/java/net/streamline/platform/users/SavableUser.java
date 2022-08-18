@@ -7,6 +7,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.configs.StorageUtils;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -80,7 +81,7 @@ public abstract class SavableUser extends SavableResource implements StreamlineU
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
         tagList = getOrSetDefault("profile.tags", getTagsFromConfig());
-        points = getOrSetDefault("profile.points", SLAPI.getInstance().getPlatform().getMainConfig().userCombinedPointsDefault());
+        points = getOrSetDefault("profile.points", GivenConfigs.getMainConfig().userCombinedPointsDefault());
 
         populateMoreDefaults();
     }

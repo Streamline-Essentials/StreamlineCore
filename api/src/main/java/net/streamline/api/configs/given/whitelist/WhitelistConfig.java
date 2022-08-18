@@ -4,6 +4,7 @@ import de.leonhard.storage.Json;
 import de.leonhard.storage.sections.FlatFileSection;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
+import net.streamline.api.configs.given.GivenConfigs;
 
 import java.util.Date;
 
@@ -34,7 +35,7 @@ public class WhitelistConfig extends FlatFileResource<Json> {
 
     public void addEntry(WhitelistEntry entry) {
         resource.set("list." + entry.whitelistedAt().getTime() + ".uuid", entry.whitelistedUuid());
-        resource.set("list." + entry.whitelistedAt().getTime() + ".by", entry.whitelistedBy() != null ? entry.whitelistedBy() : SLAPI.getInstance().getPlatform().getMainConfig().userConsoleDiscriminator());
+        resource.set("list." + entry.whitelistedAt().getTime() + ".by", entry.whitelistedBy() != null ? entry.whitelistedBy() : GivenConfigs.getMainConfig().userConsoleDiscriminator());
     }
 
     public void removeEntry(WhitelistEntry entry) {

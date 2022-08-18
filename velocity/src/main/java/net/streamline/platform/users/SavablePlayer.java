@@ -3,6 +3,7 @@ package net.streamline.platform.users;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
@@ -46,7 +47,7 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
 
     @Override
     public List<String> getTagsFromConfig() {
-        return SLAPI.getInstance().getPlatform().getMainConfig().playerTagsDefault();
+        return GivenConfigs.getMainConfig().playerTagsDefault();
     }
 
     @Override
@@ -57,9 +58,9 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
         // Names.
         nameList = getOrSetDefault("player.names", List.of(this.getLatestName()));
         // Stats.
-        level = getOrSetDefault("player.stats.level", SLAPI.getInstance().getPlatform().getMainConfig().playerStartingLevel());
-        totalXP = getOrSetDefault("player.stats.experience.total", SLAPI.getInstance().getPlatform().getMainConfig().playerStartingExperienceAmount());
-        currentXP = getOrSetDefault("player.stats.experience.current", SLAPI.getInstance().getPlatform().getMainConfig().playerStartingExperienceAmount());
+        level = getOrSetDefault("player.stats.level", GivenConfigs.getMainConfig().playerStartingLevel());
+        totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
+        currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
     }
 
@@ -198,8 +199,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getNeededXp(){
         float needed = 0;
 
-        String function = SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(this, SLAPI.getInstance().getPlatform().getMainConfig().playerLevelingEquation())
-                .replace("%default_level%", String.valueOf(SLAPI.getInstance().getPlatform().getMainConfig().playerStartingLevel()));
+        String function = SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation())
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 
@@ -235,8 +236,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getCurrentLevelXP(){
         float needed = 0;
 
-        String function = SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(this, SLAPI.getInstance().getPlatform().getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
-                .replace("%default_level%", String.valueOf(SLAPI.getInstance().getPlatform().getMainConfig().playerStartingLevel()));
+        String function = SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 

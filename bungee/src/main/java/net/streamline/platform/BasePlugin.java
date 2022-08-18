@@ -12,6 +12,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
@@ -92,10 +93,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Getter
     private String commandsFolderChild = "commands" + File.separator;
     @Getter
-    private MainConfigHandler mainConfig;
-    @Getter
-    private MainMessagesHandler mainMessages;
-    @Getter
     private LuckPerms luckPerms;
     @Getter
     private ModuleTaskManager moduleScheduler;
@@ -139,9 +136,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, userManager, messenger, getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-
-        mainConfig = new MainConfigHandler();
-        mainMessages = new MainMessagesHandler();
 
         ratapi = new RATAPI();
 
@@ -187,8 +181,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     public static void reloadData() {
-        getInstance().getMainConfig().reloadResource();
-        getInstance().getMainMessages().reloadResource();
+        GivenConfigs.getMainConfig().reloadResource();
+        GivenConfigs.getMainMessages().reloadResource();
         for (StreamlineUser user : getInstance().userManager.getLoadedUsers()) {
             user.saveAll();
             user.reload();
@@ -208,14 +202,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     public int getMaxPlayers() {
         return getInstance().getProxy().getConfig().getPlayerLimit();
-    }
-
-    public WhitelistConfig getWhitelist() {
-        return null;
-    }
-
-    public PunishmentConfig getPunishmentConfig() {
-        return null;
     }
 
     public @NotNull Set<StreamlinePlayer> getWhitelistedPlayers() {

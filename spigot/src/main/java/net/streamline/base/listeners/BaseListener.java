@@ -1,6 +1,7 @@
 package net.streamline.base.listeners;
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.events.EventProcessor;
 import net.streamline.api.events.StreamlineListener;
@@ -10,13 +11,13 @@ import net.streamline.api.savables.events.LevelChangePlayerEvent;
 public class BaseListener implements StreamlineListener {
     @EventProcessor
     public void onPlayerLevelChange(LevelChangePlayerEvent event) {
-        if (SLAPI.getInstance().getPlatform().getMainConfig().announceLevelChangeChat()) {
+        if (GivenConfigs.getMainConfig().announceLevelChangeChat()) {
             for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
                 SLAPI.getInstance().getMessenger().sendMessage(event.getResource(), SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(event.getResource(), message));
             }
         }
 
-        if (SLAPI.getInstance().getPlatform().getMainConfig().announceLevelChangeTitle()) {
+        if (GivenConfigs.getMainConfig().announceLevelChangeTitle()) {
             StreamlineTitle title = new StreamlineTitle(
                     SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_MAIN.get()),
                     SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(event.getResource(), MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_SUBTITLE.get())

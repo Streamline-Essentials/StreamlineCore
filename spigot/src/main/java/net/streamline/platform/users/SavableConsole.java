@@ -1,5 +1,6 @@
 package net.streamline.platform.users;
 
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
@@ -19,13 +20,13 @@ public class SavableConsole extends SavableUser implements StreamlineConsole {
 
     @Override
     public List<String> getTagsFromConfig(){
-        return Streamline.getInstance().getMainConfig().userConsoleDefaultTags();
+        return GivenConfigs.getMainConfig().userConsoleDefaultTags();
     }
 
     @Override
     public void populateMoreDefaults() {
-        setLatestName(getOrSetDefault("profile.latest.name", Streamline.getInstance().getMainConfig().userConsoleNameRegular()));
-        setDisplayName(getOrSetDefault("profile.display-name", Streamline.getInstance().getMainConfig().userConsoleNameFormatted()));
+        setLatestName(getOrSetDefault("profile.latest.name", GivenConfigs.getMainConfig().userConsoleNameRegular()));
+        setDisplayName(getOrSetDefault("profile.display-name", GivenConfigs.getMainConfig().userConsoleNameFormatted()));
     }
 
     @Override
