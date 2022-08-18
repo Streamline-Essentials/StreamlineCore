@@ -6,6 +6,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.modules.dependencies.Dependency;
@@ -67,7 +68,7 @@ public class ModuleManager {
                 }
             }
 
-            if (SLAPI.getInstance().getPlatform().getMainConfig().debugNotifyNoModules() && folderFiles.length <= 0) {
+            if (GivenConfigs.getMainConfig().debugNotifyNoModules() && folderFiles.length <= 0) {
                 SLAPI.getInstance().getMessenger().logInfo(getNoModulesMessage());
             }
         }

@@ -2,6 +2,7 @@ package net.streamline.platform.users;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.messages.ProxiedStreamlinePlayer;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
@@ -73,7 +74,7 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
 
     @Override
     public List<String> getTagsFromConfig() {
-        return Streamline.getInstance().getMainConfig().playerTagsDefault();
+        return GivenConfigs.getMainConfig().playerTagsDefault();
     }
 
     @Override
@@ -84,9 +85,9 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
         // Names.
         nameList = getOrSetDefault("player.names", List.of(this.getLatestName()));
         // Stats.
-        level = getOrSetDefault("player.stats.level", Streamline.getInstance().getMainConfig().playerStartingLevel());
-        totalXP = getOrSetDefault("player.stats.experience.total", Streamline.getInstance().getMainConfig().playerStartingExperienceAmount());
-        currentXP = getOrSetDefault("player.stats.experience.current", Streamline.getInstance().getMainConfig().playerStartingExperienceAmount());
+        level = getOrSetDefault("player.stats.level", GivenConfigs.getMainConfig().playerStartingLevel());
+        totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
+        currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
     }
 
@@ -225,8 +226,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getNeededXp(){
         float needed = 0;
 
-        String function = Messenger.getInstance().replaceAllPlayerBungee(this, Streamline.getInstance().getMainConfig().playerLevelingEquation())
-                .replace("%default_level%", String.valueOf(Streamline.getInstance().getMainConfig().playerStartingLevel()));
+        String function = Messenger.getInstance().replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation())
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 
@@ -262,8 +263,8 @@ public class SavablePlayer extends SavableUser implements StreamlinePlayer {
     public float getCurrentLevelXP(){
         float needed = 0;
 
-        String function = Messenger.getInstance().replaceAllPlayerBungee(this, Streamline.getInstance().getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
-                .replace("%default_level%", String.valueOf(Streamline.getInstance().getMainConfig().playerStartingLevel()));
+        String function = Messenger.getInstance().replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
         needed = (float) MathUtils.eval(function);
 

@@ -2,6 +2,7 @@ package net.streamline.base.timers;
 
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
@@ -18,7 +19,7 @@ public class OneSecondTimer extends BaseRunnable {
             if (user instanceof StreamlinePlayer player) {
                 player.addPlaySecond(1);
 
-                if (SLAPI.getInstance().getPlatform().getMainConfig().updatePlayerFormattedNames()) {
+                if (GivenConfigs.getMainConfig().updatePlayerFormattedNames()) {
                     player.setDisplayName(SLAPI.getInstance().getUserManager().getDisplayName(player.getLatestName(), player.getLatestName()));
                 }
             }

@@ -99,16 +99,16 @@ public class MainMessagesHandler extends FlatFileResource<Config> {
             }
 
             public int getInt() {
-                return SLAPI.getInstance().getPlatform().getMainMessages().resource.getInt(this.key);
+                return GivenConfigs.getMainMessages().resource.getInt(this.key);
             }
 
             public List<String> getStringList() {
-                return SLAPI.getInstance().getPlatform().getMainMessages().resource.getStringList(this.key);
+                return GivenConfigs.getMainMessages().resource.getStringList(this.key);
             }
         }
 
         public static String get(String key) {
-            return SLAPI.getInstance().getPlatform().getMainMessages().resource.getString(key);
+            return GivenConfigs.getMainMessages().resource.getString(key);
         }
     }
 }

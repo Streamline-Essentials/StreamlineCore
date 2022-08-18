@@ -6,6 +6,7 @@ import de.leonhard.storage.Toml;
 import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.savables.SavableResource;
 import org.bson.Document;
 
@@ -68,7 +69,7 @@ public class StorageUtils {
     }
 
     public static boolean areUsersFlatFiles() {
-        switch (SLAPI.getInstance().getPlatform().getMainConfig().userUseType()) {
+        switch (GivenConfigs.getMainConfig().userUseType()) {
             default -> {
                 return false;
             }

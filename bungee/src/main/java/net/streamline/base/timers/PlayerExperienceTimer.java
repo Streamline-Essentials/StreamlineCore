@@ -2,6 +2,7 @@ package net.streamline.base.timers;
 
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
@@ -17,7 +18,7 @@ public class PlayerExperienceTimer extends BaseRunnable {
     @Override
     public void run() {
         if (this.cooldown <= 0) {
-            this.cooldown = SLAPI.getInstance().getPlatform().getMainConfig().playerPayoutExperienceEvery();
+            this.cooldown = GivenConfigs.getMainConfig().playerPayoutExperienceEvery();
             done();
         }
 
@@ -27,7 +28,7 @@ public class PlayerExperienceTimer extends BaseRunnable {
     public void done() {
         for (StreamlineUser user : SLAPI.getInstance().getUserManager().getLoadedUsers()) {
             if (user instanceof StreamlinePlayer player) {
-                player.addTotalXP(SLAPI.getInstance().getPlatform().getMainConfig().playerPayoutExperienceAmount());
+                player.addTotalXP(GivenConfigs.getMainConfig().playerPayoutExperienceAmount());
             }
         }
     }

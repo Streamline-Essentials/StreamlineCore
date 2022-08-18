@@ -87,6 +87,6 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public StorageResource<?> getStorageResource() {
-        return null;
+        return storageResource;
     }
 }

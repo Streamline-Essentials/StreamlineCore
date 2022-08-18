@@ -14,6 +14,7 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.*;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ResourcePackMessageBuilder;
@@ -74,8 +75,8 @@ public class UserManager implements IUserManager {
     }
 
     public boolean userExists(String uuid) {
-        if (uuid.equals(Streamline.getInstance().getMainConfig().userConsoleDiscriminator())) return getLoadedUsers().contains(getConsole());
-        StorageUtils.StorageType type = Streamline.getInstance().getMainConfig().userUseType();
+        if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return getLoadedUsers().contains(getConsole());
+        StorageUtils.StorageType type = GivenConfigs.getMainConfig().userUseType();
         File userFolder = Streamline.getInstance().getUserFolder();
         switch (type) {
             case YAML -> {
@@ -106,13 +107,13 @@ public class UserManager implements IUserManager {
                 return false;
             }
             case MONGO -> {
-                return Streamline.getInstance().getMainConfig().getConfiguredDatabase().mongoConnection().exists(
+                return GivenConfigs.getMainConfig().getConfiguredDatabase().mongoConnection().exists(
                         StreamlinePlayer.class.getSimpleName(),
                         StorageUtils.getWhere("whitelistedUuid", uuid)
                 );
             }
             case MYSQL -> {
-                return Streamline.getInstance().getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
+                return GivenConfigs.getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
                         new SQLCollection(StreamlinePlayer.class.getSimpleName(),
                                 "whitelistedUuid",
                                 uuid
@@ -174,14 +175,14 @@ public class UserManager implements IUserManager {
 
     public StreamlineUser getOrGetUser(CommandSender sender) {
         if (isConsole(sender)) {
-            return getOrGetUser(Streamline.getInstance().getMainConfig().userConsoleDiscriminator());
+            return getOrGetUser(GivenConfigs.getMainConfig().userConsoleDiscriminator());
         } else {
             return getOrGetUser(Streamline.getPlayer(sender).getUniqueId().toString());
         }
     }
 
     public StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
-        switch (Streamline.getInstance().getMainConfig().userUseType()) {
+        switch (GivenConfigs.getMainConfig().userUseType()) {
             case YAML -> {
                 return new FlatFileResource<>(Config.class, uuid + ".yml", Streamline.getInstance().getUserFolder(), false);
             }
@@ -192,10 +193,10 @@ public class UserManager implements IUserManager {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", Streamline.getInstance().getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "whitelistedUuid", uuid);
+                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "whitelistedUuid", uuid);
             }
             case MYSQL -> {
-                return new MySQLResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "whitelistedUuid", uuid));
+                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "whitelistedUuid", uuid));
             }
         }
 
@@ -203,12 +204,12 @@ public class UserManager implements IUserManager {
     }
 
     public String getUsername(CommandSender sender) {
-        if (isConsole(sender)) return Streamline.getInstance().getMainConfig().userConsoleNameRegular();
+        if (isConsole(sender)) return GivenConfigs.getMainConfig().userConsoleNameRegular();
         else return sender.getName();
     }
 
     public String getUsername(String uuid) {
-        if (uuid.equals(Streamline.getInstance().getMainConfig().userConsoleDiscriminator())) return Streamline.getInstance().getMainConfig().userConsoleNameRegular();
+        if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return GivenConfigs.getMainConfig().userConsoleNameRegular();
         else {
             ProxiedPlayer player = Streamline.getPlayer(uuid);
             if (player == null) return null;
@@ -221,7 +222,7 @@ public class UserManager implements IUserManager {
     }
 
     public boolean isConsole(String uuid) {
-        return uuid.equals(Streamline.getInstance().getMainConfig().userConsoleDiscriminator());
+        return uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator());
     }
 
     public boolean isOnline(String uuid) {
@@ -251,14 +252,14 @@ public class UserManager implements IUserManager {
         }
 
         if (stat instanceof StreamlineConsole) {
-            return Streamline.getInstance().getMainConfig().userConsoleNameFormatted();
+            return GivenConfigs.getMainConfig().userConsoleNameFormatted();
         }
 
         if (stat instanceof StreamlinePlayer) {
             if (stat.isOnline()) {
-                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, Streamline.getInstance().getMainConfig().playerOnlineName());
+                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
             } else {
-                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, Streamline.getInstance().getMainConfig().playerOfflineName());
+                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
             }
         }
 
@@ -271,14 +272,14 @@ public class UserManager implements IUserManager {
         }
 
         if (stat instanceof StreamlineConsole) {
-            return Streamline.getInstance().getMainConfig().userConsoleNameRegular();
+            return GivenConfigs.getMainConfig().userConsoleNameRegular();
         }
 
         if (stat instanceof StreamlinePlayer) {
             if (stat.isOnline()) {
-                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, Streamline.getInstance().getMainConfig().playerOnlineName());
+                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
             } else {
-                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, Streamline.getInstance().getMainConfig().playerOfflineName());
+                return Streamline.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
             }
         }
 
@@ -291,7 +292,7 @@ public class UserManager implements IUserManager {
         }
 
         if (stat instanceof StreamlineConsole) {
-            return Streamline.getInstance().getMainConfig().userConsoleNameFormatted();
+            return GivenConfigs.getMainConfig().userConsoleNameFormatted();
         }
 
         if (stat instanceof StreamlinePlayer) {
@@ -466,7 +467,7 @@ public class UserManager implements IUserManager {
     public StreamlineUser getOrGetUserByName(String name) {
         String uuid = Streamline.getInstance().getUUIDFromName(name);
         if (uuid == null) {
-            if (name.equals(Streamline.getInstance().getMainConfig().userConsoleNameRegular())) return getConsole();
+            if (name.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return getConsole();
             return null;
         }
 
