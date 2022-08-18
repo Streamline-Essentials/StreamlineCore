@@ -108,13 +108,13 @@ public class UserManager implements IUserManager {
             case MONGO -> {
                 return Streamline.getInstance().getMainConfig().getConfiguredDatabase().mongoConnection().exists(
                         StreamlinePlayer.class.getSimpleName(),
-                        StorageUtils.getWhere("uuid", uuid)
+                        StorageUtils.getWhere("whitelistedUuid", uuid)
                 );
             }
             case MYSQL -> {
                 return Streamline.getInstance().getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
                         new SQLCollection(StreamlinePlayer.class.getSimpleName(),
-                                "uuid",
+                                "whitelistedUuid",
                                 uuid
                         )
                 );
@@ -192,10 +192,10 @@ public class UserManager implements IUserManager {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", Streamline.getInstance().getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "uuid", uuid);
+                return new MongoResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "whitelistedUuid", uuid);
             }
             case MYSQL -> {
-                return new MySQLResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
+                return new MySQLResource(Streamline.getInstance().getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "whitelistedUuid", uuid));
             }
         }
 

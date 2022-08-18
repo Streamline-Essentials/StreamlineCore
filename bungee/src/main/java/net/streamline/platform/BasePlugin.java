@@ -14,6 +14,7 @@ import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.interfaces.IProperCommand;
@@ -23,6 +24,7 @@ import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.punishments.PunishmentConfig;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -208,20 +210,12 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         return getInstance().getProxy().getConfig().getPlayerLimit();
     }
 
-    public boolean hasWhitelist() {
-        return false;
+    public WhitelistConfig getWhitelist() {
+        return null;
     }
 
-    public void setWhitelist(boolean value) {
-
-    }
-
-    public boolean isWhitelistEnforced() {
-        return false;
-    }
-
-    public void setWhitelistEnforced(boolean value) {
-
+    public PunishmentConfig getPunishmentConfig() {
+        return null;
     }
 
     public @NotNull Set<StreamlinePlayer> getWhitelistedPlayers() {

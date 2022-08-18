@@ -14,8 +14,10 @@ public class MySQLConnection {
     public HikariConfig config;
     public HikariDataSource dataSource;
     public Connection connection;
+    public String tablePrefix;
 
-    public MySQLConnection(String connectionUri, String database) {
+    public MySQLConnection(String connectionUri, String database, String tablePrefix) {
+        this.tablePrefix = tablePrefix;
         this.config = new HikariConfig();
 
         try {
@@ -65,13 +67,17 @@ public class MySQLConnection {
         return collections;
     }
 
+    public String getPrefixed(String collection) {
+        return this.tablePrefix + collection;
+    }
+
     public boolean hasCollection(String name) {
         return listCollections().contains(name);
     }
 
     public Connection getCollection(SQLCollection sqlCollection) {
         try {
-            if (! hasCollection(sqlCollection.collectionName)) {
+            if (! hasCollection(getPrefixed(sqlCollection.collectionName))) {
                 PreparedStatement statement = getOrGetConnection().prepareStatement(getCreateStatement(sqlCollection));
                 statement.execute();
             }
@@ -84,7 +90,7 @@ public class MySQLConnection {
 
     public String getCreateStatement(SQLCollection sqlCollection) {
         StringBuilder builder = new StringBuilder("CREATE TABLE ");
-        builder.append("`").append(sqlCollection.collectionName).append("` ( ");
+        builder.append("`").append(getPrefixed(sqlCollection.collectionName)).append("` ( ");
 
         for (String key : sqlCollection.document.keySet()) {
             if (key.equals(sqlCollection.document.lastKey())) {

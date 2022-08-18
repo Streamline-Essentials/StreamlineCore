@@ -40,6 +40,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
+    implementation(shadow(files("${rootDir}\\backend-api\\build\\libs\\StreamlineCore-APIB-${APIB_VER}.jar")))
     implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 

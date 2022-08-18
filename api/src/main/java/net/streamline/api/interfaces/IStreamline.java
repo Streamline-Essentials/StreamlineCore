@@ -5,12 +5,14 @@ import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.punishments.PunishmentConfig;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.ModuleTaskManager;
@@ -84,14 +86,6 @@ public interface IStreamline {
     StreamlineResourcePack getResourcePack();
 
     void setResourcePack(StreamlineResourcePack resourcePack);
-
-    boolean hasWhitelist();
-
-    void setWhitelist(boolean value);
-
-    boolean isWhitelistEnforced();
-
-    void setWhitelistEnforced(boolean value);
 
     @NotNull Set<StreamlinePlayer> getWhitelistedPlayers();
 

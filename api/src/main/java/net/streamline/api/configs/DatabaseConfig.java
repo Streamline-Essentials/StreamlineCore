@@ -17,14 +17,14 @@ public class DatabaseConfig {
 
     public MongoConnection mongoConnection() {
         if (this.mongoConnection == null) {
-            this.mongoConnection = new MongoConnection(this.connectionUri, this.database);
+            this.mongoConnection = new MongoConnection(this.connectionUri, this.database, this.prefix);
         }
         return this.mongoConnection;
     }
 
     public MySQLConnection mySQLConnection() {
         if (this.mySQLConnection == null) {
-            this.mySQLConnection = new MySQLConnection(this.connectionUri, this.database);
+            this.mySQLConnection = new MySQLConnection(this.connectionUri, this.database, this.prefix);
         }
         return this.mySQLConnection;
     }
