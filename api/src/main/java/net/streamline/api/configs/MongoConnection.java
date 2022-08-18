@@ -12,10 +12,12 @@ import java.util.List;
 public class MongoConnection {
     public MongoClient client;
     public MongoDatabase database;
+    public String tablePrefix;
 
-    public MongoConnection(String connectionUri, String database) {
+    public MongoConnection(String connectionUri, String database, String tablePrefix) {
         this.client = new MongoClient(new MongoClientURI(connectionUri));
         this.database = client.getDatabase(database);
+        this.tablePrefix = tablePrefix;
     }
 
     public List<String> listCollections() {
@@ -24,13 +26,17 @@ public class MongoConnection {
         return collections;
     }
 
+    public String getPrefixed(String collection) {
+        return this.tablePrefix + collection;
+    }
+
     public boolean hasCollection(String name) {
         return listCollections().contains(name);
     }
 
     public MongoCollection<Document> getCollection(String collectionName) {
-        if (! hasCollection(collectionName)) this.database.createCollection(collectionName);
-        return this.database.getCollection(collectionName);
+        if (! hasCollection(getPrefixed(collectionName))) this.database.createCollection(getPrefixed(collectionName));
+        return this.database.getCollection(getPrefixed(collectionName));
     }
 
     public boolean exists(String collectionName, Document check) {

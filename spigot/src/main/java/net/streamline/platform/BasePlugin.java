@@ -8,6 +8,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.configs.given.MainConfigHandler;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.interfaces.IProperEvent;
@@ -15,6 +16,7 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.punishments.PunishmentConfig;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.holders.GeyserHolder;
@@ -223,6 +225,14 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     public void setWhitelistEnforced(boolean value) {
         getInstance().getProxy().setWhitelistEnforced(value);
+    }
+
+    public WhitelistConfig getWhitelist() {
+        return null;
+    }
+
+    public PunishmentConfig getPunishmentConfig() {
+        return null;
     }
 
     public @NotNull Set<StreamlinePlayer> getWhitelistedPlayers() {
@@ -579,7 +589,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
         Player p = getPlayer(uuid);
 
-//        Messenger.getInstance().logInfo("Attempting to send a resource pack to a uuid of '" + uuid + "'...");
+//        Messenger.getInstance().logInfo("Attempting to send a resource pack to a whitelistedUuid of '" + whitelistedUuid + "'...");
 
         sendResourcePack(resourcePack, p);
     }

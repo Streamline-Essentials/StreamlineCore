@@ -1,8 +1,21 @@
-plugins {
-    id 'net.minecrell.plugin-yml.bukkit' version '0.3.0'
-}
+//plugins {
+//    id 'java'
+//    id "com.github.johnrengelman.shadow" version "7.1.1"
+//    id "net.kyori.blossom" version "1.3.1"
+//}
+//apply from: "$rootDir/../dependencies.gradle"
+
+group = 'net.streamline'
+project.version = APIB_VER
 
 repositories {
+    mavenCentral()
+    // OpenCollab
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+    maven { url 'https://repo.opencollab.dev/maven-releases/'}
+    // JitPack
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://mvnrepository.com/artifact' }
     maven {
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
 
@@ -27,7 +40,7 @@ repositories {
 }
 
 dependencies {
-    // Platform.
+    // Platform Backend.
     compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
 
     // Defaults.
@@ -40,16 +53,28 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation(shadow(files("${rootDir}\\backend-api\\build\\libs\\StreamlineCore-APIB-${APIB_VER}.jar")))
     implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 
-bukkit {
-    name = 'StreamlineAPI'
-    main = 'net.streamline.base.Streamline'
-    authors = ['Quaint', 'RedstonedLife']
-    website = 'https://github.com/Streamline-Essentials'
-    version = "${project.version}"
-    depend = ['LuckPerms']
-    softDepend = ['Geyser']
+java {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
+
+blossom {
+    replaceToken '${version}', project.version, 'src/main/resources/plugin.yml'
+}
+
+jar.enabled = false
+shadowJar {
+    String finalName = "StreamlineCore-APIB-${project.version}.jar"
+
+    destinationDirectory = file("${rootDir}/backend-api/build/libs")
+    archiveClassifier.set('')
+
+    archiveFileName = finalName;
+}
+
+artifacts {
+    archives shadowJar
 }

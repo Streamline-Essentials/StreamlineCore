@@ -6,6 +6,7 @@ import de.leonhard.storage.Toml;
 import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import net.streamline.api.SLAPI;
+import net.streamline.api.savables.SavableResource;
 import org.bson.Document;
 
 import java.io.File;
@@ -75,5 +76,27 @@ public class StorageUtils {
                 return true;
             }
         }
+    }
+
+    public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz, StorageType type, File folder, DatabaseConfig databaseConfig) {
+        switch (type) {
+            case YAML -> {
+                return new FlatFileResource<>(Config.class, uuid + ".yml", folder, false);
+            }
+            case JSON -> {
+                return new FlatFileResource<>(Json.class, uuid + ".json", folder, false);
+            }
+            case TOML -> {
+                return new FlatFileResource<>(Toml.class, uuid + ".toml", folder, false);
+            }
+            case MONGO -> {
+                return new MongoResource(databaseConfig, clazz.getSimpleName(), "uuid", uuid);
+            }
+            case MYSQL -> {
+                return new MySQLResource(databaseConfig, new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
+            }
+        }
+
+        return null;
     }
 }

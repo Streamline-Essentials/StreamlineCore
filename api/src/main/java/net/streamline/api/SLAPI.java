@@ -2,6 +2,7 @@ package net.streamline.api;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
@@ -37,5 +38,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         this.platform = platform;
         this.userManager = userManager;
         this.messenger = messenger;
+
+        GivenConfigs.init();
     }
 }
