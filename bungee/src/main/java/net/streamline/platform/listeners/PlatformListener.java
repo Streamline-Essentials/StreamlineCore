@@ -9,6 +9,10 @@ import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
+import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.messages.*;
 import net.streamline.api.modules.ModuleManager;
@@ -36,6 +40,16 @@ public class PlatformListener implements Listener {
 
         StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUserByName(connection.getName());
         if (! (user instanceof StreamlinePlayer player)) return;
+
+        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
+        if (whitelistConfig.isEnabled()) {
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            if (entry == null) {
+                event.setCancelReason(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
+                event.setCancelled(true);
+                return;
+            }
+        }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
         ModuleUtils.fireEvent(loginReceivedEvent);

@@ -12,7 +12,7 @@ ext {
             "commons-codec:commons-codec:1.15"
     ]
     SHAD = [
-            "com.github.simplix-softworks:simplixstorage:3.2.5",
+            "com.github.simplix-softworks:SimplixStorage:3.2.5",
             "net.objecthunter:exp4j:0.4.8",
             "mysql:mysql-connector-java:8.0.29",
             "com.zaxxer:HikariCP:5.0.1",

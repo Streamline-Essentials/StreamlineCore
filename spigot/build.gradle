@@ -27,8 +27,9 @@ repositories {
 }
 
 dependencies {
+    // -x :StreamlineCore-Spigot:compileJava
     // Platform.
-    compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT" // The Spigot API with no shadowing. Requires the OSS repo.
 
     // Defaults.
     implementation(IMPL)
@@ -40,8 +41,10 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation(shadow(files("${rootDir}\\backend-api\\build\\libs\\StreamlineCore-APIB-${APIB_VER}.jar")))
-    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
+//    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
+    implementation(shadow(project(":StreamlineCore-API")))
+//    implementation(shadow(files("${rootDir}\\backend-api\\build\\libs\\StreamlineCore-APIB-${APIB_VER}.jar")))
+    implementation(shadow(project(":StreamlineCore-APIB")))
 }
 
 bukkit {

@@ -1,4 +1,4 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
@@ -30,9 +30,10 @@ public class ParseCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlinePlayer player = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
-        SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(sender.getUUID(),
-                getWithOther(this.messageResult, playerName)
+        StreamlinePlayer player = SLAPI.getInstance().getUserManager().getOrGetPlayerByName(playerName);
+
+        SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(sender,
+                getWithOther(sender, this.messageResult, player)
                         .replace("%this_parsed%", SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(player, SLAPI.getInstance().getMessenger().argsToStringMinus(args, 0)))
         ));
     }

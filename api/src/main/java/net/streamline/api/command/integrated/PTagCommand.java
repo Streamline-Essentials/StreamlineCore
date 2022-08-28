@@ -1,4 +1,4 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
@@ -41,10 +41,10 @@ public class PTagCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUser(UUIDUtils.swapToUUID(playerName));
+        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUser(playerName);
 
         if (args.length == 2) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
+            SLAPI.getInstance().getMessenger().sendMessage(sender, other,
                     getWithOther(sender, this.messageTagsGet, playerName));
             return;
         }
@@ -60,11 +60,11 @@ public class PTagCommand extends StreamlineCommand {
         switch (action) {
             case "add" -> {
                 Arrays.stream(actions).forEach(other::addTag);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsAdd, other));
             }
             case "remove" -> {
                 Arrays.stream(actions).forEach(other::removeTag);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsRemove, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsRemove, other));
             }
             default -> {
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());

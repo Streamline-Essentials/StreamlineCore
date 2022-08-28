@@ -5,7 +5,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.base.commands.*;
 import net.streamline.base.module.BaseModule;
 import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
@@ -28,7 +27,7 @@ import java.nio.file.Path;
         },
         dependencies = {
                 @Dependency(id = "luckperms"),
-                @Dependency(id = "geyser", optional = true)
+                @Dependency(id = "geyser-velocity", optional = true)
         }
 )
 public class Streamline extends BasePlugin {
@@ -40,14 +39,6 @@ public class Streamline extends BasePlugin {
     @Override
     public void enable() {
         new StreamlineExpansion();
-
-        new ParseCommand().register();
-        new PXPCommand().register();
-        new ReloadCommand().register();
-        new PTagCommand().register();
-        new PointsCommand().register();
-        new PlaytimeCommand().register();
-        new ModulesCommand().register();
 
         new OneSecondTimer();
         new PlayerExperienceTimer();

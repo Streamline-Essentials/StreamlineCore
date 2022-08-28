@@ -5,4 +5,4 @@ authors: [ RedstonedLife, Quaint ]
 depends:
   - LuckPerms
 softdepends:
-  - Geyser
+  - Geyser-BungeeCord

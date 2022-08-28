@@ -1,5 +1,6 @@
 package net.streamline.apib.craft;
 
+import de.leonhard.storage.sections.FlatFileSection;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.messenger.Messenger;
@@ -24,9 +25,9 @@ public class SavedItemStack {
     @Getter @Setter
     private String name;
     @Getter @Setter
-    private List<String> lore;
+    private List<String> lore = new ArrayList<>();
     @Getter @Setter
-    private ConcurrentHashMap<String, Integer> enchants;
+    private ConcurrentHashMap<String, Integer> enchants = new ConcurrentHashMap<>();
 
     public void loreFrom(String[] lore) {
         this.lore = new ArrayList<>();
@@ -42,6 +43,7 @@ public class SavedItemStack {
     }
 
     public SavedItemStack(ItemStack from) {
+        if (from == null) from = new ItemStack(Material.AIR);
         this.setMaterial(from.getType().toString());
         this.setCount(from.getAmount());
 
@@ -51,8 +53,34 @@ public class SavedItemStack {
             this.setName(meta.getDisplayName());
             this.setLore(meta.getLore());
         }
+        setEnchants(new ConcurrentHashMap<>());
         for (Enchantment enchantment : from.getEnchantments().keySet()) {
             this.addEnchant(enchantment, from.getEnchantmentLevel(enchantment));
+        }
+    }
+
+    public SavedItemStack(FlatFileSection section) {
+        setMaterial(section.getString("material"));
+        setCount(section.getInt("count"));
+        setName(section.getString("name"));
+        setLore(section.getStringList("lore"));
+
+        setEnchants(new ConcurrentHashMap<>());
+        for (String key : section.singleLayerKeySet("enchantments")) {
+            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.fromString(key));
+            if (enchantment == null) continue;
+            addEnchant(enchantment, section.getInt("enchantments." + key));
+        }
+    }
+
+    public void saveInto(FlatFileSection section) {
+        section.set("material", getMaterial());
+        section.set("count", getCount());
+        section.set("name", getName());
+        section.set("lore", getLore());
+
+        for (String key : getEnchants().keySet()) {
+            section.set("enchantments." + key, getEnchants().get(key));
         }
     }
 
@@ -67,11 +95,15 @@ public class SavedItemStack {
             return null;
         }
         if (! this.getName().equals("")) meta.setDisplayName(this.getName());
-        meta.setLore(this.getLore());
-        for (String enchant : enchants.keySet()) {
-            Enchantment enchantment = Enchantment.getByKey(NamespacedKey.fromString(enchant));
-            if (enchantment == null) continue;
-            meta.addEnchant(enchantment, enchants.get(enchant), false);
+
+        if (this.getLore() != null) if (! this.getLore().isEmpty()) meta.setLore(this.getLore());
+
+        if (this.getEnchants() != null) if (! this.getEnchants().isEmpty()) {
+            for (String enchant : enchants.keySet()) {
+                Enchantment enchantment = Enchantment.getByKey(NamespacedKey.fromString(enchant));
+                if (enchantment == null) continue;
+                meta.addEnchant(enchantment, enchants.get(enchant), false);
+            }
         }
         stack.setItemMeta(meta);
         return stack;

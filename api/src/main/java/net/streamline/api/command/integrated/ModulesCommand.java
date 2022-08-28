@@ -1,4 +1,4 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
@@ -20,9 +20,9 @@ public class ModulesCommand extends StreamlineCommand {
 
     public ModulesCommand() {
         super(
-                "spigotstreamlinemodule",
-                "streamline.command.spigot.streamlinemodule.default",
-                "smodule", "sslm", "smodules"
+                "streamlinemodule",
+                "streamline.command.streamlinemodule.default",
+                "module", "pmodule", "slm"
         );
 
         this.messageResultReapplyAll = this.getCommandResource().getOrSetDefault("messages.result.reapply.all",

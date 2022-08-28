@@ -16,14 +16,19 @@ public class MainMessagesHandler extends FlatFileResource<Config> {
 
         public enum INVALID {
             PERMISSIONS("invalid.permissions"),
+
             PLAYER_SELF("invalid.player.self"),
             PLAYER_OTHER("invalid.player.other"),
+
             USER_SELF("invalid.user.self"),
             USER_OTHER("invalid.user.other"),
+
             ARGUMENTS_TOO_MANY("invalid.arguments.too.many"),
             ARGUMENTS_TOO_FEW("invalid.arguments.too.few"),
             ARGUMENTS_TYPE_DEFAULT("invalid.arguments.type.default"),
             ARGUMENTS_TYPE_NUMBER("invalid.arguments.type.number"),
+
+            WHITELIST_NOT("invalid.whitelist.not"),
             ;
 
             public final String key;
