@@ -474,6 +474,15 @@ public class UserManager implements IUserManager {
         return getOrGetUser(uuid);
     }
 
+    @Override
+    public StreamlinePlayer getOrGetPlayerByName(String name) {
+        if (name.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return null;
+
+        String uuid = Streamline.getInstance().getUUIDFromName(name);
+
+        return getOrGetPlayer(uuid);
+    }
+
     public List<StreamlinePlayer> getPlayersOn(String server) {
         StreamlineServerInfo s = Streamline.getInstance().getStreamlineServer(server);
         if (s == null) return new ArrayList<>();

@@ -3,6 +3,10 @@ package net.streamline.platform.listeners;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
+import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.base.Streamline;
@@ -35,6 +39,15 @@ public class PlatformListener implements Listener {
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUserByName(event.getName());
         if (! (user instanceof StreamlinePlayer player)) return;
+
+        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
+        if (whitelistConfig.isEnabled()) {
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            if (entry == null) {
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, Messenger.getInstance().codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
+                return;
+            }
+        }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
         Streamline.getInstance().fireEvent(loginReceivedEvent, true);

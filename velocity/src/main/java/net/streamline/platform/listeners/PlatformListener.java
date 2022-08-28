@@ -12,6 +12,10 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.configs.given.whitelist.WhitelistConfig;
+import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
@@ -44,6 +48,15 @@ public class PlatformListener {
 
         StreamlineUser user = UserManager.getInstance().getOrGetUserByName(event.getUsername());
         if (! (user instanceof SavablePlayer player)) return;
+
+        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
+        if (whitelistConfig.isEnabled()) {
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            if (entry == null) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get())));
+                return;
+            }
+        }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
         ModuleUtils.fireEvent(loginReceivedEvent);

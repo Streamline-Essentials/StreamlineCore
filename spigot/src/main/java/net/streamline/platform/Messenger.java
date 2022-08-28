@@ -17,6 +17,8 @@ import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
+import net.streamline.platform.users.SavablePlayer;
+import net.streamline.platform.users.SavableUser;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -39,6 +41,8 @@ public class Messenger implements IMessenger {
 
     public void logWarning(String message) {
         sendMessage(SLAPI.getInstance().getUserManager().getConsole(), "&6" + message);
+
+        SavablePlayer player = new SavablePlayer("shdfjgdsh");
     }
 
     public void logSevere(String message) {

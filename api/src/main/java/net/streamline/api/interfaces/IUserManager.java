@@ -23,6 +23,8 @@ public interface IUserManager {
 
     StreamlinePlayer getOrGetPlayer(String uuid);
 
+    StreamlinePlayer getOrGetPlayerByName(String name);
+
     StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz);
 
     boolean isConsole(String uuid);

@@ -2,7 +2,6 @@ package net.streamline.base;
 
 import net.streamline.platform.BasePlugin;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.base.commands.*;
 import net.streamline.base.module.BaseModule;
 import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.base.timers.OneSecondTimer;
@@ -13,14 +12,6 @@ public class Streamline extends BasePlugin {
     @Override
     public void enable() {
         new StreamlineExpansion();
-
-        new ParseCommand().register();
-        new PXPCommand().register();
-        new ReloadCommand().register();
-        new PTagCommand().register();
-        new PointsCommand().register();
-        new PlaytimeCommand().register();
-        new ModulesCommand().register();
 
         new OneSecondTimer();
         new PlayerExperienceTimer();

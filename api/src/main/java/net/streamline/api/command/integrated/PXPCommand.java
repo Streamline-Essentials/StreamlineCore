@@ -1,4 +1,4 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
@@ -61,7 +61,7 @@ public class PXPCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlinePlayer player = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
+        StreamlinePlayer player = SLAPI.getInstance().getUserManager().getOrGetPlayerByName(playerName);
 
         if (player == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_SELF.get());
@@ -73,8 +73,8 @@ public class PXPCommand extends StreamlineCommand {
         switch (type) {
             case "level" -> {
                 if (args.length == 2) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
-                            getWithOther(sender, this.messageLevelGet, playerName));
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, player,
+                            getWithOther(sender, this.messageLevelGet, player));
                     return;
                 }
 
@@ -93,24 +93,18 @@ public class PXPCommand extends StreamlineCommand {
                     return;
                 }
 
-                StreamlinePlayer StreamlinePlayer = SLAPI.getInstance().getUserManager().getOrGetPlayer(SLAPI.getInstance().getPlatform().getUUIDFromName(playerName));
-                if (StreamlinePlayer == null) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
-                    return;
-                }
-
                 switch (action) {
                     case "set" -> {
-                        StreamlinePlayer.setLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelSet, playerName));
+                        player.setLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelSet, player));
                     }
                     case "add" -> {
-                        StreamlinePlayer.addLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelAdd, playerName));
+                        player.addLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelAdd, player));
                     }
                     case "remove" -> {
-                        StreamlinePlayer.removeLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelRemove, playerName));
+                        player.removeLevel(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelRemove, player));
                     }
                     default -> {
                         SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
@@ -119,8 +113,8 @@ public class PXPCommand extends StreamlineCommand {
             }
             case "xp" -> {
                 if (args.length == 2) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
-                            getWithOther(sender, this.messageXPGet, playerName));
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, player,
+                            getWithOther(sender, this.messageXPGet, player));
                     return;
                 }
 
@@ -139,24 +133,18 @@ public class PXPCommand extends StreamlineCommand {
                     return;
                 }
 
-                StreamlinePlayer StreamlinePlayer = SLAPI.getInstance().getUserManager().getOrGetPlayer(SLAPI.getInstance().getPlatform().getUUIDFromName(playerName));
-                if (StreamlinePlayer == null) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
-                    return;
-                }
-
                 switch (action) {
                     case "set" -> {
-                        StreamlinePlayer.setTotalXP(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, playerName));
+                        player.setTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, player));
                     }
                     case "add" -> {
-                        StreamlinePlayer.addTotalXP(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, playerName));
+                        player.addTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, player));
                     }
                     case "remove" -> {
-                        StreamlinePlayer.removeTotalXP(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, playerName));
+                        player.removeTotalXP(amount);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, player));
                     }
                     default -> {
                         SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());

@@ -1,4 +1,4 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
@@ -41,10 +41,15 @@ public class PointsCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUser(UUIDUtils.swapToUUID(playerName));
+        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUserByName(playerName);
+
+        if (other == null) {
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            return;
+        }
 
         if (args.length == 1) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, UUIDUtils.getUUID(playerName),
+            SLAPI.getInstance().getMessenger().sendMessage(sender, other,
                     getWithOther(sender, this.messageGet, playerName));
             return;
         }
@@ -62,15 +67,21 @@ public class PointsCommand extends StreamlineCommand {
         switch (action) {
             case "set" -> {
                 other.setPoints(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet
+                                .replace("%this_value%", args[2])
+                        , other));
             }
             case "add" -> {
                 other.addPoints(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd
+                                .replace("%this_value%", args[2])
+                        , other));
             }
             case "remove" -> {
                 other.removePoints(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove
+                                .replace("%this_value%", args[2])
+                        , other));
             }
             default -> {
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());

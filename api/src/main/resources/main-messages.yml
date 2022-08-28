@@ -28,6 +28,10 @@ invalid:
       default: "&cOne of the arguments you supplied was not of a supported type!"
       # For numbers. (Example: if 'one' or 'lets say 1, but with any non number also' is specified instead of '1'.)
       number: "&cOne of the arguments you supplied was supposed to be a number, but was not!"
+  # For whitelist issues...
+  whitelist:
+    # If not whitelisted...
+    not: "&cYou are not whitelisted!"
 # Default formats for things:
 defaults:
   # For nulls. Can be used with '%streamline_null%'.

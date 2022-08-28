@@ -1,8 +1,8 @@
-package net.streamline.base.commands;
+package net.streamline.api.command.integrated;
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 
@@ -17,9 +17,9 @@ public class PlaytimeCommand extends StreamlineCommand {
 
     public PlaytimeCommand() {
         super(
-                "spigotplaytime",
-                "streamline.command.spigot.playtime.default",
-                "splaytime", "splay", "spigotplay"
+                "proxyplaytime",
+                "streamline.command.playtime.default",
+                "pplaytime", "pplay", "proxyplay"
         );
 
         this.messageGet = this.getCommandResource().getOrSetDefault("messages.playtime.get",
@@ -41,7 +41,7 @@ public class PlaytimeCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlinePlayer other = SLAPI.getInstance().getPlatform().getSavedPlayer(playerName);
+        StreamlinePlayer other = SLAPI.getInstance().getUserManager().getOrGetPlayerByName(playerName);
 
         if (other == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
@@ -49,7 +49,7 @@ public class PlaytimeCommand extends StreamlineCommand {
         }
 
         if (args.length == 1) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getPlatform().getUUIDFromName(playerName),
+            SLAPI.getInstance().getMessenger().sendMessage(sender, other,
                     getWithOther(sender, this.messageGet, playerName));
             return;
         }
@@ -67,15 +67,15 @@ public class PlaytimeCommand extends StreamlineCommand {
         switch (action) {
             case "set" -> {
                 other.setPlaySeconds(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, other));
             }
             case "add" -> {
                 other.addPlaySecond(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, other));
             }
             case "remove" -> {
                 other.removePlaySecond(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, playerName));
+                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, other));
             }
             default -> {
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
