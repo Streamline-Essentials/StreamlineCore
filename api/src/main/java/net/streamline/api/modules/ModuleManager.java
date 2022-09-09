@@ -144,7 +144,7 @@ public class ModuleManager {
         List<ModuleCommand> commands = getCommandsForModule(module);
 
         for (ModuleCommand command : commands) {
-            if (command.isEnabled()) command.disable();
+            if (command.isLoaded()) command.disable();
         }
     }
 

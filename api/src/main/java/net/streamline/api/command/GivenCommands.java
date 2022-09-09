@@ -2,7 +2,7 @@ package net.streamline.api.command;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.command.integrated.*;
+import net.streamline.api.base.commands.*;
 
 public class GivenCommands {
     @Getter @Setter

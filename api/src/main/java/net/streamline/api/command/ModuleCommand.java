@@ -37,11 +37,15 @@ public abstract class ModuleCommand extends StreamlineCommand {
 
     @Override
     public void register() {
+        if (! isEnabled()) return;
+
         SLAPI.getInstance().getPlatform().registerModuleCommand(this);
     }
 
     @Override
     public void unregister() {
+        if (! isEnabled()) if (! SLAPI.getInstance().getPlatform().getLoadedModuleCommands().containsKey(getIdentifier())) return;
+
         SLAPI.getInstance().getPlatform().unregisterModuleCommand(this);
     }
 

@@ -3,8 +3,11 @@ package net.streamline.platform.messaging;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.streamline.api.SLAPI;
 import net.streamline.api.messages.*;
-import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
+import net.streamline.api.messages.builders.ReturnParseMessageBuilder;
+import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
@@ -67,6 +70,11 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             if (server.isEmpty()) return;
             StreamlineUser player = UserManager.getInstance().getOrGetUser(set.value);
             UserManager.getInstance().connect(player, set.key);
+        }
+        if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
+            SingleSet<String, String> set = ProxyParseMessageBuilder.unbuild(event.getMessage());
+            StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(set.value);
+            SLAPI.getInstance().getProxyMessenger().sendMessage(ReturnParseMessageBuilder.build(set.key, Messenger.getInstance().replaceAllPlayerBungee(user, set.key), user));
         }
     }
 }

@@ -1,10 +1,9 @@
-package net.streamline.api.command.integrated;
+package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.api.utils.UUIDUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

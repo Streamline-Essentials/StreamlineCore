@@ -28,7 +28,7 @@ subprojects {
     apply from: "$rootDir/dependencies.gradle"
 
     group = 'net.streamline'
-    version = '2.0.0.3a'
+    version = '2.0.0.4'
 
     repositories {
         mavenCentral()

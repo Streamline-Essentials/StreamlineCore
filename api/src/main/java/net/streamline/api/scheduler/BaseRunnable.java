@@ -38,4 +38,8 @@ public abstract class BaseRunnable implements Runnable {
     public void cancel() {
         ModuleUtils.getMainScheduler().cancel(this);
     }
+
+    public boolean isCancelled() {
+        return ! ModuleUtils.getMainScheduler().currentRunnables.containsKey(this.index);
+    }
 }

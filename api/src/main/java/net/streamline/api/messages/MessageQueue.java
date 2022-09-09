@@ -23,7 +23,11 @@ public class MessageQueue {
         if (current == null) current = new ConcurrentSkipListMap<>();
         for (Date i : current.keySet()) {
             MessageTicker ticker = current.get(i);
-            if (ticker.startedAt.equals(messageTicker.startedAt)) current.remove(i);
+            if (ticker.startedAt.equals(messageTicker.startedAt)) {
+                current.remove(i);
+                ticker.cancel();
+                return;
+            }
         }
     }
 }

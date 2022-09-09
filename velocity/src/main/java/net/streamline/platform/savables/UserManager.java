@@ -17,8 +17,8 @@ import net.streamline.api.configs.*;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IUserManager;
-import net.streamline.api.messages.ResourcePackMessageBuilder;
-import net.streamline.api.messages.ServerConnectMessageBuilder;
+import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
+import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
@@ -193,10 +193,10 @@ public class UserManager implements IUserManager {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", Streamline.getInstance().getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "whitelistedUuid", uuid);
+                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "uuid", uuid);
             }
             case MYSQL -> {
-                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "whitelistedUuid", uuid));
+                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
             }
         }
 

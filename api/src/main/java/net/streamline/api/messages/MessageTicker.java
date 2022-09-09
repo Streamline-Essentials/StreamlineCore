@@ -16,7 +16,6 @@ public class MessageTicker extends BaseRunnable {
 
     @Override
     public void run() {
-        SLAPI.getInstance().getProxyMessenger().sendMessage(getMessageOut());
-        this.cancel();
+        MessageQueue.pop(this);
     }
 }

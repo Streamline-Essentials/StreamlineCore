@@ -47,6 +47,9 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("offline")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.IS_OFFLINE.get();
         }
+        if (params.equals("pending")) {
+            return MainMessagesHandler.MESSAGES.DEFAULTS.IS_PENDING.get();
+        }
         if (params.equals("placeholders_null")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
         }
@@ -61,6 +64,9 @@ public class StreamlineExpansion extends RATExpansion {
         }
         if (params.equals("placeholders_offline")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
+        }
+        if (params.equals("placeholders_pending")) {
+            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_PENDING.get();
         }
         if (params.startsWith("parse_")) {
             try {

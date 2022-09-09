@@ -77,10 +77,6 @@ public interface IStreamline {
 
     void ensureApiChannel(String apiChannel);
 
-    ModuleTaskManager getModuleScheduler();
-
-    TaskManager getMainScheduler();
-
     int getMaxPlayers();
 
     StreamlineResourcePack getResourcePack();

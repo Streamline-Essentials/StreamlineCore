@@ -344,11 +344,11 @@ public class ModuleUtils {
     }
 
     public static ModuleTaskManager getModuleScheduler() {
-        return SLAPI.getInstance().getPlatform().getModuleScheduler();
+        return SLAPI.getInstance().getModuleScheduler();
     }
 
     public static TaskManager getMainScheduler() {
-        return SLAPI.getInstance().getPlatform().getMainScheduler();
+        return SLAPI.getInstance().getMainScheduler();
     }
 
     public static IStreamline.PlatformType getPlatformType() {

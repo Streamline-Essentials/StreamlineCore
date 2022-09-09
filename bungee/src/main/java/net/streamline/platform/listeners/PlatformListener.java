@@ -2,7 +2,6 @@ package net.streamline.platform.listeners;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
-import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.*;
@@ -15,19 +14,17 @@ import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.messages.*;
+import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
-import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.platform.users.SavablePlayer;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
