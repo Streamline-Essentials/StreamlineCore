@@ -57,7 +57,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
         @Override
         public void run() {
-            getInstance().getMainScheduler().tick();
+            SLAPI.getInstance().getMainScheduler().tick();
         }
     }
 
@@ -94,10 +94,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     private String commandsFolderChild = "commands" + File.separator;
     @Getter
     private LuckPerms luckPerms;
-    @Getter
-    private ModuleTaskManager moduleScheduler;
-    @Getter
-    private TaskManager mainScheduler;
     @Getter
     private GeyserHolder geyserHolder;
 
@@ -138,9 +134,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
 
         ratapi = new RATAPI();
-
-        moduleScheduler = new ModuleTaskManager();
-        mainScheduler = new TaskManager();
 
         luckPerms = LuckPermsProvider.get();
 

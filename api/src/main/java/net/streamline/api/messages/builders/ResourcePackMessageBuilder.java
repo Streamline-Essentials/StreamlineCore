@@ -1,24 +1,20 @@
-package net.streamline.api.messages;
+package net.streamline.api.messages.builders;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
-import net.luckperms.api.messenger.Messenger;
 import net.streamline.api.SLAPI;
+import net.streamline.api.messages.ProxyMessageHelper;
+import net.streamline.api.messages.ProxyMessageIn;
+import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.api.utils.MatcherUtils;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
 
-import javax.xml.datatype.DatatypeFactory;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResourcePackMessageBuilder {
     @Getter

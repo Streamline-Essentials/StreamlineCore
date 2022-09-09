@@ -34,10 +34,14 @@ public abstract class StreamlineCommand {
     }
 
     public void register() {
+        if (! isEnabled()) return;
+
         SLAPI.getInstance().getPlatform().registerStreamlineCommand(this);
     }
 
     public void unregister() {
+        if (! isEnabled()) if (! SLAPI.getInstance().getPlatform().getLoadedStreamlineCommands().containsKey(getIdentifier())) return;
+
         SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this);
     }
 
@@ -62,12 +66,16 @@ public abstract class StreamlineCommand {
         return base.replace("%this_other%", other);
     }
 
-    public boolean isEnabled() {
+    public boolean isLoaded() {
         for (String identifier : SLAPI.getInstance().getPlatform().getLoadedStreamlineCommands().keySet()) {
             if (identifier.equals(this.getIdentifier())) return true;
         }
 
         return false;
+    }
+
+    public boolean isEnabled() {
+        return getCommandResource().resource.getBoolean("basic.enabled");
     }
 
     public void disable() {

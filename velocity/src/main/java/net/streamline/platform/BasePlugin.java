@@ -64,7 +64,7 @@ public abstract class BasePlugin implements IStreamline {
 
         @Override
         public void run() {
-            getInstance().getMainScheduler().tick();
+            SLAPI.getInstance().getMainScheduler().tick();
         }
     }
 
@@ -105,10 +105,6 @@ public abstract class BasePlugin implements IStreamline {
     private MainMessagesHandler mainMessages;
     @Getter
     private LuckPerms luckPerms;
-    @Getter
-    private ModuleTaskManager moduleScheduler;
-    @Getter
-    private TaskManager mainScheduler;
     @Getter
     private GeyserHolder geyserHolder;
 
@@ -164,9 +160,6 @@ public abstract class BasePlugin implements IStreamline {
         mainMessages = new MainMessagesHandler();
 
         ratapi = new RATAPI();
-
-        moduleScheduler = new ModuleTaskManager();
-        mainScheduler = new TaskManager();
 
         luckPerms = LuckPermsProvider.get();
 

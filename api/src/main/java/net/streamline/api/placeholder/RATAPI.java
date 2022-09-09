@@ -74,16 +74,16 @@ public class RATAPI {
     public String parseAllPlaceholders(StreamlineUser of, String from) {
         for (CustomPlaceholder placeholder : getCustomPlaceholders()) {
             RATResult result = PlaceholderUtils.parseCustomPlaceholder(placeholder.getKey(), placeholder.getValue(), from);
-            from = result.string;
             if (result.didReplacement()) {
+                from = result.string;
                 from = parseAllPlaceholders(of, from);
             }
         }
 
         for (RATExpansion expansion : loadedExpansions) {
             RATResult result = PlaceholderUtils.parsePlaceholder(expansion, of, from);
-            from = result.string;
             if (result.didReplacement()) {
+                from = result.string;
                 from = parseAllPlaceholders(of, from);
             }
         }

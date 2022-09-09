@@ -1,4 +1,4 @@
-package net.streamline.base.timers;
+package net.streamline.api.base.timers;
 
 
 import net.streamline.api.SLAPI;
@@ -8,21 +8,21 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 
 public class PlayerExperienceTimer extends BaseRunnable {
-    public int cooldown;
+    public int coolDown;
 
     public PlayerExperienceTimer() {
         super(0, 1);
-        this.cooldown = 0;
+        this.coolDown = 0;
     }
 
     @Override
     public void run() {
-        if (this.cooldown <= 0) {
-            this.cooldown = GivenConfigs.getMainConfig().playerPayoutExperienceEvery();
+        if (this.coolDown <= 0) {
+            this.coolDown = GivenConfigs.getMainConfig().playerPayoutExperienceEvery();
             done();
         }
 
-        this.cooldown --;
+        this.coolDown--;
     }
 
     public void done() {

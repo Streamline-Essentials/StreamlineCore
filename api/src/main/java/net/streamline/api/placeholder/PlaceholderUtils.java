@@ -123,7 +123,9 @@ public class PlaceholderUtils {
 
             for (PlaceholderValue pv : pvs) {
                 if (pv.isEmpty) continue;
-                pv = pv.setParsed(expansion.doRequest(on, pv.params));
+                String parsed = expansion.doRequest(on, pv.params);
+                if (parsed == null) continue;
+                pv = pv.setParsed(parsed);
                 toReplace.put(pv.unparsed, pv.parsed);
             }
             for (String match : toReplace.keySet()) {
@@ -146,7 +148,9 @@ public class PlaceholderUtils {
 
             for (PlaceholderValue pv : pvs) {
                 if (pv.isEmpty) continue;
-                pv = pv.setParsed(expansion.doLogic(pv.params));
+                String parsed = expansion.doLogic(pv.params);
+                if (parsed == null) continue;
+                pv = pv.setParsed(parsed);
                 toReplace.put(pv.unparsed, pv.parsed);
             }
 

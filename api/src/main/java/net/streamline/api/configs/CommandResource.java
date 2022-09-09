@@ -26,6 +26,10 @@ public class CommandResource extends FlatFileResource<Config> {
             defaults();
         }
 
+        if (! resource.getBoolean("basic.enabled") && resource.getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
+            defaults();
+        }
+
         syncCommand();
     }
 
@@ -34,7 +38,8 @@ public class CommandResource extends FlatFileResource<Config> {
     }
 
     public void defaults() {
-        write("basic.enabled", command.isEnabled());
+        write("DO-NOT-TOUCH.version", 1d);
+        write("basic.enabled", true);
         write("basic.label", command.getBase());
         write("basic.permissions.default", command.getPermission());
         write("basic.aliases", Arrays.stream(command.getAliases()).toList());
@@ -42,12 +47,19 @@ public class CommandResource extends FlatFileResource<Config> {
 
     public void syncCommand() {
         boolean enabled = resource.getBoolean("basic.enabled");
+
+        if (! enabled && resource.getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
+            enabled = true;
+            write("basic.enabled", true);
+            write("DO-NOT-TOUCH.version", 1d);
+        }
+
         String label = resource.getString("basic.label");
         String defaultPermission = resource.getString("basic.permissions.default");
         List<String> aliases = resource.getStringList("basic.aliases");
 
-        if (this.command.isEnabled()) if (! enabled) SLAPI.getInstance().getPlatform().registerStreamlineCommand(this.command);
-        if (! this.command.isEnabled()) if (enabled) SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this.command);
+        if (this.command.isLoaded()) if (! enabled) SLAPI.getInstance().getPlatform().registerStreamlineCommand(this.command);
+        if (! this.command.isLoaded()) if (enabled) SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this.command);
         this.command.setBase(label);
         this.command.setPermission(defaultPermission);
         this.command.setAliases(aliases.toArray(new String[0]));

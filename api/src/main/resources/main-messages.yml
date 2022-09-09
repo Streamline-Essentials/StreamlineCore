@@ -40,10 +40,12 @@ defaults:
   is-true: "&a&lTRUE"
   # For falses. Can be used with '%streamline_false%'.
   is-false: "&c&lFALSE"
-  # For falses. Can be used with '%streamline_online%'.
+  # For onlines. Can be used with '%streamline_online%'.
   is-online: "&a&lONLINE"
-  # For falses. Can be used with '%streamline_offline%'.
+  # For offlines. Can be used with '%streamline_offline%'.
   is-offline: "&c&lOFFLINE"
+  # For pendings. Can be used with '%streamline_pending%'.
+  is-pending: "&c&lPENDING"
   # Used when using placeholders.
   placeholders:
     # For nulls. Can be used with '%streamline_placeholders_null%'.
@@ -52,10 +54,12 @@ defaults:
     is-true: "%streamline_true%"
     # For falses. Can be used with '%streamline_placeholders_false%'.
     is-false: "%streamline_false%"
-    # For falses. Can be used with '%streamline_placeholders_online%'.
+    # For onlines. Can be used with '%streamline_placeholders_online%'.
     is-online: "%streamline_online%"
-    # For falses. Can be used with '%streamline_placeholders_offline%'.
+    # For offlines. Can be used with '%streamline_placeholders_offline%'.
     is-offline: "%streamline_offline%"
+    # For pendings. Can be used with '%streamline_placeholders_pending%'.
+    is-pending: "&c&lPENDING"
     # For when there is no player. Can be used with '%streamline_placeholders_no-player%'.
     no-player: "&cNo Player Found"
     # For when displaying lists.
