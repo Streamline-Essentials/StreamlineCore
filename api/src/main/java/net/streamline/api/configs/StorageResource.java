@@ -1,6 +1,9 @@
 package net.streamline.api.configs;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.utils.MathUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.time.temporal.ChronoUnit;
@@ -8,16 +11,26 @@ import java.util.Date;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class StorageResource<T> {
-    public StorageUtils.StorageType type;
-    public Class<T> resourceType;
-    public String discriminatorKey;
-    public Object discriminator;
-    public int hangingMillis;
-    public Date lastReload;
-    public TreeMap<String, Object> map;
+public abstract class StorageResource<T> implements Comparable<Date> {
+    @Getter
+    private final Date initializeDate;
+    @Getter @Setter
+    private StorageUtils.StorageType type;
+    @Getter @Setter
+    private Class<T> resourceType;
+    @Getter @Setter
+    private String discriminatorKey;
+    @Getter @Setter
+    private Object discriminator;
+    @Getter @Setter
+    private int hangingMillis;
+    @Getter @Setter
+    private Date lastReload;
+    @Getter @Setter
+    private TreeMap<String, Object> map;
 
     public StorageResource(Class<T> resourceType, String discriminatorKey, Object discriminator) {
+        initializeDate = new Date();
         this.resourceType = resourceType;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
@@ -83,11 +96,12 @@ public abstract class StorageResource<T> {
         return r;
     }
 
-    public void setHangingMillis(int setAs) {
-        this.hangingMillis = setAs;
-    }
-
     public InputStream getResourceAsStream(String filename) {
         return getClass().getClassLoader().getResourceAsStream(filename);
+    }
+
+    @Override
+    public int compareTo(@NotNull Date other) {
+        return Long.compare(getInitializeDate().getTime(), other.getTime());
     }
 }

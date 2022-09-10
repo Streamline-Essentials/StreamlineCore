@@ -5,8 +5,8 @@ import net.objecthunter.exp4j.ExpressionBuilder;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MathUtils {
     public static double eval(String function) {
@@ -38,5 +38,19 @@ public class MathUtils {
         }
 
         return value;
+    }
+
+    public static <K, V> int remove(Map<K, V> collection, V object) {
+        AtomicInteger amount = new AtomicInteger(0);
+        Map<K, V> other = new HashMap<>(collection);
+
+        other.forEach((o, t) -> {
+            if (t.equals(object)) {
+                collection.remove(o);
+                amount.incrementAndGet();
+            }
+        });
+
+        return amount.get();
     }
 }

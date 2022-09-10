@@ -1,6 +1,7 @@
 package net.streamline.api.messages;
 
 import lombok.Getter;
+import net.streamline.api.events.EventProcessor;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ReturnParseMessageBuilder;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -17,6 +18,7 @@ public class ReturnableQuery extends ReturnableMessage {
         this.user = user;
     }
 
+    @EventProcessor
     @Override
     public void onProxyMessage(ProxyMessageEvent event) {
         super.onProxyMessage(event);

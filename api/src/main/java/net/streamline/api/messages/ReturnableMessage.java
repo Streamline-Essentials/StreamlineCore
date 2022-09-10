@@ -71,5 +71,6 @@ public class ReturnableMessage extends BaseRunnable implements StreamlineListene
         setReturned(r);
 
         setFinished(true);
+        cancel();
     }
 }

@@ -116,7 +116,7 @@ public class PlaceholderUtils {
     public static RATResult parsePlaceholder(RATExpansion expansion, StreamlineUser on, String from) {
         int replaced = 0;
         try {
-            Matcher matcher = setupMatcher("([%](" + expansion.identifier + ")[_](.*?)[%])", from);
+            Matcher matcher = setupMatcher("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
             List<PlaceholderValue> pvs = getMatched(matcher);
 
             TreeMap<String, String> toReplace = new TreeMap<>();
@@ -141,7 +141,7 @@ public class PlaceholderUtils {
 
     public static String parsePlaceholderJustLogic(RATExpansion expansion, String from) {
         try {
-            Matcher matcher = setupMatcher("([%](" + expansion.identifier + ")[_](.*?)[%])", from);
+            Matcher matcher = setupMatcher("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
             List<PlaceholderValue> pvs = getMatched(matcher);
 
             TreeMap<String, String> toReplace = new TreeMap<>();
