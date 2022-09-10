@@ -1,11 +1,19 @@
 package net.streamline.api.savables;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.configs.StorageResource;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class SavableResource implements StreamlineResource {
-    public StorageResource<?> storageResource;
-    public String uuid;
-    public boolean enabled;
+import java.util.Date;
+
+public abstract class SavableResource implements StreamlineResource, Comparable<Date> {
+    @Getter @Setter
+    private StorageResource<?> storageResource;
+    @Getter @Setter
+    private String uuid;
+    @Getter @Setter
+    private boolean enabled;
 
     public SavableResource(String uuid, StorageResource<?> storageResource) {
         this.uuid = uuid;
@@ -42,11 +50,16 @@ public abstract class SavableResource implements StreamlineResource {
     }
 
     public String toString() {
-        return "SavableResource()[ KEY: " + this.storageResource.discriminatorKey + " , VALUE: " + this.storageResource.discriminator + " ]";
+        return "SavableResource()[ KEY: " + this.storageResource.getDiscriminatorKey() + " , VALUE: " + this.storageResource.getDiscriminator() + " ]";
     }
 
     public void dispose() throws Throwable {
         this.uuid = null;
         this.finalize();
+    }
+
+    @Override
+    public int compareTo(@NotNull Date other) {
+        return getStorageResource().compareTo(other);
     }
 }

@@ -4,17 +4,22 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.modules.StreamlineModule;
+import net.streamline.api.objects.DatedNumber;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class RATAPI {
-    public RATAPI api;
-    public List<RATExpansion> loadedExpansions = new ArrayList<>();
+    @Getter
+    private final RATAPI api;
     @Getter @Setter
-    private List<CustomPlaceholder> customPlaceholders = new ArrayList<>();
+    private ConcurrentSkipListMap<DatedNumber<Integer>, RATExpansion> loadedExpansions = new ConcurrentSkipListMap<>();
+    @Getter @Setter
+    private ConcurrentSkipListMap<DatedNumber<Integer>, CustomPlaceholder> customPlaceholders = new ConcurrentSkipListMap<>();
     @Getter @Setter
     private ConcurrentHashMap<StreamlineModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentHashMap<>();
 
@@ -24,11 +29,11 @@ public class RATAPI {
     }
 
     public void registerCustomPlaceholder(CustomPlaceholder placeholder) {
-        getCustomPlaceholders().add(placeholder);
+        getCustomPlaceholders().put(new DatedNumber<>(getCustomPlaceholders().size() + 1), placeholder);
     }
 
     public void unregisterCustomPlaceholder(CustomPlaceholder placeholder) {
-        getCustomPlaceholders().remove(placeholder);
+        MathUtils.remove(getCustomPlaceholders(), placeholder);
     }
 
     public void registerModularizedPlaceholder(ModularizedPlaceholder placeholder) {
@@ -48,11 +53,13 @@ public class RATAPI {
     }
 
     public void registerExpansion(RATExpansion expansion) {
-        loadedExpansions.add(expansion.setEnabled(true));
+        getLoadedExpansions().put(new DatedNumber<>(getLoadedExpansions().size() + 1), expansion);
+        expansion.setEnabled(true);
     }
 
     public void unregisterExpansion(RATExpansion expansion) {
-        loadedExpansions.remove(expansion.setEnabled(false));
+        MathUtils.remove(getLoadedExpansions(), expansion);
+        expansion.setEnabled(false);
     }
 
     public void enableExpansion(RATExpansion expansion) {
@@ -64,15 +71,15 @@ public class RATAPI {
     }
 
     public RATExpansion getExpansionByIdentifier(String identifier) {
-        for (RATExpansion expansion : loadedExpansions) {
-            if (expansion.identifier.equals(identifier)) return expansion;
+        for (RATExpansion expansion : getLoadedExpansions().values()) {
+            if (expansion.getIdentifier().equals(identifier)) return expansion;
         }
 
         return null;
     }
 
     public String parseAllPlaceholders(StreamlineUser of, String from) {
-        for (CustomPlaceholder placeholder : getCustomPlaceholders()) {
+        for (CustomPlaceholder placeholder : getCustomPlaceholders().values()) {
             RATResult result = PlaceholderUtils.parseCustomPlaceholder(placeholder.getKey(), placeholder.getValue(), from);
             if (result.didReplacement()) {
                 from = result.string;
@@ -80,7 +87,7 @@ public class RATAPI {
             }
         }
 
-        for (RATExpansion expansion : loadedExpansions) {
+        for (RATExpansion expansion : getLoadedExpansions().values()) {
             RATResult result = PlaceholderUtils.parsePlaceholder(expansion, of, from);
             if (result.didReplacement()) {
                 from = result.string;
@@ -89,5 +96,9 @@ public class RATAPI {
         }
 
         return from;
+    }
+
+    public boolean isRegistered(RATExpansion expansion) {
+        return getLoadedExpansions().containsValue(expansion);
     }
 }
