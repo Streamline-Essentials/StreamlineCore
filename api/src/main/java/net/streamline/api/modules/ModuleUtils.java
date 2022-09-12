@@ -6,8 +6,6 @@ import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.interfaces.IStreamline;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
@@ -22,12 +20,15 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
+import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ModuleUtils {
     public static String loggedModulePrefix(StreamlineModule module) {
@@ -174,36 +175,40 @@ public class ModuleUtils {
         return SLAPI.getInstance().getMessenger().isNullOrLessThanEqualTo(thingArray, lessThanOrEqualTo);
     }
 
-    public static List<StreamlineUser> getLoadedUsers() {
-        return SLAPI.getInstance().getUserManager().getLoadedUsers();
+    public static ConcurrentSkipListMap<String, StreamlineUser> getLoadedUsers() {
+        return UserUtils.getLoadedUsers();
+    }
+
+    public static ConcurrentSkipListSet<StreamlineUser> getLoadedUsersSet() {
+        return UserUtils.getLoadedUsersSet();
     }
 
     public static StreamlineUser loadUser(StreamlineUser user) {
-        return SLAPI.getInstance().getUserManager().loadUser(user);
+        return UserUtils.loadUser(user);
     }
 
     public static void unloadUser(StreamlineUser user) {
-        SLAPI.getInstance().getUserManager().unloadUser(user);
+        UserUtils.unloadUser(user);
     }
 
     public static boolean userExists(String uuid) {
-        return SLAPI.getInstance().getUserManager().userExists(uuid);
+        return UserUtils.userExists(uuid);
     }
 
     public static StreamlineUser getOrGetUser(String uuid) {
-        return SLAPI.getInstance().getUserManager().getOrGetUser(uuid);
+        return UserUtils.getOrGetUser(uuid);
     }
 
     public static StreamlinePlayer getOrGetPlayer(String uuid) {
-        return SLAPI.getInstance().getUserManager().getOrGetPlayer(uuid);
+        return UserUtils.getOrGetPlayer(uuid);
     }
 
     public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
-        return SLAPI.getInstance().getUserManager().newStorageResource(uuid, clazz);
+        return UserUtils.newStorageResource(uuid, clazz);
     }
 
     public static boolean isConsole(String uuid) {
-        return SLAPI.getInstance().getUserManager().isConsole(uuid);
+        return UserUtils.isConsole(uuid);
     }
 
     public static boolean isOnline(String uuid) {
@@ -211,31 +216,31 @@ public class ModuleUtils {
     }
 
     public static String getOffOnFormatted(StreamlineUser stat){
-        return SLAPI.getInstance().getUserManager().getOffOnFormatted(stat);
+        return UserUtils.getOffOnFormatted(stat);
     }
 
     public static String getOffOnAbsolute(StreamlineUser stat){
-        return SLAPI.getInstance().getUserManager().getOffOnAbsolute(stat);
+        return UserUtils.getOffOnAbsolute(stat);
     }
 
     public static String getFormatted(StreamlineUser stat){
-        return SLAPI.getInstance().getUserManager().getFormatted(stat);
+        return UserUtils.getFormatted(stat);
     }
 
     public static String getAbsolute(StreamlineUser stat){
-        return SLAPI.getInstance().getUserManager().getAbsolute(stat);
+        return UserUtils.getAbsolute(stat);
     }
 
     public static String getLuckPermsPrefix(String username){
-        return SLAPI.getInstance().getUserManager().getLuckPermsPrefix(username);
+        return UserUtils.getLuckPermsPrefix(username);
     }
 
     public static String getLuckPermsSuffix(String username){
-        return SLAPI.getInstance().getUserManager().getLuckPermsSuffix(username);
+        return UserUtils.getLuckPermsSuffix(username);
     }
 
     public static String getDisplayName(String username, String nickName) {
-        return SLAPI.getInstance().getUserManager().getDisplayName(username, nickName);
+        return UserUtils.getDisplayName(username, nickName);
     }
 
     public static void fireEvent(StreamlineEvent event) {
@@ -260,31 +265,31 @@ public class ModuleUtils {
     }
 
     public static LuckPerms getLuckPerms() {
-        return SLAPI.getInstance().getPlatform().getLuckPerms();
+        return SLAPI.getLuckPerms();
     }
 
     public static RATAPI getRATAPI() {
-        return SLAPI.getInstance().getPlatform().getRATAPI();
+        return SLAPI.getRatAPI();
     }
 
     public static StreamlineConsole getConsole() {
-        return SLAPI.getInstance().getUserManager().getConsole();
+        return UserUtils.getConsole();
     }
 
     public static void addPermission(User user, String permission) {
-        SLAPI.getInstance().getUserManager().addPermission(user, permission);
+        UserUtils.addPermission(user, permission);
     }
 
     public static void removePermission(User user, String permission) {
-        SLAPI.getInstance().getUserManager().removePermission(user, permission);
+        UserUtils.removePermission(user, permission);
     }
 
     public static boolean runAs(OperatorUser user, String command) {
-        return SLAPI.getInstance().getUserManager().runAs(user, command);
+        return UserUtils.runAs(user, command);
     }
 
     public static boolean runAs(StreamlineUser user, String command) {
-        return SLAPI.getInstance().getUserManager().runAs(user, command);
+        return UserUtils.runAs(user, command);
     }
 
     public static boolean runAs(StreamlineUser user, boolean bypass, String command) {
@@ -292,11 +297,11 @@ public class ModuleUtils {
     }
 
     public static String getUUIDFromName(String name) {
-        return SLAPI.getInstance().getPlatform().getUUIDFromName(name);
+        return UserUtils.getUUIDFromName(name);
     }
 
     public static StreamlineUser getOrGetUserByName(String name) {
-        return SLAPI.getInstance().getUserManager().getOrGetUserByName(name);
+        return UserUtils.getOrGetUserByName(name);
     }
 
     public static void chatAs(StreamlineUser as, String message) {
@@ -320,11 +325,11 @@ public class ModuleUtils {
     }
 
     public static boolean isGeyserPlayer(StreamlineUser user) {
-        return SLAPI.getInstance().getUserManager().isGeyserPlayer(user);
+        return UserUtils.isGeyserPlayer(user);
     }
 
     public static boolean isGeyserPlayer(String uuid) {
-        return SLAPI.getInstance().getUserManager().isGeyserPlayer(uuid);
+        return UserUtils.isGeyserPlayer(uuid);
     }
 
     public static boolean serverHasPlugin(String plugin) {

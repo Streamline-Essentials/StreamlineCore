@@ -9,26 +9,24 @@ import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.platform.Messenger;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
@@ -37,12 +35,12 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
-        StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUserByName(event.getName());
+        StreamlineUser user = UserUtils.getOrGetUserByName(event.getName());
         if (! (user instanceof StreamlinePlayer player)) return;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
             if (entry == null) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, Messenger.getInstance().codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 return;
@@ -75,14 +73,14 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onLeave(PlayerQuitEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(uuid);
+        StreamlinePlayer StreamlinePlayer = UserUtils.getOrGetPlayer(uuid);
         if (StreamlinePlayer == null) return;
 
         LogoutEvent logoutEvent = new LogoutEvent(StreamlinePlayer);
         ModuleUtils.fireEvent(logoutEvent);
 
         StreamlinePlayer.getStorageResource().sync();
-        UserManager.getInstance().unloadUser(StreamlinePlayer);
+        UserUtils.unloadUser(StreamlinePlayer);
     }
 
     @EventHandler

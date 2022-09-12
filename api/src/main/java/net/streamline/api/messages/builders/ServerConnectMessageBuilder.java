@@ -30,7 +30,7 @@ public class ServerConnectMessageBuilder {
 
         output.writeUTF(getSubChannel());
         output.writeUTF(lines.get(0).replace("%this_identifier%", serverInfo.getIdentifier()));
-        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUUID()));
+        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUuid()));
 
         return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
     }

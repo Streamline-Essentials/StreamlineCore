@@ -1,76 +1,176 @@
 package net.streamline.api.savables.users;
 
-import net.streamline.api.savables.StreamlineResource;
+import de.leonhard.storage.internal.FlatFile;
+import lombok.Getter;
+import lombok.Setter;
+import net.streamline.api.SLAPI;
+import net.streamline.api.configs.FlatFileResource;
+import net.streamline.api.configs.StorageResource;
+import net.streamline.api.configs.StorageUtils;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.savables.SavableResource;
+import net.streamline.api.utils.UUIDUtils;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface StreamlineUser extends StreamlineResource {
-    String getUUID();
+public abstract class StreamlineUser extends SavableResource {
+    @Override
+    public StorageResource<?> getStorageResource() {
+        return super.getStorageResource();
+    }
 
-    UUID getUUIDReal();
+    public UUID getUUIDReal() {
+        return UUID.fromString(this.getUuid());
+    }
 
-    StreamlineUser getStreamlineUser();
+    @Getter
+    private final StreamlineUser savableUser;
+    @Getter
+    private String latestName;
+    @Getter
+    private String displayName;
+    @Getter @Setter
+    private List<String> tagList;
+    @Getter
+    private double points;
+    @Getter @Setter
+    private String lastMessage;
+    @Getter @Setter
+    private boolean online;
+    @Getter
+    private String latestServer;
+    @Getter @Setter
+    private boolean bypassPermissions;
 
-    String getLatestName();
+    public StreamlineUser getStreamlineUser() {
+        return savableUser;
+    }
 
-    String getDisplayName();
+    public StreamlineUser asStreamlineUser() {
+        return this.savableUser;
+    }
 
-    List<String> getTagList();
+    public boolean updateOnline() {
+        if (getUuid().equals("%")) this.online = false;
 
-    double getPoints();
+        this.online = SLAPI.getInstance().getUserManager().isOnline(this.getUuid());
+        return this.online;
+    }
 
-    String getLastMessage();
+    public StreamlineUser(String uuid) {
+        super(uuid, UserUtils.newStorageResource(uuid, uuid.equals("%") ? StreamlineConsole.class : StreamlinePlayer.class));
 
-    boolean isOnline();
+        this.savableUser = this;
+    }
 
-    String getLatestServer();
+    @Override
+    public void populateDefaults() {
+        // Profile.
+        String username = UUIDUtils.getCachedName(this.getUuid());
+        latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
+        latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
+        displayName = getOrSetDefault("profile.display-name", latestName);
+        tagList = getOrSetDefault("profile.tags", getTagsFromConfig());
+        points = getOrSetDefault("profile.points", GivenConfigs.getMainConfig().userCombinedPointsDefault());
 
-    boolean isBypassPermissions();
+        populateMoreDefaults();
+    }
 
-    void setTagList(List<String> tagList);
+    abstract public List<String> getTagsFromConfig();
 
-    void setLastMessage(String message);
+    abstract public void populateMoreDefaults();
 
-    void setOnline(boolean online);
+    @Override
+    public void loadValues() {
+        // Profile.
+        latestName = getOrSetDefault("profile.latest.name", latestName);
+        latestServer = getOrSetDefault("profile.latest.server", latestServer);
+        displayName = getOrSetDefault("profile.display-name", displayName);
+        tagList = getOrSetDefault("profile.tags", tagList);
+        points = getOrSetDefault("profile.points", points);
+        // Online.
+        online = updateOnline();
+        // More.
+        loadMoreValues();
+    }
 
-    void setBypassPermissions(boolean bypassPermissions);
+    abstract public void loadMoreValues();
 
-    StreamlineUser asStreamlineUser();
+    public void saveAll() {
+        // Profile.
+        set("profile.latest.name", latestName);
+        set("profile.latest.server", latestServer);
+        set("profile.display-name", latestName);
+        set("profile.tags", tagList);
+        set("profile.points", points);
+        // More.
+        saveMore();
+        getStorageResource().push();
+    }
 
-    boolean updateOnline();
+    abstract public void saveMore();
 
-    List<String> getTagsFromConfig();
+    public void addTag(String tag) {
+        //        loadValues();
+        if (tagList.contains(tag)) return;
 
-    void populateMoreDefaults();
+        tagList.add(tag);
+        //        saveAll();
+    }
 
-    void loadMoreValues();
+    public void removeTag(String tag) {
+        //        loadValues();
+        if (! tagList.contains(tag)) return;
 
-    void saveAll();
+        tagList.remove(tag);
+        //        saveAll();
+    }
 
-    void saveMore();
+    public void setPoints(double amount) {
+        points = amount;
+    }
 
-    void addTag(String tag);
+    public void addPoints(double amount) {
+        setPoints(points + amount);
+    }
 
-    void removeTag(String tag);
+    public void removePoints(double amount) {
+        setPoints(points - amount);
+    }
 
-    void setPoints(double amount);
+    public void updateLastMessage(String message) {
+        lastMessage = message;
+    }
 
-    void addPoints(double amount);
+    public void setLatestServer(String server) {
+        latestServer = server;
+    }
 
-    void removePoints(double amount);
+    public void setLatestName(String name) {
+        latestName = name;
+    }
 
-    void updateLastMessage(String message);
+    public void setDisplayName(String name) {
+        displayName = name;
+    }
 
-    void setLatestServer(String server);
+    public String getName() {
+        return latestName;
+    }
 
-    void setLatestName(String name);
-
-    void setDisplayName(String name);
-
-    String getName();
-
-    void dispose() throws Throwable;
-
-    void reload();
+    public void dispose() throws Throwable {
+        try {
+            UserUtils.unloadUser(this);
+            this.setUuid(null);
+            if (StorageUtils.areUsersFlatFiles()) {
+                FlatFileResource<? extends FlatFile> resource = (FlatFileResource<? extends FlatFile>) this.getStorageResource();
+                resource.delete();
+            }
+        } finally {
+            super.finalize();
+        }
+    }
 }

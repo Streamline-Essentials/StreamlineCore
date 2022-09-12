@@ -4,6 +4,7 @@ package net.streamline.api.base.timers;
 import net.streamline.api.SLAPI;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 
@@ -27,9 +28,9 @@ public class UserSaveTimer extends BaseRunnable {
     }
 
     public void done() {
-        for (StreamlineUser user : new ArrayList<>(SLAPI.getInstance().getUserManager().getLoadedUsers())) {
+        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
             user.saveAll();
-            SLAPI.getInstance().getUserManager().unloadUser(user);
+            UserUtils.unloadUser(user);
         }
     }
 }

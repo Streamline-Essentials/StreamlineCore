@@ -4,6 +4,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class PointsCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUserByName(playerName);
+        StreamlineUser other = UserUtils.getOrGetUserByName(playerName);
 
         if (other == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());

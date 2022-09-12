@@ -22,16 +22,16 @@ import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.platform.users.SavablePlayer;
 
 public class PlatformListener {
     public PlatformListener() {
@@ -42,12 +42,12 @@ public class PlatformListener {
     public void onPreJoin(PreLoginEvent event) {
         InboundConnection connection = event.getConnection();
 
-        StreamlineUser user = UserManager.getInstance().getOrGetUserByName(event.getUsername());
-        if (! (user instanceof SavablePlayer player)) return;
+        StreamlineUser user = UserUtils.getOrGetUserByName(event.getUsername());
+        if (! (user instanceof StreamlinePlayer player)) return;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
             if (entry == null) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get())));
                 return;
@@ -69,7 +69,7 @@ public class PlatformListener {
         Player player = event.getPlayer();
 
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
         streamlinePlayer.setLatestName(event.getPlayer().getUsername());
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
@@ -79,14 +79,14 @@ public class PlatformListener {
     @Subscribe
     public void onLeave(DisconnectEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(uuid);
+        StreamlinePlayer StreamlinePlayer = UserUtils.getOrGetPlayer(uuid);
         if (StreamlinePlayer == null) return;
 
         LogoutEvent logoutEvent = new LogoutEvent(StreamlinePlayer);
         ModuleUtils.fireEvent(logoutEvent);
 
         StreamlinePlayer.getStorageResource().sync();
-        UserManager.getInstance().unloadUser(StreamlinePlayer);
+        UserUtils.unloadUser(StreamlinePlayer);
     }
 
     @Subscribe

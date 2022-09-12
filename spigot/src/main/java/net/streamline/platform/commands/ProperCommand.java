@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
@@ -26,7 +27,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        parent.run(SLAPI.getInstance().getUserManager().getOrGetUserByName(sender.getName()), args);
+        parent.run(UserUtils.getOrGetUserByName(sender.getName()), args);
         return true;
     }
 
@@ -36,7 +37,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         if (args == null) return new ArrayList<>();
         if (args.length <= 0) return new ArrayList<>();
 
-        List<String> r = parent.doTabComplete(SLAPI.getInstance().getUserManager().getOrGetUserByName(sender.getName()), args);
+        List<String> r = parent.doTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
 
         return r == null ? new ArrayList<>() : SLAPI.getInstance().getMessenger().getCompletion(r, args[args.length - 1]).stream().toList();
     }
@@ -69,7 +70,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        parent.run(SLAPI.getInstance().getUserManager().getOrGetUserByName(sender.getName()), args);
+        parent.run(UserUtils.getOrGetUserByName(sender.getName()), args);
         return true;
     }
 }

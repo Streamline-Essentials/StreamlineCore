@@ -10,6 +10,7 @@ import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.APIProfile;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 
 import java.util.ArrayList;
@@ -86,9 +87,9 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
 
         ConcurrentSkipListMap<String, StreamlineUser> users = new ConcurrentSkipListMap<>();
         onlineUUIDs.forEach(a -> {
-            StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(a);
+            StreamlineUser user = UserUtils.getOrGetUser(a);
             if (user == null) return;
-            users.put(user.getUUID(), user);
+            users.put(user.getUuid(), user);
         });
 
         return new StreamlineServerInfo(key, name, motd, address, users);

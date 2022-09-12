@@ -1,6 +1,7 @@
 package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.modules.ModuleManager;
@@ -28,11 +29,11 @@ public class ReloadCommand extends StreamlineCommand {
         GivenConfigs.getMainConfig().reloadResource(true);
         GivenConfigs.getMainMessages().reloadResource(true);
 
-        for (StreamlineCommand command : new ArrayList<>(SLAPI.getInstance().getPlatform().getLoadedStreamlineCommands().values())) {
-            SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(command);
+        for (StreamlineCommand command : new ArrayList<>(CommandHandler.getLoadedStreamlineCommands().values())) {
+            CommandHandler.unregisterStreamlineCommand(command);
             command.getCommandResource().reloadResource(true);
             command.getCommandResource().syncCommand();
-            SLAPI.getInstance().getPlatform().registerStreamlineCommand(command);
+            CommandHandler.registerStreamlineCommand(command);
         }
 
         ModuleManager.restartModules();

@@ -5,6 +5,7 @@ import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class PlaytimeCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlinePlayer other = SLAPI.getInstance().getUserManager().getOrGetPlayerByName(playerName);
+        StreamlinePlayer other = UserUtils.getOrGetPlayerByName(playerName);
 
         if (other == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());

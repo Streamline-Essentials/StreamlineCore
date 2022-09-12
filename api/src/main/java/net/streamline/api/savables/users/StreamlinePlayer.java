@@ -1,76 +1,201 @@
 package net.streamline.api.savables.users;
 
-import net.streamline.api.configs.StorageResource;
+import lombok.Getter;
+import lombok.Setter;
+import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.events.server.LoginCompletedEvent;
+import net.streamline.api.messages.ProxiedStreamlinePlayer;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.events.LevelChangePlayerEvent;
+import net.streamline.api.savables.events.XPChangePlayerEvent;
+import net.streamline.api.utils.MathUtils;
+import net.streamline.api.utils.UserUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-public interface StreamlinePlayer extends StreamlineUser {
-    double getTotalXP();
+public class StreamlinePlayer extends StreamlineUser {
+    @Getter
+    private double totalXP;
+    @Setter
+    private double currentXP;
+    @Getter
+    private int level;
+    @Getter
+    private int playSeconds;
+    private String latestIP;
+    @Getter @Setter
+    private List<String> ipList;
+    @Getter @Setter
+    private List<String> nameList;
+    @Getter @Setter
+    private int defaultLevel;
 
-    int getLevel();
+    public String getLatestIP() {
+        return SLAPI.getInstance().getUserManager().parsePlayerIP(this.getUuid());
+    }
 
-    int getPlaySeconds();
+    public StreamlinePlayer(ProxiedStreamlinePlayer player){
+        super(player.getUuid());
 
-    List<String> getIpList();
+        setLatestName(player.getLatestName());
+        setDisplayName(player.getDisplayName());
+        setTagList(player.getTagList());
+        setPoints(player.getPoints());
+        setLastMessage(player.getLastMessage());
+        setOnline(player.isOnline());
+        setLatestServer(player.getLatestServer());
+        setBypassPermissions(player.isBypassPermissions());
+        setTotalXP(player.getTotalXP());
+        setCurrentXP(player.getCurrentXP());
+        setLevel(player.getLevel());
+        setPlaySeconds(player.getPlaySeconds());
+        setLatestIP(player.getLatestIP());
+        setIpList(player.getIpList());
+        setNameList(player.getNameList());
+//        setDefaultLevel(player.getDefaultLevel());
 
-    List<String> getNameList();
 
-    int getDefaultLevel();
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(this);
+        ModuleUtils.fireEvent(loginCompletedEvent);
+    }
 
-    void setCurrentXP(double currentXP);
+    public StreamlinePlayer(String uuid){
+        super(uuid);
+    }
 
-    void setIpList(List<String> ipList);
-
-    void setNameList(List<String> nameList);
-
-    void setDefaultLevel(int defaultLevel);
-
-    String getLatestIP();
+    public StreamlinePlayer(UUID uuid) {
+        this(uuid.toString());
+    }
 
     @Override
-    List<String> getTagsFromConfig();
+    public List<String> getTagsFromConfig() {
+        return GivenConfigs.getMainConfig().playerTagsDefault();
+    }
 
     @Override
-    void populateMoreDefaults();
+    public void populateMoreDefaults() {
+        // Ips.
+        latestIP = getOrSetDefault("player.ips.latest", getLatestIP());
+        ipList = getOrSetDefault("player.ips.list", new ArrayList<>());
+        // Names.
+        nameList = getOrSetDefault("player.names", List.of(this.getLatestName()));
+        // Stats.
+        level = getOrSetDefault("player.stats.level", GivenConfigs.getMainConfig().playerStartingLevel());
+        totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
+        currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
+        playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
+    }
 
     @Override
-    void loadMoreValues();
+    public void loadMoreValues() {
+        // Ips.
+        latestIP = getOrSetDefault("player.ips.latest", latestIP);
+        ipList = getOrSetDefault("player.ips.list", ipList);
+        // Names.
+        nameList = getOrSetDefault("player.names", nameList);
+        // Stats.
+        level = getOrSetDefault("player.stats.level", level);
+        totalXP = getOrSetDefault("player.stats.experience.total", totalXP);
+        currentXP = getOrSetDefault("player.stats.experience.current", currentXP);
+        playSeconds = getOrSetDefault("player.stats.playtime.seconds", playSeconds);
+    }
 
     @Override
-    void saveMore();
+    public void saveMore() {
+        // Ips.
+        set("player.ips.latest", latestIP);
+        set("player.ips.list", ipList);
+        // Names.
+        set("player.names", nameList);
+        // Stats.
+        set("player.stats.level", level);
+        set("player.stats.experience.total", totalXP);
+        set("player.stats.experience.current", currentXP);
+        set("player.stats.playtime.seconds", playSeconds);
+    }
 
     @Override
-    void setLatestName(String name);
+    public void setLatestName(String name) {
+        super.setLatestName(name);
+        addName(name);
+    }
 
-    void addName(String name);
+    public void addName(String name){
+        if (nameList.contains(name)) return;
 
-    void removeName(String name);
+        nameList.add(name);
+    }
 
-    void setLatestIP(String ip);
+    public void removeName(String name){
+        if (! nameList.contains(name)) return;
 
-    void addIP(String ip);
+        nameList.remove(name);
+    }
 
-    void removeIP(String ip);
+    public void setLatestIP(String ip) {
+        this.latestIP = ip;
+        this.addIP(ip);
+        saveAll();
+    }
 
-    void addPlaySecond(int amount);
+    public void addIP(String ip){
+        if (ipList.contains(ip)) return;
 
-    void removePlaySecond(int amount);
+        ipList.add(ip);
+    }
 
-    void setPlaySeconds(int amount);
+    public void removeIP(String ip){
+        if (! ipList.contains(ip)) return;
 
-    double getPlayMinutes();
+        ipList.remove(ip);
+    }
 
-    double getPlayHours();
+    public void addPlaySecond(int amount){
+        setPlaySeconds(playSeconds + amount);
+    }
 
-    double getPlayDays();
+    public void removePlaySecond(int amount){
+        setPlaySeconds(playSeconds - amount);
+    }
 
-    String getPlaySecondsAsString();
+    public void setPlaySeconds(int amount){
+        playSeconds = amount;
+    }
 
-    String getPlayMinutesAsString();
+    public double getPlayMinutes(){
+        return playSeconds / (60.0d);
+    }
 
-    String getPlayHoursAsString();
+    public double getPlayHours(){
+        return playSeconds / (60.0d * 60.0d);
+    }
 
-    String getPlayDaysAsString();
+    public double getPlayDays(){
+        if (playSeconds < 300) return 0;
+        return playSeconds / (60.0d * 60.0d * 24.0d);
+    }
+
+    public String getPlaySecondsAsString(){
+        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(this.playSeconds), 2);
+    }
+
+    public String getPlayMinutesAsString(){
+        //        loadValues();
+        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayMinutes()), 2);
+    }
+
+    public String getPlayHoursAsString(){
+        //        loadValues();
+        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayHours()), 2);
+    }
+
+    public String getPlayDaysAsString(){
+        //        loadValues();
+        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayDays()), 2);
+    }
 
     /*
    Experience required =
@@ -80,27 +205,76 @@ public interface StreamlinePlayer extends StreamlineUser {
     */
 
 
-    void setLevel(int amount);
+    public void setLevel(int amount) {
+        int oldL = this.level;
 
-    void addLevel(int amount);
+        this.level = amount;
 
-    void removeLevel(int amount);
+        ModuleUtils.fireEvent(new LevelChangePlayerEvent(this, oldL));
+    }
 
-    float getNeededXp();
+    public void addLevel(int amount) {
+        setLevel(this.level + amount);
+    }
 
-    double xpUntilNextLevel();
+    public void removeLevel(int amount) {
+        setLevel(this.level - amount);
+    }
 
-    void addTotalXP(double amount);
+    public float getNeededXp(){
+        float needed = 0;
 
-    void removeTotalXP(double amount);
+        String function = ModuleUtils.replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation())
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
-    void setTotalXP(double amount);
+        needed = (float) MathUtils.eval(function);
 
-    float getCurrentLevelXP();
+        return needed;
+    }
 
-    double getCurrentXP();
+    public double xpUntilNextLevel(){
+        return getNeededXp() - this.totalXP;
+    }
 
-    String getDisplayName();
+    public void addTotalXP(double amount){
+        setTotalXP(this.totalXP + amount);
+    }
 
-    boolean isConnected();
+    public void removeTotalXP(double amount){
+        setTotalXP(this.totalXP - amount);
+    }
+
+    public void setTotalXP(double amount){
+        double old = this.totalXP;
+
+        this.totalXP = amount;
+
+        while (xpUntilNextLevel() <= 0) {
+            addLevel(1);
+        }
+
+        this.currentXP = getCurrentXP();
+
+        ModuleUtils.fireEvent(new XPChangePlayerEvent(this, old));
+    }
+
+    public float getCurrentLevelXP(){
+        float needed = 0;
+
+        String function = ModuleUtils.replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation().replace("%streamline_user_level%", String.valueOf(this.level - 1)))
+                .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
+
+        needed = (float) MathUtils.eval(function);
+
+        return needed;
+    }
+
+    public double getCurrentXP(){
+        //        loadValues();
+        return this.totalXP - getCurrentLevelXP();
+    }
+
+    public boolean isConnected() {
+        return isOnline();
+    }
 }

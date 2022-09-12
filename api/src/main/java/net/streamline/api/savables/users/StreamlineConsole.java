@@ -1,18 +1,38 @@
 package net.streamline.api.savables.users;
 
+import net.streamline.api.configs.given.GivenConfigs;
+
+import java.util.ArrayList;
 import java.util.List;
 
-public interface StreamlineConsole extends StreamlineUser {
+public class StreamlineConsole extends StreamlineUser {
+    public List<String> savedKeys = new ArrayList<>();
+
+    public StreamlineConsole() {
+        super("%");
+
+        if (this.getUuid() == null) return;
+        if (this.getUuid().equals("")) return;
+    }
 
     @Override
-    List<String> getTagsFromConfig();
+    public List<String> getTagsFromConfig(){
+        return GivenConfigs.getMainConfig().userConsoleDefaultTags();
+    }
 
     @Override
-    void populateMoreDefaults();
+    public void populateMoreDefaults() {
+        setLatestName(getOrSetDefault("profile.latest.name", GivenConfigs.getMainConfig().userConsoleNameRegular()));
+        setDisplayName(getOrSetDefault("profile.display-name", GivenConfigs.getMainConfig().userConsoleNameFormatted()));
+    }
 
     @Override
-    void loadMoreValues();
+    public void loadMoreValues() {
+
+    }
 
     @Override
-    void saveMore();
+    public void saveMore() {
+
+    }
 }

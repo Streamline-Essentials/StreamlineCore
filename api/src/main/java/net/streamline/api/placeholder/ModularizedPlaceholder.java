@@ -15,11 +15,11 @@ public class ModularizedPlaceholder extends CustomPlaceholder {
 
     @Override
     public void register() {
-        SLAPI.getInstance().getPlatform().getRATAPI().registerModularizedPlaceholder(this);
+        SLAPI.getRatAPI().registerModularizedPlaceholder(this);
     }
 
     @Override
     public void unregister() {
-        SLAPI.getInstance().getPlatform().getRATAPI().unregisterModularizedPlaceholder(this);
+        SLAPI.getRatAPI().unregisterModularizedPlaceholder(this);
     }
 }

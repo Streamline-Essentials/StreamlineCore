@@ -10,6 +10,7 @@ import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +65,7 @@ public class ServerInfoMessageBuilder {
         String usersString = ProxyMessageHelper.extrapolate(l.get(4)).value;
         ConcurrentSkipListMap<String, StreamlineUser> usersMap = new ConcurrentSkipListMap<>();
         extrapolateUsers(usersString).forEach(a -> {
-            usersMap.put(a.getUUID(), a);
+            usersMap.put(a.getUuid(), a);
         });
 
         return new StreamlineServerInfo(identifier, name, motd, address, usersMap);
@@ -76,7 +77,7 @@ public class ServerInfoMessageBuilder {
         List<StreamlineUser> r = new ArrayList<>();
 
         Arrays.stream(uuids).forEach(a -> {
-            StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(a);
+            StreamlineUser user = UserUtils.getOrGetUser(a);
             if (user == null) return;
             r.add(user);
         });
@@ -90,9 +91,9 @@ public class ServerInfoMessageBuilder {
         AtomicInteger integer = new AtomicInteger(0);
         users.forEach(a -> {
             if (integer.get() < users.size()) {
-                builder.append(a.getUUID()).append(",");
+                builder.append(a.getUuid()).append(",");
             } else {
-                builder.append(a.getUUID());
+                builder.append(a.getUuid());
             }
             integer.incrementAndGet();
         });

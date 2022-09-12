@@ -17,11 +17,12 @@ import net.streamline.api.messages.*;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -35,12 +36,12 @@ public class PlatformListener implements Listener {
     public void onPreJoin(PreLoginEvent event) {
         PendingConnection connection = event.getConnection();
 
-        StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUserByName(connection.getName());
+        StreamlineUser user = UserUtils.getOrGetUserByName(connection.getName());
         if (! (user instanceof StreamlinePlayer player)) return;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUUID());
+            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
             if (entry == null) {
                 event.setCancelReason(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 event.setCancelled(true);
@@ -74,14 +75,14 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(uuid);
+        StreamlinePlayer StreamlinePlayer = UserUtils.getOrGetPlayer(uuid);
         if (StreamlinePlayer == null) return;
 
         LogoutEvent logoutEvent = new LogoutEvent(StreamlinePlayer);
         ModuleUtils.fireEvent(logoutEvent);
 
         StreamlinePlayer.getStorageResource().sync();
-        UserManager.getInstance().unloadUser(StreamlinePlayer);
+        UserUtils.unloadUser(StreamlinePlayer);
     }
 
     @EventHandler

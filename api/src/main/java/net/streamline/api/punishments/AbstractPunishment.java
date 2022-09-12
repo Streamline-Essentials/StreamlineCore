@@ -44,13 +44,13 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public void populateDefaults() {
-        storageResource.getOrSetDefault("id", 0);
-        storageResource.getOrSetDefault("type", "");
-        storageResource.getOrSetDefault("convict", "");
-        storageResource.getOrSetDefault("executioner", "");
-        storageResource.getOrSetDefault("reason", "");
-        storageResource.getOrSetDefault("time", 0L);
-        storageResource.getOrSetDefault("active", true);
+        getStorageResource().getOrSetDefault("id", 0);
+        getStorageResource().getOrSetDefault("type", "");
+        getStorageResource().getOrSetDefault("convict", "");
+        getStorageResource().getOrSetDefault("executioner", "");
+        getStorageResource().getOrSetDefault("reason", "");
+        getStorageResource().getOrSetDefault("time", 0L);
+        getStorageResource().getOrSetDefault("active", true);
 
         populateMore();
     }
@@ -59,11 +59,11 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public void loadValues() {
-        convict = storageResource.get("convict", String.class);
-        executioner = storageResource.get("executioner", String.class);
-        reason = storageResource.get("reason", String.class);
-        convictedAt = new Date(storageResource.get("time", Long.class));
-        active = storageResource.get("active", Boolean.class);
+        convict = getStorageResource().get("convict", String.class);
+        executioner = getStorageResource().get("executioner", String.class);
+        reason = getStorageResource().get("reason", String.class);
+        convictedAt = new Date(getStorageResource().get("time", Long.class));
+        active = getStorageResource().get("active", Boolean.class);
 
         loadMore();
     }
@@ -72,13 +72,13 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public void saveAll() {
-        storageResource.write("id", getId());
-        storageResource.write("type", type());
-        storageResource.write("convict", getConvict());
-        storageResource.write("executioner", getExecutioner());
-        storageResource.write("reason", getReason());
-        storageResource.write("time", getConvictedAt().getTime());
-        storageResource.write("active", isActive());
+        getStorageResource().write("id", getId());
+        getStorageResource().write("type", type());
+        getStorageResource().write("convict", getConvict());
+        getStorageResource().write("executioner", getExecutioner());
+        getStorageResource().write("reason", getReason());
+        getStorageResource().write("time", getConvictedAt().getTime());
+        getStorageResource().write("active", isActive());
 
         saveMore();
     }
@@ -87,6 +87,6 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public StorageResource<?> getStorageResource() {
-        return storageResource;
+        return getStorageResource();
     }
 }

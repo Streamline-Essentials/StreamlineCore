@@ -9,6 +9,7 @@ import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATExpansion;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
 
@@ -24,7 +25,7 @@ public class StreamlineExpansion extends RATExpansion {
     public String onLogic(String params) {
         if (params.equals("version")) return SLAPI.getInstance().getPlatform().getVersion();
         if (params.equals("players_online")) return String.valueOf(BasePlugin.onlinePlayers().size());
-        if (params.equals("players_loaded")) return String.valueOf(SLAPI.getInstance().getUserManager().getLoadedUsers().size());
+        if (params.equals("players_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
 
         if (params.matches("([a][u][t][h][o][r][\\[]([0-2])[\\]])")) {
             Pattern pattern = Pattern.compile("([a][u][t][h][o][r][\\[]([0-9])[\\]])");
@@ -70,7 +71,7 @@ public class StreamlineExpansion extends RATExpansion {
             try {
                 String p = params.substring("parse_".length());
                 String[] things = p.split(":::", 2);
-                StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(SLAPI.getInstance().getPlatform().getUUIDFromName(things[0]));
+                StreamlineUser user = UserUtils.getOrGetUser(UserUtils.getUUIDFromName(things[0]));
                 String parse = things[1].replace("*/*", "%");
                 return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, parse);
             } catch (Exception e) {
@@ -87,21 +88,21 @@ public class StreamlineExpansion extends RATExpansion {
     @Override
     public String onRequest(StreamlineUser user, String params) {
         if (params.equals("user_ping")) {
-            if (user.updateOnline()) return String.valueOf(BasePlugin.getPlayer(user.getUUID()).getPing());
+            if (user.updateOnline()) return String.valueOf(BasePlugin.getPlayer(user.getUuid()).getPing());
             else return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
         }
         if (params.equals("user_online")) return user.updateOnline() ?
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get() :
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
-        if (params.equals("user_uuid")) return user.getUUID();
+        if (params.equals("user_uuid")) return user.getUuid();
 
-        if (params.equals("user_absolute")) return SLAPI.getInstance().getUserManager().getAbsolute(user);
-        if (params.equals("user_absolute_onlined")) return SLAPI.getInstance().getUserManager().getOffOnAbsolute(user);
-        if (params.equals("user_formatted")) return SLAPI.getInstance().getUserManager().getFormatted(user);
-        if (params.equals("user_formatted_onlined")) return SLAPI.getInstance().getUserManager().getOffOnFormatted(user);
+        if (params.equals("user_absolute")) return UserUtils.getAbsolute(user);
+        if (params.equals("user_absolute_onlined")) return UserUtils.getOffOnAbsolute(user);
+        if (params.equals("user_formatted")) return UserUtils.getFormatted(user);
+        if (params.equals("user_formatted_onlined")) return UserUtils.getOffOnFormatted(user);
 
-        if (params.equals("user_prefix")) return SLAPI.getInstance().getUserManager().getLuckPermsPrefix(user.getLatestName());
-        if (params.equals("user_suffix")) return SLAPI.getInstance().getUserManager().getLuckPermsSuffix(user.getLatestName());
+        if (params.equals("user_prefix")) return UserUtils.getLuckPermsPrefix(user.getLatestName());
+        if (params.equals("user_suffix")) return UserUtils.getLuckPermsSuffix(user.getLatestName());
 
         if (params.equals("user_points")) return String.valueOf(user.getPoints());
 

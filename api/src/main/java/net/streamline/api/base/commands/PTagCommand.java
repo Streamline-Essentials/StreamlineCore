@@ -4,6 +4,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +41,7 @@ public class PTagCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser other = SLAPI.getInstance().getUserManager().getOrGetUser(playerName);
+        StreamlineUser other = UserUtils.getOrGetUser(playerName);
 
         if (args.length == 2) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, other,

@@ -33,7 +33,7 @@ public class ResourcePackMessageBuilder {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
 
         output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_user_uuid%", user.getUUID()));
+        output.writeUTF(lines.get(0).replace("%this_user_uuid%", user.getUuid()));
         output.writeUTF(lines.get(1).replace("%this_url%", resourcePack.getUrl()));
         output.writeUTF(lines.get(2).replace("%this_prompt%", resourcePack.getPrompt()));
         output.writeUTF(lines.get(3).replace("%this_hash%",  Hex.encodeHexString(resourcePack.getHash())));

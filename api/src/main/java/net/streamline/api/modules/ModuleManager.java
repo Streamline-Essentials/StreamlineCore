@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.*;
@@ -55,7 +56,7 @@ public class ModuleManager {
     }
 
     public static void registerExternalModules() {
-        File[] folderFiles = SLAPI.getInstance().getPlatform().getModuleFolder().listFiles();
+        File[] folderFiles = SLAPI.getModuleFolder().listFiles();
 
         if (folderFiles != null) {
             for (File file : folderFiles) {
@@ -133,7 +134,7 @@ public class ModuleManager {
     public static List<ModuleCommand> getCommandsForModule(StreamlineModule module) {
         List<ModuleCommand> r = new ArrayList<>();
 
-        for (ModuleCommand command : SLAPI.getInstance().getPlatform().getLoadedModuleCommands().values()) {
+        for (ModuleCommand command : CommandHandler.getLoadedModuleCommands().values()) {
             if (command.getOwningModule().identifier().equals(module.identifier())) r.add(command);
         }
 
