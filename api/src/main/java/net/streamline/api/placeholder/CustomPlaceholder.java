@@ -16,10 +16,10 @@ public class CustomPlaceholder {
     }
 
     public void register() {
-        SLAPI.getInstance().getPlatform().getRATAPI().registerCustomPlaceholder(this);
+        SLAPI.getRatAPI().registerCustomPlaceholder(this);
     }
 
     public void unregister() {
-        SLAPI.getInstance().getPlatform().getRATAPI().unregisterCustomPlaceholder(this);
+        SLAPI.getRatAPI().unregisterCustomPlaceholder(this);
     }
 }

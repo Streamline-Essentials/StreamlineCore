@@ -1,6 +1,9 @@
 package net.streamline.api.events;
 
+import java.io.Serial;
+
 public class EventException extends Exception {
+    @Serial
     private static final long serialVersionUID = 3532808232324183999L;
     private final Throwable cause;
 

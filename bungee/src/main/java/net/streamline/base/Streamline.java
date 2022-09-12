@@ -26,9 +26,4 @@ public class Streamline extends BasePlugin {
     public void load() {
 
     }
-
-    @Override
-    public void reload() {
-
-    }
 }

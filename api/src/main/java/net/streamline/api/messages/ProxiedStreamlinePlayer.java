@@ -2,7 +2,6 @@ package net.streamline.api.messages;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.savables.users.StreamlinePlayer;
 
 import java.util.List;
 

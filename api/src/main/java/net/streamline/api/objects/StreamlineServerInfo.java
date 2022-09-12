@@ -6,7 +6,6 @@ import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class StreamlineServerInfo {
@@ -31,7 +30,7 @@ public class StreamlineServerInfo {
 
     public void updateUsersTo(List<StreamlineUser> users) {
         onlineUsers = new ConcurrentSkipListMap<>();
-        users.forEach(a -> onlineUsers.put(a.getUUID(), a));
+        users.forEach(a -> onlineUsers.put(a.getUuid(), a));
     }
 
     public void updateUsersTo(StreamlineUser... users) {

@@ -9,9 +9,12 @@ import net.streamline.api.messages.builders.ReturnParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.savables.UserManager;
+
+import java.util.Optional;
 
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
@@ -26,7 +29,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                     Messenger.getInstance().logInfo(a + " server is empty...");
                     return;
                 }
-                ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).get(0).getUUID());
+                ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).get(0).getUuid());
                 if (player == null) {
                     return;
                 }
@@ -41,7 +44,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             MessageQueue.queue(message);
             return;
         }
-        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUUID());
+        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUuid());
         if (player == null) {
             return;
         }
@@ -52,14 +55,16 @@ public class ProxyPluginMessenger implements ProxyMessenger {
     public void receiveMessage(ProxyMessageEvent event) {
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             SingleSet<String, String> set = ServerConnectMessageBuilder.unbuild(event.getMessage());
-            ServerInfo info = Streamline.getInstance().getProxy().getServerInfo(set.key);
-            if (info == null) return;
-            StreamlineUser player = UserManager.getInstance().getOrGetUser(set.value);
+            ServerInfo server = Streamline.getInstance().getProxy().getServerInfo(set.key);
+            if (server == null) return;
+            StreamlineUser player = UserUtils.getOrGetUser(set.value);
+            if (player == null) return;
             UserManager.getInstance().connect(player, set.key);
         }
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             SingleSet<String, String> set = ProxyParseMessageBuilder.unbuild(event.getMessage());
-            StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(set.value);
+            StreamlineUser user = UserUtils.getOrGetUser(set.value);
+            if (user == null) return;
             SLAPI.getInstance().getProxyMessenger().sendMessage(ReturnParseMessageBuilder.build(set.key, Messenger.getInstance().replaceAllPlayerBungee(user, set.key), user));
         }
     }

@@ -1,21 +1,18 @@
 package net.streamline.platform.config;
 
-import com.google.common.collect.ConcurrentHashMultiset;
 import de.leonhard.storage.Json;
 import de.leonhard.storage.sections.FlatFileSection;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
-import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.APIProfile;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
-import net.streamline.platform.users.SavableUser;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -87,9 +84,9 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
 
         ConcurrentSkipListMap<String, StreamlineUser> users = new ConcurrentSkipListMap<>();
         onlineUUIDs.forEach(a -> {
-            StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(a);
+            StreamlineUser user = UserUtils.getOrGetUser(a);
             if (user == null) return;
-            users.put(user.getUUID(), user);
+            users.put(user.getUuid(), user);
         });
 
         return new StreamlineServerInfo(key, name, motd, address, users);

@@ -52,7 +52,7 @@ public abstract class StreamlineModule {
     protected abstract void registerCommands();
 
     public StreamlineModule() {
-        this.dataFolder = new File(SLAPI.getInstance().getPlatform().getModuleFolder(), identifier() + File.separator);
+        this.dataFolder = new File(SLAPI.getModuleFolder(), identifier() + File.separator);
         logInfo("Loaded!");
         onLoad();
     }

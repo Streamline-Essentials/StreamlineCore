@@ -13,7 +13,7 @@ public abstract class ModuleCommand extends StreamlineCommand {
     private final StreamlineModule owningModule;
 
     public ModuleCommand(StreamlineModule module, String base, String permission, String... aliases) {
-        this(module, base, permission, new File(module.getDataFolder(), SLAPI.getInstance().getPlatform().getCommandsFolderChild()), withLabel(module, base, aliases));
+        this(module, base, permission, new File(module.getDataFolder(), SLAPI.getCommandsFolderChild()), withLabel(module, base, aliases));
     }
 
 
@@ -39,18 +39,18 @@ public abstract class ModuleCommand extends StreamlineCommand {
     public void register() {
         if (! isEnabled()) return;
 
-        SLAPI.getInstance().getPlatform().registerModuleCommand(this);
+        CommandHandler.registerModuleCommand(this);
     }
 
     @Override
     public void unregister() {
-        if (! isEnabled()) if (! SLAPI.getInstance().getPlatform().getLoadedModuleCommands().containsKey(getIdentifier())) return;
+        if (! isEnabled()) if (! CommandHandler.getLoadedModuleCommands().containsKey(getIdentifier())) return;
 
-        SLAPI.getInstance().getPlatform().unregisterModuleCommand(this);
+        CommandHandler.unregisterModuleCommand(this);
     }
 
     @Override
     public void disable() {
-        SLAPI.getInstance().getPlatform().unregisterModuleCommand(this);
+        CommandHandler.unregisterModuleCommand(this);
     }
 }

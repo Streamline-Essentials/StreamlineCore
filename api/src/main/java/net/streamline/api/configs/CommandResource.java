@@ -2,6 +2,7 @@ package net.streamline.api.configs;
 
 import de.leonhard.storage.Config;
 import net.streamline.api.SLAPI;
+import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.modules.StreamlineModule;
 
@@ -58,8 +59,8 @@ public class CommandResource extends FlatFileResource<Config> {
         String defaultPermission = resource.getString("basic.permissions.default");
         List<String> aliases = resource.getStringList("basic.aliases");
 
-        if (this.command.isLoaded()) if (! enabled) SLAPI.getInstance().getPlatform().registerStreamlineCommand(this.command);
-        if (! this.command.isLoaded()) if (enabled) SLAPI.getInstance().getPlatform().unregisterStreamlineCommand(this.command);
+        if (this.command.isLoaded()) if (! enabled) CommandHandler.registerStreamlineCommand(this.command);
+        if (! this.command.isLoaded()) if (enabled) CommandHandler.unregisterStreamlineCommand(this.command);
         this.command.setBase(label);
         this.command.setPermission(defaultPermission);
         this.command.setAliases(aliases.toArray(new String[0]));

@@ -18,11 +18,11 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     @Getter
     private final StreamlineCommand parent;
     @Getter
-    private String base;
+    private final String base;
     @Getter
-    private String permission;
+    private final String permission;
     @Getter
-    private String[] aliases;
+    private final String[] aliases;
 
     public ProperCommand(StreamlineCommand parent) {
         this.parent = parent;

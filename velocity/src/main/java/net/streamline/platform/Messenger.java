@@ -21,6 +21,7 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 
@@ -39,15 +40,15 @@ public class Messenger implements IMessenger {
     }
 
     public void logInfo(String message) {
-        sendMessage(SLAPI.getInstance().getUserManager().getConsole(), message);
+        sendMessage(UserUtils.getConsole(), message);
     }
 
     public void logWarning(String message) {
-        sendMessage(SLAPI.getInstance().getUserManager().getConsole(), "&6" + message);
+        sendMessage(UserUtils.getConsole(), "&6" + message);
     }
 
     public void logSevere(String message) {
-        sendMessage(SLAPI.getInstance().getUserManager().getConsole(), "&c" + message);
+        sendMessage(UserUtils.getConsole(), "&c" + message);
     }
 
     public String loggedModulePrefix(StreamlineModule module) {
@@ -68,7 +69,7 @@ public class Messenger implements IMessenger {
 
     public void sendMessage(@Nullable CommandSource to, String message) {
         if (to == null) return;
-        if (Streamline.getInstance().getRATAPI() == null) {
+        if (SLAPI.getRatAPI() == null) {
             to.sendMessage(codedText(message));
         } else {
             to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
@@ -77,7 +78,7 @@ public class Messenger implements IMessenger {
 
     public void sendMessage(@Nullable CommandSource to, String otherUUID, String message) {
         if (to == null) return;
-        if (Streamline.getInstance().getRATAPI() == null) {
+        if (SLAPI.getRatAPI() == null) {
             to.sendMessage(codedText(message));
         } else {
             to.sendMessage(codedText(replaceAllPlayerBungee(otherUUID, message)));
@@ -85,7 +86,7 @@ public class Messenger implements IMessenger {
     }
     public void sendMessage(@Nullable CommandSource to, StreamlineUser other, String message) {
         if (to == null) return;
-        if (Streamline.getInstance().getRATAPI() == null) {
+        if (SLAPI.getRatAPI() == null) {
             to.sendMessage(codedText(message));
         } else {
             to.sendMessage(codedText(replaceAllPlayerBungee(other, message)));
@@ -95,35 +96,35 @@ public class Messenger implements IMessenger {
     public void sendMessage(@Nullable StreamlineUser to, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), message);
         if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUUID()), message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), message);
     }
 
     public void sendMessage(@Nullable StreamlineUser to, String otherUUID, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
         if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUUID()), otherUUID, message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
     }
 
     public void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleCommandSource(), other, message);
         if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUUID()), other, message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
     }
 
     public void sendMessage(String to, String message) {
-        StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(to);
+        StreamlineUser user = UserUtils.getOrGetUser(to);
 
         sendMessage(user, message);
     }
 
     public void sendMessage(@Nullable String to, String otherUUID, String message) {
-        StreamlineUser user = SLAPI.getInstance().getUserManager().getOrGetUser(to);
+        StreamlineUser user = UserUtils.getOrGetUser(to);
 
         sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
 
     public void sendTitle(StreamlinePlayer player, StreamlineTitle title) {
-        Player p = Streamline.getPlayer(player.getUUID());
+        Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
             logInfo("Could not send a title to a player because player is null!");
             return;
@@ -449,11 +450,11 @@ public class Messenger implements IMessenger {
     public String replaceAllPlayerBungee(StreamlineUser user, String of) {
         if (user == null) return of;
 
-        return Streamline.getInstance().getRATAPI().parseAllPlaceholders(user, of);
+        return SLAPI.getRatAPI().parseAllPlaceholders(user, of);
     }
 
     public String replaceAllPlayerBungee(String uuid, String of) {
-        return replaceAllPlayerBungee(SLAPI.getInstance().getUserManager().getOrGetUser(uuid), of);
+        return replaceAllPlayerBungee(UserUtils.getOrGetUser(uuid), of);
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {

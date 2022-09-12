@@ -9,7 +9,6 @@ import net.streamline.api.messages.ProxyMessageHelper;
 import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.SingleSet;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class ProxyParseMessageBuilder {
 
         output.writeUTF(getSubChannel());
         output.writeUTF(lines.get(0).replace("%this_parse%", toParse));
-        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUUID()));
+        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUuid()));
 
         return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
     }

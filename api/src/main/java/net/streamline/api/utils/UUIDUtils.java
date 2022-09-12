@@ -48,8 +48,8 @@ public class UUIDUtils {
     static public String getUUID(String username) {
         if (username.contains("-")) return getName(username);
 
-        if (SLAPI.getInstance().getPlatform().getGeyserHolder().isPresent()) {
-            String r = SLAPI.getInstance().getPlatform().getGeyserHolder().getUUID(username);
+        if (SLAPI.getGeyserHolder().isPresent()) {
+            String r = SLAPI.getGeyserHolder().getUUID(username);
             if (r != null) return r;
         }
 
@@ -83,8 +83,8 @@ public class UUIDUtils {
     public static String getName(String uuid) {
         if (! uuid.contains("-")) return getUUID(uuid);
 
-        if (SLAPI.getInstance().getPlatform().getGeyserHolder().isPresent()) {
-            String r = SLAPI.getInstance().getPlatform().getGeyserHolder().getName(uuid);
+        if (SLAPI.getGeyserHolder().isPresent()) {
+            String r = SLAPI.getGeyserHolder().getName(uuid);
             if (r != null) return r;
         }
 

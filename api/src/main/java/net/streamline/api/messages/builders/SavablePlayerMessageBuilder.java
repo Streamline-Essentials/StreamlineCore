@@ -60,7 +60,7 @@ public class SavablePlayerMessageBuilder {
         output.writeUTF(lines.get(12).replace("%this_latest_ip%", player.getLatestIP()));
         output.writeUTF(lines.get(13).replace("%this_list_ips%", getStringsAsString(player.getIpList())));
         output.writeUTF(lines.get(14).replace("%this_list_names%", getStringsAsString(player.getNameList())));
-        output.writeUTF(lines.get(15).replace("%this_user_uuid%", player.getUUID()));
+        output.writeUTF(lines.get(15).replace("%this_user_uuid%", player.getUuid()));
 
         ProxyMessageOut message = new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
         message.setServer(player.getLatestServer());

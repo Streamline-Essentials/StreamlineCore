@@ -6,9 +6,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
 
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class RATExpansion {
@@ -28,14 +26,14 @@ public abstract class RATExpansion {
     private ConcurrentSkipListMap<String, Integer> userCalls;
 
     public RATExpansion setCallForUser(StreamlineUser user, int set) {
-        this.userCalls.put(user.getUUID(), set);
+        this.userCalls.put(user.getUuid(), set);
         return this;
     }
 
     public RATExpansion addCallForUser(StreamlineUser user, int add) {
-        if (! this.userCalls.containsKey(user.getUUID())) return this.setCallForUser(user, add);
+        if (! this.userCalls.containsKey(user.getUuid())) return this.setCallForUser(user, add);
         else {
-            return this.setCallForUser(user, this.userCalls.get(user.getUUID()) + add);
+            return this.setCallForUser(user, this.userCalls.get(user.getUuid()) + add);
         }
     }
 
@@ -44,14 +42,14 @@ public abstract class RATExpansion {
     }
 
     public RATExpansion removeCallForUser(StreamlineUser user, int remove) {
-        if (! getUserCalls().containsKey(user.getUUID())) return this.setCallForUser(user, remove);
+        if (! getUserCalls().containsKey(user.getUuid())) return this.setCallForUser(user, remove);
         else {
-            return this.setCallForUser(user, getUserCalls().get(user.getUUID()) - remove);
+            return this.setCallForUser(user, getUserCalls().get(user.getUuid()) - remove);
         }
     }
 
     public int getUserCalls(StreamlineUser user) {
-        Integer calls = getUserCalls().get(user.getUUID());
+        Integer calls = getUserCalls().get(user.getUuid());
         return calls == null ? 0 : calls;
     }
 
@@ -98,12 +96,12 @@ public abstract class RATExpansion {
 
     public void unregister() {
         if (! isRegistered()) return;
-        SLAPI.getInstance().getPlatform().getRATAPI().unregisterExpansion(this);
+        SLAPI.getRatAPI().unregisterExpansion(this);
     }
 
     public void register() {
         if (isRegistered()) return;
-        SLAPI.getInstance().getPlatform().getRATAPI().registerExpansion(this);
+        SLAPI.getRatAPI().registerExpansion(this);
     }
 
     public SingleSet<String, Integer> getMostUsedCheck() {
@@ -120,6 +118,6 @@ public abstract class RATExpansion {
     }
 
     public boolean isRegistered() {
-        return SLAPI.getInstance().getPlatform().getRATAPI().isRegistered(this);
+        return SLAPI.getRatAPI().isRegistered(this);
     }
 }

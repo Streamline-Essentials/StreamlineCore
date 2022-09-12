@@ -5,6 +5,8 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.punishments.PunishmentConfig;
+import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.io.File;
 
@@ -38,5 +40,14 @@ public class GivenConfigs {
         if (! folder.isDirectory()) return;
 
         folder.mkdirs();
+    }
+
+    public static void reloadData() {
+        getMainConfig().reloadResource();
+        getMainMessages().reloadResource();
+        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
+            user.saveAll();
+            user.reload();
+        }
     }
 }

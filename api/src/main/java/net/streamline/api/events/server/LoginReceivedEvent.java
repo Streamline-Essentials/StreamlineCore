@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.events.server.LoginEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 
 public class LoginReceivedEvent extends LoginEvent {

@@ -3,8 +3,9 @@ package net.streamline.api.base.commands;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,12 @@ public class ParseCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser player = SLAPI.getInstance().getUserManager().getOrGetUserByName(playerName);
+        StreamlineUser player = UserUtils.getOrGetUserByName(playerName);
+
+        if (player == null) {
+            ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            return;
+        }
 
         SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(sender,
                 getWithOther(sender, this.messageResult, player)

@@ -1,15 +1,12 @@
 package net.streamline.api.messages;
 
-import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IStreamline;
-import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MatcherUtils;
@@ -85,9 +82,9 @@ public class ProxyMessageHelper {
     }
 
     public static void addPendingPlayer(StreamlineUser user, ReturnableMessage message) {
-        ConcurrentSkipListSet<Date> r = getPendingDatesOfPlayer(user.getUUID());
+        ConcurrentSkipListSet<Date> r = getPendingDatesOfPlayer(user.getUuid());
         r.add(addPendingMessage(message));
-        getPendingPlayers().put(user.getUUID(), r);
+        getPendingPlayers().put(user.getUuid(), r);
     }
 
     public static ConcurrentSkipListSet<Date> getPendingDatesOfPlayer(String uuid) {

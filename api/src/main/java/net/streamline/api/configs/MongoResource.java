@@ -53,13 +53,13 @@ public class MongoResource extends StorageResource<Document> {
     public void continueReloadResource() {
         this.sheet = this.get();
         if (this.sheet == null) return;
-        this.map.putAll(this.sheet);
+        this.getMap().putAll(this.sheet);
     }
 
     @Override
     public void write(String key, Object value) {
         key = StorageUtils.parseDotsMongo(key);
-        if (this.sheet == null) this.sheet = new Document(StorageUtils.parseDotsMongo(discriminatorKey), discriminator);
+        if (this.sheet == null) this.sheet = new Document(StorageUtils.parseDotsMongo(getDiscriminatorKey()), getDiscriminator());
 
         this.sheet.put(key, value);
 
@@ -81,7 +81,7 @@ public class MongoResource extends StorageResource<Document> {
     }
 
     public Document getWhere() {
-        return StorageUtils.getWhere(discriminatorKey, discriminator);
+        return StorageUtils.getWhere(getDiscriminatorKey(), getDiscriminator());
     }
 
     public void sortDocument() {
