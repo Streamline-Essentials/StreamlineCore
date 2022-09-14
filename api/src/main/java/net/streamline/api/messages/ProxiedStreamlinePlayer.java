@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProxiedStreamlinePlayer {
     @Getter @Setter
@@ -11,7 +12,7 @@ public class ProxiedStreamlinePlayer {
     @Getter @Setter
     private String displayName;
     @Getter @Setter
-    private List<String> tagList;
+    private ConcurrentSkipListSet<String> tagList;
     @Getter @Setter
     private double points;
     @Getter @Setter
@@ -33,9 +34,9 @@ public class ProxiedStreamlinePlayer {
     @Getter @Setter
     private String latestIP;
     @Getter @Setter
-    private List<String> ipList;
+    private ConcurrentSkipListSet<String> ipList;
     @Getter @Setter
-    private List<String> nameList;
+    private ConcurrentSkipListSet<String> nameList;
     @Getter @Setter
     private int defaultLevel;
     @Getter @Setter

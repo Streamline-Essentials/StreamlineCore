@@ -15,6 +15,7 @@ import net.streamline.api.utils.UserUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class StreamlinePlayer extends StreamlineUser {
     @Getter
@@ -27,9 +28,9 @@ public class StreamlinePlayer extends StreamlineUser {
     private int playSeconds;
     private String latestIP;
     @Getter @Setter
-    private List<String> ipList;
+    private ConcurrentSkipListSet<String> ipList;
     @Getter @Setter
-    private List<String> nameList;
+    private ConcurrentSkipListSet<String> nameList;
     @Getter @Setter
     private int defaultLevel;
 
@@ -79,9 +80,9 @@ public class StreamlinePlayer extends StreamlineUser {
     public void populateMoreDefaults() {
         // Ips.
         latestIP = getOrSetDefault("player.ips.latest", getLatestIP());
-        ipList = getOrSetDefault("player.ips.list", new ArrayList<>());
+        ipList = new ConcurrentSkipListSet<>(getOrSetDefault("player.ips.list", new ArrayList<>()));
         // Names.
-        nameList = getOrSetDefault("player.names", List.of(this.getLatestName()));
+        nameList = new ConcurrentSkipListSet<>(getOrSetDefault("player.names", List.of(this.getLatestName())));
         // Stats.
         level = getOrSetDefault("player.stats.level", GivenConfigs.getMainConfig().playerStartingLevel());
         totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());

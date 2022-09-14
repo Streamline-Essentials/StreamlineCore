@@ -67,9 +67,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private UserManager userManager;
     @Getter
     private Messenger messenger;
-
-    @Setter
-    private SpigotProfiler profiler;
     @Setter @Getter
     private SavedProfileConfig profileConfig;
 
@@ -86,16 +83,11 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-
-        profiler = new SpigotProfiler();
         profileConfig = new SavedProfileConfig();
-
-        getSlapi().setProfiler(getProfiler());
+        getSlapi().setProfiler(new SpigotProfiler());
 
         registerListener(new PlatformListener());
         getProxy().getScheduler().scheduleSyncRepeatingTask(this, new Runner(), 0, 50);
-
-        UserUtils.loadUser(new StreamlineConsole());
 
         getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
@@ -274,11 +266,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public StreamlineProfiler getProfiler() {
-        return profiler;
-    }
-
-    @Override
     public boolean equalsAnyServer(String servername) {
         return getServerNames().contains(servername);
     }
@@ -323,7 +310,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
         Player p = getPlayer(uuid);
 
-//        getMessenger().logInfo("Attempting to send a resource pack to a whitelistedUuid of '" + whitelistedUuid + "'...");
+//        getMessenger().logInfo("Attempting to send a resource pack to a uuid of '" + whitelistedUuid + "'...");
 
         sendResourcePack(resourcePack, p);
     }

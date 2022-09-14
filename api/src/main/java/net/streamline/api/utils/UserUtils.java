@@ -102,13 +102,13 @@ public class UserUtils {
             case MONGO -> {
                 return GivenConfigs.getMainConfig().getConfiguredDatabase().mongoConnection().exists(
                         StreamlinePlayer.class.getSimpleName(),
-                        StorageUtils.getWhere("whitelistedUuid", uuid)
+                        StorageUtils.getWhere("uuid", uuid)
                 );
             }
             case MYSQL -> {
                 return GivenConfigs.getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
                         new SQLCollection(StreamlinePlayer.class.getSimpleName(),
-                                "whitelistedUuid",
+                                "uuid",
                                 uuid
                         )
                 );
@@ -168,10 +168,10 @@ public class UserUtils {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", SLAPI.getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "whitelistedUuid", uuid);
+                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "uuid", uuid);
             }
             case MYSQL -> {
-                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "whitelistedUuid", uuid));
+                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
             }
         }
 
@@ -383,7 +383,7 @@ public class UserUtils {
     public static StreamlineUser getOrGetUserByName(String name) {
         String uuid = getUUIDFromName(name);
         if (uuid == null) {
-            SLAPI.getInstance().getMessenger().logWarning("Could not get UUID from name '" + name + "'.");
+//            SLAPI.getInstance().getMessenger().logWarning("Could not get UUID from name '" + name + "'.");
             return null;
         }
 

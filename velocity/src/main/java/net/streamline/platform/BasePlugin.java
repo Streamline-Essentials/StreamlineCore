@@ -107,11 +107,8 @@ public abstract class BasePlugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-
-        profiler = new VelocityProfiler();
         profileConfig = new SavedProfileConfig();
-
-        getSlapi().setProfiler(getProfiler());
+        getSlapi().setProfiler(new VelocityProfiler());
 
         registerListener(new PlatformListener());
         getProxy().getScheduler().buildTask(this, new Runner()).repeat(50, TimeUnit.MILLISECONDS).schedule();
@@ -293,11 +290,6 @@ public abstract class BasePlugin implements IStreamline {
     @Override
     public void setStreamlineServer(StreamlineServerInfo serverInfo) {
         getInstance().getProfileConfig().updateServerInfo(serverInfo);
-    }
-
-    @Override
-    public StreamlineProfiler getProfiler() {
-        return profiler;
     }
 
     @Override

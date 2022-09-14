@@ -61,8 +61,6 @@ public interface IStreamline {
 
     void setStreamlineServer(StreamlineServerInfo server);
 
-    StreamlineProfiler getProfiler();
-
     boolean equalsAnyServer(String servername);
 
     IProperCommand createCommand(StreamlineCommand command);

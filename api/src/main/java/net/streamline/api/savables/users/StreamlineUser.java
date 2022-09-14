@@ -15,6 +15,7 @@ import net.streamline.api.utils.UserUtils;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class StreamlineUser extends SavableResource {
     @Override
@@ -33,7 +34,7 @@ public abstract class StreamlineUser extends SavableResource {
     @Getter
     private String displayName;
     @Getter @Setter
-    private List<String> tagList;
+    private ConcurrentSkipListSet<String> tagList;
     @Getter
     private double points;
     @Getter @Setter
@@ -75,7 +76,7 @@ public abstract class StreamlineUser extends SavableResource {
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
-        tagList = getOrSetDefault("profile.tags", getTagsFromConfig());
+        tagList = new ConcurrentSkipListSet<>(getOrSetDefault("profile.tags", getTagsFromConfig().stream().toList()));
         points = getOrSetDefault("profile.points", GivenConfigs.getMainConfig().userCombinedPointsDefault());
 
         populateMoreDefaults();
