@@ -377,18 +377,15 @@ public class UserUtils {
     }
 
     public static String getUUIDFromName(String name) {
-        String uuid;
-        try {
-            uuid = CachedUUIDsHandler.getCachedUUID(name);
-        } catch (Exception e) {
-            return null;
-        }
-        return uuid;
+        return CachedUUIDsHandler.getCachedUUID(name);
     }
 
     public static StreamlineUser getOrGetUserByName(String name) {
         String uuid = getUUIDFromName(name);
-        if (uuid == null) return null;
+        if (uuid == null) {
+            SLAPI.getInstance().getMessenger().logWarning("Could not get UUID from name '" + name + "'.");
+            return null;
+        }
 
         return getOrGetUser(uuid);
     }

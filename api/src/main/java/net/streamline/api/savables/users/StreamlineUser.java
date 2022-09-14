@@ -61,9 +61,11 @@ public abstract class StreamlineUser extends SavableResource {
     }
 
     public StreamlineUser(String uuid) {
-        super(uuid, UserUtils.newStorageResource(uuid, uuid.equals("%") ? StreamlineConsole.class : StreamlinePlayer.class));
-
+        super(uuid, UserUtils.newStorageResource(uuid, uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())
+                ? StreamlineConsole.class : StreamlinePlayer.class));
         this.savableUser = this;
+
+        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.StorageType.MONGO)) getStorageResource().sync();
     }
 
     @Override

@@ -21,9 +21,9 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
         @Override
         public void run() {
-            setCachedUUIDs(new ConcurrentSkipListMap<>());
-            setCachedCurrentNames(new ConcurrentSkipListMap<>());
             setCachedTotalNames(new ConcurrentSkipListMap<>());
+            setCachedUUIDs(new ConcurrentSkipListMap<>());
+//            setCachedCurrentNames(new ConcurrentSkipListMap<>());
         }
     }
 
@@ -104,7 +104,10 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
             return getCachedUUIDs().get(username);
         } else {
             String uuid = getUUID(username);
-            if (uuid == null) return null;
+            if (uuid == null) {
+                SLAPI.getInstance().getMessenger().logWarning("$getUUID() returned 'null' on username '" + username + "'.");
+                return null;
+            }
             getCachedUUIDs().put(username, uuid);
             return uuid;
         }
