@@ -122,7 +122,7 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("user_server")) return user.getLatestServer();
 
         if (params.equals("user_tags")) {
-            List<String> tags = user.getTagList();
+            List<String> tags = user.getTagList().stream().toList();
             StringBuilder builder = new StringBuilder();
 
             for (int i = 0; i < tags.size(); i ++) {
