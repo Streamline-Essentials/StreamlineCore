@@ -92,7 +92,7 @@ public abstract class StreamlineUser extends SavableResource {
         latestName = getOrSetDefault("profile.latest.name", latestName);
         latestServer = getOrSetDefault("profile.latest.server", latestServer);
         displayName = getOrSetDefault("profile.display-name", displayName);
-        tagList = getOrSetDefault("profile.tags", tagList);
+        tagList = new ConcurrentSkipListSet<>(getOrSetDefault("profile.tags", tagList.stream().toList()));
         points = getOrSetDefault("profile.points", points);
         // Online.
         online = updateOnline();

@@ -96,9 +96,9 @@ public class StreamlinePlayer extends StreamlineUser {
     public void loadMoreValues() {
         // Ips.
         latestIP = getOrSetDefault("player.ips.latest", latestIP);
-        ipList = getOrSetDefault("player.ips.list", ipList);
+        ipList = new ConcurrentSkipListSet<>(getOrSetDefault("player.ips.list", ipList.stream().toList()));
         // Names.
-        nameList = getOrSetDefault("player.names", nameList);
+        nameList = new ConcurrentSkipListSet<>(getOrSetDefault("player.names", nameList.stream().toList()));
         // Stats.
         level = getOrSetDefault("player.stats.level", level);
         totalXP = getOrSetDefault("player.stats.experience.total", totalXP);
