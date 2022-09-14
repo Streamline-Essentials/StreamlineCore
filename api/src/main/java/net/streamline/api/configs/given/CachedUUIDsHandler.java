@@ -48,10 +48,24 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
     public static void cachePlayer(String uuid, String... allNames) {
         ConcurrentSkipListMap<Integer, String> names = getOrSetDefaultNames(uuid);
-        names.putAll(MathUtils.mappifyArray(allNames, names.size() + 1));
-        getInstance().write(uuid + ".total", names);
+
+        ConcurrentSkipListMap<Integer, String> a = new ConcurrentSkipListMap<>();
+        int actual = 1;
+        for (int i = 0; i < allNames.length; i ++) {
+            String s = allNames[i];
+            if (names.containsValue(s)) continue;
+            a.put(names.size() + actual, s);
+            actual ++;
+        }
+
+        names.putAll(a);
+
+        for (int i : names.keySet()) {
+            getInstance().write(uuid + ".total." + i, names.get(i));
+        }
+
         String currentName = allNames[allNames.length - 1];
-        getInstance().write(uuid + "current", currentName);
+        getInstance().write(uuid + ".current", currentName);
 
         getCachedTotalNames().put(uuid, names);
         getCachedUUIDs().put(uuid, currentName);
