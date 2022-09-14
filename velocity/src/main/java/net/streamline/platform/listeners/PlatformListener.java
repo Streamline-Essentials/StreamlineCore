@@ -12,6 +12,7 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
@@ -67,6 +68,8 @@ public class PlatformListener {
     @Subscribe
     public void onJoin(PostLoginEvent event) {
         Player player = event.getPlayer();
+
+        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getUsername());
 
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));

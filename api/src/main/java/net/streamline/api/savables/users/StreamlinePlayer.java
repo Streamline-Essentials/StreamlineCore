@@ -87,6 +87,8 @@ public class StreamlinePlayer extends StreamlineUser {
         totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
+
+        SLAPI.getInstance().getMessenger().logWarning("Ran thingy");
     }
 
     @Override

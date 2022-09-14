@@ -8,6 +8,7 @@ import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
@@ -63,6 +64,8 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
+
+        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
 
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
