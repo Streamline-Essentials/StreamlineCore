@@ -3,6 +3,7 @@ package net.streamline.platform.listeners;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
@@ -60,6 +61,8 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+
+        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
 
 //        if (UserManager.getInstance().userExists(player.getUniqueId().toString())) {
 //            StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);

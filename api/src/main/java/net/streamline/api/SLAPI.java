@@ -10,6 +10,7 @@ import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.PlayerExperienceTimer;
 import net.streamline.api.base.timers.UserSaveTimer;
 import net.streamline.api.command.GivenCommands;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.interfaces.IMessenger;
@@ -19,8 +20,10 @@ import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
+import net.streamline.api.utils.UserUtils;
 
 import java.io.File;
 
@@ -99,13 +102,16 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         GivenConfigs.init();
         GivenCommands.init();
 
+        CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());
+        UserUtils.loadUser(new StreamlineConsole());
+
+        luckPerms = LuckPermsProvider.get();
+        geyserHolder = new GeyserHolder();
+
         ratAPI = new RATAPI();
 
         baseModule = new BaseModule();
         ModuleManager.registerModule(getBaseModule());
-
-        luckPerms = LuckPermsProvider.get();
-        geyserHolder = new GeyserHolder();
 
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();

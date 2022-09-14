@@ -15,6 +15,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SavablePlayerMessageBuilder {
@@ -47,7 +48,7 @@ public class SavablePlayerMessageBuilder {
         output.writeUTF(getSubChannel());
         output.writeUTF(lines.get(0).replace("%this_latest_name%", player.getLatestName()));
         output.writeUTF(lines.get(1).replace("%this_display_name%", player.getDisplayName()));
-        output.writeUTF(lines.get(2).replace("%this_list_tags%", getStringsAsString(player.getTagList())));
+        output.writeUTF(lines.get(2).replace("%this_list_tags%", getStringsAsString(player.getTagList().stream().toList())));
         output.writeUTF(lines.get(3).replace("%this_points%", String.valueOf(player.getPoints())));
         output.writeUTF(lines.get(4).replace("%this_latest_message%", player.getLastMessage() == null ? "" : player.getLastMessage()));
         output.writeUTF(lines.get(5).replace("%this_online%", String.valueOf(player.isOnline())));
@@ -58,8 +59,8 @@ public class SavablePlayerMessageBuilder {
         output.writeUTF(lines.get(10).replace("%this_level%", String.valueOf(player.getLevel())));
         output.writeUTF(lines.get(11).replace("%this_play_seconds%", String.valueOf(player.getPlaySeconds())));
         output.writeUTF(lines.get(12).replace("%this_latest_ip%", player.getLatestIP()));
-        output.writeUTF(lines.get(13).replace("%this_list_ips%", getStringsAsString(player.getIpList())));
-        output.writeUTF(lines.get(14).replace("%this_list_names%", getStringsAsString(player.getNameList())));
+        output.writeUTF(lines.get(13).replace("%this_list_ips%", getStringsAsString(player.getIpList().stream().toList())));
+        output.writeUTF(lines.get(14).replace("%this_list_names%", getStringsAsString(player.getNameList().stream().toList())));
         output.writeUTF(lines.get(15).replace("%this_user_uuid%", player.getUuid()));
 
         ProxyMessageOut message = new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
@@ -78,7 +79,7 @@ public class SavablePlayerMessageBuilder {
 
         player.setLatestName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
         player.setDisplayName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setTagList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
+        player.setTagList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
         player.setPoints(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
         player.setLastMessage(ProxyMessageHelper.extrapolate(input.readUTF()).value);
         player.setOnline(Boolean.parseBoolean(ProxyMessageHelper.extrapolate(input.readUTF()).value));
@@ -89,8 +90,8 @@ public class SavablePlayerMessageBuilder {
         player.setLevel(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
         player.setPlaySeconds(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
         player.setLatestIP(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setIpList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
-        player.setNameList(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList());
+        player.setIpList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
+        player.setNameList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
         player.setUuid(ProxyMessageHelper.extrapolate(input.readUTF()).value);
 
         return player;

@@ -63,8 +63,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Getter
     private Messenger messenger;
 
-    @Setter
-    private BungeeProfiler profiler;
     @Setter @Getter
     private SavedProfileConfig profileConfig;
 
@@ -86,16 +84,13 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-
-        profiler = new BungeeProfiler();
         profileConfig = new SavedProfileConfig();
+        getSlapi().setProfiler(new BungeeProfiler());
 
-        getSlapi().setProfiler(getProfiler());
+        profileConfig = new SavedProfileConfig();
 
         registerListener(new PlatformListener());
         getProxy().getScheduler().schedule(this, new Runner(), 0, 50, TimeUnit.MILLISECONDS);
-
-        UserUtils.loadUser(new StreamlineConsole());
 
         getProxy().registerChannel(SLAPI.getApiChannel());
 
@@ -257,11 +252,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Override
     public void setStreamlineServer(StreamlineServerInfo serverInfo) {
         getInstance().getProfileConfig().updateServerInfo(serverInfo);
-    }
-
-    @Override
-    public StreamlineProfiler getProfiler() {
-        return profiler;
     }
 
     @Override

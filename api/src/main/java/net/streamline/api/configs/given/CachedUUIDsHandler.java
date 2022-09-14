@@ -98,14 +98,13 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
     public static String getCachedUUID(String username) {
         if (username.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return username;
-        if (! username.contains("-")) return username;
+        if (username.contains("-")) return username;
 
         if (getCachedUUIDs().containsKey(username)) {
             return getCachedUUIDs().get(username);
         } else {
             String uuid = getUUID(username);
             if (uuid == null) {
-                SLAPI.getInstance().getMessenger().logWarning("$getUUID() returned 'null' on username '" + username + "'.");
                 return null;
             }
             getCachedUUIDs().put(username, uuid);
@@ -114,7 +113,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     public static String getCachedName(String uuid) {
-        if (uuid.equals("%")) return uuid;
+        if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return GivenConfigs.getMainConfig().userConsoleNameRegular();
         if (! uuid.contains("-")) return uuid;
 
         if (getCachedCurrentNames().containsKey(uuid)) {
@@ -128,8 +127,6 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     private static String getUUID(String username) {
-        if (username.contains("-")) return getName(username);
-
         if (SLAPI.getGeyserHolder().isPresent()) {
             String r = SLAPI.getGeyserHolder().getUUID(username);
             if (r != null) return r;
@@ -143,8 +140,6 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     private static String getName(String uuid) {
-        if (! uuid.contains("-")) return getUUID(uuid);
-
         if (SLAPI.getGeyserHolder().isPresent()) {
             String r = SLAPI.getGeyserHolder().getName(uuid);
             if (r != null) return r;

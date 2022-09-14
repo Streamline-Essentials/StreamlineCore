@@ -341,7 +341,7 @@ public class ModuleUtils {
     }
 
     public static StreamlineProfiler getProfiler() {
-        return SLAPI.getInstance().getPlatform().getProfiler();
+        return SLAPI.getInstance().getProfiler();
     }
 
     public static boolean equalsAnyServer(String servername) {
