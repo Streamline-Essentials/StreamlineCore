@@ -53,4 +53,18 @@ public class MathUtils {
 
         return amount.get();
     }
+
+    public static <T> Map<Integer, T> mappifyArray(T[] array, int offset) {
+        Map<Integer, T> r = new HashMap<>();
+
+        for (int i = 0; i < array.length; i ++) {
+            r.put(i + offset, array[i]);
+        }
+
+        return r;
+    }
+
+    public static <T> Map<Integer, T> mappifyArray(T[] array) {
+        return mappifyArray(array, 0);
+    }
 }

@@ -40,8 +40,6 @@ public class Messenger implements IMessenger {
 
     public void logWarning(String message) {
         sendMessage(UserUtils.getConsole(), "&6" + message);
-
-        StreamlinePlayer player = new StreamlinePlayer("shdfjgdsh");
     }
 
     public void logSevere(String message) {

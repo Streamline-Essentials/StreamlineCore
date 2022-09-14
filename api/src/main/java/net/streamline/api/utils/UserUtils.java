@@ -13,6 +13,7 @@ import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.*;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
@@ -378,7 +379,7 @@ public class UserUtils {
     public static String getUUIDFromName(String name) {
         String uuid;
         try {
-            uuid = UUIDUtils.getCachedUUID(name);
+            uuid = CachedUUIDsHandler.getCachedUUID(name);
         } catch (Exception e) {
             return null;
         }

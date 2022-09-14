@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class StorageResource<T> implements Comparable<Date> {
+public abstract class StorageResource<T> implements Comparable<StorageResource<?>> {
     @Getter
     private final Date initializeDate;
     @Getter @Setter
@@ -101,7 +101,7 @@ public abstract class StorageResource<T> implements Comparable<Date> {
     }
 
     @Override
-    public int compareTo(@NotNull Date other) {
-        return Long.compare(getInitializeDate().getTime(), other.getTime());
+    public int compareTo(@NotNull StorageResource<?> other) {
+        return Long.compare(getInitializeDate().getTime(), other.getInitializeDate().getTime());
     }
 }

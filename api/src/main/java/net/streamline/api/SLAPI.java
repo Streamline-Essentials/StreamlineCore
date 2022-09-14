@@ -93,13 +93,13 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         moduleFolder.mkdirs();
         mainCommandsFolder.mkdirs();
 
-        ratAPI = new RATAPI();
-
         mainScheduler = new TaskManager();
         moduleScheduler = new ModuleTaskManager();
 
         GivenConfigs.init();
         GivenCommands.init();
+
+        ratAPI = new RATAPI();
 
         baseModule = new BaseModule();
         ModuleManager.registerModule(getBaseModule());

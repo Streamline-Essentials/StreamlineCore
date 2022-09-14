@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
-public abstract class SavableResource implements StreamlineResource, Comparable<Date> {
+public abstract class SavableResource implements StreamlineResource, Comparable<SavableResource> {
     @Getter @Setter
     private StorageResource<?> storageResource;
     @Getter @Setter
@@ -59,7 +59,7 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
     }
 
     @Override
-    public int compareTo(@NotNull Date other) {
-        return getStorageResource().compareTo(other);
+    public int compareTo(@NotNull SavableResource other) {
+        return getStorageResource().compareTo(other.getStorageResource());
     }
 }

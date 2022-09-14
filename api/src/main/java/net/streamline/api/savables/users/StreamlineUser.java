@@ -7,10 +7,10 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.configs.StorageUtils;
+import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
-import net.streamline.api.utils.UUIDUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.List;
@@ -69,7 +69,7 @@ public abstract class StreamlineUser extends SavableResource {
     @Override
     public void populateDefaults() {
         // Profile.
-        String username = UUIDUtils.getCachedName(this.getUuid());
+        String username = CachedUUIDsHandler.getCachedName(this.getUuid());
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
