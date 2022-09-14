@@ -21,6 +21,9 @@ public class GivenConfigs {
     private static PunishmentConfig punishmentConfig;
 
     @Getter @Setter
+    private static CachedUUIDsHandler cachedUUIDsHandler;
+
+    @Getter @Setter
     private static File punishmentFolder;
 
     public static void init() {
@@ -28,10 +31,11 @@ public class GivenConfigs {
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
         setPunishmentConfig(new PunishmentConfig());
+        setCachedUUIDsHandler(new CachedUUIDsHandler());
     }
 
     public static void ensureFolders() {
-        setPunishmentFolder(new File(SLAPI.getInstance().getDataFolder(), "punishments" + File.separator));
+        setPunishmentFolder(new File(SLAPI.getDataFolder(), "punishments" + File.separator));
         ensureFolder(getPunishmentFolder());
     }
 
