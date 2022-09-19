@@ -3,15 +3,14 @@ package net.streamline.api.holders;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
 
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class StreamlineDependencyHolder<T> {
+public abstract class ModuleDependencyHolder<T> {
     @Getter @Setter
     private ConcurrentSkipListMap<Integer, String> keysToTry;
     @Getter @Setter
@@ -19,7 +18,7 @@ public abstract class StreamlineDependencyHolder<T> {
     @Getter @Setter
     private String identifier;
 
-    StreamlineDependencyHolder(String identifier, String... keysToTry) {
+    ModuleDependencyHolder(String identifier, String... keysToTry) {
         this.identifier = identifier;
         this.keysToTry = new ConcurrentSkipListMap<>();
         for (String key : keysToTry) {
@@ -36,7 +35,7 @@ public abstract class StreamlineDependencyHolder<T> {
     }
 
     public static boolean isPresentCertain(String toTry) {
-        return ModuleUtils.serverHasPlugin(toTry);
+        return ModuleManager.hasModuleLoaded(toTry);
     }
 
     public void tryLoad(Callable<Void> callable) {
