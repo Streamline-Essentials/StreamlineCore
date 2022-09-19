@@ -13,6 +13,7 @@ import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
+import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.platform.config.SavedProfileConfig;
@@ -58,6 +59,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private static BasePlugin instance;
     @Getter
     private SLAPI<BasePlugin, UserManager, Messenger> slapi;
+    @Getter
+    private SLAPIB slapiB;
 
     public Server getProxy() {
         return getServer();
@@ -82,6 +85,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         userManager = new UserManager();
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
+        slapiB = new SLAPIB(getSlapi(), this);
+
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         profileConfig = new SavedProfileConfig();
         getSlapi().setProfiler(new SpigotProfiler());

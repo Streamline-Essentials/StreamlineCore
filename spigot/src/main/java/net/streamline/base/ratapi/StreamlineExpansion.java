@@ -75,7 +75,7 @@ public class StreamlineExpansion extends RATExpansion {
             }
         }
         if (params.equals("modules_loaded")) {
-            return String.valueOf(ModuleManager.loadedModules.size());
+            return String.valueOf(ModuleManager.getLoadedModules().size());
         }
 
         return null;

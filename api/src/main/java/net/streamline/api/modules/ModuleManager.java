@@ -21,10 +21,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class ModuleManager {
-    public static TreeMap<String, StreamlineModule> loadedModules = new TreeMap<>();
-    public static TreeMap<String, StreamlineModule> enabledModules = new TreeMap<>();
+    @Getter @Setter
+    private static ConcurrentSkipListMap<String, StreamlineModule> loadedModules = new ConcurrentSkipListMap<>();
+    @Getter @Setter
+    private static ConcurrentSkipListMap<String, StreamlineModule> enabledModules = new ConcurrentSkipListMap<>();
 
     @Getter
     private static final String noModulesMessage =
@@ -331,5 +334,17 @@ public class ModuleManager {
             eventSet.add(new RegisteredListener(listener, executor, eh.priority(), module, eh.ignoreCancelled()));
         }
         return ret;
+    }
+
+    public boolean hasModuleLoaded(String identifier) {
+        return getLoadedModules().containsKey(identifier);
+    }
+
+    public boolean hasModuleEnabled(String identifier) {
+        return getEnabledModules().containsKey(identifier);
+    }
+
+    public boolean hasModuleLoadedAndEnabled(String identifier) {
+        return hasModuleLoaded(identifier) && hasModuleEnabled(identifier);
     }
 }

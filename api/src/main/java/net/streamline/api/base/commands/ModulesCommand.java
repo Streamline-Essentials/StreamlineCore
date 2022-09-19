@@ -46,7 +46,7 @@ public class ModulesCommand extends StreamlineCommand {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "reapply" -> {
                 if (args.length == 1) {
-                    new ArrayList<>(ModuleManager.loadedModules.values()).forEach(ModuleManager::unregisterModule);
+                    new ArrayList<>(ModuleManager.getLoadedModules().values()).forEach(ModuleManager::unregisterModule);
                     ModuleManager.registerExternalModules();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyAll);
                 } else {
@@ -61,7 +61,7 @@ public class ModulesCommand extends StreamlineCommand {
             }
             case "reload" -> {
                 if (args.length == 1) {
-                    new ArrayList<>(ModuleManager.loadedModules.values()).forEach(StreamlineModule::restart);
+                    new ArrayList<>(ModuleManager.getLoadedModules().values()).forEach(StreamlineModule::restart);
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadAll);
                 } else {
                     Arrays.stream(SLAPI.getInstance().getMessenger().argsMinus(args, 0)).forEach(a -> {
@@ -84,7 +84,7 @@ public class ModulesCommand extends StreamlineCommand {
             );
         }
         if (args.length == 2) {
-            return new ArrayList<>(ModuleManager.loadedModules.keySet());
+            return new ArrayList<>(ModuleManager.getLoadedModules().keySet());
         }
         return new ArrayList<>();
     }
