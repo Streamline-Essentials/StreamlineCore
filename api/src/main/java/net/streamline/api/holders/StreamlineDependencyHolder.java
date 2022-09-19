@@ -62,7 +62,7 @@ public abstract class StreamlineDependencyHolder<T> {
         private final Callable<Void> toRun;
 
         public LoaderRunnable(int timesTried, Callable<Void> toRun) {
-            super(60L, 1L);
+            super(getRetryDelay(), getRetryPeriod());
             this.timesTried = timesTried;
             this.toRun = toRun;
         }
@@ -72,7 +72,7 @@ public abstract class StreamlineDependencyHolder<T> {
             try {
                 getToRun().call();
             } catch (Exception e) {
-                if (getTimesTried() < 3) new LoaderRunnable(getTimesTried() + 1, getToRun());
+                if (getTimesTried() < getRetryMax()) new LoaderRunnable(getTimesTried() + 1, getToRun());
             }
             this.cancel();
         }

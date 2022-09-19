@@ -336,15 +336,15 @@ public class ModuleManager {
         return ret;
     }
 
-    public boolean hasModuleLoaded(String identifier) {
+    public static boolean hasModuleLoaded(String identifier) {
         return getLoadedModules().containsKey(identifier);
     }
 
-    public boolean hasModuleEnabled(String identifier) {
+    public static boolean hasModuleEnabled(String identifier) {
         return getEnabledModules().containsKey(identifier);
     }
 
-    public boolean hasModuleLoadedAndEnabled(String identifier) {
+    public static boolean hasModuleLoadedAndEnabled(String identifier) {
         return hasModuleLoaded(identifier) && hasModuleEnabled(identifier);
     }
 }
