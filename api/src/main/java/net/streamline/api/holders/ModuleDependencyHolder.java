@@ -17,7 +17,7 @@ public abstract class ModuleDependencyHolder<T> {
     @Getter @Setter
     private String identifier;
 
-    ModuleDependencyHolder(String identifier, String... keysToTry) {
+    public ModuleDependencyHolder(String identifier, String... keysToTry) {
         this.identifier = identifier;
         this.keysToTry = new ConcurrentSkipListMap<>();
         for (String key : keysToTry) {
