@@ -5,6 +5,7 @@ import fr.minuskube.inv.SmartInventory;
 import fr.minuskube.inv.content.InventoryProvider;
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.SLAPI;
 import net.streamline.api.objects.SingleSet;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,13 +16,12 @@ public class SLAPIB {
     private static SLAPIB instance;
     @Getter @Setter
     private static InventoryManager inventoryManager;
+    @Getter @Setter
+    private static SLAPI<?, ?, ?> slapi;
 
-    @Getter
-    private final File dataFolder;
-
-    public SLAPIB(File dataFolder, JavaPlugin plugin) {
+    public SLAPIB(SLAPI<?, ?, ?> slapi, JavaPlugin plugin) {
         instance = this;
-        this.dataFolder = dataFolder;
+        setSlapi(slapi);
         setInventoryManager(new InventoryManager(plugin));
         getInventoryManager().init();
     }

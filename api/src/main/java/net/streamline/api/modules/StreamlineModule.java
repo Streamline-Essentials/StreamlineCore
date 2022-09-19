@@ -16,7 +16,7 @@ import java.util.List;
 public abstract class StreamlineModule {
     @Getter
     private final File dataFolder;
-    @Getter
+    @Getter @Setter
     private boolean initialized;
     @Getter @Setter
     private boolean enabled;
@@ -68,7 +68,7 @@ public abstract class StreamlineModule {
         ModuleUtils.fireEvent(new ModuleEnableEvent(this));
         onEnable();
         setEnabled(true);
-        ModuleManager.enabledModules.put(identifier(), this);
+        ModuleManager.getEnabledModules().put(identifier(), this);
     }
 
     public void stop() {
@@ -81,7 +81,7 @@ public abstract class StreamlineModule {
         ModuleUtils.fireEvent(new ModuleDisableEvent(this));
         onDisable();
         setEnabled(false);
-        ModuleManager.enabledModules.remove(identifier());
+        ModuleManager.getEnabledModules().remove(identifier());
     }
 
     public void restart() {
@@ -157,5 +157,13 @@ public abstract class StreamlineModule {
 
     public InputStream getResourceAsStream(String filename) {
         return getClassLoader().getResourceAsStream(filename);
+    }
+
+    public boolean isRegisteredForSure() {
+        return ModuleManager.getLoadedModules().containsValue(this);
+    }
+
+    public boolean isRegisteredByIdentifier() {
+        return ModuleManager.getLoadedModules().containsKey(identifier());
     }
 }

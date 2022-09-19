@@ -56,7 +56,7 @@ dependencies {
     implementation(shadow("fr.minuskube.inv:smart-invs:1.2.7"))
 
     // Streamline API.
-    implementation(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar"))
+    implementation(project(":StreamlineCore-API"))
 }
 
 java {
