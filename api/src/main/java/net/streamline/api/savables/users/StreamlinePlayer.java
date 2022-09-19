@@ -89,7 +89,13 @@ public class StreamlinePlayer extends StreamlineUser {
         currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
 
-        SLAPI.getInstance().getMessenger().logWarning("Ran thingy");
+//        try {
+//            throw new RuntimeException("Check here:");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        SLAPI.getInstance().getMessenger().logWarning("Ran thingy");
     }
 
     @Override

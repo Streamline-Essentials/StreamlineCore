@@ -65,6 +65,8 @@ public abstract class RATExpansion {
     }
 
     public String doLogic(String params) {
+        incrementChecked(params);
+
         if (params.equals("logic_version")) return getVersion();
         if (params.equals("logic_author")) return getAuthor();
         if (params.equals("logic_identifier")) return getIdentifier();
@@ -81,6 +83,7 @@ public abstract class RATExpansion {
     public String doRequest(StreamlineUser user, String params) {
         String logic = doLogic(params);
         if (! logic.equals("")) return logic;
+        else incrementChecked(params);
 
         if (params.equals("request_calls_previous")) return String.valueOf(getUserCalls(user));
         addCallForUser(user);
@@ -119,5 +122,14 @@ public abstract class RATExpansion {
 
     public boolean isRegistered() {
         return SLAPI.getRatAPI().isRegistered(this);
+    }
+
+    public void incrementChecked(String params) {
+        int i = 1;
+        if (getChecked().containsKey(params)) {
+            i = getChecked().get(params);
+        }
+
+        getChecked().put(params, i);
     }
 }

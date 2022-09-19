@@ -171,4 +171,8 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     public static String stripUUID(String uuid) {
         return uuid.replace("-", "");
     }
+
+    public static boolean isCached(String uuid) {
+        return getInstance().resource.singleLayerKeySet().contains(uuid);
+    }
 }

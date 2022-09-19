@@ -20,7 +20,7 @@ public class UserSaveTimer extends BaseRunnable {
     @Override
     public void run() {
         if (this.coolDown <= 0) {
-            this.coolDown = 200;
+            this.coolDown = 48000;
             done();
         }
 
@@ -28,9 +28,8 @@ public class UserSaveTimer extends BaseRunnable {
     }
 
     public void done() {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            user.saveAll();
-            UserUtils.unloadUser(user);
-        }
+        UserUtils.getLoadedUsersSet().forEach(UserUtils::unloadUser);
+
+        SLAPI.getInstance().getPlatform().getOnlinePlayerNames().forEach(UserUtils::getOrGetUserByName);
     }
 }

@@ -53,18 +53,18 @@ public class UserUtils {
     }
 
     public static StreamlineUser loadUser(StreamlineUser user) {
-        loadedUsers.put(user.getUuid(), user);
-        user.saveAll();
+        getLoadedUsers().put(user.getUuid(), user);
         ModuleUtils.fireEvent(new LoadStreamlineUserEvent<>(user));
         return user;
     }
 
     public static void unloadUser(StreamlineUser user) {
-        loadedUsers.remove(user.getUuid());
+        user.saveAll();
+        getLoadedUsers().remove(user.getUuid());
     }
 
     private static StreamlineUser getUser(String uuid) {
-        return loadedUsers.get(uuid);
+        return getLoadedUsers().get(uuid);
     }
 
     public static boolean userExists(String uuid) {
@@ -126,8 +126,11 @@ public class UserUtils {
         if (isConsole(uuid)) {
             user = new StreamlineConsole();
         } else {
-            if (! userExists(uuid)) return null;
-            user = new StreamlinePlayer(uuid);
+            if (CachedUUIDsHandler.isCached(uuid) || userExists(uuid)) {
+                user = new StreamlinePlayer(uuid);
+            } else {
+                return null;
+            }
         }
 
         loadUser(user);
