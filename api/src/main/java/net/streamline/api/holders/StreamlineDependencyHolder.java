@@ -19,7 +19,7 @@ public abstract class StreamlineDependencyHolder<T> {
     @Getter @Setter
     private String identifier;
 
-    StreamlineDependencyHolder(String identifier, String... keysToTry) {
+    public StreamlineDependencyHolder(String identifier, String... keysToTry) {
         this.identifier = identifier;
         this.keysToTry = new ConcurrentSkipListMap<>();
         for (String key : keysToTry) {
