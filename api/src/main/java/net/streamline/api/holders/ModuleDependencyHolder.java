@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
 
 import java.util.concurrent.Callable;
