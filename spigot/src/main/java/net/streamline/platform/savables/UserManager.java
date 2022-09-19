@@ -31,18 +31,8 @@ public class UserManager implements IUserManager {
         instance = this;
     }
 
-    private StreamlinePlayer getPlayer(Player player) {
-        return (StreamlinePlayer) UserUtils.getLoadedUsers().get(player.getUniqueId().toString());
-    }
-
     public StreamlinePlayer getOrGetPlayer(Player player) {
-        StreamlinePlayer user = getPlayer(player);
-        if (user != null) return user;
-
-        user = new StreamlinePlayer(player.getUniqueId());
-
-        UserUtils.loadUser(user);
-        return user;
+        return UserUtils.getOrGetPlayer(player.getUniqueId().toString());
     }
 
     public StreamlineUser getOrGetUser(CommandSender sender) {
