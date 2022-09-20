@@ -16,14 +16,13 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class CachedUUIDsHandler extends FlatFileResource<Json> {
     public static class Runner extends BaseRunnable {
         public Runner() {
-            super(200, 200);
+            super(1200, 1200);
         }
 
         @Override
         public void run() {
             setCachedTotalNames(new ConcurrentSkipListMap<>());
             setCachedUUIDs(new ConcurrentSkipListMap<>());
-//            setCachedCurrentNames(new ConcurrentSkipListMap<>());
         }
     }
 
