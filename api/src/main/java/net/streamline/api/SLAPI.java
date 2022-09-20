@@ -26,6 +26,7 @@ import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.UserUtils;
 
 import java.io.File;
+import java.io.InputStream;
 
 public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> {
     @Getter
@@ -117,5 +118,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
         cachePurgeTimer = new CachePurgeTimer();
+    }
+
+    public InputStream getResourceAsStream(String filename) {
+        return getClass().getClassLoader().getResourceAsStream(filename);
     }
 }

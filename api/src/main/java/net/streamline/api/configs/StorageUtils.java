@@ -11,6 +11,7 @@ import net.streamline.api.savables.SavableResource;
 import org.bson.Document;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 public class StorageUtils {
@@ -99,5 +100,32 @@ public class StorageUtils {
         }
 
         return null;
+    }
+
+    public static void ensureFileFromSelf(File parentDirectory, File toEnsure, String fileName) {
+        if (! toEnsure.exists()) {
+            try {
+                parentDirectory.mkdirs();
+                try (InputStream in = SLAPI.getInstance(). getResourceAsStream(fileName)) {
+                    assert in != null;
+                    Files.copy(in, toEnsure.toPath());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void ensureFileNoDefault(File parentDirectory, File toEnsure) {
+        if (! toEnsure.exists()) {
+            try {
+                parentDirectory.mkdirs();
+                toEnsure.createNewFile();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
