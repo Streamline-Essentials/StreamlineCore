@@ -77,7 +77,7 @@ public abstract class RATExpansion {
         if (params.equals("logic_checked_most")) return getMostUsedCheck().key;
 
         String logic = onLogic(params);
-        return logic == null ? "" : logic;
+        return logic == null ? "${{null}}" : logic;
     }
 
     public String doRequest(StreamlineUser user, String params) {
@@ -90,7 +90,7 @@ public abstract class RATExpansion {
         if (params.equals("request_calls_now")) return String.valueOf(getUserCalls(user));
 
         String request = onRequest(user, params);
-        return request == null ? "" : request;
+        return request == null ? "${{null}}" : request;
     }
 
     public abstract String onLogic(String params);

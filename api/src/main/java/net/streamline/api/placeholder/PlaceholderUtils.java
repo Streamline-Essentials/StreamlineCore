@@ -6,6 +6,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public class PlaceholderUtils {
@@ -124,7 +125,7 @@ public class PlaceholderUtils {
             for (PlaceholderValue pv : pvs) {
                 if (pv.isEmpty) continue;
                 String parsed = expansion.doRequest(on, pv.params);
-                if (parsed == null) continue;
+                if (parsed.equals("${{null}}")) continue;
                 pv = pv.setParsed(parsed);
                 toReplace.put(pv.unparsed, pv.parsed);
             }
@@ -150,7 +151,7 @@ public class PlaceholderUtils {
                 if (pv.isEmpty) continue;
                 String parsed = expansion.doLogic(pv.params);
                 if (parsed == null) continue;
-                pv = pv.setParsed(parsed);
+                if (parsed.equals("${{null}}")) continue;
                 toReplace.put(pv.unparsed, pv.parsed);
             }
 
