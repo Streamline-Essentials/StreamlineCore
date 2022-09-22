@@ -52,4 +52,8 @@ public class PlaceholderValue {
     public String toString() {
         return "PlaceholderValue{ Is Empty: " + this.isEmpty + " , Unparsed:" + this.unparsed + " ; [ " + this.identifier + " , " + this.params + " ] }";
     }
+
+    public boolean isVoid() {
+        return this.parsed == null;
+    }
 }

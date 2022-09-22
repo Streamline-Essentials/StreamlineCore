@@ -7,6 +7,7 @@ import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.scheduler.BaseRunnable;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public abstract class ModuleDependencyHolder<T> {
@@ -35,6 +36,28 @@ public abstract class ModuleDependencyHolder<T> {
 
     public static boolean isPresentCertain(String toTry) {
         return ModuleManager.hasModuleLoaded(toTry);
+    }
+
+    public CompletableFuture<Void> nativeComplete() {
+        return CompletableFuture.runAsync(() -> {
+            setApi((T) ModuleManager.getModule(getIdentifier()));
+        });
+    }
+
+    public void nativeLoad() {
+        new NativeLoader();
+    }
+
+    public class NativeLoader extends BaseRunnable {
+        public NativeLoader() {
+            super(40, 1);
+        }
+
+        @Override
+        public void run() {
+            nativeComplete().join();
+            cancel();
+        }
     }
 
     public void tryLoad(Callable<Void> callable) {

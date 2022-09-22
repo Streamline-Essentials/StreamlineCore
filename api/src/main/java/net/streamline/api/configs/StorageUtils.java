@@ -7,6 +7,7 @@ import de.leonhard.storage.Yaml;
 import de.leonhard.storage.internal.FlatFile;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.savables.SavableResource;
 import org.bson.Document;
 
@@ -106,7 +107,23 @@ public class StorageUtils {
         if (! toEnsure.exists()) {
             try {
                 parentDirectory.mkdirs();
-                try (InputStream in = SLAPI.getInstance(). getResourceAsStream(fileName)) {
+                try (InputStream in = SLAPI.getInstance().getResourceAsStream(fileName)) {
+                    assert in != null;
+                    Files.copy(in, toEnsure.toPath());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void ensureFileFromSelfModule(StreamlineModule module, File parentDirectory, File toEnsure, String fileName) {
+        if (! toEnsure.exists()) {
+            try {
+                parentDirectory.mkdirs();
+                try (InputStream in = module.getResourceAsStream(fileName)) {
                     assert in != null;
                     Files.copy(in, toEnsure.toPath());
                 } catch (Exception e) {
