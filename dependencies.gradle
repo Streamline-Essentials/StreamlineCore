@@ -36,6 +36,6 @@ ext {
             "org.geysermc:base-api:2.0.4-SNAPSHOT",
             "org.geysermc:geyser-api:2.0.4-SNAPSHOT"
     ]
-    API_VER = "1.0.2-SNAPSHOT"
+    API_VER = "1.0.3-SNAPSHOT"
     APIB_VER = "1.0.0-SNAPSHOT"
 }
