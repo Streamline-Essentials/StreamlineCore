@@ -52,6 +52,16 @@ public class UserUtils {
         return new ConcurrentSkipListSet<>(getLoadedUsers().values());
     }
 
+    public static ConcurrentSkipListMap<String, StreamlinePlayer> getLoadedPlayers() {
+        ConcurrentSkipListMap<String, StreamlinePlayer> r = new ConcurrentSkipListMap<>();
+
+        getLoadedUsers().forEach((s, user) -> {
+            if (user instanceof StreamlinePlayer player) r.put(user.getUuid(), player);
+        });
+
+        return r;
+    }
+
     public static StreamlineUser loadUser(StreamlineUser user) {
         getLoadedUsers().put(user.getUuid(), user);
         ModuleUtils.fireEvent(new LoadStreamlineUserEvent<>(user));
@@ -61,6 +71,26 @@ public class UserUtils {
     public static void unloadUser(StreamlineUser user) {
         user.saveAll();
         getLoadedUsers().remove(user.getUuid());
+    }
+
+    public static ConcurrentSkipListMap<String, StreamlineUser> getOnlineUsers() {
+        ConcurrentSkipListMap<String, StreamlineUser> r = new ConcurrentSkipListMap<>();
+
+        getLoadedUsers().forEach((s, user) -> {
+            if (user.isOnline()) r.put(user.getUuid(), user);
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListMap<String, StreamlinePlayer> getOnlinePlayers() {
+        ConcurrentSkipListMap<String, StreamlinePlayer> r = new ConcurrentSkipListMap<>();
+
+        getOnlineUsers().forEach((s, user) -> {
+            if (user instanceof StreamlinePlayer player) r.put(user.getUuid(), player);
+        });
+
+        return r;
     }
 
     private static StreamlineUser getUser(String uuid) {

@@ -2,166 +2,165 @@ package net.streamline.api.placeholder;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
+import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MatcherUtils;
+import net.streamline.api.utils.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlaceholderUtils {
-    public static Matcher setupMatcher(String regex, String from) {
-        Pattern search = Pattern.compile(regex);
+    public static boolean containsReplacement(ConcurrentSkipListSet<RATReplacement> replacements, String totalToCheck) {
+        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
 
-        return search.matcher(from);
+        replacements.forEach(replacement -> {
+            if (replacement.getTotal().equals(totalToCheck)) atomicBoolean.set(true);
+        });
+
+        return atomicBoolean.get();
     }
 
-    public static PlaceholderValue getParsed(List<String> found, int i) {
-        String matched = found.get(i);
-        if (! (matched.startsWith("%") && matched.endsWith("%"))) return new PlaceholderValue();
-        if (i + 1 >= found.size()) return new PlaceholderValue();
-        if (i + 2 >= found.size()) return new PlaceholderValue();
-        String identifier = found.get(i + 1);
-        if (identifier == null) return new PlaceholderValue();
-        String params = found.get(i + 2);
-        if (params == null) return new PlaceholderValue();
-        return new PlaceholderValue(matched, identifier, params);
+    public static ConcurrentSkipListSet<RATReplacement> getReplacements(StreamlineUser user, String from) {
+        ConcurrentSkipListSet<RATReplacement> replacements = new ConcurrentSkipListSet<>();
+
+        SLAPI.getRatAPI().getLoadedExpansions().forEach((integerDatedNumber, expansion) -> {
+            replacements.addAll(getReplacements(user, expansion, from));
+        });
+
+        return replacements;
     }
 
-    public static List<PlaceholderValue> getParsed(List<String> found) {
-        List<PlaceholderValue> placeholderValues = new ArrayList<>();
+    public static ConcurrentSkipListSet<RATReplacement> getReplacements(StreamlineUser user, RATExpansion expansion, String from) {
+        Matcher matcher = MatcherUtils.matcherBuilder("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
 
-        int rotator = 0;
-        boolean skipToNext = false;
-        for (String string : found) {
-            rotator ++;
-
-            PlaceholderValue pv = new PlaceholderValue();
-            if (rotator == 1 && placeholderValues.size() > 0) pv = placeholderValues.get(placeholderValues.size() - 1);
-
-            switch (rotator) {
-                case 1 -> {
-                    skipToNext = false;
-                    if (! (string.startsWith("%") && string.endsWith("%"))) {
-                        skipToNext = true;
-                        continue;
-                    }
-                    pv = pv.setUnparsed(string);
-                }
-                case 2 -> {
-                    if (skipToNext) continue;
-                    pv = pv.setIdentifier(string);
-                }
-                case 3 -> {
-                    if (skipToNext) continue;
-                    pv = pv.setParams(string);
-                }
-            }
-
-            pv = pv.updateEmptiness();
-            placeholderValues.add(pv);
-
-            if (rotator == 3) rotator = 0;
-        }
-
-        return placeholderValues;
-    }
-
-//    public static List<PlaceholderValue> getParsed(List<PlaceholderValue> found) {
-//        List<PlaceholderValue> placeholderValues = new ArrayList<>();
-//
-//        for (PlaceholderValue value : found) {
-//
-//        }
-//
-//        return placeholderValues;
-//    }
-
-    public static List<PlaceholderValue> getMatched(Matcher matcher) {
-        List<PlaceholderValue> found = new ArrayList<>();
+        ConcurrentSkipListSet<RATReplacement> found = new ConcurrentSkipListSet<>();
 
         while (matcher.find()) {
-            String unparsed = matcher.group(1);
+            String total = matcher.group(1);
             String identifier = matcher.group(2);
             String params = matcher.group(3);
-            if (unparsed == null || identifier == null || params == null) continue;
-            PlaceholderValue pv = new PlaceholderValue();
-            pv = pv.setUnparsed(unparsed);
-            pv = pv.setIdentifier(identifier);
-            pv = pv.setParams(params);
-            pv = pv.updateEmptiness();
-            found.add(pv);
-//            MessagingUtils.logInfo("PlaceholderUtils#getMatched : found = " + pv.toString());
+            if (total == null || identifier == null || params == null) continue;
+            String value = expansion.doRequest(user, params);
+            if (value == null) continue;
+            RATReplacement replacement = new RATReplacement(total, identifier, params, value);
+            if (containsReplacement(found, replacement.getTotal())) continue;
+            found.add(replacement);
         }
 
         return found;
     }
 
-    public static RATResult parseCustomPlaceholder(String key, String value, String from) {
-        int count = 0;
+    public static ConcurrentSkipListSet<RATReplacement> getReplacements(String from) {
+        ConcurrentSkipListSet<RATReplacement> replacements = new ConcurrentSkipListSet<>();
 
-        boolean isDone = false;
-        String temp = from;
-        while (! isDone) {
-            from = from.replaceFirst(key, value);
-            if (from.equals(temp)) {
-                isDone = true;
-                continue;
-            }
-            temp = from;
-            count ++;
-        }
-        return new RATResult(from, count);
+        SLAPI.getRatAPI().getLoadedExpansions().forEach((integerDatedNumber, expansion) -> {
+            replacements.addAll(getReplacements(expansion, from));
+        });
+
+        return replacements;
     }
 
-    public static RATResult parsePlaceholder(RATExpansion expansion, StreamlineUser on, String from) {
-        int replaced = 0;
-        try {
-            Matcher matcher = setupMatcher("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
-            List<PlaceholderValue> pvs = getMatched(matcher);
+    public static ConcurrentSkipListSet<RATReplacement> getReplacements(RATExpansion expansion, String from) {
+        Matcher matcher = MatcherUtils.matcherBuilder("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
 
-            TreeMap<String, String> toReplace = new TreeMap<>();
+        ConcurrentSkipListSet<RATReplacement> found = new ConcurrentSkipListSet<>();
 
-            for (PlaceholderValue pv : pvs) {
-                if (pv.isEmpty) continue;
-                String parsed = expansion.doRequest(on, pv.params);
-                if (parsed.equals("${{null}}")) continue;
-                pv = pv.setParsed(parsed);
-                toReplace.put(pv.unparsed, pv.parsed);
-            }
-            for (String match : toReplace.keySet()) {
-                from = from.replace(match, toReplace.get(match));
-                replaced ++;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (matcher.find()) {
+            String total = matcher.group(1);
+            String identifier = matcher.group(2);
+            String params = matcher.group(3);
+            if (total == null || identifier == null || params == null) continue;
+            String value = expansion.doLogic(params);
+            if (value == null) continue;
+            RATReplacement replacement = new RATReplacement(total, identifier, params, value);
+            if (containsReplacement(found, replacement.getTotal())) continue;
+            found.add(replacement);
         }
 
-        return new RATResult(from, replaced);
+        return found;
     }
 
-    public static String parsePlaceholderJustLogic(RATExpansion expansion, String from) {
-        try {
-            Matcher matcher = setupMatcher("([%](" + expansion.getIdentifier() + ")[_](.*?)[%])", from);
-            List<PlaceholderValue> pvs = getMatched(matcher);
+    public static ConcurrentSkipListSet<RATReplacement> getReplacementsCustom(String from) {
+        ConcurrentSkipListSet<RATReplacement> replacements = new ConcurrentSkipListSet<>();
 
-            TreeMap<String, String> toReplace = new TreeMap<>();
+        SLAPI.getRatAPI().getCustomPlaceholders().forEach((integerDatedNumber, customPlaceholder) -> {
+            replacements.addAll(getReplacements(customPlaceholder, from));
+        });
 
-            for (PlaceholderValue pv : pvs) {
-                if (pv.isEmpty) continue;
-                String parsed = expansion.doLogic(pv.params);
-                if (parsed == null) continue;
-                if (parsed.equals("${{null}}")) continue;
-                toReplace.put(pv.unparsed, pv.parsed);
-            }
+        return replacements;
+    }
 
-            for (String match : toReplace.keySet()) {
-                from = from.replace(match, toReplace.get(match));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    public static ConcurrentSkipListSet<RATReplacement> getReplacements(CustomPlaceholder customPlaceholder, String from) {
+        ConcurrentSkipListSet<RATReplacement> found = new ConcurrentSkipListSet<>();
+        Matcher matcher = MatcherUtils.matcherBuilder("(" + customPlaceholder.getKey() + ")", from);
+
+        while (matcher.find()) {
+            String total = matcher.group(1);
+            if (total == null) continue;
+            RATReplacement replacement = new RATReplacement(total, total, total, customPlaceholder.getValue());
+            if (replacement.getReplacement() == null) continue;
+            if (containsReplacement(found, replacement.getTotal())) continue;
+            found.add(replacement);
         }
 
-        return from;
+        return found;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getResults(ConcurrentSkipListSet<RATReplacement> replacements) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        replacements.forEach(replacement -> r.add(new RATResult(replacement)));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getAllPlaceholderResults(StreamlineUser user, String from) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        r.addAll(getResults(getReplacements(user, from)));
+//        r.addAll(getResults(getReplacements(from))); // Don't think we need this?
+        r.addAll(getResults(getReplacementsCustom(from)));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getLogicPlaceholderResults(String from) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        r.addAll(getResults(getReplacements(from)));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getAllLogicalPlaceholderResults(String from) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        r.addAll(getResults(getReplacements(from)));
+        r.addAll(getResults(getReplacementsCustom(from)));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getCustomPlaceholderResults(String from) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        r.addAll(getResults(getReplacementsCustom(from)));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<RATResult> getUserPlaceholderResults(StreamlineUser user, String from) {
+        ConcurrentSkipListSet<RATResult> r = new ConcurrentSkipListSet<>();
+
+        r.addAll(getResults(getReplacements(user, from)));
+
+        return r;
     }
 }

@@ -5,7 +5,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.base.ratapi.StreamlineExpansion;
 import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
 
@@ -34,8 +33,6 @@ public class Streamline extends BasePlugin {
 
     @Override
     public void enable() {
-        new StreamlineExpansion();
-
         try {
             ModuleManager.registerExternalModules();
             ModuleManager.startModules();

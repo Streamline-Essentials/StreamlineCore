@@ -10,6 +10,7 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public interface IUserManager {
     String getUsername(String uuid);
@@ -18,11 +19,13 @@ public interface IUserManager {
 
     boolean runAs(StreamlineUser user, boolean bypass, String command);
 
-    List<StreamlineUser> getUsersOn(String server);
+    ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server);
 
     void connect(StreamlineUser user, String server);
 
     void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack);
 
     String parsePlayerIP(String uuid);
+
+    double getPlayerPing(String uuid);
 }

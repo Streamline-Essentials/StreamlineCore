@@ -29,7 +29,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                     Messenger.getInstance().logInfo(a + " server is empty...");
                     return;
                 }
-                ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).get(0).getUuid());
+                ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
                 if (player == null) {
                     return;
                 }
@@ -44,7 +44,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             MessageQueue.queue(message);
             return;
         }
-        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).get(0).getUuid());
+        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).first().getUuid());
         if (player == null) {
             return;
         }

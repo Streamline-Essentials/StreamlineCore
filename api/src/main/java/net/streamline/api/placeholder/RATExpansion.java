@@ -5,11 +5,13 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class RATExpansion {
+public abstract class RATExpansion implements Comparable<RATExpansion> {
     @Getter @Setter
     private ConcurrentSkipListMap<String, Integer> checked = new ConcurrentSkipListMap<>();
     @Getter @Setter
@@ -72,25 +74,22 @@ public abstract class RATExpansion {
         if (params.equals("logic_identifier")) return getIdentifier();
         if (params.equals("logic_class_name")) return getClass().getSimpleName();
         if (params.equals("logic_calls_previous")) return String.valueOf(this.calls);
-        this.calls ++;
+        this.calls++;
         if (params.equals("logic_calls_now")) return String.valueOf(this.calls);
         if (params.equals("logic_checked_most")) return getMostUsedCheck().key;
 
-        String logic = onLogic(params);
-        return logic == null ? "${{null}}" : logic;
+        return onLogic(params);
     }
 
     public String doRequest(StreamlineUser user, String params) {
         String logic = doLogic(params);
-        if (! logic.equals("")) return logic;
-        else incrementChecked(params);
+        if (logic != null) if (!logic.equals("")) return logic;
 
         if (params.equals("request_calls_previous")) return String.valueOf(getUserCalls(user));
         addCallForUser(user);
         if (params.equals("request_calls_now")) return String.valueOf(getUserCalls(user));
 
-        String request = onRequest(user, params);
-        return request == null ? "${{null}}" : request;
+        return onRequest(user, params);
     }
 
     public abstract String onLogic(String params);
@@ -131,5 +130,10 @@ public abstract class RATExpansion {
         }
 
         getChecked().put(params, i);
+    }
+
+    @Override
+    public int compareTo(@NotNull RATExpansion o) {
+        return CharSequence.compare(getIdentifier(), o.getIdentifier());
     }
 }

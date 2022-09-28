@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -159,6 +160,10 @@ public class ModuleUtils {
         return SLAPI.getInstance().getMessenger().equalsAny(object, toEqual);
     }
 
+    public static CompletableFuture<String> replaceAllLogicalBungee(String of) {
+        return SLAPI.getRatAPI().parseAllLogicalPlaceholders(of);
+    }
+
     public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
         return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, of);
     }
@@ -177,6 +182,18 @@ public class ModuleUtils {
 
     public static ConcurrentSkipListMap<String, StreamlineUser> getLoadedUsers() {
         return UserUtils.getLoadedUsers();
+    }
+
+    public static ConcurrentSkipListMap<String, StreamlinePlayer> getLoadedPlayers() {
+        return UserUtils.getLoadedPlayers();
+    }
+
+    public static ConcurrentSkipListMap<String, StreamlineUser> getOnlineUsers() {
+        return UserUtils.getOnlineUsers();
+    }
+
+    public static ConcurrentSkipListMap<String, StreamlinePlayer> getOnlinePlayers() {
+        return UserUtils.getOnlinePlayers();
     }
 
     public static ConcurrentSkipListSet<StreamlineUser> getLoadedUsersSet() {
@@ -251,10 +268,6 @@ public class ModuleUtils {
         ModuleManager.registerEvents(listener, module);
     }
 
-    public static @NotNull Collection<StreamlinePlayer> getOnlinePlayers() {
-        return SLAPI.getInstance().getPlatform().getOnlinePlayers();
-    }
-
     public static List<String> getOnlinePlayerNames() {
         return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
     }
@@ -312,7 +325,7 @@ public class ModuleUtils {
         SLAPI.getInstance().getPlatform().runAsStrictly(as, message);
     }
 
-    public static List<StreamlineUser> getUsersOn(String server) {
+    public static ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
         return SLAPI.getInstance().getUserManager().getUsersOn(server);
     }
 
@@ -349,11 +362,11 @@ public class ModuleUtils {
     }
 
     public static ModuleTaskManager getModuleScheduler() {
-        return SLAPI.getInstance().getModuleScheduler();
+        return SLAPI.getModuleScheduler();
     }
 
     public static TaskManager getMainScheduler() {
-        return SLAPI.getInstance().getMainScheduler();
+        return SLAPI.getMainScheduler();
     }
 
     public static IStreamline.PlatformType getPlatformType() {
@@ -366,5 +379,9 @@ public class ModuleUtils {
 
     public static void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
         SLAPI.getInstance().getPlatform().sendResourcePack(resourcePack, player);
+    }
+
+    public static double getPlayerPing(String uuid) {
+        return SLAPI.getInstance().getUserManager().getPlayerPing(uuid);
     }
 }

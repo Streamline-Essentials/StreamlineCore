@@ -6,11 +6,12 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.CommandResource;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
 
-public abstract class StreamlineCommand {
+public abstract class StreamlineCommand implements Comparable<StreamlineCommand> {
     @Getter @Setter
     private String identifier;
     @Getter @Setter
@@ -77,5 +78,10 @@ public abstract class StreamlineCommand {
 
     public void disable() {
         CommandHandler.unregisterStreamlineCommand(this);
+    }
+
+    @Override
+    public int compareTo(@NotNull StreamlineCommand o) {
+        return CharSequence.compare(getIdentifier(), o.getIdentifier());
     }
 }
