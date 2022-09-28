@@ -22,6 +22,7 @@ import net.streamline.platform.BasePlugin;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class UserManager implements IUserManager {
     @Getter
@@ -110,8 +111,8 @@ public class UserManager implements IUserManager {
     }
 
     @Override
-    public List<StreamlineUser> getUsersOn(String server) {
-        List<StreamlineUser> r = new ArrayList<>();
+    public ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
+        ConcurrentSkipListSet<StreamlineUser> r = new ConcurrentSkipListSet<>();
 
         Streamline.getInstance().getProxy().getServers().values().forEach(a -> {
             a.getPlayers().forEach(b -> {
@@ -155,5 +156,12 @@ public class UserManager implements IUserManager {
         ipSt = ipSplit[0];
 
         return ipSt;
+    }
+
+    @Override
+    public double getPlayerPing(String uuid) {
+        ProxiedPlayer player = Streamline.getPlayer(uuid);
+        if (player == null) return 0d;
+        return player.getPing();
     }
 }

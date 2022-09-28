@@ -2,13 +2,10 @@ package net.streamline.base;
 
 import net.streamline.platform.BasePlugin;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.base.ratapi.StreamlineExpansion;
 
 public class Streamline extends BasePlugin {
     @Override
     public void enable() {
-        new StreamlineExpansion();
-
         try {
             ModuleManager.registerExternalModules();
             ModuleManager.startModules();

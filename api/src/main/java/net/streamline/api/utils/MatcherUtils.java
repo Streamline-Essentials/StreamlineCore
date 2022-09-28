@@ -25,4 +25,14 @@ public class MatcherUtils {
 
         return groups;
     }
+
+    public static String makeLiteral(String string) {
+        StringBuilder builder = new StringBuilder();
+
+        for (char c : string.toCharArray()) {
+            builder.append("[").append(c).append("]");
+        }
+
+        return builder.toString();
+    }
 }

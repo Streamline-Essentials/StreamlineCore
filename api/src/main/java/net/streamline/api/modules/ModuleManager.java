@@ -5,29 +5,82 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.modules.dependencies.Dependency;
-import net.streamline.api.utils.JarFiles;
 import org.jetbrains.annotations.NotNull;
+import org.pf4j.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class ModuleManager {
     @Getter @Setter
     private static ConcurrentSkipListMap<String, StreamlineModule> loadedModules = new ConcurrentSkipListMap<>();
     @Getter @Setter
     private static ConcurrentSkipListMap<String, StreamlineModule> enabledModules = new ConcurrentSkipListMap<>();
+
+    @Getter @Setter
+    private static PluginManager pluginManager;
+
+    public static ConcurrentSkipListMap<String, File> getModuleFiles() {
+        ConcurrentSkipListMap<String, File> r = new ConcurrentSkipListMap<>();
+
+        File[] files = SLAPI.getModuleFolder().listFiles();
+        if (files == null) return r;
+
+        for (File file : files) {
+            if (file.isDirectory()) continue;
+            if (! file.getName().endsWith(".jar")) continue;
+            r.put(file.getName(), file);
+        }
+
+        return r;
+    }
+
+    public static List<Path> getModuleFilesAsPaths() {
+        List<Path> r = new ArrayList<>();
+
+        getModuleFiles().forEach((s, file) -> {
+            r.add(file.toPath());
+        });
+
+        return r;
+    }
+
+    public static PluginManager safePluginManager() {
+        PluginManager manager = getPluginManager();
+        if (manager != null) return manager;
+        manager = new DefaultPluginManager(List.of(SLAPI.getModuleFolder().toPath())) {
+            @Override
+            protected PluginLoader createPluginLoader() {
+                return new JarPluginLoader(this);
+            }
+
+            @Override
+            protected PluginDescriptorFinder createPluginDescriptorFinder() {
+                return new ManifestPluginDescriptorFinder();
+            }
+        };
+        setPluginManager(manager);
+        return manager;
+    }
 
     @Getter
     private static final String noModulesMessage =
@@ -49,33 +102,18 @@ public class ModuleManager {
             ;
 
     public static void loadModule(@NonNull StreamlineModule module) {
-        if (loadedModules.containsKey(module.identifier())) {
+        if (getLoadedModules().containsKey(module.identifier())) {
             SLAPI.getInstance().getMessenger().logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
             return;
         }
 
-        loadedModules.put(module.identifier(), module);
+        getLoadedModules().put(module.identifier(), module);
         ModuleUtils.fireEvent(new ModuleLoadEvent(module));
     }
 
     public static void registerExternalModules() {
-        File[] folderFiles = SLAPI.getModuleFolder().listFiles();
-
-        if (folderFiles != null) {
-            for (File file : folderFiles) {
-                if (! file.isDirectory() && file.getName().endsWith(".jar")) {
-                    try {
-                        registerModule(file);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }
-
-            if (GivenConfigs.getMainConfig().debugNotifyNoModules() && folderFiles.length <= 0) {
-                SLAPI.getInstance().getMessenger().logInfo(getNoModulesMessage());
-            }
-        }
+        safePluginManager().loadPlugins();
+        safePluginManager().startPlugins();
     }
 
     public static void registerModule(StreamlineModule module) {
@@ -83,136 +121,55 @@ public class ModuleManager {
         loadModule(module);
     }
 
-    public static StreamlineModule registerModule(File moduleFile) throws IOException, ReflectiveOperationException {
-        if (!moduleFile.getName().endsWith(".jar"))
-            throw new IllegalArgumentException("The given file is not a valid jar file.");
-
-        String moduleName = moduleFile.getName().replace(".jar", "");
-
-        ModuleClassLoader moduleClassLoader = new ModuleClassLoader(moduleFile);
-
-        //noinspection deprecation
-        Optional<Class<?>> moduleClass = JarFiles.getClasses(moduleFile.toURL(), StreamlineModule.class, moduleClassLoader).stream().findFirst();
-
-        if (moduleClass.isEmpty())
-            throw new IllegalArgumentException("The file " + moduleName + " is not a valid module.");
-
-        StreamlineModule module = createInstance(moduleClass.get());
-        module.initModuleLoader(moduleFile, moduleClassLoader);
-
-        registerModule(module);
-
-        return module;
-    }
-
     public static void unregisterModule(StreamlineModule module) {
         try {
-            module.stop();
+            safePluginManager().stopPlugin(module.identifier());
             unregisterHandlersOf(module);
-            loadedModules.remove(module.identifier());
+            getLoadedModules().remove(module.identifier());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public static StreamlineModule getModule(String identifier) {
-        return loadedModules.get(identifier);
+        return getLoadedModules().get(identifier);
     }
 
-    private static StreamlineModule createInstance(Class<?> clazz) throws ReflectiveOperationException {
-        Preconditions.checkArgument(StreamlineModule.class.isAssignableFrom(clazz), "Class " + clazz + " is not a BundledModule.");
+    public static ConcurrentSkipListSet<ModuleCommand> getCommandsForModule(StreamlineModule module) {
+        ConcurrentSkipListSet<ModuleCommand> r = new ConcurrentSkipListSet<>();
 
-        for (Constructor<?> constructor : clazz.getConstructors()) {
-            if (constructor.getParameterCount() == 0) {
-                if (!constructor.isAccessible())
-                    constructor.setAccessible(true);
-
-                return (StreamlineModule) constructor.newInstance();
-            }
-        }
-
-        throw new IllegalArgumentException("Class " + clazz + " has no valid constructors.");
-    }
-
-    public static List<ModuleCommand> getCommandsForModule(StreamlineModule module) {
-        List<ModuleCommand> r = new ArrayList<>();
-
-        for (ModuleCommand command : CommandHandler.getLoadedModuleCommands().values()) {
-            if (command.getOwningModule().identifier().equals(module.identifier())) r.add(command);
-        }
+        CommandHandler.getLoadedModuleCommands().forEach((s, moduleCommand) -> {
+            if (moduleCommand.getOwningModule().identifier().equals(module.identifier())) r.add(moduleCommand);
+        });
 
         return r;
     }
 
     public static void unloadCommandsForModule(StreamlineModule module) {
-        List<ModuleCommand> commands = getCommandsForModule(module);
-
-        for (ModuleCommand command : commands) {
+        getCommandsForModule(module).forEach(command -> {
             if (command.isLoaded()) command.disable();
-        }
+        });
     }
 
-    public static void reapplyModule(StreamlineModule module) {
-        ModuleManager.unregisterModule(module);
-        try {
-            module = ModuleManager.registerModule(module.getModuleFile());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return;
-        }
-        module.restart();
+    public static void reapplyModule(String id) {
+        if (id.equals(SLAPI.getBaseModule().identifier())) return;
+        Path path = safePluginManager().getPlugin(id).getPluginPath();
+        safePluginManager().unloadPlugin(id);
+        safePluginManager().loadPlugin(path);
+        safePluginManager().startPlugin(id);
     }
 
     public static void restartModules() {
-        for (StreamlineModule module : new ArrayList<>(enabledModules.values())) {
-            module.restart();
-        }
+        safePluginManager().stopPlugins();
+        safePluginManager().startPlugins();
     }
 
     public static void startModules() {
-        for (StreamlineModule module : orderModules().values()) {
-            if (enabledModules.containsKey(module.identifier())) continue;
-            module.start();
-        }
+        safePluginManager().startPlugins();
     }
 
     public static void stopModules() {
-        for (StreamlineModule module : new ArrayList<>(enabledModules.values())) {
-            module.stop();
-        }
-    }
-
-    public static TreeMap<Integer, StreamlineModule> orderModules() {
-        return orderModules(loadedModules.values().stream().toList());
-    }
-
-    public static TreeMap<Integer, StreamlineModule> orderModules(StreamlineModule... from) {
-        return orderModules(Arrays.stream(from).toList());
-    }
-
-    public static TreeMap<Integer, StreamlineModule> orderModules(List<StreamlineModule> from) {
-        TreeMap<Integer, StreamlineModule> r = new TreeMap<>();
-        List<StreamlineModule> independents = new ArrayList<>();
-
-        TreeSet<String> identified = new TreeSet<>();
-        from.forEach(a -> identified.add(a.identifier()));
-
-        for (StreamlineModule module : from) {
-            if (module.dependencies().size() <= 0) {
-                independents.add(module);
-                continue;
-            }
-            for (Dependency dependency : module.dependencies()) {
-                if (identified.contains(dependency.getDependency())) {
-                    break;
-                }
-
-            }
-        }
-
-        independents.forEach(a -> r.put(r.size(), a));
-
-        return r;
+        safePluginManager().stopPlugins();
     }
 
     public static void fireEvent(@NotNull StreamlineEvent event) {

@@ -67,4 +67,17 @@ public class MathUtils {
     public static <T> Map<Integer, T> mappifyArray(T[] array) {
         return mappifyArray(array, 0);
     }
+
+    public static int getStringCount(String toCount, String on) {
+        int count = 0;
+
+        String temp;
+        do {
+            temp = on;
+            on = on.replaceFirst(MatcherUtils.makeLiteral(toCount), "");
+            if (! temp.equals(on)) count ++;
+        } while (! temp.equals(on));
+
+        return count;
+    }
 }

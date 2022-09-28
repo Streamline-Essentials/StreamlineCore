@@ -3,15 +3,20 @@ package net.streamline.api.placeholder;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.modules.StreamlineModule;
+import net.streamline.api.objects.AtomicString;
 import net.streamline.api.objects.DatedNumber;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RATAPI {
     @Getter
@@ -21,10 +26,16 @@ public class RATAPI {
     @Getter @Setter
     private ConcurrentSkipListMap<DatedNumber<Integer>, CustomPlaceholder> customPlaceholders = new ConcurrentSkipListMap<>();
     @Getter @Setter
-    private ConcurrentHashMap<StreamlineModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentHashMap<>();
+    private ConcurrentSkipListMap<StreamlineModule, List<CustomPlaceholder>> modularizedPlaceholders = new ConcurrentSkipListMap<>();
+    @Getter @Setter
+    private AtomicInteger totalParsedPlaceholders = new AtomicInteger(0);
 
     public RATAPI() {
         this.api = this;
+        setLoadedExpansions(new ConcurrentSkipListMap<>());
+        setCustomPlaceholders(new ConcurrentSkipListMap<>());
+        setModularizedPlaceholders(new ConcurrentSkipListMap<>());
+        setTotalParsedPlaceholders(new AtomicInteger(0));
         SLAPI.getInstance().getMessenger().logInfo("Replace A Thing (RAT) API Loaded... (A Placeholder API for Proxies.)");
     }
 
@@ -78,24 +89,34 @@ public class RATAPI {
         return null;
     }
 
-    public String parseAllPlaceholders(StreamlineUser of, String from) {
-        for (CustomPlaceholder placeholder : getCustomPlaceholders().values()) {
-            RATResult result = PlaceholderUtils.parseCustomPlaceholder(placeholder.getKey(), placeholder.getValue(), from);
-            if (result.didReplacement()) {
-                from = result.string;
-                from = parseAllPlaceholders(of, from);
-            }
-        }
+    public CompletableFuture<String> parseAllPlaceholders(StreamlineUser of, String from) {
+        return CompletableFuture.supplyAsync(() -> {
+            AtomicString atomicString = new AtomicString(from);
+            AtomicInteger integer = new AtomicInteger(0);
+//            for (RATResult result : PlaceholderUtils.getAllPlaceholderResults(of, from)) {
+//                integer.getAndAdd(result.parse(atomicString));
+//            }
+            PlaceholderUtils.getAllPlaceholderResults(of, from).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
 
-        for (RATExpansion expansion : getLoadedExpansions().values()) {
-            RATResult result = PlaceholderUtils.parsePlaceholder(expansion, of, from);
-            if (result.didReplacement()) {
-                from = result.string;
-                from = parseAllPlaceholders(of, from);
-            }
-        }
+            if (integer.get() > 0) atomicString.set(parseAllPlaceholders(of, atomicString.get()).join());
 
-        return from;
+            return atomicString.get();
+        });
+    }
+
+    public CompletableFuture<String> parseAllLogicalPlaceholders(String from) {
+        return CompletableFuture.supplyAsync(() -> {
+            AtomicString atomicString = new AtomicString(from);
+            AtomicInteger integer = new AtomicInteger(0);
+//            for (RATResult result : PlaceholderUtils.getAllLogicalPlaceholderResults(from)) {
+//                integer.getAndAdd(result.parse(atomicString));
+//            }
+            PlaceholderUtils.getAllLogicalPlaceholderResults(from).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
+
+            if (integer.get() > 0) atomicString.set(parseAllLogicalPlaceholders(atomicString.get()).join());
+
+            return atomicString.get();
+        });
     }
 
     public boolean isRegistered(RATExpansion expansion) {

@@ -1,37 +1,30 @@
-package net.streamline.base.ratapi;
+package net.streamline.api.base.ratapi;
 
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.placeholder.RATExpansion;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
-import net.streamline.base.Streamline;
-import net.streamline.platform.BasePlugin;
+import net.streamline.api.modules.ModuleManager;
+import net.streamline.api.placeholder.RATExpansion;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class StreamlineExpansion extends RATExpansion {
     public StreamlineExpansion() {
         super("streamline", "Quaint", "0.0.0.1");
+        BaseModule.getInstance().logInfo(getClass().getSimpleName() + " is registered!");
     }
 
     @Override
     public String onLogic(String params) {
         if (params.equals("version")) return SLAPI.getInstance().getPlatform().getVersion();
-        if (params.equals("players_online")) return String.valueOf(BasePlugin.onlinePlayers().size());
+        if (params.equals("players_online")) return String.valueOf(UserUtils.getOnlinePlayers().size());
+        if (params.equals("users_online")) return String.valueOf(UserUtils.getOnlineUsers().size());
         if (params.equals("players_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
-
-        if (params.matches("([a][u][t][h][o][r][\\[]([0-2])[\\]])")) {
-            Pattern pattern = Pattern.compile("([a][u][t][h][o][r][\\[]([0-9])[\\]])");
-            Matcher matcher = pattern.matcher(params);
-            while (matcher.find()) {
-                return Streamline.getInstance().getDescription().getAuthor();
-            }
-        }
+        if (params.equals("users_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
 
         if (params.equals("null")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
@@ -48,9 +41,6 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("offline")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.IS_OFFLINE.get();
         }
-        if (params.equals("pending")) {
-            return MainMessagesHandler.MESSAGES.DEFAULTS.IS_PENDING.get();
-        }
         if (params.equals("placeholders_null")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
         }
@@ -66,16 +56,13 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("placeholders_offline")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
         }
-        if (params.equals("placeholders_pending")) {
-            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_PENDING.get();
-        }
         if (params.startsWith("parse_")) {
             try {
                 String p = params.substring("parse_".length());
                 String[] things = p.split(":::", 2);
-                StreamlineUser user = UserUtils.getOrGetUser(UserUtils.getUUIDFromName(things[0]));
+                StreamlineUser user = UserUtils.getOrGetUserByName(things[0]);
                 String parse = things[1].replace("*/*", "%");
-                return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, parse);
+                return SLAPI.getRatAPI().parseAllPlaceholders(user, parse).join();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -90,7 +77,8 @@ public class StreamlineExpansion extends RATExpansion {
     @Override
     public String onRequest(StreamlineUser user, String params) {
         if (params.equals("user_ping")) {
-            if (user.updateOnline()) return String.valueOf(BasePlugin.getPlayer(user.getUuid()).getPing());
+            if (user.updateOnline())
+                return String.valueOf(SLAPI.getInstance().getUserManager().getPlayerPing(user.getUuid()));
             else return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
         }
         if (params.equals("user_online")) return user.updateOnline() ?
@@ -127,7 +115,7 @@ public class StreamlineExpansion extends RATExpansion {
             List<String> tags = user.getTagList().stream().toList();
             StringBuilder builder = new StringBuilder();
 
-            for (int i = 0; i < tags.size(); i ++) {
+            for (int i = 0; i < tags.size(); i++) {
                 String tag = tags.get(i);
 
                 if (i < tags.size() - 1) {
@@ -136,6 +124,8 @@ public class StreamlineExpansion extends RATExpansion {
                     builder.append(MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.LISTS_LAST.get().replace("%value%", tag));
                 }
             }
+
+            return builder.toString();
         }
 
         return null;

@@ -1,6 +1,7 @@
 package net.streamline.api.modules;
 
 import com.google.common.io.ByteStreams;
+import net.streamline.api.SLAPI;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class ModuleClassLoader extends URLClassLoader {
     private final URL url;
 
     public ModuleClassLoader(File file) throws IOException {
-        super(new URL[]{file.toURI().toURL()}, StreamlineModule.class.getClassLoader());
+        super(new URL[]{ file.toURI().toURL() }, SLAPI.getInstance().getClass().getClassLoader());
 
         this.jar = new JarFile(file);
         this.manifest = jar.getManifest();
@@ -60,16 +61,17 @@ public class ModuleClassLoader extends URLClassLoader {
                 byte[] classBytes;
 
                 try (InputStream is = jar.getInputStream(entry)) {
-                    //noinspection UnstableApiUsage
                     classBytes = ByteStreams.toByteArray(is);
                 } catch (IOException ex) {
                     throw new ClassNotFoundException(name, ex);
                 }
 
+//                classBytes = loader.server.getUnsafe().processClass(description, path, classBytes);
+
                 int dot = name.lastIndexOf('.');
                 if (dot != -1) {
                     String pkgName = name.substring(0, dot);
-                    if (getDefinedPackage(pkgName) == null) {
+                    if (getPackage(pkgName) == null) {
                         try {
                             if (manifest != null) {
                                 definePackage(pkgName, manifest, url);
@@ -77,7 +79,7 @@ public class ModuleClassLoader extends URLClassLoader {
                                 definePackage(pkgName, null, null, null, null, null, null, null);
                             }
                         } catch (IllegalArgumentException ex) {
-                            if (getDefinedPackage(pkgName) == null) {
+                            if (getPackage(pkgName) == null) {
                                 throw new IllegalStateException("Cannot find package " + pkgName);
                             }
                         }
@@ -94,6 +96,7 @@ public class ModuleClassLoader extends URLClassLoader {
                 result = super.findClass(name);
             }
 
+//            loader.setClass(name, result);
             classes.put(name, result);
         }
 

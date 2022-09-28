@@ -52,7 +52,7 @@ public class ModulesCommand extends StreamlineCommand {
                 } else {
                     Arrays.stream(SLAPI.getInstance().getMessenger().argsMinus(args, 0)).forEach(a -> {
                         StreamlineModule module = ModuleManager.getModule(a);
-                        ModuleManager.reapplyModule(module);
+                        ModuleManager.reapplyModule(module.identifier());
                         SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyOne
                                 .replace("%this_identifier%", a)
                         );

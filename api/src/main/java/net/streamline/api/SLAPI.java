@@ -26,7 +26,12 @@ import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.UserUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Predicate;
 
 public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> {
     @Getter
@@ -42,6 +47,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     private static File userFolder;
     @Getter
     private static File moduleFolder;
+    @Getter
+    private static File moduleSaveFolder;
     @Getter
     private static File mainCommandsFolder;
     @Getter
@@ -92,10 +99,24 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
         userFolder = new File(getDataFolder(), "users" + File.separator);
         moduleFolder = new File(getDataFolder(), "modules" + File.separator);
+        moduleSaveFolder = new File(getDataFolder(), "module-resources" + File.separator);
         mainCommandsFolder = new File(getDataFolder(), getCommandsFolderChild());
         userFolder.mkdirs();
         moduleFolder.mkdirs();
+        moduleSaveFolder.mkdirs();
         mainCommandsFolder.mkdirs();
+
+        getFiles(getModuleFolder(), file -> {
+            if (file.isDirectory()) return true;
+            return ! file.getName().endsWith(".jar");
+        }).forEach((s, file) -> {
+            try {
+                Files.move(file.toPath(), Path.of(file.toPath().toString()
+                        .replace(getModuleFolder().toPath().toString(), getModuleSaveFolder().toPath().toString())));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
 
         mainScheduler = new TaskManager();
         moduleScheduler = new ModuleTaskManager();
@@ -118,6 +139,19 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
         cachePurgeTimer = new CachePurgeTimer();
+    }
+
+    public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {
+        ConcurrentSkipListMap<String, File> r = new ConcurrentSkipListMap<>();
+        if (! folder.isDirectory()) return r;
+        File[] files = folder.listFiles();
+        if (files == null) return r;
+
+        for (File file : files) {
+            if (filePredicate.test(file)) r.put(file.getName(), file);
+        }
+
+        return r;
     }
 
     public InputStream getResourceAsStream(String filename) {

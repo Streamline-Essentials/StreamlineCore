@@ -506,7 +506,7 @@ public class Messenger implements IMessenger {
     public String replaceAllPlayerBungee(StreamlineUser user, String of) {
         if (user == null) return of;
 
-        return SLAPI.getRatAPI().parseAllPlaceholders(user, of);
+        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).join();
     }
 
     public String replaceAllPlayerBungee(String uuid, String of) {
