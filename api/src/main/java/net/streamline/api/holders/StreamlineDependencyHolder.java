@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -43,7 +44,7 @@ public abstract class StreamlineDependencyHolder<T> {
         try {
             callable.call();
         } catch (Exception e) {
-            SLAPI.getInstance().getMessenger().logWarning("Could not load '" + getIdentifier() + "'... Retrying in " + LoaderRunnable.getRetryDelay() + " ticks...");
+            MessageUtils.logWarning("Could not load '" + getIdentifier() + "'... Retrying in " + LoaderRunnable.getRetryDelay() + " ticks...");
             new LoaderRunnable(0, callable);
         }
     }

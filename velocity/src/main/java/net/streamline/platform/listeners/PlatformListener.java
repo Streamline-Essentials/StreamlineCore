@@ -29,6 +29,7 @@ import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
@@ -36,7 +37,7 @@ import net.streamline.platform.savables.UserManager;
 
 public class PlatformListener {
     public PlatformListener() {
-        Messenger.getInstance().logInfo("BaseListener registered!");
+        MessageUtils.logInfo("BaseListener registered!");
     }
 
     @Subscribe

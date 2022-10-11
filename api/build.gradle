@@ -27,6 +27,8 @@ dependencies {
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
+
+    implementation(shadow(files("C:\\Users\\nitra\\Dropbox\\Streamline\\Project\\SBP\\sbp\\build\\libs\\sbp-spring-boot-starter-1.0-SNAPSHOT.jar")));
 }
 
 java {

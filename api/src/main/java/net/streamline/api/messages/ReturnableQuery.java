@@ -18,10 +18,8 @@ public class ReturnableQuery extends ReturnableMessage {
         this.user = user;
     }
 
-    @EventProcessor
     @Override
-    public void onProxyMessage(ProxyMessageEvent event) {
-        super.onProxyMessage(event);
+    public void afterEvent() {
         ProxyMessageHelper.cacheQuery(getToQuery(), getQuery());
     }
 

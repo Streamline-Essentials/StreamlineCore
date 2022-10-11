@@ -38,7 +38,7 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
 
     @Override
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        return CompletableFuture.completedFuture(new ArrayList<>(parent.doTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments())));
+        return CompletableFuture.completedFuture(parent.doTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments()).stream().toList());
     }
 
     @Override

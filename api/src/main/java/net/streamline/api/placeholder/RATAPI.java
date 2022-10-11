@@ -9,6 +9,7 @@ import net.streamline.api.objects.AtomicString;
 import net.streamline.api.objects.DatedNumber;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MathUtils;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public class RATAPI {
         setCustomPlaceholders(new ConcurrentSkipListMap<>());
         setModularizedPlaceholders(new ConcurrentSkipListMap<>());
         setTotalParsedPlaceholders(new AtomicInteger(0));
-        SLAPI.getInstance().getMessenger().logInfo("Replace A Thing (RAT) API Loaded... (A Placeholder API for Proxies.)");
+        MessageUtils.logInfo("Replace A Thing (RAT) API Loaded... (A Placeholder API for Proxies.)");
     }
 
     public void registerCustomPlaceholder(CustomPlaceholder placeholder) {

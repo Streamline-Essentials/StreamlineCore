@@ -2,6 +2,7 @@ package net.streamline.api.configs;
 
 import de.leonhard.storage.*;
 import de.leonhard.storage.internal.FlatFile;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 
 import java.io.File;
@@ -18,7 +19,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
     public File parentDirectory;
     public File file;
     public boolean selfContained;
-    public StreamlineModule module;
+    public ModuleLike module;
 
     public FlatFileResource(Class<T> resourceType, String fileName, File parentDirectory, boolean selfContained) {
         super(resourceType, "name", fileName);
@@ -32,7 +33,7 @@ public class FlatFileResource<T extends FlatFile> extends StorageResource<T> {
         reloadResource();
     }
 
-    public FlatFileResource(StreamlineModule module, Class<T> resourceType, String fileName, File parentDirectory, boolean selfContained) {
+    public FlatFileResource(ModuleLike module, Class<T> resourceType, String fileName, File parentDirectory, boolean selfContained) {
         super(resourceType, "name", fileName);
         this.resourceType = resourceType;
         this.name = fileName;

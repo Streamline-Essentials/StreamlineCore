@@ -5,10 +5,12 @@ import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ParseCommand extends StreamlineCommand {
     private final String messageResult;
@@ -38,18 +40,18 @@ public class ParseCommand extends StreamlineCommand {
             return;
         }
 
-        SLAPI.getInstance().getMessenger().sendMessage(sender, SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(sender,
+        SLAPI.getInstance().getMessenger().sendMessage(sender, MessageUtils.replaceAllPlayerBungee(sender,
                 getWithOther(sender, this.messageResult, player)
-                        .replace("%this_parsed%", SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(player, SLAPI.getInstance().getMessenger().argsToStringMinus(args, 0)))
+                        .replace("%this_parsed%", MessageUtils.replaceAllPlayerBungee(player, MessageUtils.argsToStringMinus(args, 0)))
         ));
     }
 
     @Override
-    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
 
-        return new ArrayList<>();
+        return new ConcurrentSkipListSet<>();
     }
 }

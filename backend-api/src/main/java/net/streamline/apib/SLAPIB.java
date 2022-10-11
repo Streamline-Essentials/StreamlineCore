@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.objects.SingleSet;
+import net.streamline.apib.depends.PAPIDepend;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -18,12 +19,19 @@ public class SLAPIB {
     private static InventoryManager inventoryManager;
     @Getter @Setter
     private static SLAPI<?, ?, ?> slapi;
+    @Getter @Setter
+    private static JavaPlugin plugin;
+    @Getter @Setter
+    private static PAPIDepend papiDepend;
 
     public SLAPIB(SLAPI<?, ?, ?> slapi, JavaPlugin plugin) {
         instance = this;
+        setPlugin(plugin);
         setSlapi(slapi);
         setInventoryManager(new InventoryManager(plugin));
         getInventoryManager().init();
+
+        setPapiDepend(new PAPIDepend());
     }
 
     public static SmartInventory.Builder getInventoryBuilder() {

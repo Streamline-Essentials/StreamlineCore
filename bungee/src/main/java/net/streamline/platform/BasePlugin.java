@@ -16,6 +16,7 @@ import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.config.SavedProfileConfig;
@@ -30,12 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin extends Plugin implements IStreamline {
-    public class Runner implements Runnable {
+    public static class Runner implements Runnable {
         public Runner() {
-            getMessenger().logInfo("Task Runner registered!");
+            MessageUtils.logInfo("Task Runner registered!");
         }
 
         @Override
@@ -117,8 +119,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public @NotNull Collection<StreamlinePlayer> getOnlinePlayers() {
-        List<StreamlinePlayer> players = new ArrayList<>();
+    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -137,8 +139,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public List<String> getOnlinePlayerNames() {
-        List<String> r = new ArrayList<>();
+    public ConcurrentSkipListSet<String> getOnlinePlayerNames() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getOnlinePlayers().forEach(a -> {
             r.add(a.getName());
@@ -219,7 +221,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
             runAsStrictly(as, message);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(message)) runAsStrictly(as, message.substring("/".length()));
+            if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
             ProxiedPlayer player = getPlayer(as.getUuid());
             if (player == null) return;
             player.chat(message);
@@ -232,7 +234,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
             getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getProxy().getConsole(), command);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(command)) runAsStrictly(as, command.substring("/".length()));
+            if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
             ProxiedPlayer player = getPlayer(as.getUuid());
             if (player == null) return;
             getInstance().getProxy().getPluginManager().dispatchCommand(player, command);
@@ -281,8 +283,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public List<String> getServerNames() {
-        return new ArrayList<>(getInstance().getProxy().getServers().keySet());
+    public ConcurrentSkipListSet<String> getServerNames() {
+        return new ConcurrentSkipListSet<>(getInstance().getProxy().getServers().keySet());
     }
 
     @Override
@@ -299,5 +301,10 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
         // nothing right now
+    }
+
+    @Override
+    public ClassLoader getMainClassLoader() {
+        return getProxy().getClass().getClassLoader();
     }
 }

@@ -5,11 +5,13 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.CommandResource;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class StreamlineCommand implements Comparable<StreamlineCommand> {
     @Getter @Setter
@@ -49,19 +51,19 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
 
     abstract public void run(StreamlineUser sender, String[] args);
 
-    abstract public List<String> doTabComplete(StreamlineUser sender, String[] args);
+    abstract public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args);
 
     public String getWithOther(StreamlineUser sender, String base, StreamlineUser other) {
         base = base.replace("%this_other%", other.getName());
         base = base.replace("%this_other_uuid%", other.getUuid());
-        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(other, getWithOther(sender, base, other.getLatestName()));
+        return MessageUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.getLatestName()));
     }
 
     public String getWithOther(StreamlineUser sender, String base, String other) {
         base = base.replace("%this_sender%", sender.getName());
         base = base.replace("%this_sender_uuid%", sender.getName());
         StreamlineUser user = UserUtils.getOrGetUser(sender.getUuid());
-        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, getWithOther(base, other));
+        return MessageUtils.replaceAllPlayerBungee(user, getWithOther(base, other));
     }
 
     public String getWithOther(String base, String other) {

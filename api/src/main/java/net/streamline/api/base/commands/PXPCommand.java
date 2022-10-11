@@ -9,6 +9,7 @@ import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class PXPCommand extends StreamlineCommand {
     private final String messageLevelGet;
@@ -159,20 +160,20 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
-            return List.of("level", "xp");
+            return new ConcurrentSkipListSet<>(List.of("level", "xp"));
         }
         if (args.length == 3) {
-            return List.of("set", "add", "remove");
+            return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
         if (args.length == 4) {
-            return List.of("-3", "-2", "-1", "0", "1", "2", "3");
+            return new ConcurrentSkipListSet<>(List.of("-3", "-2", "-1", "0", "1", "2", "3"));
         }
 
-        return new ArrayList<>();
+        return new ConcurrentSkipListSet<>();
     }
 }

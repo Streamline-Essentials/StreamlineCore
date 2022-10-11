@@ -23,7 +23,7 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("version")) return SLAPI.getInstance().getPlatform().getVersion();
         if (params.equals("players_online")) return String.valueOf(UserUtils.getOnlinePlayers().size());
         if (params.equals("users_online")) return String.valueOf(UserUtils.getOnlineUsers().size());
-        if (params.equals("players_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
+        if (params.equals("players_loaded")) return String.valueOf(UserUtils.getLoadedPlayers().size());
         if (params.equals("users_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
 
         if (params.equals("null")) {

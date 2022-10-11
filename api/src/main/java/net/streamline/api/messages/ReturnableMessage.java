@@ -10,8 +10,11 @@ import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.MessageUtils;
 
-public class ReturnableMessage extends BaseRunnable implements StreamlineListener {
+import java.util.Arrays;
+
+public class ReturnableMessage extends BaseRunnable {
     @Getter
     private static final long period = 1L;
     @Getter
@@ -33,16 +36,14 @@ public class ReturnableMessage extends BaseRunnable implements StreamlineListene
         setSubChannel(subChannel);
 
         String[] returned = new String[lines];
-        for (int i = 0; i < returned.length; i ++) {
-            returned[i] = "";
-        }
+        Arrays.fill(returned, "");
         setReturned(returned);
 
         setFinished(false);
 
         SLAPI.getInstance().getProxyMessenger().sendMessage(out);
 
-        ModuleUtils.listen(this, SLAPI.getInstance().getBaseModule());
+        ModuleUtils.listen(new ReturnableListener(), SLAPI.getBaseModule());
     }
 
     @Override
@@ -51,26 +52,34 @@ public class ReturnableMessage extends BaseRunnable implements StreamlineListene
         cancel();
     }
 
-    @EventProcessor
-    public void onProxyMessage(ProxyMessageEvent event) {
-        if (isFinished()) return;
+    public void afterEvent() {
 
-        if (! event.getMessage().getSubChannel().equals(getSubChannel())) return;
+    }
 
-        ByteArrayDataInput input = ByteStreams.newDataInput(event.getMessage().getMessages());
+    public class ReturnableListener extends StreamlineListener {
+        @EventProcessor
+        public void onProxyMessage(ProxyMessageEvent event) {
+            if (isFinished()) return;
 
-        if (! getSubChannel().equals(input.readUTF())) {
-            SLAPI.getInstance().getMessenger().logWarning("Data mis-match on ProxyMessageIn for '" + ResourcePackMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
-            return;
+            if (! event.getMessage().getSubChannel().equals(getSubChannel())) return;
+
+            ByteArrayDataInput input = ByteStreams.newDataInput(event.getMessage().getMessages());
+
+            if (! getSubChannel().equals(input.readUTF())) {
+                MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ResourcePackMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+                return;
+            }
+
+            String[] r = getReturned().clone();
+            for (int i = 0; i < r.length; i ++) {
+                r[i] = input.readUTF();
+            }
+            setReturned(r);
+
+            setFinished(true);
+            cancel();
+
+            afterEvent();
         }
-
-        String[] r = getReturned().clone();
-        for (int i = 0; i < r.length; i ++) {
-            r[i] = input.readUTF();
-        }
-        setReturned(r);
-
-        setFinished(true);
-        cancel();
     }
 }

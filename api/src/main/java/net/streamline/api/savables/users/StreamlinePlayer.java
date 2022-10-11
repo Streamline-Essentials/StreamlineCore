@@ -10,6 +10,7 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.api.utils.MathUtils;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class StreamlinePlayer extends StreamlineUser {
 //            e.printStackTrace();
 //        }
 //
-//        SLAPI.getInstance().getMessenger().logWarning("Ran thingy");
+//        MessageUtils.logWarning("Ran thingy");
     }
 
     @Override
@@ -188,22 +189,22 @@ public class StreamlinePlayer extends StreamlineUser {
     }
 
     public String getPlaySecondsAsString(){
-        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(this.playSeconds), 2);
+        return MessageUtils.truncate(String.valueOf(this.playSeconds), 2);
     }
 
     public String getPlayMinutesAsString(){
         //        loadValues();
-        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayMinutes()), 2);
+        return MessageUtils.truncate(String.valueOf(getPlayMinutes()), 2);
     }
 
     public String getPlayHoursAsString(){
         //        loadValues();
-        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayHours()), 2);
+        return MessageUtils.truncate(String.valueOf(getPlayHours()), 2);
     }
 
     public String getPlayDaysAsString(){
         //        loadValues();
-        return SLAPI.getInstance().getMessenger().truncate(String.valueOf(getPlayDays()), 2);
+        return MessageUtils.truncate(String.valueOf(getPlayDays()), 2);
     }
 
     /*

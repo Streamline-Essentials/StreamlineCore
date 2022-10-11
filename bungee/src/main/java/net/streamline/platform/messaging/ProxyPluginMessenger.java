@@ -9,6 +9,7 @@ import net.streamline.api.messages.builders.ReturnParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
@@ -26,7 +27,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 //                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
 
                 if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
-                    Messenger.getInstance().logInfo(a + " server is empty...");
+                    MessageUtils.logInfo(a + " server is empty...");
                     return;
                 }
                 ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
@@ -65,7 +66,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             SingleSet<String, String> set = ProxyParseMessageBuilder.unbuild(event.getMessage());
             StreamlineUser user = UserUtils.getOrGetUser(set.value);
             if (user == null) return;
-            SLAPI.getInstance().getProxyMessenger().sendMessage(ReturnParseMessageBuilder.build(set.key, Messenger.getInstance().replaceAllPlayerBungee(user, set.key), user));
+            SLAPI.getInstance().getProxyMessenger().sendMessage(ReturnParseMessageBuilder.build(set.key, MessageUtils.replaceAllPlayerBungee(user, set.key), user));
         }
     }
 }

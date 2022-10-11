@@ -9,39 +9,24 @@ group = 'net.streamline'
 project.version = APIB_VER
 
 repositories {
+    jcenter()
     mavenCentral()
+    mavenLocal()
     // OpenCollab
     maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url 'https://repo.opencollab.dev/maven-releases/'}
     // JitPack
     maven { url 'https://jitpack.io' }
     maven { url 'https://mvnrepository.com/artifact' }
-    maven {
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-
-        // As of Gradle 5.1, you can limit this to only those
-        // dependencies you expect from it
-        content {
-            includeGroup 'org.bukkit'
-            includeGroup 'org.spigotmc'
-        }
-    }
-    /*
-     As Spigot-API depends on the BungeeCord ChatComponent-API,
-    we need to add the Sonatype OSS repository, as Gradle,
-    in comparison to maven, doesn't want to understand the ~/.m2
-    directory unless added using mavenLocal(). Maven usually just gets
-    it from there, as most people have run the BuildTools at least once.
-    This is therefore not needed if you're using the full Spigot/CraftBukkit,
-    or if you're using the Bukkit API.
-    */
+    maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+    maven { url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
 }
 
 dependencies {
     // Platform Backend.
-    compileOnly 'org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
 
     // Defaults.
     implementation(IMPL)
@@ -56,7 +41,8 @@ dependencies {
     implementation(shadow("fr.minuskube.inv:smart-invs:1.2.7"))
 
     // Streamline API.
-    implementation(project(":StreamlineCore-API"))
+    compileOnly(project(":StreamlineCore-API"))
+    compileOnly 'me.clip:placeholderapi:2.11.2'
 }
 
 java {

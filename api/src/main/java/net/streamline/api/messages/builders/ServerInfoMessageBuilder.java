@@ -10,6 +10,7 @@ import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public class ServerInfoMessageBuilder {
         List<StreamlineUser> users = new ArrayList<>();
         ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
         if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            SLAPI.getInstance().getMessenger().logWarning("Data mis-match on ProxyMessageIn for '" + ServerInfoMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerInfoMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
         }
 
         List<String> l = new ArrayList<>();

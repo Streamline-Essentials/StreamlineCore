@@ -4,11 +4,13 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class PTagCommand extends StreamlineCommand {
     private final String messageTagsGet;
@@ -55,7 +57,7 @@ public class PTagCommand extends StreamlineCommand {
         }
 
         String action = args[1];
-        String[] actions = SLAPI.getInstance().getMessenger().argsToStringMinus(args, 0, 1).split(" ");
+        String[] actions = MessageUtils.argsToStringMinus(args, 0, 1).split(" ");
 
         switch (action) {
             case "add" -> {
@@ -73,14 +75,14 @@ public class PTagCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
-            return List.of("add", "remove");
+            return new ConcurrentSkipListSet<>(List.of("add", "remove"));
         }
 
-        return new ArrayList<>();
+        return new ConcurrentSkipListSet<>();
     }
 }

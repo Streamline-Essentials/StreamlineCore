@@ -12,6 +12,7 @@ import net.streamline.api.messages.ProxyMessageEvent;
 import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.events.ProperEvent;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
-        Messenger.getInstance().logInfo("BaseListener registered!");
+        MessageUtils.logInfo("BaseListener registered!");
     }
 
     @EventHandler
@@ -43,7 +44,7 @@ public class PlatformListener implements Listener {
         if (whitelistConfig.isEnabled()) {
             WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
             if (entry == null) {
-                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, Messenger.getInstance().codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, MessageUtils.codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 return;
             }
         }
@@ -54,7 +55,7 @@ public class PlatformListener implements Listener {
         if (loginReceivedEvent.getResult().isCancelled()) {
             loginReceivedEvent.getResult().validate();
 
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Messenger.getInstance().codedString(loginReceivedEvent.getResult().getDisconnectMessage()));
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageUtils.codedString(loginReceivedEvent.getResult().getDisconnectMessage()));
         }
     }
 
@@ -127,7 +128,7 @@ public class PlatformListener implements Listener {
 
     public static class ProxyMessagingListener implements PluginMessageListener {
         public ProxyMessagingListener() {
-            Messenger.getInstance().logInfo("Registered " + getClass().getSimpleName() + "!");
+            MessageUtils.logInfo("Registered " + getClass().getSimpleName() + "!");
         }
 
         @Override
@@ -140,7 +141,7 @@ public class PlatformListener implements Listener {
             ProxyMessageEvent event = new ProxyMessageEvent(messageIn, null);
             ModuleUtils.fireEvent(event);
             if (event.isCancelled()) {
-                Messenger.getInstance().logInfo("Cancelled.");
+                MessageUtils.logInfo("Cancelled.");
                 return;
             }
             SLAPI.getInstance().getProxyMessenger().receiveMessage(event);

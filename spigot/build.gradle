@@ -54,5 +54,5 @@ bukkit {
     website = 'https://github.com/Streamline-Essentials'
     version = "${project.version}"
     depend = ['LuckPerms']
-    softDepend = ['Geyser']
+    softDepend = ['Geyser', 'PlaceholderAPI']
 }

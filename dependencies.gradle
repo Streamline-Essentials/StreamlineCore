@@ -9,8 +9,8 @@ ext {
             "org.apache.commons:commons-lang3:3.12.0",
             "com.google.guava:guava:31.1-jre",
             "com.google.code.gson:gson:2.9.1",
-            "commons-codec:commons-codec:1.15",
-            "org.pf4j:pf4j:3.7.0"
+            "commons-codec:commons-codec:1.15"/*,
+            "org.laxture:sbp-core:0.1.13"*/
     ]
     SHAD = [
             "com.github.simplix-softworks:SimplixStorage:3.2.5",
@@ -21,21 +21,27 @@ ext {
             "org.mongodb:mongo-java-driver:3.12.11",
             "com.google.guava:guava:31.1-jre",
             "com.google.code.gson:gson:2.9.1",
-            "commons-codec:commons-codec:1.15",
-            "org.pf4j:pf4j:3.7.0"
+            "commons-codec:commons-codec:1.15"/*,
+            "org.laxture:sbp-core:0.1.13"*/
     ]
     ANNO = [
             "org.projectlombok:lombok:1.18.24",
-            "org.mongodb:mongo-java-driver:3.12.11"
+            "org.mongodb:mongo-java-driver:3.12.11"/*,
+            "org.laxture:sbp-spring-boot-starter:0.1.13"*/
     ]
     COMP_ONLY = [
             "net.luckperms:api:5.4",
-            "org.projectlombok:lombok:1.18.24"
+            "org.projectlombok:lombok:1.18.24"/*,
+            "org.laxture:sbp-spring-boot-starter:0.1.13"*/
     ]
     OTHER_PLUGINS = [
             "org.geysermc:base-api:2.0.4-SNAPSHOT",
             "org.geysermc:geyser-api:2.0.4-SNAPSHOT"
     ]
-    API_VER = "1.0.3-SNAPSHOT"
+    FILES = [
+            "${project.rootProject.rootDir}/libs/sbp-spring-boot-starter.jar"/*,
+            "${project.rootProject.rootDir}/libs/sbp-core.jar"*/
+    ]
+    API_VER = "1.0.4-SNAPSHOT"
     APIB_VER = "1.0.0-SNAPSHOT"
 }

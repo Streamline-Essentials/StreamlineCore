@@ -5,6 +5,7 @@ import de.leonhard.storage.sections.FlatFileSection;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.Date;
 
@@ -56,7 +57,7 @@ public class WhitelistConfig extends FlatFileResource<Json> {
 
                     return new WhitelistEntry(whitelistedUuid, whitelistedAt, whitelistedBy);
                 } catch (Exception e) {
-                    SLAPI.getInstance().getMessenger().logWarning("Error getting WhitelistEntry for UUID of '" + uuid + "':");
+                    MessageUtils.logWarning("Error getting WhitelistEntry for UUID of '" + uuid + "':");
                     e.printStackTrace();
                 }
             }

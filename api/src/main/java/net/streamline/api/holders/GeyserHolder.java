@@ -3,6 +3,7 @@ package net.streamline.api.holders;
 import de.leonhard.storage.Config;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.FlatFileResource;
+import net.streamline.api.utils.MessageUtils;
 import org.geysermc.api.Geyser;
 import org.geysermc.api.GeyserApiBase;
 import org.geysermc.api.session.Connection;
@@ -53,11 +54,11 @@ public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
             tryLoad(() -> {
                 setApi(Geyser.api());
                 saver = new Saver();
-                SLAPI.getInstance().getMessenger().logInfo("Hooked into Geyser! Enabling Geyser support!");
+                MessageUtils.logInfo("Hooked into Geyser! Enabling Geyser support!");
                 return null;
             });
         } else {
-            SLAPI.getInstance().getMessenger().logInfo("Did not detect a '" + getIdentifier() + "' plugin... Disabling support for '" + getIdentifier() + "'...");
+            MessageUtils.logInfo("Did not detect a '" + getIdentifier() + "' plugin... Disabling support for '" + getIdentifier() + "'...");
         }
     }
 

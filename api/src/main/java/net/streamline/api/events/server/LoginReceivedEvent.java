@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.utils.MessageUtils;
 
 public class LoginReceivedEvent extends LoginEvent {
     @Getter @Setter
@@ -28,7 +29,7 @@ public class LoginReceivedEvent extends LoginEvent {
 
         public boolean validate() {
             if (isCancelled() && disconnectMessage.equals("")) {
-                SLAPI.getInstance().getMessenger().logWarning("LoginReceivedEvent has an invalid ConnectionResult! This is due to being set to cancelled while the disconnectMessage is empty!");
+                MessageUtils.logWarning("LoginReceivedEvent has an invalid ConnectionResult! This is due to being set to cancelled while the disconnectMessage is empty!");
                 return false;
             }
             return true;

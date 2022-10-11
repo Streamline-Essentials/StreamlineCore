@@ -77,7 +77,7 @@ public class UserUtils {
         ConcurrentSkipListMap<String, StreamlineUser> r = new ConcurrentSkipListMap<>();
 
         getLoadedUsers().forEach((s, user) -> {
-            if (user.isOnline()) r.put(user.getUuid(), user);
+            if (user.updateOnline()) r.put(user.getUuid(), user);
         });
 
         return r;
@@ -226,9 +226,9 @@ public class UserUtils {
 
         if (stat instanceof StreamlinePlayer) {
             if (stat.isOnline()) {
-                return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
+                return MessageUtils.replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
             } else {
-                return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
+                return MessageUtils.replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
             }
         }
 
@@ -246,9 +246,9 @@ public class UserUtils {
 
         if (stat instanceof StreamlinePlayer) {
             if (stat.isOnline()) {
-                return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
+                return MessageUtils.replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOnlineName());
             } else {
-                return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
+                return MessageUtils.replaceAllPlayerBungee(stat, GivenConfigs.getMainConfig().playerOfflineName());
             }
         }
 
@@ -416,7 +416,7 @@ public class UserUtils {
     public static StreamlineUser getOrGetUserByName(String name) {
         String uuid = getUUIDFromName(name);
         if (uuid == null) {
-//            SLAPI.getInstance().getMessenger().logWarning("Could not get UUID from name '" + name + "'.");
+//            MessageUtils.logWarning("Could not get UUID from name '" + name + "'.");
             return null;
         }
 

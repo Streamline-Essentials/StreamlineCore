@@ -11,6 +11,7 @@ import net.streamline.api.messages.ProxyMessageIn;
 import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,7 +73,7 @@ public class SavablePlayerMessageBuilder {
         List<StreamlineUser> users = new ArrayList<>();
         ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
         if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            SLAPI.getInstance().getMessenger().logWarning("Data mis-match on ProxyMessageIn for '" + SavablePlayerMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + SavablePlayerMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
         }
 
         ProxiedStreamlinePlayer player = new ProxiedStreamlinePlayer();
