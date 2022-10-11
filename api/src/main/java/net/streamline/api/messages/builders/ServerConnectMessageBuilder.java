@@ -5,13 +5,15 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.messages.ProxyMessageHelper;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
+import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineServerInfo;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.UserUtils;
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,29 +28,35 @@ public class ServerConnectMessageBuilder {
             "user_uuid=%this_user_uuid%;"
     );
 
-    public static ProxyMessageOut build(StreamlineServerInfo serverInfo, StreamlineUser user) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+    public static ProxiedMessage build(StreamlinePlayer carrier, StreamlineServerInfo serverInfo, String uuid) {
+        ProxiedMessage r = new ProxiedMessage(carrier, false);
 
-        output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_identifier%", serverInfo.getIdentifier()));
-        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUuid()));
+        r.setSubChannel(getSubChannel());
+        r.write("user_uuid", uuid);
+        r.write("identifier", serverInfo.getIdentifier());
 
-        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
+        return r;
     }
 
-    public static SingleSet<String, String> unbuild(ProxyMessageIn messageIn) {
-        List<StreamlineUser> users = new ArrayList<>();
-        ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
-        if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+    public static void handle(ProxiedMessage messageIn) {
+        if (! messageIn.getSubChannel().equals(getSubChannel())) {
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'.");
+            return;
         }
 
-        List<String> l = new ArrayList<>();
-        l.add(input.readUTF());
+        if (messageIn.isProxyOriginated()) {
+            MessageUtils.logWarning("Tried to handle a ProxiedMessage with sub-channel '" + messageIn.getSubChannel() + "', but it was ProxyOriginated...");
+            return;
+        }
 
-        String identifier = ProxyMessageHelper.extrapolate(l.get(0)).value;
-        String uuid = ProxyMessageHelper.extrapolate(l.get(1)).value;
+        String uuid = messageIn.getString("user_uuid");
 
-        return new SingleSet<>(identifier, uuid);
+        StreamlineUser user = ModuleUtils.getOrGetUser(uuid);
+        if (user == null) {
+            MessageUtils.logWarning("Tried to handle a ProxiedMessage with sub-channel '" + messageIn.getSubChannel() + "', but it was could not find a user for '" + uuid + "'...");
+            return;
+        }
+
+        SLAPI.getInstance().getUserManager().connect(user, messageIn.getString("identifier"));
     }
 }

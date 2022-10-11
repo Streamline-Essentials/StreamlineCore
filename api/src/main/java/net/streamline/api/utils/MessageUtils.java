@@ -22,21 +22,21 @@ public class MessageUtils {
     public static void logInfo(String message) {
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &r" + line);
         }
     }
 
     public static void logWarning(String message) {
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&6" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &6" + line);
         }
     }
 
     public static void logSevere(String message) {
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&c" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &c" + line);
         }
     }
 

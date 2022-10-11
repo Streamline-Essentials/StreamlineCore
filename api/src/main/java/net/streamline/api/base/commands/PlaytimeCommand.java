@@ -93,6 +93,9 @@ public class PlaytimeCommand extends StreamlineCommand {
         if (args.length == 2) {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
+        if (args.length == 3) {
+            return getIntegerArgument();
+        }
 
         return new ConcurrentSkipListSet<>();
     }

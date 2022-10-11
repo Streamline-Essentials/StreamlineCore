@@ -86,4 +86,43 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     public int compareTo(@NotNull StreamlineCommand o) {
         return CharSequence.compare(getIdentifier(), o.getIdentifier());
     }
+
+    public ConcurrentSkipListSet<String> getIntegerArgument() {
+        return getIntegerArgument(-5, 5);
+    }
+
+    public ConcurrentSkipListSet<String> getIntegerArgument(int min, int max) {
+        if (min > max) {
+            int temp = min;
+            min = max;
+            max = temp;
+        }
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        for (int i = min; i <= max; i ++) {
+            r.add(String.valueOf(i));
+        }
+
+        return r;
+    }
+
+    public ConcurrentSkipListSet<String> getDoubleArgument() {
+        return getDoubleArgument(-3.0, 3.0, 0.25);
+    }
+
+    public ConcurrentSkipListSet<String> getDoubleArgument(double min, double max, double step) {
+        if (min > max) {
+            double temp = min;
+            min = max;
+            max = temp;
+        }
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        for (double i = min; i <= max; i += step) {
+            r.add(String.valueOf(i));
+        }
+        r.add(String.valueOf(max));
+
+        return r;
+    }
 }

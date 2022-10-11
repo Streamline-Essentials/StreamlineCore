@@ -17,14 +17,12 @@ import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
-import net.streamline.platform.config.SavedProfileConfig;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
@@ -74,8 +72,6 @@ public abstract class BasePlugin implements IStreamline {
 
     @Setter
     private VelocityProfiler profiler;
-    @Setter @Getter
-    private SavedProfileConfig profileConfig;
 
     @Getter @Setter
     private StreamlineResourcePack resourcePack;
@@ -108,7 +104,6 @@ public abstract class BasePlugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-        profileConfig = new SavedProfileConfig();
         getSlapi().setProfiler(new VelocityProfiler());
 
         registerListener(new PlatformListener());
@@ -281,16 +276,6 @@ public abstract class BasePlugin implements IStreamline {
     @Override
     public boolean serverHasPlugin(String plugin) {
         return getInstance().getProxy().getPluginManager().getPlugin(plugin).isPresent();
-    }
-
-    @Override
-    public StreamlineServerInfo getStreamlineServer(String server) {
-        return getProfileConfig().getServerInfo(server);
-    }
-
-    @Override
-    public void setStreamlineServer(StreamlineServerInfo serverInfo) {
-        getInstance().getProfileConfig().updateServerInfo(serverInfo);
     }
 
     @Override

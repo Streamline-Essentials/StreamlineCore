@@ -2,6 +2,7 @@ package net.streamline.platform.savables;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
 import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
@@ -15,6 +16,7 @@ import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
@@ -22,6 +24,7 @@ import net.streamline.platform.BasePlugin;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class UserManager implements IUserManager {
@@ -120,8 +123,14 @@ public class UserManager implements IUserManager {
 
         Player player = Streamline.getPlayer(user.getUuid());
         if (player == null) return;
-        StreamlineServerInfo s = Streamline.getInstance().getStreamlineServer(server);
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ServerConnectMessageBuilder.build(s, user));
+        Optional<RegisteredServer> serverOptional = Streamline.getInstance().getProxy().getServer(server);
+
+        if (serverOptional.isEmpty()) {
+            MessageUtils.logWarning("Tried to send a user with uuid of '" + user.getUuid() + "' to server '" + server + "', but it does not exist!");
+            return;
+        }
+
+        player.createConnectionRequest(serverOptional.get());
     }
 
     @Override
@@ -131,7 +140,7 @@ public class UserManager implements IUserManager {
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, pack));
+        Streamline.getInstance().sendResourcePack(pack, user);
     }
 
     @Override

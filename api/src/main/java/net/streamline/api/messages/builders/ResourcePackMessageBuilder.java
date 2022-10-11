@@ -5,11 +5,10 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.messages.ProxyMessageHelper;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import org.apache.commons.codec.binary.Hex;
@@ -21,45 +20,28 @@ public class ResourcePackMessageBuilder {
     @Getter
     private static final String subChannel = "resource-pack";
 
-    @Getter
-    private static final List<String> lines = List.of(
-            "user_uuid=%this_user_uuid%;",
-            "url=%this_url%;",
-            "prompt=%this_prompt%;",
-            "hash=%this_hash%;",
-            "force=%this_force%;"
-    );
+    public static ProxiedMessage build(StreamlinePlayer carrier, boolean isProxyOriginated, StreamlineUser user, StreamlineResourcePack resourcePack) {
+        ProxiedMessage r = new ProxiedMessage(carrier, isProxyOriginated);
 
-    public static ProxyMessageOut build(StreamlineUser user, StreamlineResourcePack resourcePack) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        r.setSubChannel(getSubChannel());
+        r.write("user_uuid", user.getUuid());
+        r.write("url", resourcePack.getUrl());
+        r.write("prompt", resourcePack.getPrompt());
+        r.write("hash", Hex.encodeHexString(resourcePack.getHash()));
+        r.write("force", String.valueOf(resourcePack.isForce()));
 
-        output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_user_uuid%", user.getUuid()));
-        output.writeUTF(lines.get(1).replace("%this_url%", resourcePack.getUrl()));
-        output.writeUTF(lines.get(2).replace("%this_prompt%", resourcePack.getPrompt()));
-        output.writeUTF(lines.get(3).replace("%this_hash%",  Hex.encodeHexString(resourcePack.getHash())));
-        output.writeUTF(lines.get(4).replace("%this_force%", String.valueOf(resourcePack.isForce())));
-
-        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
+        return r;
     }
 
-    public static SingleSet<String, StreamlineResourcePack> unbuild(ProxyMessageIn messageIn) {
-        ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
-        if (! messageIn.getSubChannel().equals(input.readUTF())) {
+    public static SingleSet<String, StreamlineResourcePack> unbuild(ProxiedMessage messageIn) {
+        if (! messageIn.getSubChannel().equals(getSubChannel())) {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ResourcePackMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
         }
 
-        List<String> l = new ArrayList<>();
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-
-        String uuid = ProxyMessageHelper.extrapolate(l.get(0)).value;
-        String url = ProxyMessageHelper.extrapolate(l.get(1)).value;
-        String prompt = ProxyMessageHelper.extrapolate(l.get(2)).value;
-        String unparsed = ProxyMessageHelper.extrapolate(l.get(3)).value;
+        String uuid = messageIn.getString("user_uuid");
+        String url = messageIn.getString("url");
+        String prompt = messageIn.getString("url");
+        String unparsed = messageIn.getString("hash");
         byte[] hash;
         try {
             if (unparsed.equals("")) {
@@ -71,7 +53,7 @@ public class ResourcePackMessageBuilder {
             e.printStackTrace();
             hash = new byte[0];
         }
-        boolean force = Boolean.parseBoolean(ProxyMessageHelper.extrapolate(l.get(4)).value);
+        boolean force = messageIn.getBoolean("force");
 
         return new SingleSet<>(uuid, new StreamlineResourcePack(url, hash, prompt, force));
     }

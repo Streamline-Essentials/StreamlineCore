@@ -4,7 +4,10 @@ import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.modules.ModuleManager;
+import net.streamline.base.runnables.ServerPusher;
 import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
 
@@ -26,6 +29,9 @@ import java.nio.file.Path;
         }
 )
 public class Streamline extends BasePlugin {
+    @Getter @Setter
+    private static ServerPusher serverPusher;
+
     @Inject
     public Streamline(ProxyServer s, Logger l, @DataDirectory Path dd) {
         super(s, l, dd);
@@ -36,6 +42,7 @@ public class Streamline extends BasePlugin {
         try {
             ModuleManager.registerExternalModules();
             ModuleManager.startModules();
+            setServerPusher(new ServerPusher());
         } catch (Exception e) {
             e.printStackTrace();
         }

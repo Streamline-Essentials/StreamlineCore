@@ -66,7 +66,7 @@ public class PXPCommand extends StreamlineCommand {
         StreamlinePlayer player = UserUtils.getOrGetPlayerByName(playerName);
 
         if (player == null) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_SELF.get());
+            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
@@ -126,9 +126,9 @@ public class PXPCommand extends StreamlineCommand {
                 }
 
                 String action = args[2];
-                int amount = 0;
+                double amount = 0;
                 try {
-                    amount = Integer.parseInt(args[3]);
+                    amount = Double.parseDouble(args[3]);
                 } catch (Exception e) {
                     e.printStackTrace();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
@@ -171,7 +171,8 @@ public class PXPCommand extends StreamlineCommand {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
         if (args.length == 4) {
-            return new ConcurrentSkipListSet<>(List.of("-3", "-2", "-1", "0", "1", "2", "3"));
+            if (args[1].equals("xp")) return getDoubleArgument();
+            return getIntegerArgument();
         }
 
         return new ConcurrentSkipListSet<>();

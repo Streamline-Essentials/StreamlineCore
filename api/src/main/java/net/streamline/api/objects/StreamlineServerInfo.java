@@ -7,6 +7,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class StreamlineServerInfo {
     @Getter
@@ -18,9 +19,9 @@ public class StreamlineServerInfo {
     @Getter @Setter
     private String address;
     @Getter @Setter
-    private ConcurrentSkipListMap<String, StreamlineUser> onlineUsers;
+    private ConcurrentSkipListSet<String> onlineUsers;
 
-    public StreamlineServerInfo(String identifier, String name, String motd, String address, ConcurrentSkipListMap<String, StreamlineUser> onlineUsers) {
+    public StreamlineServerInfo(String identifier, String name, String motd, String address, ConcurrentSkipListSet<String> onlineUsers) {
         this.identifier = identifier;
         this.name = name;
         this.motd = motd;
@@ -29,8 +30,8 @@ public class StreamlineServerInfo {
     }
 
     public void updateUsersTo(List<StreamlineUser> users) {
-        onlineUsers = new ConcurrentSkipListMap<>();
-        users.forEach(a -> onlineUsers.put(a.getUuid(), a));
+        onlineUsers = new ConcurrentSkipListSet<>();
+        users.forEach(a -> onlineUsers.add(a.getUuid()));
     }
 
     public void updateUsersTo(StreamlineUser... users) {

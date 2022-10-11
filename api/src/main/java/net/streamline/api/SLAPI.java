@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.base.module.BaseModule;
-import net.streamline.api.base.timers.CachePurgeTimer;
 import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.PlayerExperienceTimer;
 import net.streamline.api.base.timers.UserSaveTimer;
@@ -17,7 +16,6 @@ import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ProxyMessenger;
-import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -80,8 +78,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     private static PlayerExperienceTimer playerExperienceTimer;
     @Getter
     private static UserSaveTimer userSaveTimer;
-    @Getter
-    private static CachePurgeTimer cachePurgeTimer;
 
     @Getter
     private static TaskManager mainScheduler;
@@ -138,7 +134,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
-        cachePurgeTimer = new CachePurgeTimer();
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

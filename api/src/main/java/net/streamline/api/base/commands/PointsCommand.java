@@ -56,9 +56,9 @@ public class PointsCommand extends StreamlineCommand {
         }
 
         String action = args[1];
-        int amount = 0;
+        double amount = 0;
         try {
-            amount = Integer.parseInt(args[2]);
+            amount = Double.parseDouble(args[2]);
         } catch (Exception e) {
             e.printStackTrace();
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
@@ -97,6 +97,9 @@ public class PointsCommand extends StreamlineCommand {
         }
         if (args.length == 2) {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
+        }
+        if (args.length == 3) {
+            return getDoubleArgument();
         }
 
         return new ConcurrentSkipListSet<>();

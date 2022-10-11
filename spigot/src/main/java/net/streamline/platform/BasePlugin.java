@@ -3,12 +3,12 @@ package net.streamline.platform;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -17,7 +17,6 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.platform.config.SavedProfileConfig;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.SpigotProfiler;
@@ -72,8 +71,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private UserManager userManager;
     @Getter
     private Messenger messenger;
-    @Setter @Getter
-    private SavedProfileConfig profileConfig;
 
     @Override
     public void onLoad() {
@@ -90,7 +87,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         slapiB = new SLAPIB(getSlapi(), this);
 
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-        profileConfig = new SavedProfileConfig();
         getSlapi().setProfiler(new SpigotProfiler());
 
         registerListener(new PlatformListener());
@@ -263,16 +259,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public StreamlineServerInfo getStreamlineServer(String server) {
-        return getProfileConfig().getServerInfo(server);
-    }
-
-    @Override
-    public void setStreamlineServer(StreamlineServerInfo serverInfo) {
-        getInstance().getProfileConfig().updateServerInfo(serverInfo);
-    }
-
-    @Override
     public boolean equalsAnyServer(String servername) {
         return getServerNames().contains(servername);
     }
@@ -304,7 +290,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public ConcurrentSkipListSet<String> getServerNames() {
-        return new ConcurrentSkipListSet<>(getProfileConfig().getCachedProfile().getServers().keySet());
+        return new ConcurrentSkipListSet<>(GivenConfigs.getProfileConfig().getCachedProfile().getServers().keySet());
     }
 
     @Override

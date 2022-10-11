@@ -14,12 +14,10 @@ import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
-import net.streamline.platform.config.SavedProfileConfig;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
@@ -65,9 +63,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Getter
     private Messenger messenger;
 
-    @Setter @Getter
-    private SavedProfileConfig profileConfig;
-
     @Getter @Setter
     private StreamlineResourcePack resourcePack;
 
@@ -86,10 +81,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         messenger = new Messenger();
         slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-        profileConfig = new SavedProfileConfig();
         getSlapi().setProfiler(new BungeeProfiler());
-
-        profileConfig = new SavedProfileConfig();
 
         registerListener(new PlatformListener());
         getProxy().getScheduler().schedule(this, new Runner(), 0, 50, TimeUnit.MILLISECONDS);
@@ -244,16 +236,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Override
     public boolean serverHasPlugin(String plugin) {
         return getInstance().getProxy().getPluginManager().getPlugin(plugin) != null;
-    }
-
-    @Override
-    public StreamlineServerInfo getStreamlineServer(String server) {
-        return getProfileConfig().getServerInfo(server);
-    }
-
-    @Override
-    public void setStreamlineServer(StreamlineServerInfo serverInfo) {
-        getInstance().getProfileConfig().updateServerInfo(serverInfo);
     }
 
     @Override

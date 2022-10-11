@@ -14,8 +14,9 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.LogoutEvent;
-import net.streamline.api.messages.*;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
+import net.streamline.api.messages.events.ProxyMessageInEvent;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.events.server.LoginReceivedEvent;
@@ -96,7 +97,7 @@ public class PlatformListener implements Listener {
         StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
         savablePlayer.setLatestServer(event.getServer().getInfo().getName());
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer));
+        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer, true));
     }
 
     @EventHandler
@@ -143,6 +144,9 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
         if (event.getReceiver() instanceof ProxiedPlayer) return;
+        if (! (event.getSender() instanceof ProxiedPlayer player)) return;
+
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
         String tag = event.getTag();
         if (event.getData() == null) return;
@@ -151,13 +155,11 @@ public class PlatformListener implements Listener {
             ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
             String subChannel = input.readUTF();
 
-            ProxyMessageIn messageIn = new ProxyMessageIn(tag, subChannel, event.getData());
-            ProxyMessageEvent e = new ProxyMessageEvent(messageIn, null);
+            ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, event.getData(), tag);
+            messageIn.setSubChannel(subChannel);
+            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
             ModuleUtils.fireEvent(e);
-            if (e.isCancelled()) {
-                MessageUtils.logInfo("Cancelled.");
-                return;
-            }
+            if (e.isCancelled()) return;
             SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
         } catch (Exception e) {
             // do nothing.
