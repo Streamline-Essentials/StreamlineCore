@@ -71,7 +71,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter
     private static File dataFolder;
 
-    @Getter
+    @Getter @Setter
     private static BaseModule baseModule;
 
     @Getter
@@ -132,8 +132,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
         ratAPI = new RATAPI();
 
-        baseModule = new BaseModule();
-        ModuleManager.registerModule(getBaseModule());
+//        baseModule = new BaseModule();
+//        ModuleManager.registerModule(getBaseModule());
 
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();
@@ -156,5 +156,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
     public InputStream getResourceAsStream(String filename) {
         return getClass().getClassLoader().getResourceAsStream(filename);
+    }
+
+    public InputStream getResourceAsStreamMain(String filename) {
+        return getPlatform().getMainClassLoader().getResourceAsStream(filename);
     }
 }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public interface IStreamline {
     enum PlatformType {
@@ -43,13 +44,13 @@ public interface IStreamline {
 
     void handleMisSync(StreamlineEvent event, boolean async);
 
-    @NotNull Collection<StreamlinePlayer> getOnlinePlayers();
+    @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers();
 
-    List<String> getOnlinePlayerNames();
+    ConcurrentSkipListSet<String> getOnlinePlayerNames();
 
     boolean hasPermission(StreamlineUser user, String permission);
 
-    List<String> getServerNames();
+    ConcurrentSkipListSet<String> getServerNames();
 
     void chatAs(StreamlineUser as, String message);
 
@@ -80,4 +81,6 @@ public interface IStreamline {
     void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player);
 
     void sendResourcePack(StreamlineResourcePack resourcePack, String uuid);
+
+    ClassLoader getMainClassLoader();
 }

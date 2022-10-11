@@ -21,6 +21,7 @@ import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.config.SavedProfileConfig;
@@ -41,9 +42,9 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin implements IStreamline {
-    public class Runner implements Runnable {
+    public static class Runner implements Runnable {
         public Runner() {
-            getMessenger().logInfo("Task Runner registered!");
+            MessageUtils.logInfo("Task Runner registered!");
         }
 
         @Override
@@ -142,8 +143,8 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public @NotNull Collection<StreamlinePlayer> getOnlinePlayers() {
-        List<StreamlinePlayer> players = new ArrayList<>();
+    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -163,8 +164,8 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public List<String> getOnlinePlayerNames() {
-        List<String> r = new ArrayList<>();
+    public ConcurrentSkipListSet<String> getOnlinePlayerNames() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getOnlinePlayers().forEach(a -> {
             r.add(a.getName());
@@ -257,7 +258,7 @@ public abstract class BasePlugin implements IStreamline {
             runAsStrictly(as, message);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(message)) runAsStrictly(as, message.substring("/".length()));
+            if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
             player.spoofChatInput(message);
@@ -270,7 +271,7 @@ public abstract class BasePlugin implements IStreamline {
             getInstance().getProxy().getCommandManager().executeAsync(getInstance().getProxy().getConsoleCommandSource(), command);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(command)) runAsStrictly(as, command.substring("/".length()));
+            if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
             getInstance().getProxy().getCommandManager().executeAsync(player, command);
@@ -323,13 +324,13 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public List<String> getServerNames() {
+    public ConcurrentSkipListSet<String> getServerNames() {
         ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
         getInstance().getProxy().getAllServers().forEach(a -> {
             r.add(a.getServerInfo().getName());
         });
 
-        return r.stream().toList();
+        return r;
     }
 
     @Override
@@ -352,7 +353,12 @@ public abstract class BasePlugin implements IStreamline {
             if (! resourcePack.getPrompt().equals("")) infoBuilder.setPrompt(getMessenger().codedText(resourcePack.getPrompt()));
             player.sendResourcePackOffer(infoBuilder.build());
         } catch (Exception e) {
-            getMessenger().logWarning("Sent '" + player.getUsername() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
+            MessageUtils.logWarning("Sent '" + player.getUsername() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");
         }
+    }
+
+    @Override
+    public ClassLoader getMainClassLoader() {
+        return getProxy().getClass().getClassLoader();
     }
 }

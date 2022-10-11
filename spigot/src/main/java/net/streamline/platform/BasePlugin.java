@@ -12,6 +12,7 @@ import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
@@ -32,11 +33,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public class Runner implements Runnable {
         public Runner() {
-            getMessenger().logInfo("Task Runner registered!");
+            MessageUtils.logInfo("Task Runner registered!");
         }
 
         @Override
@@ -122,8 +124,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public @NotNull Collection<StreamlinePlayer> getOnlinePlayers() {
-        List<StreamlinePlayer> players = new ArrayList<>();
+    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -143,8 +145,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public List<String> getOnlinePlayerNames() {
-        List<String> r = new ArrayList<>();
+    public ConcurrentSkipListSet<String> getOnlinePlayerNames() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getOnlinePlayers().forEach(a -> {
             r.add(a.getName());
@@ -235,7 +237,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             runAsStrictly(as, message);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(message)) runAsStrictly(as, message.substring("/".length()));
+            if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
             player.chat(message);
@@ -248,7 +250,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             getInstance().getProxy().dispatchCommand(getInstance().getProxy().getConsoleSender(), command);
         }
         if (as instanceof StreamlinePlayer) {
-            if (getMessenger().isCommand(command)) runAsStrictly(as, command.substring("/".length()));
+            if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
             getInstance().getProxy().dispatchCommand(player, command);
@@ -301,8 +303,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public List<String> getServerNames() {
-        return new ArrayList<>(getProfileConfig().getCachedProfile().getServers().keySet());
+    public ConcurrentSkipListSet<String> getServerNames() {
+        return new ConcurrentSkipListSet<>(getProfileConfig().getCachedProfile().getServers().keySet());
     }
 
     @Override
@@ -322,7 +324,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     public void sendResourcePack(StreamlineResourcePack resourcePack, Player player) {
         if (player == null) {
-            getMessenger().logWarning("Tried to send a player a resource pack, but could not find their player!");
+            MessageUtils.logWarning("Tried to send a player a resource pack, but could not find their player!");
             return;
         }
 
@@ -341,5 +343,10 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public ClassLoader getMainClassLoader() {
+        return getProxy().getClass().getClassLoader();
     }
 }

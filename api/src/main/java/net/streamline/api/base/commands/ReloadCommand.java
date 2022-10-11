@@ -9,6 +9,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ReloadCommand extends StreamlineCommand {
     private final String messageResult;
@@ -42,7 +43,7 @@ public class ReloadCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
-        return new ArrayList<>();
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+        return new ConcurrentSkipListSet<>();
     }
 }

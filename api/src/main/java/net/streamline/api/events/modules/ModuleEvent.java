@@ -1,16 +1,18 @@
 package net.streamline.api.events.modules;
 
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import org.jetbrains.annotations.NotNull;
+import org.pf4j.ExtensionPoint;
 
 /**
  * Used for module enable and disable events
  */
-public abstract class ModuleEvent extends StreamlineEvent {
-    private final StreamlineModule module;
+public abstract class ModuleEvent extends StreamlineEvent implements ExtensionPoint {
+    private final ModuleLike module;
 
-    public ModuleEvent(@NotNull final StreamlineModule module) {
+    public ModuleEvent(@NotNull final ModuleLike module) {
         super();
         this.module = module;
     }
@@ -21,7 +23,7 @@ public abstract class ModuleEvent extends StreamlineEvent {
      * @return Module for this event
      */
     @NotNull
-    public StreamlineModule getModule() {
+    public ModuleLike getModule() {
         return module;
     }
 }

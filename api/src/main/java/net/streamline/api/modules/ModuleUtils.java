@@ -6,6 +6,7 @@ import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.StorageResource;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
@@ -20,6 +21,7 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,19 +35,19 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ModuleUtils {
     public static String loggedModulePrefix(StreamlineModule module) {
-        return SLAPI.getInstance().getMessenger().loggedModulePrefix(module);
+        return MessageUtils.loggedModulePrefix(module);
     }
 
-    public static void logInfo(StreamlineModule module, String message) {
-        SLAPI.getInstance().getMessenger().logInfo(module, message);
+    public static void logInfo(ModuleLike module, String message) {
+        MessageUtils.logInfo(module, message);
     }
 
-    public static void logWarning(StreamlineModule module, String message) {
-        SLAPI.getInstance().getMessenger().logWarning(module, message);
+    public static void logWarning(ModuleLike module, String message) {
+        MessageUtils.logWarning(module, message);
     }
 
-    public static void logSevere(StreamlineModule module, String message) {
-        SLAPI.getInstance().getMessenger().logSevere(module, message);
+    public static void logSevere(ModuleLike module, String message) {
+        MessageUtils.logSevere(module, message);
     }
 
     public static void sendMessage(@Nullable StreamlineUser to, String message) {
@@ -61,11 +63,11 @@ public class ModuleUtils {
     }
 
     public static void sendMessage(String to, String message) {
-        SLAPI.getInstance().getMessenger().sendMessage(to, message);
+        MessageUtils.sendMessage(to, message);
     }
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
-        SLAPI.getInstance().getMessenger().sendMessage(to, otherUUID, message);
+        MessageUtils.sendMessage(to, otherUUID, message);
     }
 
     public static void sendTitle(StreamlinePlayer user, StreamlineTitle title) {
@@ -73,31 +75,31 @@ public class ModuleUtils {
     }
 
     public static String getListAsFormattedString(List<?> list) {
-        return SLAPI.getInstance().getMessenger().getListAsFormattedString(list);
+        return MessageUtils.getListAsFormattedString(list);
     }
 
     public static String removeExtraDot(String string){
-        return SLAPI.getInstance().getMessenger().removeExtraDot(string);
+        return MessageUtils.removeExtraDot(string);
     }
 
     public static String resize(String text, int digits) {
-        return SLAPI.getInstance().getMessenger().resize(text, digits);
+        return MessageUtils.resize(text, digits);
     }
 
     public static String truncate(String text, int digits) {
-        return SLAPI.getInstance().getMessenger().truncate(text, digits);
+        return MessageUtils.truncate(text, digits);
     }
 
     public static int getDigits(int start, int otherSize){
-        return SLAPI.getInstance().getMessenger().getDigits(start, otherSize);
+        return MessageUtils.getDigits(start, otherSize);
     }
 
-    public static TreeSet<String> getCompletion(List<String> of, String param){
-        return SLAPI.getInstance().getMessenger().getCompletion(of, param);
+    public static ConcurrentSkipListSet<String> getCompletion(List<String> of, String param){
+        return MessageUtils.getCompletion(of, param);
     }
 
-    public static TreeSet<String> getCompletion(TreeSet<String> of, String param){
-        return SLAPI.getInstance().getMessenger().getCompletion(of, param);
+    public static ConcurrentSkipListSet<String> getCompletion(ConcurrentSkipListSet<String> of, String param){
+        return MessageUtils.getCompletion(of, param);
     }
 
     public static String stripColor(String string){
@@ -105,59 +107,55 @@ public class ModuleUtils {
     }
 
     public static String[] argsMinus(String[] args, int... toRemove) {
-        return SLAPI.getInstance().getMessenger().argsMinus(args, toRemove);
+        return MessageUtils.argsMinus(args, toRemove);
     }
 
     public static String argsToStringMinus(String[] args, int... toRemove){
-        return SLAPI.getInstance().getMessenger().argsToStringMinus(args, toRemove);
+        return MessageUtils.argsToStringMinus(args, toRemove);
     }
 
     public static String argsToString(String[] args){
-        return SLAPI.getInstance().getMessenger().argsToString(args);
+        return MessageUtils.argsToString(args);
     }
 
     public static String codedString(String text){
-        return SLAPI.getInstance().getMessenger().codedString(text);
+        return MessageUtils.codedString(text);
     }
 
     public static String formatted(String string) {
-        return SLAPI.getInstance().getMessenger().formatted(string);
-    }
-
-    public static String isolateChatColor(String format) {
-        return SLAPI.getInstance().getMessenger().isolateChatColor(format);
+        return MessageUtils.formatted(string);
     }
 
     public static String newLined(String text){
-        return SLAPI.getInstance().getMessenger().newLined(text);
+        return MessageUtils.newLined(text);
     }
 
     public static boolean isCommand(String msg){
-        return SLAPI.getInstance().getMessenger().isCommand(msg);
+        return MessageUtils.isCommand(msg);
     }
 
     public static String normalize(String[] splitMsg){
-        return SLAPI.getInstance().getMessenger().normalize(splitMsg);
+        return MessageUtils.normalize(splitMsg);
     }
 
     public static String normalize(TreeSet<String> splitMsg) {
-        return SLAPI.getInstance().getMessenger().normalize(splitMsg);
+        return MessageUtils.normalize(splitMsg);
     }
 
     public static String normalize(TreeMap<Integer, String> splitMsg) {
-        return SLAPI.getInstance().getMessenger().normalize(splitMsg);
+        return MessageUtils.normalize(splitMsg);
     }
 
     public static boolean equalsAll(Object object, Object... toEqual){
-        return SLAPI.getInstance().getMessenger().equalsAll(object, toEqual);
+        return MessageUtils.equalsAll(object, toEqual);
     }
 
     public static boolean equalsAll(Object object, Collection<Object> toEqual){
-        return SLAPI.getInstance().getMessenger().equalsAll(object, toEqual);
+        return MessageUtils.equalsAll(object, toEqual);
     }
 
     public static boolean equalsAny(Object object, Collection<?> toEqual){
-        return SLAPI.getInstance().getMessenger().equalsAny(object, toEqual);
+        return MessageUtils.equalsAny(object, toEqual);
     }
 
     public static CompletableFuture<String> replaceAllLogicalBungee(String of) {
@@ -165,19 +163,19 @@ public class ModuleUtils {
     }
 
     public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
-        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, of);
+        return MessageUtils.replaceAllPlayerBungee(user, of);
     }
 
     public static String replaceAllPlayerBungee(String uuid, String of) {
-        return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(uuid, of);
+        return MessageUtils.replaceAllPlayerBungee(uuid, of);
     }
 
     public static List<String> getStringListFromString(String string) {
-        return SLAPI.getInstance().getMessenger().getStringListFromString(string);
+        return MessageUtils.getStringListFromString(string);
     }
 
     public static boolean isNullOrLessThanEqualTo(Object[] thingArray, int lessThanOrEqualTo) {
-        return SLAPI.getInstance().getMessenger().isNullOrLessThanEqualTo(thingArray, lessThanOrEqualTo);
+        return MessageUtils.isNullOrLessThanEqualTo(thingArray, lessThanOrEqualTo);
     }
 
     public static ConcurrentSkipListMap<String, StreamlineUser> getLoadedUsers() {
@@ -268,7 +266,7 @@ public class ModuleUtils {
         ModuleManager.registerEvents(listener, module);
     }
 
-    public static List<String> getOnlinePlayerNames() {
+    public static ConcurrentSkipListSet<String> getOnlinePlayerNames() {
         return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
     }
 
@@ -329,7 +327,7 @@ public class ModuleUtils {
         return SLAPI.getInstance().getUserManager().getUsersOn(server);
     }
 
-    public static List<String> getServerNames() {
+    public static ConcurrentSkipListSet<String> getServerNames() {
         return SLAPI.getInstance().getPlatform().getServerNames();
     }
 
@@ -383,5 +381,9 @@ public class ModuleUtils {
 
     public static double getPlayerPing(String uuid) {
         return SLAPI.getInstance().getUserManager().getPlayerPing(uuid);
+    }
+
+    public static ClassLoader getMainClassLoader() {
+        return SLAPI.getInstance().getPlatform().getMainClassLoader();
     }
 }

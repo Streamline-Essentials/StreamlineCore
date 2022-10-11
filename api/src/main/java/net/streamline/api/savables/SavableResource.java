@@ -60,6 +60,6 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
 
     @Override
     public int compareTo(@NotNull SavableResource other) {
-        return getStorageResource().compareTo(other.getStorageResource());
+        return Long.compare(getStorageResource().getInitializeDate().getTime(), other.getStorageResource().getInitializeDate().getTime());
     }
 }

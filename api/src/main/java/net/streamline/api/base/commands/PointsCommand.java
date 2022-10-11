@@ -8,6 +8,7 @@ import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class PointsCommand extends StreamlineCommand {
     private final String messageGet;
@@ -90,14 +91,14 @@ public class PointsCommand extends StreamlineCommand {
     }
 
     @Override
-    public List<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (args.length == 2) {
-            return List.of("set", "add", "remove");
+            return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
 
-        return new ArrayList<>();
+        return new ConcurrentSkipListSet<>();
     }
 }

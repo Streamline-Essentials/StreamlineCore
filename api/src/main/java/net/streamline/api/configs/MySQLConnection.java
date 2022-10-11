@@ -3,6 +3,7 @@ package net.streamline.api.configs;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import net.streamline.api.SLAPI;
+import net.streamline.api.utils.MessageUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
@@ -102,7 +103,7 @@ public class MySQLConnection {
 
         builder.append(");");
 
-        SLAPI.getInstance().getMessenger().logInfo("Prepared a create statement: " + builder);
+        MessageUtils.logInfo("Prepared a create statement: " + builder);
 
         return builder.toString();
     }

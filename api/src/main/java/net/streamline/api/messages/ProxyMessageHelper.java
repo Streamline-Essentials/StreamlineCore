@@ -10,6 +10,7 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MatcherUtils;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -132,7 +133,7 @@ public class ProxyMessageHelper {
     }
 
     public static String parseOnProxy(String toParse, StreamlineUser user) {
-        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY)) return SLAPI.getInstance().getMessenger().replaceAllPlayerBungee(user, toParse);
+        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY)) return MessageUtils.replaceAllPlayerBungee(user, toParse);
 
         ReturnableQuery returnableQuery = new ReturnableQuery(toParse, user);
         addPendingPlayer(user, returnableQuery);

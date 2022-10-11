@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.messenger.Messenger;
 import net.streamline.api.SLAPI;
+import net.streamline.api.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -91,7 +92,7 @@ public class SavedItemStack {
         );
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) {
-            SLAPI.getInstance().getMessenger().logWarning("Could not get ItemMeta for an item!");
+            MessageUtils.logWarning("Could not get ItemMeta for an item!");
             return null;
         }
         if (! this.getName().equals("")) meta.setDisplayName(this.getName());

@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import org.bukkit.Bukkit;
@@ -15,6 +16,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProperCommand extends Command implements TabExecutor, IProperCommand {
     @Getter
@@ -37,16 +39,16 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         if (args == null) return new ArrayList<>();
         if (args.length <= 0) return new ArrayList<>();
 
-        List<String> r = parent.doTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
+        ConcurrentSkipListSet<String> r = parent.doTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
 
-        return r == null ? new ArrayList<>() : SLAPI.getInstance().getMessenger().getCompletion(r, args[args.length - 1]).stream().toList();
+        return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]).stream().toList();
     }
 
     public void register() {
 //        Streamline.getInstance().getConfig().set("commands." + getParent().getBase() + ".permission", getParent().getPermission());
 //        PluginCommand command = Streamline.getInstance().getCommand(getParent().getBase());
 //        if (command == null) {
-//            SLAPI.getInstance().getMessenger().logWarning("Unable to register command with parent base '" + getParent().getBase() + "' because the command getter returned null!");
+//            MessageUtils.logWarning("Unable to register command with parent base '" + getParent().getBase() + "' because the command getter returned null!");
 //            return;
 //        }
 //        command.setExecutor(this);

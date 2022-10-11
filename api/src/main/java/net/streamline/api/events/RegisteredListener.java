@@ -1,24 +1,33 @@
 package net.streamline.api.events;
 
+import lombok.Getter;
+import lombok.Setter;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Stores relevant information for plugin listeners
  */
-public class RegisteredListener {
+public class RegisteredListener<T extends ModuleLike> implements Comparable<RegisteredListener<T>> {
+    @Getter @Setter
+    private static int masterIndex = 0;
+
     private final StreamlineListener listener;
     private final EventPriority priority;
-    private final StreamlineModule module;
+    private final T module;
     private final EventExecutor executor;
     private final boolean ignoreCancelled;
+    private final int index;
 
-    public RegisteredListener(@NotNull final StreamlineListener listener, @NotNull final EventExecutor executor, @NotNull final EventPriority priority, @NotNull final StreamlineModule module, final boolean ignoreCancelled) {
+    public RegisteredListener(@NotNull final StreamlineListener listener, @NotNull final EventExecutor executor, @NotNull final EventPriority priority, @NotNull final T module, final boolean ignoreCancelled) {
         this.listener = listener;
         this.priority = priority;
         this.module = module;
         this.executor = executor;
         this.ignoreCancelled = ignoreCancelled;
+        setMasterIndex(getMasterIndex() + 1);
+        this.index = getMasterIndex();
     }
 
     /**
@@ -37,7 +46,7 @@ public class RegisteredListener {
      * @return Registered Plugin
      */
     @NotNull
-    public StreamlineModule getModule() {
+    public T getModule() {
         return module;
     }
 
@@ -68,5 +77,10 @@ public class RegisteredListener {
      */
     public boolean isIgnoringCancelled() {
         return ignoreCancelled;
+    }
+
+    @Override
+    public int compareTo(@NotNull RegisteredListener o) {
+        return Integer.compare(index, o.index);
     }
 }

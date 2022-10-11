@@ -22,6 +22,8 @@ public class OneSecondTimer extends BaseRunnable {
     @Override
     public void run() {
         for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
+            if (! user.updateOnline()) return;
+
             if (user instanceof StreamlinePlayer player) {
                 player.addPlaySecond(1);
 

@@ -6,7 +6,9 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.modules.ModuleDisableEvent;
 import net.streamline.api.events.modules.ModuleEnableEvent;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.dependencies.Dependency;
+import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
@@ -18,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class StreamlineModule extends Plugin implements Comparable<StreamlineModule> {
+public abstract class StreamlineModule extends Plugin implements Comparable<StreamlineModule>, ModuleLike {
     @Getter
     private final File dataFolder;
     @Getter @Setter
@@ -52,7 +54,7 @@ public abstract class StreamlineModule extends Plugin implements Comparable<Stre
     public StreamlineModule(PluginWrapper wrapper) {
         super(wrapper);
         this.dataFolder = new File(SLAPI.getModuleSaveFolder(), identifier() + File.separator);
-        logInfo("Loaded!");
+        ModuleManager.registerModule(this);
         onLoad();
     }
 
@@ -74,6 +76,7 @@ public abstract class StreamlineModule extends Plugin implements Comparable<Stre
     @Override
     public void stop() {
         if (! isEnabled()) return;
+
         for (ModuleCommand command : this.getCommands()) {
             ModuleUtils.logInfo(this, "Unregistering command: " + command.getIdentifier());
             command.unregister();
@@ -120,15 +123,15 @@ public abstract class StreamlineModule extends Plugin implements Comparable<Stre
     }
 
     public void logInfo(String message) {
-        SLAPI.getInstance().getMessenger().logInfo(this, message);
+        MessageUtils.logInfo(this, message);
     }
 
     public void logWarning(String message) {
-        SLAPI.getInstance().getMessenger().logWarning(this, message);
+        MessageUtils.logWarning(this, message);
     }
 
     public void logSevere(String message) {
-        SLAPI.getInstance().getMessenger().logSevere(this, message);
+        MessageUtils.logSevere(this, message);
     }
 
     public InputStream getResourceAsStream(String filename) {

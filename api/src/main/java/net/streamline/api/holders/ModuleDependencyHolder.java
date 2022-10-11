@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -35,7 +36,7 @@ public abstract class ModuleDependencyHolder<T> {
     }
 
     public static boolean isPresentCertain(String toTry) {
-        return ModuleManager.hasModuleLoaded(toTry);
+        return ModuleManager.hasModule(toTry);
     }
 
     public CompletableFuture<Void> nativeComplete() {
@@ -64,7 +65,7 @@ public abstract class ModuleDependencyHolder<T> {
         try {
             callable.call();
         } catch (Exception e) {
-            SLAPI.getInstance().getMessenger().logWarning("Could not load '" + getIdentifier() + "'... Retrying in " + LoaderRunnable.getRetryDelay() + " ticks...");
+            MessageUtils.logWarning("Could not load '" + getIdentifier() + "'... Retrying in " + LoaderRunnable.getRetryDelay() + " ticks...");
             new LoaderRunnable(0, callable);
         }
     }

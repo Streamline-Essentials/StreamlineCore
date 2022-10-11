@@ -7,6 +7,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.savables.UserManager;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProperCommand extends Command implements TabExecutor, IProperCommand {
     @Getter
@@ -36,9 +38,9 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         if (args == null) return new ArrayList<>();
         if (args.length <= 0) return new ArrayList<>();
 
-        List<String> r = parent.doTabComplete(UserManager.getInstance().getOrGetUser(sender), args);
+        ConcurrentSkipListSet<String> r = parent.doTabComplete(UserManager.getInstance().getOrGetUser(sender), args);
 
-        return r == null ? new ArrayList<>() : Messenger.getInstance().getCompletion(r, args[args.length - 1]).stream().toList();
+        return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]);
     }
 
     public void register() {

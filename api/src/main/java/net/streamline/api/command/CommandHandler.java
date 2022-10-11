@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.interfaces.IProperCommand;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -32,7 +33,7 @@ public class CommandHandler {
 
     public static void registerStreamlineCommand(StreamlineCommand command) {
         if (isProperCommandRegistered(command.getIdentifier())) {
-            SLAPI.getInstance().getMessenger().logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered!");
+            MessageUtils.logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered!");
             return;
         }
 
@@ -45,7 +46,7 @@ public class CommandHandler {
 
     public static void registerModuleCommand(ModuleCommand command) {
         if (isProperCommandRegistered(command.getIdentifier())) {
-            SLAPI.getInstance().getMessenger().logWarning(command.getOwningModule(), "Command with identifier '" + command.getIdentifier() + "' is already registered!");
+            MessageUtils.logWarning(command.getOwningModule(), "Command with identifier '" + command.getIdentifier() + "' is already registered!");
             return;
         }
         registerCommandRaw(command);

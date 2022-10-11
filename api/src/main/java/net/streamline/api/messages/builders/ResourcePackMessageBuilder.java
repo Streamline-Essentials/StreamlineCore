@@ -11,6 +11,7 @@ import net.streamline.api.messages.ProxyMessageOut;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ public class ResourcePackMessageBuilder {
     public static SingleSet<String, StreamlineResourcePack> unbuild(ProxyMessageIn messageIn) {
         ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
         if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            SLAPI.getInstance().getMessenger().logWarning("Data mis-match on ProxyMessageIn for '" + ResourcePackMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ResourcePackMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
         }
 
         List<String> l = new ArrayList<>();

@@ -2,6 +2,7 @@ package net.streamline.api.command;
 
 import lombok.Getter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 
 import java.io.File;
@@ -10,19 +11,19 @@ import java.util.List;
 
 public abstract class ModuleCommand extends StreamlineCommand {
     @Getter
-    private final StreamlineModule owningModule;
+    private final ModuleLike owningModule;
 
-    public ModuleCommand(StreamlineModule module, String base, String permission, String... aliases) {
+    public ModuleCommand(ModuleLike module, String base, String permission, String... aliases) {
         this(module, base, permission, new File(module.getDataFolder(), SLAPI.getCommandsFolderChild()), withLabel(module, base, aliases));
     }
 
 
-    public ModuleCommand(StreamlineModule module, String base, String permission, File parentDirectory, String... aliases) {
+    public ModuleCommand(ModuleLike module, String base, String permission, File parentDirectory, String... aliases) {
         super(base, permission, parentDirectory, withLabel(module, base, aliases));
         this.owningModule = module;
     }
 
-    public static String[] withLabel(StreamlineModule module, String base, String... before) {
+    public static String[] withLabel(ModuleLike module, String base, String... before) {
         List<String> names = new ArrayList<>(List.of(before));
         names.add(base);
 
