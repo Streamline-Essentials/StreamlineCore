@@ -1,54 +1,49 @@
 package net.streamline.api.messages.builders;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.messages.ProxyMessageHelper;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
-import net.streamline.api.objects.SingleSet;
+import net.streamline.api.messages.answered.ReturnableMessage;
+import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ProxyParseMessageBuilder {
     @Getter
-    private static final String subChannel = "api-parse-send";
+    private static final String subChannel = "api-parse";
 
-    @Getter
-    private static final List<String> lines = List.of(
-            "parse=%this_parse%;",
-            "user_uuid=%this_user_uuid%;"
-    );
+    public static ReturnableMessage build(StreamlinePlayer carrier, String toParse, StreamlineUser user) {
+        ProxiedMessage r = new ProxiedMessage(carrier, false);
 
-    public static ProxyMessageOut build(String toParse, StreamlineUser user) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        r.setSubChannel(getSubChannel());
+        r.write("user_uuid", user.getUuid());
+        r.write("parse", toParse);
 
-        output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_parse%", toParse));
-        output.writeUTF(lines.get(1).replace("%this_user_uuid%", user.getUuid()));
-
-        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
+        return new ReturnableMessage(r);
     }
 
-    public static SingleSet<String, String> unbuild(ProxyMessageIn messageIn) {
-        List<StreamlineUser> users = new ArrayList<>();
-        ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
-        if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ProxyParseMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
+    public static void handle(ProxiedMessage in) {
+        if (! in.getSubChannel().equals(getSubChannel())) {
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'.");
+            return;
+        }
+        if (! in.isReturnableLike()) {
+            MessageUtils.logWarning("Tried to reply to a ProxiedMessage with sub-channel '" + in.getSubChannel() + "', but it was not ReturnableLike.");
+            return;
         }
 
-        List<String> l = new ArrayList<>();
-        l.add(input.readUTF());
-        l.add(input.readUTF());
+        StreamlineUser user = ModuleUtils.getOrGetUser(in.getString("user_uuid"));
+        String parsedAs = ModuleUtils.replaceAllPlayerBungee(in.getString("user_uuid"), in.getString("parse"));
 
-        String toParse = ProxyMessageHelper.extrapolate(l.get(0)).value;
-        String uuid = ProxyMessageHelper.extrapolate(l.get(1)).value;
+        ProxiedMessage r = new ProxiedMessage(in.getCarrier(), true);
 
-        return new SingleSet<>(toParse, uuid);
+        r.setSubChannel(getSubChannel());
+        r.write("user_uuid", user.getUuid());
+        r.write("parse", in.getString("parse"));
+        r.write("parsed", parsedAs);
+        r.write(ReturnableMessage.getKey(), in.getString(ReturnableMessage.getKey()));
+
+        SLAPI.getInstance().getProxyMessenger().sendMessage(r);
     }
 }

@@ -1,7 +1,10 @@
 package net.streamline.api.messages;
 
-public interface ProxyMessenger {
-    void sendMessage(ProxyMessageOut message);
+import net.streamline.api.messages.events.ProxyMessageInEvent;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 
-    void receiveMessage(ProxyMessageEvent event);
+public interface ProxyMessenger {
+    void sendMessage(ProxiedMessage message);
+
+    void receiveMessage(ProxyMessageInEvent event);
 }

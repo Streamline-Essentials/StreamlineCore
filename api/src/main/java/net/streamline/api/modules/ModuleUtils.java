@@ -5,6 +5,7 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -347,10 +348,6 @@ public class ModuleUtils {
         return SLAPI.getInstance().getPlatform().serverHasPlugin(plugin);
     }
 
-    public static StreamlineServerInfo getStreamlineServer(String server) {
-        return SLAPI.getInstance().getPlatform().getStreamlineServer(server);
-    }
-
     public static StreamlineProfiler getProfiler() {
         return SLAPI.getInstance().getProfiler();
     }
@@ -385,5 +382,13 @@ public class ModuleUtils {
 
     public static ClassLoader getMainClassLoader() {
         return SLAPI.getInstance().getPlatform().getMainClassLoader();
+    }
+
+    public static void setStreamlineServer(StreamlineServerInfo serverInfo) {
+        GivenConfigs.getProfileConfig().updateServerInfo(serverInfo);
+    }
+
+    public static StreamlineServerInfo getServerInfo(String server) {
+        return GivenConfigs.getProfileConfig().getServerInfo(server);
     }
 }

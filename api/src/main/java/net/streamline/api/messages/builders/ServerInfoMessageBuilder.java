@@ -5,10 +5,10 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.messages.ProxyMessageHelper;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
+import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerInfoMessageBuilder {
@@ -32,73 +33,38 @@ public class ServerInfoMessageBuilder {
             "user_uuids=%this_user_uuids%;"
     );
 
-    public static ProxyMessageOut build(StreamlineServerInfo serverInfo) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+    public static ProxiedMessage build(StreamlinePlayer carrier, StreamlineServerInfo serverInfo) {
+        ProxiedMessage r = new ProxiedMessage(carrier, true);
 
-        output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_identifier%", serverInfo.getIdentifier()));
-        output.writeUTF(lines.get(1).replace("%this_name%", serverInfo.getName()));
-        output.writeUTF(lines.get(2).replace("%this_motd%", serverInfo.getMotd()));
-        output.writeUTF(lines.get(3).replace("%this_address%", serverInfo.getAddress()));
-        output.writeUTF(lines.get(4).replace("%this_user_uuids%", getUserUUIDs(serverInfo.getOnlineUsers().values().stream().toList())));
-
-        return new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
-    }
-
-    public static StreamlineServerInfo unbuild(ProxyMessageIn messageIn) {
-        List<StreamlineUser> users = new ArrayList<>();
-        ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
-        if (! messageIn.getSubChannel().equals(input.readUTF())) {
-            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerInfoMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
-        }
-
-        List<String> l = new ArrayList<>();
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-        l.add(input.readUTF());
-
-        String identifier = ProxyMessageHelper.extrapolate(l.get(0)).value;
-        String name = ProxyMessageHelper.extrapolate(l.get(1)).value;
-        String motd = ProxyMessageHelper.extrapolate(l.get(2)).value;
-        String address = ProxyMessageHelper.extrapolate(l.get(3)).value;
-        String usersString = ProxyMessageHelper.extrapolate(l.get(4)).value;
-        ConcurrentSkipListMap<String, StreamlineUser> usersMap = new ConcurrentSkipListMap<>();
-        extrapolateUsers(usersString).forEach(a -> {
-            usersMap.put(a.getUuid(), a);
-        });
-
-        return new StreamlineServerInfo(identifier, name, motd, address, usersMap);
-    }
-
-    public static List<StreamlineUser> extrapolateUsers(String from) {
-        String[] uuids = from.split(",");
-
-        List<StreamlineUser> r = new ArrayList<>();
-
-        Arrays.stream(uuids).forEach(a -> {
-            StreamlineUser user = UserUtils.getOrGetUser(a);
-            if (user == null) return;
-            r.add(user);
-        });
+        r.setSubChannel(getSubChannel());
+        r.write("identifier", serverInfo.getIdentifier());
+        r.write("name", serverInfo.getName());
+        r.write("motd", serverInfo.getMotd());
+        r.write("address", serverInfo.getAddress());
+        r.write("user_uuids", serverInfo.getOnlineUsers());
 
         return r;
     }
 
-    public static String getUserUUIDs(List<StreamlineUser> users) {
-        StringBuilder builder = new StringBuilder();
+    public static void handle(ProxiedMessage messageIn) {
+        if (! messageIn.getSubChannel().equals(getSubChannel())) {
+            MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'.");
+            return;
+        }
 
-        AtomicInteger integer = new AtomicInteger(0);
-        users.forEach(a -> {
-            if (integer.get() < users.size()) {
-                builder.append(a.getUuid()).append(",");
-            } else {
-                builder.append(a.getUuid());
-            }
-            integer.incrementAndGet();
-        });
+        if (! messageIn.isProxyOriginated()) {
+            MessageUtils.logWarning("Tried to handle a ProxiedMessage with sub-channel '" + messageIn.getSubChannel() + "', but it was not ProxyOriginated...");
+            return;
+        }
 
-        return builder.toString();
+        String identifier = messageIn.getString("identifier");
+        String name = messageIn.getString("name");
+        String motd = messageIn.getString("motd");
+        String address = messageIn.getString("address");
+        ConcurrentSkipListSet<String> userUuids = messageIn.getConcurrentStringList("user_uuids");
+
+        StreamlineServerInfo serverInfo = new StreamlineServerInfo(identifier, name, motd, address, userUuids);
+
+        SLAPI.getInstance().getProfiler();
     }
 }

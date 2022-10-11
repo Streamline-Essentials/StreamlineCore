@@ -3,6 +3,7 @@ package net.streamline.api.base.commands;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -43,7 +44,12 @@ public class PTagCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamlineUser other = UserUtils.getOrGetUser(playerName);
+        StreamlineUser other = UserUtils.getOrGetUserByName(playerName);
+
+        if (other == null) {
+            ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            return;
+        }
 
         if (args.length == 2) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, other,

@@ -5,6 +5,7 @@ import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.holders.GeyserHolder;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.placeholder.RATAPI;
@@ -57,10 +58,6 @@ public interface IStreamline {
     void runAsStrictly(StreamlineUser as, String message);
 
     boolean serverHasPlugin(String plugin);
-
-    StreamlineServerInfo getStreamlineServer(String server);
-
-    void setStreamlineServer(StreamlineServerInfo server);
 
     boolean equalsAnyServer(String servername);
 

@@ -3,6 +3,7 @@ package net.streamline.platform.savables;
 import lombok.Getter;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
@@ -15,6 +16,7 @@ import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
@@ -130,8 +132,14 @@ public class UserManager implements IUserManager {
 
         ProxiedPlayer player = Streamline.getPlayer(user.getUuid());
         if (player == null) return;
-        StreamlineServerInfo s = Streamline.getInstance().getStreamlineServer(server);
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ServerConnectMessageBuilder.build(s, user));
+        ServerInfo serverInfo = Streamline.getInstance().getProxy().getServerInfo(server);
+
+        if (serverInfo == null) {
+            MessageUtils.logWarning("Tried to send a user with uuid of '" + user.getUuid() + "' to server '" + server + "', but it does not exist!");
+            return;
+        }
+
+        player.connect(serverInfo);
     }
 
     @Override
@@ -140,8 +148,9 @@ public class UserManager implements IUserManager {
         if (! player.updateOnline()) return;
         ProxiedPlayer p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
+        StreamlinePlayer pl = getOrGetPlayer(p);
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, pack));
+        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(pl, true, pl, pack));
     }
 
     @Override

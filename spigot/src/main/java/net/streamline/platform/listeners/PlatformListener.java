@@ -8,8 +8,8 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.messages.ProxyMessageEvent;
-import net.streamline.api.messages.ProxyMessageIn;
+import net.streamline.api.messages.events.ProxyMessageInEvent;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
@@ -22,7 +22,6 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.api.events.server.LoginReceivedEvent;
 import net.streamline.api.events.server.StreamlineChatEvent;
-import net.streamline.platform.Messenger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -133,18 +132,21 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            ByteArrayDataInput input = ByteStreams.newDataInput(message);
+            StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
-            String subChannel = input.readUTF();
+            try {
+                ByteArrayDataInput input = ByteStreams.newDataInput(message);
+                String subChannel = input.readUTF();
 
-            ProxyMessageIn messageIn = new ProxyMessageIn(channel, subChannel, message);
-            ProxyMessageEvent event = new ProxyMessageEvent(messageIn, null);
-            ModuleUtils.fireEvent(event);
-            if (event.isCancelled()) {
-                MessageUtils.logInfo("Cancelled.");
-                return;
+                ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, message, channel);
+                messageIn.setSubChannel(subChannel);
+                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+                ModuleUtils.fireEvent(e);
+                if (e.isCancelled()) return;
+                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+            } catch (Exception e) {
+                // do nothing.
             }
-            SLAPI.getInstance().getProxyMessenger().receiveMessage(event);
         }
     }
 }

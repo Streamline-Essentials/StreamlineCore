@@ -12,19 +12,19 @@ and more.
 
 # What features does `StreamlineAPI` allows?
 
-- [ ] Friendly API to create your own addons (**WIP**)
+- [x] Friendly API to create your own addons (**SLAPI**)
 - [x] `RAT` API (**Replace A Thing API**)
     - This is an API that gives you the ability to easily and efficiently add your own placeholders like `PlaceholderAPI`, but for proxies.
 
-- [ ] Reload-ability (**WIP**)
+- [x] Reload-ability (**DONE**)
     - **Reload-Ability** is a priority. We want `StreamlineAPI` to work flawlessly with reloads to prevent restarts on large systems.
 
-- [ ] User-friendly (**WIP**)
+- [x] User-friendly (**MANAGING**)
 - [ ] Internationalization (**WIP**)
-- [ ] Organized file structure (**WIP**)
-- [ ] Efficient and Safe Data Structures (**WIP**)
-- [ ] Countless user-friendly in-game commands (**WIP**)
-- [ ] Bungee, Velocity Support (**WIP**)
+- [x] Organized file structure (**MANAGING**)
+- [x] Efficient and Safe Data Structures (**MANAGING**)
+- [x] Countless user-friendly in-game commands (**MANAGING**)
+- [x] Bungee, Velocity Support (**DONE**)
 - [ ] Built-In Support for countless proxy plugins (**WIP**)
 - [ ] `KnoxLine` API (**Knox, like Fort Knox**) (**WIP**)
     - `KnoxLine` API is an API that allows end-users to create proxy anti-cheats
@@ -58,6 +58,6 @@ The API is currently in the works to be easy and end-user friendly to use.
 
 `RAT` (**Replace A Thing**) API will be available as a maven repository to add to your projects and will have support for
 -
-- [ ] **Bungeecord**
-- [ ] **Velocity**
+- [x] **Bungeecord**
+- [x] **Velocity**
 

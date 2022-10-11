@@ -124,8 +124,9 @@ public class UserManager implements IUserManager {
 
         Player player = Streamline.getPlayer(user.getUuid());
         if (player == null) return;
-        StreamlineServerInfo s = Streamline.getInstance().getStreamlineServer(server);
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ServerConnectMessageBuilder.build(s, user));
+        StreamlinePlayer pl = getOrGetPlayer(player);
+        StreamlineServerInfo s = GivenConfigs.getProfileConfig().getServerInfo(server);
+        SLAPI.getInstance().getProxyMessenger().sendMessage(ServerConnectMessageBuilder.build(pl, s, pl.getUuid()));
     }
 
     public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
@@ -134,7 +135,7 @@ public class UserManager implements IUserManager {
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, pack));
+        Streamline.getInstance().sendResourcePack(pack, user);
     }
 
     @Override

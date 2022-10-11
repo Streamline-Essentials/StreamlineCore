@@ -430,14 +430,30 @@ public class UserUtils {
         return getOrGetPlayer(uuid);
     }
 
-    public static List<StreamlinePlayer> getPlayersOn(String server) {
-        StreamlineServerInfo s = SLAPI.getInstance().getPlatform().getStreamlineServer(server);
-        if (s == null) return new ArrayList<>();
+    public static ConcurrentSkipListSet<StreamlinePlayer> getPlayersOn(String server) {
+        StreamlineServerInfo s = GivenConfigs.getProfileConfig().getServerInfo(server);
+        if (s == null) return new ConcurrentSkipListSet<>();
 
-        List<StreamlinePlayer> r = new ArrayList<>();
+        ConcurrentSkipListSet<StreamlinePlayer> r = new ConcurrentSkipListSet<>();
 
-        s.getOnlineUsers().forEach((string, StreamlineUser) -> {
-            if (! (StreamlineUser instanceof StreamlinePlayer player)) return;
+        s.getOnlineUsers().forEach((string) -> {
+            StreamlinePlayer player = getOrGetPlayer(string);
+            if (player == null) return;
+            r.add(player);
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
+        StreamlineServerInfo s = GivenConfigs.getProfileConfig().getServerInfo(server);
+        if (s == null) return new ConcurrentSkipListSet<>();
+
+        ConcurrentSkipListSet<StreamlineUser> r = new ConcurrentSkipListSet<>();
+
+        s.getOnlineUsers().forEach((string) -> {
+            StreamlineUser player = getOrGetUser(string);
+            if (player == null) return;
             r.add(player);
         });
 

@@ -6,12 +6,11 @@ import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.ProxiedStreamlinePlayer;
-import net.streamline.api.messages.ProxyMessageHelper;
-import net.streamline.api.messages.ProxyMessageIn;
-import net.streamline.api.messages.ProxyMessageOut;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+import org.apache.commons.codec.binary.Hex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,77 +22,53 @@ public class SavablePlayerMessageBuilder {
     @Getter
     private static final String subChannel = "server-info";
 
-    @Getter
-    private static final List<String> lines = List.of(
-            "latest_name=%this_latest_name%;",
-            "displayname=%this_display_name%;",
-            "list_tags=%this_list_tags%;",
-            "points=%this_points%;",
-            "latest_message=%this_latest_message%;",
-            "online=%this_online%;",
-            "latest_server=%this_latest_server%;",
-            "bypass=%this_bypass%;",
-            "xp_total=%this_xp_total%;",
-            "xp_current=%this_xp_current%;",
-            "level=%this_level%;",
-            "play_seconds=%this_play_seconds%;",
-            "latest_ip=null;",
-            "list_ips=null;",
-            "list_names=%this_list_names%;",
-            "user_uuid=%this_user_uuid%;"
-    );
+    public static ProxiedMessage build(StreamlinePlayer player, boolean isProxyOriginated) {
+        ProxiedMessage r = new ProxiedMessage(player, isProxyOriginated);
 
-    public static ProxyMessageOut build(StreamlinePlayer player) {
-        ByteArrayDataOutput output = ByteStreams.newDataOutput();
+        r.setSubChannel(getSubChannel());
+        r.write("latest_name", player.getLatestName());
+        r.write("display_name", player.getDisplayName());
+        r.write("tag_list", player.getTagList());
+        r.write("points", String.valueOf(player.getPoints()));
+        r.write("latest_message", player.getLastMessage());
+        r.write("online", String.valueOf(player.isOnline()));
+        r.write("latest_serve", player.getLatestServer());
+        r.write("bypass", String.valueOf(player.isBypassPermissions()));
+        r.write("xp_total", String.valueOf(player.getTotalXP()));
+        r.write("xp_current", String.valueOf(player.getCurrentXP()));
+        r.write("level", String.valueOf(player.getLevel()));
+        r.write("play_seconds", String.valueOf(player.getPlaySeconds()));
+        r.write("latest_ip", "null");
+        r.write("ip_list", "null");
+        r.write("name_list", player.getNameList());
+        r.write("user_uuid", player.getUuid());
 
-        output.writeUTF(getSubChannel());
-        output.writeUTF(lines.get(0).replace("%this_latest_name%", player.getLatestName()));
-        output.writeUTF(lines.get(1).replace("%this_display_name%", player.getDisplayName()));
-        output.writeUTF(lines.get(2).replace("%this_list_tags%", getStringsAsString(player.getTagList().stream().toList())));
-        output.writeUTF(lines.get(3).replace("%this_points%", String.valueOf(player.getPoints())));
-        output.writeUTF(lines.get(4).replace("%this_latest_message%", player.getLastMessage() == null ? "" : player.getLastMessage()));
-        output.writeUTF(lines.get(5).replace("%this_online%", String.valueOf(player.isOnline())));
-        output.writeUTF(lines.get(6).replace("%this_latest_server%", player.getLatestServer()));
-        output.writeUTF(lines.get(7).replace("%this_bypass%", String.valueOf(player.isBypassPermissions())));
-        output.writeUTF(lines.get(8).replace("%this_xp_total%", String.valueOf(player.getTotalXP())));
-        output.writeUTF(lines.get(9).replace("%this_xp_current%", String.valueOf(player.getCurrentXP())));
-        output.writeUTF(lines.get(10).replace("%this_level%", String.valueOf(player.getLevel())));
-        output.writeUTF(lines.get(11).replace("%this_play_seconds%", String.valueOf(player.getPlaySeconds())));
-        output.writeUTF(lines.get(12).replace("%this_latest_ip%", player.getLatestIP()));
-        output.writeUTF(lines.get(13).replace("%this_list_ips%", getStringsAsString(player.getIpList().stream().toList())));
-        output.writeUTF(lines.get(14).replace("%this_list_names%", getStringsAsString(player.getNameList().stream().toList())));
-        output.writeUTF(lines.get(15).replace("%this_user_uuid%", player.getUuid()));
-
-        ProxyMessageOut message = new ProxyMessageOut(SLAPI.getApiChannel(), getSubChannel(), output.toByteArray());
-        message.setServer(player.getLatestServer());
-        return message;
+        return r;
     }
 
-    public static ProxiedStreamlinePlayer unbuild(ProxyMessageIn messageIn) {
-        List<StreamlineUser> users = new ArrayList<>();
-        ByteArrayDataInput input = ByteStreams.newDataInput(messageIn.getMessages());
-        if (! messageIn.getSubChannel().equals(input.readUTF())) {
+    public static ProxiedStreamlinePlayer unbuild(ProxiedMessage messageIn) {
+        if (! messageIn.getSubChannel().equals(getSubChannel())) {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + SavablePlayerMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");
         }
 
         ProxiedStreamlinePlayer player = new ProxiedStreamlinePlayer();
 
-        player.setLatestName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setDisplayName(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setTagList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
-        player.setPoints(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setLastMessage(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setOnline(Boolean.parseBoolean(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setLatestServer(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setBypassPermissions(Boolean.parseBoolean(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setTotalXP(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setCurrentXP(Double.parseDouble(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setLevel(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setPlaySeconds(Integer.parseInt(ProxyMessageHelper.extrapolate(input.readUTF()).value));
-        player.setLatestIP(ProxyMessageHelper.extrapolate(input.readUTF()).value);
-        player.setIpList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
-        player.setNameList(new ConcurrentSkipListSet<>(Arrays.stream(ProxyMessageHelper.extrapolate(input.readUTF()).value.split(",")).toList()));
-        player.setUuid(ProxyMessageHelper.extrapolate(input.readUTF()).value);
+        player.setLatestName(messageIn.getString("latest_name"));
+        player.setDisplayName(messageIn.getString("display_name"));
+        player.setTagList(messageIn.getConcurrentStringList("list_tags"));
+        player.setPoints(messageIn.getDouble("points"));
+        player.setLastMessage(messageIn.getString(""));
+        player.setOnline(messageIn.getBoolean("online"));
+        player.setLatestServer(messageIn.getString("latest_server"));
+        player.setBypassPermissions(messageIn.getBoolean("bypass"));
+        player.setTotalXP(messageIn.getDouble("xp_total"));
+        player.setCurrentXP(messageIn.getDouble("xp_current"));
+        player.setLevel(messageIn.getInteger("level"));
+        player.setPlaySeconds(messageIn.getInteger("play_seconds"));
+        player.setLatestIP(messageIn.getString("latest_ip"));
+        player.setIpList(messageIn.getConcurrentStringList("ip_list"));
+        player.setNameList(messageIn.getConcurrentStringList("name_list"));
+        player.setUuid(messageIn.getString("user_uuid"));
 
         return player;
     }

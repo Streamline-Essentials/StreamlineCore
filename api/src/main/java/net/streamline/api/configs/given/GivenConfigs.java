@@ -22,6 +22,8 @@ public class GivenConfigs {
 
     @Getter @Setter
     private static CachedUUIDsHandler cachedUUIDsHandler;
+    @Getter @Setter
+    private static SavedProfileConfig profileConfig;
 
     @Getter @Setter
     private static File punishmentFolder;
@@ -32,6 +34,7 @@ public class GivenConfigs {
         setWhitelistConfig(new WhitelistConfig());
         setPunishmentConfig(new PunishmentConfig());
         setCachedUUIDsHandler(new CachedUUIDsHandler());
+        setProfileConfig(new SavedProfileConfig());
     }
 
     public static void ensureFolders() {
