@@ -391,4 +391,20 @@ public class ModuleUtils {
     public static StreamlineServerInfo getServerInfo(String server) {
         return GivenConfigs.getProfileConfig().getServerInfo(server);
     }
+
+    public static String parseOnProxy(StreamlineUser user, String toParse) {
+        return MessageUtils.parseOnProxy(user, toParse);
+    }
+
+    public static String parseOnProxy(String toParse) {
+        return MessageUtils.parseOnProxy(toParse);
+    }
+
+    public static void kick(StreamlineUser user, String message) {
+        SLAPI.getInstance().getUserManager().kick(user, message);
+    }
+
+    public static void kick(StreamlineUser user) {
+        SLAPI.getInstance().getUserManager().kick(user, "&cConnection Closed by Server");
+    }
 }

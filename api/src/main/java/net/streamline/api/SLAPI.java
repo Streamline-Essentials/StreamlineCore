@@ -16,6 +16,7 @@ import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ProxyMessenger;
+import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -134,6 +135,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
+        ProxiedMessageManager.init();
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

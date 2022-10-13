@@ -135,11 +135,7 @@ public class PlatformListener implements Listener {
             StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
             try {
-                ByteArrayDataInput input = ByteStreams.newDataInput(message);
-                String subChannel = input.readUTF();
-
-                ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, message, channel);
-                messageIn.setSubChannel(subChannel);
+                ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, true, message, channel);
                 ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
                 ModuleUtils.fireEvent(e);
                 if (e.isCancelled()) return;

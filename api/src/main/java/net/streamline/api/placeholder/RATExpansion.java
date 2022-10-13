@@ -3,8 +3,10 @@ package net.streamline.api.placeholder;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +14,71 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class RATExpansion implements Comparable<RATExpansion> {
+    public static class CacheTimer extends BaseRunnable {
+        @Getter
+        private static final int ticks = 36000;
+
+        @Getter
+        private final RATExpansion parent;
+
+        public CacheTimer(RATExpansion parent) {
+            super(getTicks(), getTicks());
+            this.parent = parent;
+        }
+
+        @Override
+        public void run() {
+            getParent().setCache(new ConcurrentSkipListMap<>());
+        }
+    }
+
+    @Getter @Setter
+    private ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
+
+    public void cache(StreamlineUser user, String params, String outcome) {
+        ConcurrentSkipListMap<String, String> map = getCache().get(user);
+        if (map == null) map = new ConcurrentSkipListMap<>();
+        map.put(params, outcome);
+        getCache().put(user, map);
+    }
+
+    public String getCached(StreamlineUser user, String params) {
+        ConcurrentSkipListMap<String, String> map = getCache().get(user);
+        if (map == null) {
+            map = new ConcurrentSkipListMap<>();
+            getCache().put(user, map);
+            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
+        }
+        String cached = map.get(params);
+        if (cached == null) {
+            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
+        }
+        return cached;
+    }
+
+    @Getter @Setter
+    private ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, CompletableFuture<String>>> cachedFutures = new ConcurrentSkipListMap<>();
+
+    public void cacheFuture(StreamlineUser user, String params, CompletableFuture<String> outcome) {
+        ConcurrentSkipListMap<String, CompletableFuture<String>> map = getCachedFutures().get(user);
+        if (map == null) map = new ConcurrentSkipListMap<>();
+        map.put(params, outcome);
+        getCachedFutures().put(user, map);
+    }
+
+    public CompletableFuture<String> getCachedFuture(StreamlineUser user, String params) {
+        ConcurrentSkipListMap<String, CompletableFuture<String>> map = getCachedFutures().get(user);
+        if (map == null) {
+            map = new ConcurrentSkipListMap<>();
+            getCachedFutures().put(user, map);
+        }
+        CompletableFuture<String> cached = map.get(params);
+        if (cached == null) {
+            map.put(params, new CompletableFuture<>());
+        }
+        return cached;
+    }
+
     @Getter @Setter
     private ConcurrentSkipListMap<String, Integer> checked = new ConcurrentSkipListMap<>();
     @Getter @Setter
@@ -26,6 +93,8 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
     private int calls;
     @Getter @Setter
     private ConcurrentSkipListMap<String, Integer> userCalls;
+    @Getter @Setter
+    private CacheTimer cacheTimer;
 
     public RATExpansion setCallForUser(StreamlineUser user, int set) {
         this.userCalls.put(user.getUuid(), set);
@@ -62,6 +131,7 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
         setCalls(0);
         setUserCalls(new ConcurrentSkipListMap<>());
         setChecked(new ConcurrentSkipListMap<>());
+        setCacheTimer(new CacheTimer(this));
 
         register();
     }

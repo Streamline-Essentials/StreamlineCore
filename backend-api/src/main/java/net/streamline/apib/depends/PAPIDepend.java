@@ -61,7 +61,10 @@ public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
         public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
             StreamlinePlayer streamlinePlayer = ModuleUtils.getOrGetPlayer(player.getUniqueId().toString());
             if (streamlinePlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
-            return ModuleUtils.replaceAllPlayerBungee(streamlinePlayer, "%streamline_" + params + "%");
+            String toParse;
+            if (params.startsWith("!")) toParse = "%" + params.substring("!".length()) + "%";
+            else toParse = "%streamline_" + params + "%";
+            return ModuleUtils.replaceAllPlayerBungee(streamlinePlayer, toParse);
         }
     }
 }

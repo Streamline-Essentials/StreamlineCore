@@ -12,6 +12,7 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.base.Streamline;
 
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,7 +23,10 @@ public class ServerPusher extends BaseRunnable {
 
     @Override
     public void run() {
-        ConcurrentSkipListSet<RegisteredServer> r = new ConcurrentSkipListSet<>(Streamline.getInstance().getProxy().getAllServers());
+        ConcurrentSkipListMap<String, RegisteredServer> r = new ConcurrentSkipListMap<>();
+        Streamline.getInstance().getProxy().getAllServers().forEach(registeredServer -> {
+            r.put(registeredServer.getServerInfo().getName(), registeredServer);
+        });
 
         ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
 
@@ -35,7 +39,7 @@ public class ServerPusher extends BaseRunnable {
             players.add(streamlinePlayer);
         });
 
-        r.forEach((registeredServer) -> {
+        r.forEach((s, registeredServer) -> {
             ConcurrentSkipListSet<String> uuids = new ConcurrentSkipListSet<>();
 
             registeredServer.getPlayersConnected().forEach(proxiedPlayer -> {

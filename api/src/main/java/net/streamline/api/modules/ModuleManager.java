@@ -191,8 +191,9 @@ public class ModuleManager {
     }
 
     public static void restartModules() {
-        safePluginManager().stopPlugins();
-        safePluginManager().startPlugins();
+        getLoadedModules().forEach((s, moduleLike) -> {
+            moduleLike.restart();
+        });
     }
 
     public static void startModules() {

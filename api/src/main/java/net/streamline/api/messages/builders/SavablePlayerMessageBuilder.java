@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SavablePlayerMessageBuilder {
     @Getter
-    private static final String subChannel = "server-info";
+    private static final String subChannel = "savable-player";
 
     public static ProxiedMessage build(StreamlinePlayer player, boolean isProxyOriginated) {
         ProxiedMessage r = new ProxiedMessage(player, isProxyOriginated);
@@ -32,7 +32,7 @@ public class SavablePlayerMessageBuilder {
         r.write("points", String.valueOf(player.getPoints()));
         r.write("latest_message", player.getLastMessage());
         r.write("online", String.valueOf(player.isOnline()));
-        r.write("latest_serve", player.getLatestServer());
+        r.write("latest_server", player.getLatestServer());
         r.write("bypass", String.valueOf(player.isBypassPermissions()));
         r.write("xp_total", String.valueOf(player.getTotalXP()));
         r.write("xp_current", String.valueOf(player.getCurrentXP()));
@@ -42,6 +42,8 @@ public class SavablePlayerMessageBuilder {
         r.write("ip_list", "null");
         r.write("name_list", player.getNameList());
         r.write("user_uuid", player.getUuid());
+
+        r.setServer(player.getLatestServer());
 
         return r;
     }

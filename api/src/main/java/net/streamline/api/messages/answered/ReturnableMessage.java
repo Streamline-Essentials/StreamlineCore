@@ -11,6 +11,10 @@ import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
@@ -29,14 +33,18 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter @Setter
     private boolean fired = false;
     @Getter @Setter
+    private boolean called = false;
+    @Getter @Setter
     private TimeoutTimer timeoutTimer;
+    @Getter @Setter
+    private ConcurrentSkipListMap<Integer, Consumer<ProxiedMessage>> registeredEvents = new ConcurrentSkipListMap<>();
 
-    public ReturnableMessage(ProxiedMessage payload, boolean load) {
+    public ReturnableMessage(ProxiedMessage payload, boolean send) {
         this.payload = payload;
         this.answerKey = UUID.randomUUID().toString();
         getPayload().write(getKey(), getAnswerKey());
         setTimeoutTimer(new TimeoutTimer(this));
-        if (load) ProxiedMessageManager.loadReturnableMessage(this);
+        if (send) send();
     }
 
     public ReturnableMessage(ProxiedMessage payload) {
@@ -57,9 +65,18 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
 
     public void acceptAnswer(ProxiedMessage message) {
         setAnswered(true);
-        ModuleUtils.fireEvent(new AnsweredMessageEvent(this, message));
+
+        AnsweredMessageEvent event = new AnsweredMessageEvent(this, message);
+        ModuleUtils.fireEvent(event);
+        if (event.isCancelled()) {
+            return;
+        }
+
         fire(message);
         setFired(true);
+
+        callEvents(message);
+        setCalled(true);
     }
 
     public void fire(ProxiedMessage message) {
@@ -73,6 +90,20 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     public void killNow() {
         getTimeoutTimer().cancel();
         ProxiedMessageManager.unloadReturnableMessage(this);
+    }
+
+    public void registerEventCall(Consumer<ProxiedMessage> consumer) {
+        getRegisteredEvents().put(getRegisteredEvents().size() + 1, consumer);
+    }
+
+    public void callEvents(ProxiedMessage accepted) {
+        getRegisteredEvents().forEach((integer, consumer) -> {
+            try {
+                consumer.accept(accepted);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override

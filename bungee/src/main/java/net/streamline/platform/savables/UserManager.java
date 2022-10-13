@@ -20,6 +20,7 @@ import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
+import net.streamline.platform.Messenger;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -172,5 +173,12 @@ public class UserManager implements IUserManager {
         ProxiedPlayer player = Streamline.getPlayer(uuid);
         if (player == null) return 0d;
         return player.getPing();
+    }
+
+    @Override
+    public void kick(StreamlineUser user, String message) {
+        ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
+        if (player == null) return;
+        player.disconnect(Messenger.getInstance().codedText(message));
     }
 }

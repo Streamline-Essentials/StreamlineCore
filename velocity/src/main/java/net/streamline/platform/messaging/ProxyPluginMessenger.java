@@ -8,6 +8,7 @@ import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
@@ -15,6 +16,7 @@ import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 
 import java.util.Optional;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
@@ -30,12 +32,10 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                 server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getMainChannel()), message.read());
 
                 if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
-//                    Messenger.getInstance().logInfo(a + " server is empty...");
                     return;
                 }
                 Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
                 if (player == null) {
-//                    Messenger.getInstance().logInfo("Player = null...");
                     return;
                 }
                 player.getCurrentServer().get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getMainChannel()), message.read());
@@ -43,15 +43,13 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-//        Optional<RegisteredServer> server = Streamline.getInstance().getProxy().getServer(message.getServer());
-//        if (server.isEmpty()) {
-//            return;
-//        }
-//        server.get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getChannel()), message.getMessages());
-
-        Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).first().getUuid());
+        ConcurrentSkipListSet<StreamlineUser> users = UserManager.getInstance().getUsersOn(message.getServer());
+        if (users.isEmpty()) {
+            ProxiedMessageManager.pendMessage(message);
+            return;
+        }
+        Player player = Streamline.getPlayer(users.first().getUuid());
         if (player == null) {
-//                    Messenger.getInstance().logInfo("Player = null...");
             return;
         }
         player.getCurrentServer().get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getMainChannel()), message.read());
@@ -59,11 +57,15 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
+        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             ServerConnectMessageBuilder.handle(event.getMessage());
+            return;
         }
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             ProxyParseMessageBuilder.handle(event.getMessage());
+            return;
         }
+        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
     }
 }

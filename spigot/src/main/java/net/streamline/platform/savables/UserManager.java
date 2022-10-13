@@ -13,9 +13,11 @@ import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
+import net.streamline.platform.Messenger;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -157,5 +159,12 @@ public class UserManager implements IUserManager {
         Player player = Streamline.getPlayer(uuid);
         if (player == null) return 0d;
         return player.getPing();
+    }
+
+    @Override
+    public void kick(StreamlineUser user, String message) {
+        Player player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
+        if (player == null) return;
+        player.kickPlayer(Messenger.getInstance().codedString(message));
     }
 }

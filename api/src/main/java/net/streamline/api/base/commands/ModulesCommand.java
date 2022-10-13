@@ -64,7 +64,7 @@ public class ModulesCommand extends StreamlineCommand {
             }
             case "reload" -> {
                 if (args.length == 1) {
-                    ModuleManager.getLoadedModules().forEach((s, module) -> module.restart());
+                    ModuleManager.restartModules();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadAll);
                 } else {
                     Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {

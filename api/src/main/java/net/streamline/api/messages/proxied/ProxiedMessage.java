@@ -7,9 +7,11 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.answered.ReturnableMessage;
+import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MatcherUtils;
+import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -21,13 +23,26 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxiedMessage implements Comparable<ProxiedMessage> {
     @Getter
     private final String defaultListSeparator = "{{,}}";
+    @Getter
+    private final String argumentKeyMaster = "{{arg[%index%]}}";
+    @Getter
+    private final String subChannelKey = "{{sub-channel}}";
 
     @Getter @Setter
-    private String subChannel;
+    private ConcurrentSkipListMap<Integer, SingleSet<String, String>> arguments = new ConcurrentSkipListMap<>();
+
     @Getter @Setter
     private ConcurrentSkipListMap<String, String> literalContents = new ConcurrentSkipListMap<>();
     @Getter @Setter
     private String server = "lobby";
+
+    public void setSubChannel(String subChannel) {
+        write(getSubChannelKey(), subChannel);
+    }
+
+    public String getSubChannel() {
+        return getString(getSubChannelKey());
+    }
 
     @Getter
     private final StreamlinePlayer carrier;
@@ -64,7 +79,11 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     }
 
     public void write(String key, String value) {
+        if (key == null) key = "";
+        if (value == null) value = "";
         getLiteralContents().put(key, value);
+//        if (getSubChannel() == null) return;
+//        if (! getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) MessageUtils.logInfo("Wrote '" + key + "' : '" + value + "'.");
     }
 
     public void write(String utf) {
@@ -74,8 +93,6 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
 
     public void writeAll(byte[] bytes) {
         ByteArrayDataInput input = ByteStreams.newDataInput(bytes);
-
-        setSubChannel(input.readUTF());
 
         boolean errored = false;
         while (! errored) {
@@ -90,10 +107,27 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
 
     public SingleSet<String, String> extrapolate(String from) {
         List<String[]> groups = MatcherUtils.getGroups(MatcherUtils.matcherBuilder("(.+)[=](.+)[;]", from), 2);
-        if (groups.isEmpty()) return new SingleSet<>("", "");
+        if (groups.isEmpty()) {
+            return getArgumentSetFrom(from);
+        }
 
         String[] strings = groups.get(0);
         return new SingleSet<>(strings[0], strings[1]);
+    }
+
+    public SingleSet<String, String> getArgumentSetFrom(String from) {
+        String key = getNextArgument();
+        SingleSet<String, String> r = new SingleSet<>(key, from);
+        getArguments().put(getArguments().size(), r);
+        return r;
+    }
+
+    public String getNextArgument() {
+        return getArgumentKeyMaster().replace("%index%", String.valueOf(getArguments().size()));
+    }
+
+    public String getArgument(int index) {
+        return getString(getArguments().get(index).key);
     }
 
     public boolean getBoolean(String key) {
@@ -208,8 +242,6 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
 
     public byte[] read() {
         ByteArrayDataOutput output = ByteStreams.newDataOutput();
-
-        output.writeUTF(getSubChannel());
 
         for (String content : getJustifiedContents()) {
             output.writeUTF(content);

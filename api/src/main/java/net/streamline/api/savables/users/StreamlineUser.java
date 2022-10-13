@@ -106,7 +106,7 @@ public abstract class StreamlineUser extends SavableResource {
         // Profile.
         set("profile.latest.name", latestName);
         set("profile.latest.server", latestServer);
-        set("profile.display-name", latestName);
+        set("profile.display-name", displayName);
         set("profile.tags", tagList);
         set("profile.points", points);
         // More.

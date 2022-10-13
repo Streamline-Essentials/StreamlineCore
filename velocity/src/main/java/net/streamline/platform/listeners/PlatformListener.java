@@ -113,33 +113,22 @@ public class PlatformListener {
     public void onChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
 
+        event.setResult(PlayerChatEvent.ChatResult.message("t"));
+
         StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
 
-//        if (chatEvent.isCanceled()) {
-//
-//            event.setResult(PlayerChatEvent.ChatResult.denied());
-////            return;
-//        }
-
-        if (player.getProtocolVersion().getProtocol() > 759) {
-            if (chatEvent.isCanceled()) {
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-//                return;
-            }
-        } else {
-            if (chatEvent.isCanceled()) {
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-                return;
-            }
-            // TODO: Change back once Velocity fixes it.
-            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
-            if (event.getResult().getMessage().isPresent()) {
-                String newMessage = event.getResult().getMessage().get();
-                event.setResult(PlayerChatEvent.ChatResult.denied());
-                player.spoofChatInput(newMessage);
-            }
+        if (chatEvent.isCanceled()) {
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+            return;
+        }
+        // TODO: Change back once Velocity fixes it.
+        event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
+        if (event.getResult().getMessage().isPresent()) {
+            String newMessage = event.getResult().getMessage().get();
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+            player.spoofChatInput(newMessage);
         }
     }
 
@@ -151,15 +140,11 @@ public class PlatformListener {
     @Subscribe
     public void onPluginMessage(PluginMessageEvent event) {
         String tag = event.getIdentifier().getId();
-        if (! (event.getSource() instanceof Player player)) return;
+        if (! (event.getTarget() instanceof Player player)) return;
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
         try {
-            ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
-            String subChannel = input.readUTF();
-
             ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, event.getData(), tag);
-            messageIn.setSubChannel(subChannel);
             ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
             ModuleUtils.fireEvent(e);
             if (e.isCancelled()) return;
