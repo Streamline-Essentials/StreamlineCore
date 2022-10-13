@@ -9,6 +9,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
@@ -256,12 +257,16 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void fireEvent(StreamlineEvent event, boolean async) {
-        fireEvent(new ProperEvent(event));
+        try {
+            StreamEventHandler.fireEvent(event);
+        } catch (Exception e) {
+            handleMisSync(event, async);
+        }
     }
 
     @Override
     public void handleMisSync(StreamlineEvent event, boolean async) {
-        fireEvent(new ProperEvent(event));
+        StreamEventHandler.fireEvent(event);
     }
 
     @Override

@@ -6,6 +6,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MathUtils;
 
 import java.time.temporal.ChronoUnit;
@@ -13,6 +14,13 @@ import java.util.Date;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class ProxiedMessageManager {
+    @Getter @Setter
+    private static PendingTicker pendingTicker;
+
+    public static void init() {
+        setPendingTicker(new PendingTicker());
+    }
+
     @Getter @Setter
     private static ConcurrentSkipListMap<Date, ReturnableMessage> loadedReturnableMessaged = new ConcurrentSkipListMap<>();
 
@@ -40,13 +48,40 @@ public class ProxiedMessageManager {
     public static void onProxiedMessageReceived(ProxiedMessage proxiedMessage) {
         ProxyMessageInEvent event = new ProxyMessageInEvent(proxiedMessage);
         ModuleUtils.fireEvent(event);
-        proxiedMessage = event.getMessage();
 
-        if (proxiedMessage.isReturnableLike()) {
-            ProxiedMessage finalProxiedMessage = proxiedMessage;
+        if (event.getMessage().isReturnableLike()) {
             getLoadedReturnableMessaged().forEach((date, returnableMessage) -> {
-                returnableMessage.tryAnswer(finalProxiedMessage);
+                returnableMessage.tryAnswer(event.getMessage());
             });
         }
+    }
+
+    public static class PendingTicker extends BaseRunnable {
+        public PendingTicker() {
+            super(40, 40);
+        }
+
+        @Override
+        public void run() {
+            tickPendingMessages();
+        }
+    }
+
+    @Getter @Setter
+    private static ConcurrentSkipListMap<Date, ProxiedMessage> pendingMessages = new ConcurrentSkipListMap<>();
+
+    public static void pendMessage(ProxiedMessage proxiedMessage) {
+        getPendingMessages().put(proxiedMessage.getGottenAt(), proxiedMessage);
+    }
+
+    public static void unpendMessage(ProxiedMessage proxiedMessage) {
+        getPendingMessages().remove(proxiedMessage.getGottenAt());
+    }
+
+    public static void tickPendingMessages() {
+        getPendingMessages().forEach((date, proxiedMessage) -> {
+            SLAPI.getInstance().getProxyMessenger().sendMessage(proxiedMessage);
+            if (MathUtils.isDateOlderThan(date, 10, ChronoUnit.MINUTES)) unpendMessage(proxiedMessage);
+        });
     }
 }

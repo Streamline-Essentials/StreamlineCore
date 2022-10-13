@@ -23,6 +23,8 @@ public interface IUserManager {
 
     void connect(StreamlineUser user, String server);
 
+    void kick(StreamlineUser user, String message);
+
     void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack);
 
     String parsePlayerIP(String uuid);

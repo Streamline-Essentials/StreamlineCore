@@ -24,15 +24,6 @@ public class ServerInfoMessageBuilder {
     @Getter
     private static final String subChannel = "server-info";
 
-    @Getter
-    private static final List<String> lines = List.of(
-            "identifier=%this_identifier%;",
-            "name=%this_name%;",
-            "motd=%this_motd%;",
-            "address=%this_address%;",
-            "user_uuids=%this_user_uuids%;"
-    );
-
     public static ProxiedMessage build(StreamlinePlayer carrier, StreamlineServerInfo serverInfo) {
         ProxiedMessage r = new ProxiedMessage(carrier, true);
 

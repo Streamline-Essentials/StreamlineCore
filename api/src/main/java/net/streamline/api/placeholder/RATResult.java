@@ -2,19 +2,15 @@ package net.streamline.api.placeholder;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.objects.AtomicString;
 import net.streamline.api.utils.MatcherUtils;
-import net.streamline.api.utils.MathUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 public class RATResult implements Comparable<RATResult> {
     @Getter @Setter
     private RATReplacement replacement;
     @Getter @Setter
-    private int timedReplaced;
+    private int timesReplaced;
 
     public RATResult(RATReplacement replacement) {
         setReplacement(replacement);
@@ -22,17 +18,18 @@ public class RATResult implements Comparable<RATResult> {
 
     public int parse(AtomicString on) {
         String temp;
+
         do {
             temp = on.get();
             on.set(on.get().replaceFirst(MatcherUtils.makeLiteral(getReplacement().getTotal()), getReplacement().getReplacement()));
             if (! temp.equals(on.get())) increment();
         } while (! temp.equals(on.get()));
 
-        return getTimedReplaced();
+        return getTimesReplaced();
     }
 
     public void increment() {
-        setTimedReplaced(getTimedReplaced() + 1);
+        setTimesReplaced(getTimesReplaced() + 1);
     }
 
     @Override

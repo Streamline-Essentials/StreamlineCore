@@ -112,28 +112,6 @@ public class PlatformListener implements Listener {
             return;
         }
         event.setMessage(chatEvent.getMessage());
-//        String newMessage = event.getMessage();
-//        event.setCancelled(true);
-//        player.chat(newMessage);
-
-//        if (player.getProtocolVersion().getProtocol() > 759) {
-//            if (chatEvent.isCanceled()) {
-//                event.setResult(PlayerChatEvent.ChatResult.denied());
-////                return;
-//            }
-//        } else {
-//            if (chatEvent.isCanceled()) {
-//                event.setResult(PlayerChatEvent.ChatResult.denied());
-//                return;
-//            }
-//            // TODO: Change back once Velocity fixes it.
-//            event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
-//            if (event.getResult().getMessage().isPresent()) {
-//                String newMessage = event.getResult().getMessage().get();
-//                event.setResult(PlayerChatEvent.ChatResult.denied());
-//                player.spoofChatInput(newMessage);
-//            }
-//        }
     }
 
     @EventHandler
@@ -143,8 +121,7 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
-        if (event.getReceiver() instanceof ProxiedPlayer) return;
-        if (! (event.getSender() instanceof ProxiedPlayer player)) return;
+        if (! (event.getReceiver() instanceof ProxiedPlayer player)) return;
 
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
@@ -152,11 +129,7 @@ public class PlatformListener implements Listener {
         if (event.getData() == null) return;
 
         try {
-            ByteArrayDataInput input = ByteStreams.newDataInput(event.getData());
-            String subChannel = input.readUTF();
-
             ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, event.getData(), tag);
-            messageIn.setSubChannel(subChannel);
             ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
             ModuleUtils.fireEvent(e);
             if (e.isCancelled()) return;

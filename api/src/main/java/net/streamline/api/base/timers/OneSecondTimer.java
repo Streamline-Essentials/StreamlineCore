@@ -2,10 +2,13 @@ package net.streamline.api.base.timers;
 
 
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.events.UserNameUpdateEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MathUtils;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.time.temporal.ChronoUnit;
@@ -19,16 +22,21 @@ public class OneSecondTimer extends BaseRunnable {
 
     @Override
     public void run() {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
+        UserUtils.getLoadedUsersSet().forEach(user -> {
             if (! user.updateOnline()) return;
 
             if (user instanceof StreamlinePlayer player) {
                 player.addPlaySecond(1);
-
-                if (GivenConfigs.getMainConfig().updatePlayerFormattedNames()) {
-                    player.setDisplayName(UserUtils.getDisplayName(player.getLatestName(), player.getLatestName()));
-                }
             }
-        }
+
+            if (GivenConfigs.getMainConfig().updatePlayerFormattedNames()) {
+                UserNameUpdateEvent updateEvent = new UserNameUpdateEvent(user, UserUtils.getDisplayName(user.getLatestName(), user.getLatestName()), user.getDisplayName());
+                ModuleUtils.fireEvent(updateEvent);
+                if (updateEvent.isCancelled()) return;
+
+                user.setDisplayName(updateEvent.getChangeTo());
+//                MessageUtils.logInfo("Updated player name for '" + user.getUuid() + "' to '" + updateEvent.getChangeTo() + "'");
+            }
+        });
     }
 }

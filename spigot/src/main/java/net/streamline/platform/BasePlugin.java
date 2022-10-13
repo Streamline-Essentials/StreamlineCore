@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
@@ -277,7 +278,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public void fireEvent(StreamlineEvent event, boolean async) {
         try {
-            fireEvent(new ProperEvent(event, async));
+            StreamEventHandler.fireEvent(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -285,7 +286,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void handleMisSync(StreamlineEvent event, boolean async) {
-        fireEvent(new ProperEvent(event, ! async));
+        StreamEventHandler.fireEvent(event);
     }
 
     @Override

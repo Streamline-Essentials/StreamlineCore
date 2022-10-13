@@ -3,6 +3,7 @@ package net.streamline.api.base.ratapi;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
@@ -70,6 +71,15 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("modules_loaded")) {
             return String.valueOf(ModuleManager.getLoadedModules().size());
         }
+        if (params.startsWith("?L:")) {
+            params = params.substring("?L:".length());
+            params = params
+                    .replace("{", "%")
+                    .replace("}", "%")
+                    .replace("*/*", "%")
+            ;
+            return ModuleUtils.parseOnProxy(params);
+        }
 
         return null;
     }
@@ -126,6 +136,15 @@ public class StreamlineExpansion extends RATExpansion {
             }
 
             return builder.toString();
+        }
+        if (params.startsWith("?R:")) {
+            params = params.substring("?R:".length());
+            params = params
+                    .replace("{", "%")
+                    .replace("}", "%")
+                    .replace("*/*", "%")
+            ;
+            return ModuleUtils.parseOnProxy(user, params);
         }
 
         return null;

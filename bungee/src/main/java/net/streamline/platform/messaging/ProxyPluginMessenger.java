@@ -6,9 +6,14 @@ import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.messages.proxied.ProxiedMessageManager;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
+
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
@@ -34,7 +39,13 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
 //        Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.getMessages());
 
-        ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(message.getServer()).first().getUuid());
+        ConcurrentSkipListSet<StreamlineUser> users = UserManager.getInstance().getUsersOn(message.getServer());
+        if (users.isEmpty()) {
+            ProxiedMessageManager.pendMessage(message);
+            return;
+        }
+
+        ProxiedPlayer player = Streamline.getPlayer(users.first().getUuid());
         if (player == null) {
             return;
         }
@@ -43,11 +54,14 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
+        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             ServerConnectMessageBuilder.handle(event.getMessage());
+            return;
         }
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             ProxyParseMessageBuilder.handle(event.getMessage());
+            return;
         }
     }
 }

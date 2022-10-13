@@ -33,16 +33,20 @@ public class ProxyParseMessageBuilder {
             return;
         }
 
-        StreamlineUser user = ModuleUtils.getOrGetUser(in.getString("user_uuid"));
-        String parsedAs = ModuleUtils.replaceAllPlayerBungee(in.getString("user_uuid"), in.getString("parse"));
+        String uuid = in.getString("user_uuid");
+        String parse = in.getString("parse");
+        String key = in.getString(ReturnableMessage.getKey());
+
+//        MessageUtils.logInfo("ProxiedMessage in > uuid = '" + uuid + "', parse = '" + parse + "', key = '" + key + "'.");
+        String parsed = ModuleUtils.replaceAllPlayerBungee(in.getString("user_uuid"), in.getString("parse"));
 
         ProxiedMessage r = new ProxiedMessage(in.getCarrier(), true);
 
         r.setSubChannel(getSubChannel());
-        r.write("user_uuid", user.getUuid());
-        r.write("parse", in.getString("parse"));
-        r.write("parsed", parsedAs);
-        r.write(ReturnableMessage.getKey(), in.getString(ReturnableMessage.getKey()));
+        r.write("user_uuid", uuid);
+        r.write("parse", parse);
+        r.write("parsed", parsed);
+        r.write(ReturnableMessage.getKey(), key);
 
         SLAPI.getInstance().getProxyMessenger().sendMessage(r);
     }

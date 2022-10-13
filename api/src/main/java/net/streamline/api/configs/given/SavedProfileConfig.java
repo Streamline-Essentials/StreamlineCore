@@ -19,16 +19,18 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class SavedProfileConfig extends FlatFileResource<Json> {
     public static class Ticker extends BaseRunnable {
-        SavedProfileConfig parent;
+        @Getter @Setter
+        private SavedProfileConfig parent;
 
         public Ticker(SavedProfileConfig parent) {
-            super(0, 6000);
-            this.parent = parent;
+            super(0, 600);
+            setParent(parent);
         }
 
         @Override
         public void run() {
-            parent.saveProfile();
+            getParent().saveProfile();
+            getParent().saveServers();
         }
     }
 
@@ -113,6 +115,17 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
         }
 
         saveProfile();
+    }
+
+    public void saveServers() {
+        FlatFileSection serverSection = resource.getSection("servers");
+
+        getServerInfosFromConfig().forEach((s, streamlineServerInfo) -> {
+            serverSection.set(streamlineServerInfo.getIdentifier() + ".name", streamlineServerInfo.getName());
+            serverSection.set(streamlineServerInfo.getIdentifier() + ".motd", streamlineServerInfo.getMotd());
+            serverSection.set(streamlineServerInfo.getIdentifier() + ".address", streamlineServerInfo.getAddress());
+            serverSection.set(streamlineServerInfo.getIdentifier() + ".online-users", streamlineServerInfo.getOnlineUsers().stream().toList());
+        });
     }
 }
 
