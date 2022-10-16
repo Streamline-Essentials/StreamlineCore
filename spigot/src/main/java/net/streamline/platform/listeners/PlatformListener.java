@@ -1,13 +1,17 @@
 package net.streamline.platform.listeners;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
+import net.streamline.api.events.EventProcessor;
+import net.streamline.api.events.StreamEventHandler;
+import net.streamline.api.events.StreamlineListener;
+import net.streamline.api.events.server.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.savables.users.StreamlinePlayer;
@@ -16,22 +20,30 @@ import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.events.ProperEvent;
-import net.streamline.api.events.server.LogoutEvent;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.api.events.server.LoginReceivedEvent;
-import net.streamline.api.events.server.StreamlineChatEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
+import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
-public class PlatformListener implements Listener {
+public class PlatformListener implements Listener, StreamlineListener {
+    @Getter @Setter
+    private static boolean messaged = false;
+    @Getter @Setter
+    private static boolean joined = false;
+
+    public static boolean isTested() {
+        return isMessaged() && isJoined();
+    }
+
     public PlatformListener() {
         MessageUtils.logInfo("BaseListener registered!");
+        ModuleUtils.listen(this, SLAPI.getBaseModule());
     }
 
     @EventHandler
@@ -49,10 +61,10 @@ public class PlatformListener implements Listener {
         }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
-        Streamline.getInstance().fireEvent(loginReceivedEvent, true);
+        StreamEventHandler.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
-            loginReceivedEvent.getResult().validate();
+            if (! loginReceivedEvent.getResult().validate()) return;
 
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageUtils.codedString(loginReceivedEvent.getResult().getDisconnectMessage()));
         }
@@ -64,13 +76,16 @@ public class PlatformListener implements Listener {
 
         CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
 
-//        if (UserManager.getInstance().userExists(player.getUniqueId().toString())) {
-//            StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-//            StreamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
-//
-//            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamlinePlayer);
-//            ModuleUtils.fireEvent(loginCompletedEvent);
-//        }
+        if (! SLAPI.isProxiedServer() && isTested()) {
+            StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+            streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+            streamlinePlayer.setLatestName(player.getName());
+
+            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
+            ModuleUtils.fireEvent(loginCompletedEvent);
+        }
+
+        setJoined(true);
     }
 
     @EventHandler
@@ -144,5 +159,18 @@ public class PlatformListener implements Listener {
                 // do nothing.
             }
         }
+    }
+
+    @EventHandler
+    public void onStart(ServerLoadEvent event) {
+        ServerStartEvent e = new ServerStartEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+    }
+
+    @EventProcessor
+    public void onProxiedMessageReceived(ProxyMessageInEvent event) {
+        setMessaged(true);
     }
 }

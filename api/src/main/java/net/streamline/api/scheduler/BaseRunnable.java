@@ -1,15 +1,21 @@
 package net.streamline.api.scheduler;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleUtils;
 
 import java.util.Date;
 
 public abstract class BaseRunnable implements Runnable {
-    public Date startedAt;
-    public long currentTickCount;
-    public long period;
-    public int index;
+    @Getter @Setter
+    private Date startedAt;
+    @Getter @Setter
+    private long currentTickCount;
+    @Getter @Setter
+    private long period;
+    @Getter @Setter
+    private int index;
 
     /**
      * Constructor for all Streamline API-ed Runnables.

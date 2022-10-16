@@ -17,13 +17,11 @@ public class RATResult implements Comparable<RATResult> {
     }
 
     public int parse(AtomicString on) {
-        String temp;
-
-        do {
-            temp = on.get();
-            on.set(on.get().replaceFirst(MatcherUtils.makeLiteral(getReplacement().getTotal()), getReplacement().getReplacement()));
-            if (! temp.equals(on.get())) increment();
-        } while (! temp.equals(on.get()));
+        String regexMatch = MatcherUtils.makeLiteral(getReplacement().getTotal());
+        while (on.get().contains(getReplacement().getTotal())) {
+            on.set(on.get().replaceFirst(regexMatch, getReplacement().getReplacement()));
+            increment();
+        }
 
         return getTimesReplaced();
     }

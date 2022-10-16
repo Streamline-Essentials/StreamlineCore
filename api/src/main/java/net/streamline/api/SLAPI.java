@@ -17,6 +17,7 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -85,12 +86,17 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter
     private static ModuleTaskManager moduleScheduler;
 
+    @Getter @Setter
+    private static boolean proxiedServer;
+
     public SLAPI(P platform, U userManager, M messenger, File dataFolderExt) {
         instance = this;
 
         this.platform = platform;
         this.userManager = userManager;
         this.messenger = messenger;
+
+        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.PROXY));
 
         dataFolder = dataFolderExt;
 
@@ -136,6 +142,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
         ProxiedMessageManager.init();
+
+        setBaseModule(new BaseModule());
+        ModuleManager.registerModule(getBaseModule());
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

@@ -29,17 +29,16 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        parent.run(UserUtils.getOrGetUserByName(sender.getName()), args);
+        parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
         return true;
     }
 
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args == null) return new ArrayList<>();
-        if (args.length <= 0) return new ArrayList<>();
-
-        ConcurrentSkipListSet<String> r = parent.doTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
+        if (args == null) args = new String[] { "" };
+        if (args.length < 1) args = new String[] { "" };
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
 
         return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]).stream().toList();
     }
@@ -72,7 +71,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        parent.run(UserUtils.getOrGetUserByName(sender.getName()), args);
+        parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
         return true;
     }
 }

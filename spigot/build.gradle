@@ -3,6 +3,9 @@ plugins {
 }
 
 repositories {
+    jcenter()
+    mavenLocal()
+    mavenCentral()
     maven {
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
 
@@ -29,7 +32,7 @@ repositories {
 dependencies {
     // -x :StreamlineCore-Spigot:compileJava
     // Platform.
-    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT" // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly "org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT" // The Spigot API with no shadowing. Requires the OSS repo.
 
     // Defaults.
     compileOnly(IMPL)

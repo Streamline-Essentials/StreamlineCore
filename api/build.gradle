@@ -6,7 +6,7 @@
 //apply from: "$rootDir/../dependencies.gradle"
 
 group = 'net.streamline'
-project.version = API_VER
+project.version = "SL" + version
 
 repositories {
     mavenCentral()

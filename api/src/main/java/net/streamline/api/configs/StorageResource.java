@@ -69,6 +69,11 @@ public abstract class StorageResource<T> implements Comparable<StorageResource<?
         this.reloadResource();
     }
 
+    public void sync(boolean force) {
+        this.push();
+        this.reloadResource(force);
+    }
+
     public abstract void push();
 
     public abstract void delete();
@@ -94,6 +99,12 @@ public abstract class StorageResource<T> implements Comparable<StorageResource<?
         });
 
         return r;
+    }
+
+    public boolean isEmpty() {
+        sync(true);
+
+        return getMap().isEmpty();
     }
 
     public InputStream getResourceAsStream(String filename) {

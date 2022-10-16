@@ -34,6 +34,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -288,7 +289,9 @@ public class UserUtils {
     }
 
     public static String getLuckPermsPrefix(String username){
-        User user = SLAPI.getLuckPerms().getUserManager().getUser(username);
+        User user;
+        if (username.contains("-")) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
+        else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
         if (user == null) {
             return "";
         }
@@ -333,7 +336,9 @@ public class UserUtils {
     }
 
     public static String getLuckPermsSuffix(String username){
-        User user = SLAPI.getLuckPerms().getUserManager().getUser(username);
+        User user;
+        if (username.contains("-")) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
+        else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
         if (user == null) return "";
 
         String suffix = "";

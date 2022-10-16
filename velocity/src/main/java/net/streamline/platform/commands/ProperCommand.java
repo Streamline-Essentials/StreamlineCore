@@ -6,6 +6,7 @@ import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ProperCommand implements SimpleCommand, IProperCommand {
     @Getter
@@ -33,12 +35,17 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
 
     @Override
     public void execute(Invocation invocation) {
-        parent.run(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments());
+        parent.baseRun(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments());
     }
 
     @Override
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        return CompletableFuture.completedFuture(parent.doTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments()).stream().toList());
+        String[] args = invocation.arguments();
+        if (args == null) args = new String[] { "" };
+        if (args.length < 1) args = new String[] { "" };
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments());
+
+        return CompletableFuture.completedFuture(r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]).stream().toList());
     }
 
     @Override

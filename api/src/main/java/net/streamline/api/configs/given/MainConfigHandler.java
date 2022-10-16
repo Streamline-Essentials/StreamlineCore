@@ -11,6 +11,46 @@ import java.util.List;
 public class MainConfigHandler extends FlatFileResource<Config> {
     public MainConfigHandler() {
         super(Config.class, "main-config.yml", SLAPI.getInstance().getDataFolder(), true);
+        init();
+    }
+
+    public void init() {
+        userUseType();
+        userDatabaseConnectionUri();
+        userDatabaseDatabase();
+        userDatabasePrefix();
+
+        userConsoleNameRegular();
+        userConsoleDefaultTags();
+        userConsoleDiscriminator();
+        userConsoleServer();
+        userConsoleNameFormatted();
+
+        updatePlayerFormattedNames();
+
+        playerLevelingEquation();
+        playerOfflineName();
+        playerOnlineName();
+        playerTagsDefault();
+        playerStartingLevel();
+        playerPayoutExperienceAmount();
+        playerPayoutExperienceEvery();
+        playerStartingExperienceAmount();
+
+        debugNotifyNoModules();
+
+        debugConsoleInfoDisabled();
+        debugConsoleInfoPrefix();
+        debugConsoleWarningsDisabled();
+        debugConsoleWarningsPrefix();
+        debugConsoleErrorsDisabled();
+        debugConsoleErrorsPrefix();
+        debugConsoleDebugDisabled();
+        debugConsoleDebugPrefix();
+
+        placeholderCacheReleaseTicks();
+        placeholderCacheReleaseInput();
+        placeholderCacheReleaseOutput();
     }
 
     public StorageUtils.StorageType userUseType() {
@@ -152,5 +192,71 @@ public class MainConfigHandler extends FlatFileResource<Config> {
         reloadResource();
 
         return resource.getOrSetDefault("debug.notify-on.no-modules", true);
+    }
+
+    public boolean debugConsoleInfoDisabled() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.info.full-disable", false);
+    }
+
+    public String debugConsoleInfoPrefix() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.info.prefix", "&f[&3StreamlineCore&f] &r");
+    }
+
+    public boolean debugConsoleWarningsDisabled() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.warnings.full-disable", false);
+    }
+
+    public String debugConsoleWarningsPrefix() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.warnings.prefix", "&f[&3StreamlineCore&f] &6");
+    }
+
+    public boolean debugConsoleErrorsDisabled() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.errors.full-disable", false);
+    }
+
+    public String debugConsoleErrorsPrefix() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.errors.prefix", "&f[&3StreamlineCore&f] &c");
+    }
+
+    public boolean debugConsoleDebugDisabled() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.debug.full-disable", true);
+    }
+
+    public String debugConsoleDebugPrefix() {
+        reloadResource();
+
+        return resource.getOrSetDefault("debug.console.debug.prefix", "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r");
+    }
+
+    public int placeholderCacheReleaseTicks() {
+        reloadResource();
+
+        return resource.getOrSetDefault("placeholders.cache.release-after.ticks", 100);
+    }
+
+    public String placeholderCacheReleaseInput() {
+        reloadResource();
+
+        return resource.getOrSetDefault("placeholders.cache.release-after.placeholder.input", "{{release}}");
+    }
+
+    public String placeholderCacheReleaseOutput() {
+        reloadResource();
+
+        return resource.getOrSetDefault("placeholders.cache.release-after.placeholder.output", "");
     }
 }

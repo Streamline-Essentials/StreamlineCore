@@ -38,6 +38,10 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                 if (player == null) {
                     return;
                 }
+                if (player.getCurrentServer().isEmpty()) {
+                    ProxiedMessageManager.pendMessage(message);
+                    return;
+                }
                 player.getCurrentServer().get().sendPluginMessage(MinecraftChannelIdentifier.from(message.getMainChannel()), message.read());
             });
             return;

@@ -1,19 +1,16 @@
 package net.streamline.api.objects;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class SingleSet<K, V> {
-    public K key;
-    public V value;
+    @Getter @Setter
+    private K key;
+    @Getter @Setter
+    private V value;
 
     public SingleSet(K key, V value){
         this.key = key;
-        this.value = value;
-    }
-
-    public void updateKey(K key){
-        this.key = key;
-    }
-
-    public void updateValue(V value){
         this.value = value;
     }
 }

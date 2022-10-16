@@ -110,11 +110,11 @@ public class ModuleManager {
     }
 
     public static void registerExternalModules() {
-        if (! getLoadedModules().containsKey("streamline-base")) {
-            BaseModule module = new BaseModule();
-            SLAPI.setBaseModule(module);
-            registerModule(module);
-        }
+//        if (! getLoadedModules().containsKey("streamline-base")) {
+//            BaseModule module = new BaseModule();
+//            SLAPI.setBaseModule(module);
+//            registerModule(module);
+//        }
         if (! hasNonBaseModules()) {
             MessageUtils.logInfo(getNoModulesMessage());
             return;

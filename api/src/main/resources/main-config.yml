@@ -107,3 +107,24 @@ debug:
   notify-on:
     # Whether we should notify you about how to get modules if your 'modules' folder is empty.
     no-modules: true
+  console:
+    info:
+      full-disable: false
+      prefix: "&f[&3StreamlineCore&f] &r"
+    warnings:
+      full-disable: false
+      prefix: "&f[&3StreamlineCore&f] &6"
+    errors:
+      full-disable: false
+      prefix: "&f[&3StreamlineCore&f] &c"
+    debug:
+      full-disable: true
+      prefix: "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r"
+
+placeholders:
+  cache:
+    release-after:
+      ticks: 100
+      placeholder:
+        input: "{{release}}"
+        output: ""

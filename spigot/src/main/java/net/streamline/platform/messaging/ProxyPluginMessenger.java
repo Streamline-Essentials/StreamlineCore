@@ -43,9 +43,9 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             }
             if (event.getMessage().getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
                 SingleSet<String, StreamlineResourcePack> set = ResourcePackMessageBuilder.unbuild(event.getMessage());
-                StreamlineResourcePack resourcePack = set.value;
+                StreamlineResourcePack resourcePack = set.getValue();
 
-                Streamline.getInstance().sendResourcePack(resourcePack, set.key);
+                Streamline.getInstance().sendResourcePack(resourcePack, set.getKey());
             }
             if (event.getMessage().getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) {
                 ServerInfoMessageBuilder.handle(event.getMessage());
