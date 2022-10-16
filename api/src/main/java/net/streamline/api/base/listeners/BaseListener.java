@@ -13,7 +13,7 @@ import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
-public class BaseListener extends StreamlineListener {
+public class BaseListener implements StreamlineListener {
     @EventProcessor
     public void onPlayerJoin(LoginCompletedEvent event) {
         StreamlineUser user = event.getResource();

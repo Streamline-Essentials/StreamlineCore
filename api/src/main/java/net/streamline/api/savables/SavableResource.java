@@ -3,16 +3,23 @@ package net.streamline.api.savables;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.configs.StorageResource;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.events.CreateSavableResourceEvent;
+import net.streamline.api.savables.events.DeleteSavableResourceEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
+import java.lang.ref.Cleaner;
 
 public abstract class SavableResource implements StreamlineResource, Comparable<SavableResource> {
-    @Getter @Setter
+
+    @Getter
+    @Setter
     private StorageResource<?> storageResource;
-    @Getter @Setter
+    @Getter
+    @Setter
     private String uuid;
-    @Getter @Setter
+    @Getter
+    @Setter
     private boolean enabled;
 
     public SavableResource(String uuid, StorageResource<?> storageResource) {
@@ -26,6 +33,18 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
             this.enabled = false;
         }
 
+        if (getStorageResource().isEmpty()) {
+            CreateSavableResourceEvent<SavableResource> event = new CreateSavableResourceEvent<>(this);
+            ModuleUtils.fireEvent(event);
+            if (event.isCancelled()) {
+                try {
+                    dispose();
+                    return;
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         this.populateDefaults();
 
         this.loadValues();
@@ -54,8 +73,15 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
     }
 
     public void dispose() throws Throwable {
+        DeleteSavableResourceEvent<SavableResource> event = new DeleteSavableResourceEvent<>(this);
+        ModuleUtils.fireEvent(event);
+        if (event.isCancelled()) return;
         this.uuid = null;
-        this.finalize();
+        try {
+            finalize();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     @Override
@@ -63,3 +89,4 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
         return Long.compare(getStorageResource().getInitializeDate().getTime(), other.getStorageResource().getInitializeDate().getTime());
     }
 }
+

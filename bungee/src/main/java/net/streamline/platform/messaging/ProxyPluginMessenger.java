@@ -32,7 +32,16 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                 if (player == null) {
                     return;
                 }
-                player.getServer().sendData(message.getMainChannel(), message.read());
+                if (player.getServer() != null) {
+                    if (player.getServer().getInfo() == null) {
+                        ProxiedMessageManager.pendMessage(message);
+                        return;
+                    }
+                    player.getServer().sendData(message.getMainChannel(), message.read());
+                } else {
+                    ProxiedMessageManager.pendMessage(message);
+                    return;
+                }
             });
             return;
         }

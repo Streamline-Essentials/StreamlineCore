@@ -50,6 +50,23 @@ public class ModuleUtils {
     public static void logSevere(ModuleLike module, String message) {
         MessageUtils.logSevere(module, message);
     }
+    public static void logDebug(ModuleLike module, String message) {
+        MessageUtils.logDebug(module, message);
+    }
+    public static void logInfo(ModuleLike module, StackTraceElement[] elements) {
+        MessageUtils.logInfo(module, elements);
+    }
+
+    public static void logWarning(ModuleLike module, StackTraceElement[] elements) {
+        MessageUtils.logWarning(module, elements);
+    }
+
+    public static void logSevere(ModuleLike module, StackTraceElement[] elements) {
+        MessageUtils.logSevere(module, elements);
+    }
+    public static void logDebug(ModuleLike module, StackTraceElement[] elements) {
+        MessageUtils.logDebug(module, elements);
+    }
 
     public static void sendMessage(@Nullable StreamlineUser to, String message) {
         SLAPI.getInstance().getMessenger().sendMessage(to, message);

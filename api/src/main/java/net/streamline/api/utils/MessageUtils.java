@@ -25,24 +25,59 @@ import java.util.stream.Collectors;
 
 public class MessageUtils {
     public static void logInfo(String message) {
+        if (GivenConfigs.getMainConfig().debugConsoleInfoDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &r" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleInfoPrefix() + line);
         }
     }
 
     public static void logWarning(String message) {
+        if (GivenConfigs.getMainConfig().debugConsoleWarningsDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &6" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleWarningsPrefix() + line);
         }
     }
 
     public static void logSevere(String message) {
+        if (GivenConfigs.getMainConfig().debugConsoleErrorsDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), "&f[&3StreamlineCore&f] &c" + line);
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleErrorsPrefix() + line);
         }
+    }
+
+    public static void logDebug(String message) {
+        if (GivenConfigs.getMainConfig().debugConsoleDebugDisabled()) return;
+        message = message.replace("%newline%", "\n");
+        for (String line : message.split("\n")) {
+            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleDebugPrefix() + line);
+        }
+    }
+
+    public static void logInfo(StackTraceElement[] stackTraceElements) {
+        Arrays.stream(stackTraceElements).forEach(stackTraceElement -> {
+            logInfo(stackTraceElement.toString());
+        });
+    }
+
+    public static void logWarning(StackTraceElement[] stackTraceElements) {
+        Arrays.stream(stackTraceElements).forEach(stackTraceElement -> {
+            logWarning(stackTraceElement.toString());
+        });
+    }
+
+    public static void logSevere(StackTraceElement[] stackTraceElements) {
+        Arrays.stream(stackTraceElements).forEach(stackTraceElement -> {
+            logSevere(stackTraceElement.toString());
+        });
+    }
+
+    public static void logDebug(StackTraceElement[] stackTraceElements) {
+        Arrays.stream(stackTraceElements).forEach(stackTraceElement -> {
+            logDebug(stackTraceElement.toString());
+        });
     }
 
     public static String loggedModulePrefix(ModuleLike module) {
@@ -68,6 +103,37 @@ public class MessageUtils {
         for (String line : message.split("\n")) {
             logSevere(loggedModulePrefix(module) + line);
         }
+    }
+
+    public static void logDebug(ModuleLike module, String message) {
+        message = message.replace("%newline%", "\n");
+        for (String line : message.split("\n")) {
+            logDebug(loggedModulePrefix(module) + line);
+        }
+    }
+
+    public static void logInfo(ModuleLike module, StackTraceElement[] elements) {
+        Arrays.stream(elements).forEach(stackTraceElement -> {
+            logInfo(loggedModulePrefix(module) + stackTraceElement);
+        });
+    }
+
+    public static void logWarning(ModuleLike module, StackTraceElement[] elements) {
+        Arrays.stream(elements).forEach(stackTraceElement -> {
+            logWarning(loggedModulePrefix(module) + stackTraceElement);
+        });
+    }
+
+    public static void logSevere(ModuleLike module, StackTraceElement[] elements) {
+        Arrays.stream(elements).forEach(stackTraceElement -> {
+            logSevere(loggedModulePrefix(module) + stackTraceElement);
+        });
+    }
+
+    public static void logDebug(ModuleLike module, StackTraceElement[] elements) {
+        Arrays.stream(elements).forEach(stackTraceElement -> {
+            logDebug(loggedModulePrefix(module) + stackTraceElement);
+        });
     }
 
     public static void sendMessage(String to, String message) {
@@ -145,24 +211,38 @@ public class MessageUtils {
 //        }).join();
 //    }
 
-        public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
-        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY)) return ModuleUtils.replaceAllPlayerBungee(streamlineUser, toParse);
+    public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
+        if (user == null) return of;
+
+        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).completeOnTimeout(of, 1000, TimeUnit.MILLISECONDS).join();
+    }
+
+    public static String replaceAllPlayerBungee(String uuid, String of) {
+        return replaceAllPlayerBungee(UserUtils.getOrGetUser(uuid), of);
+    }
+
+    public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
+        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY))
+            return ModuleUtils.replaceAllPlayerBungee(streamlineUser, toParse);
 
         return CompletableFuture.supplyAsync(() -> {
-            Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
-            if (entry == null) return null;
-
-            StreamlinePlayer player = entry.getValue();
+            StreamlinePlayer player = UserUtils.getOrGetPlayer(streamlineUser.getUuid());
+            if (player == null) {
+                Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
+                if (entry == null) return null;
+                player = entry.getValue();
+            }
 
             AtomicString atomicString = new AtomicString(null);
 
-            CompletableFuture<Boolean> futureBool = CompletableFuture.supplyAsync(() -> {
-                ReturnableMessage message = ProxyParseMessageBuilder.build(player, toParse, streamlineUser);
+            StreamlinePlayer finalPlayer = player;
+            CompletableFuture.supplyAsync(() -> {
+                ReturnableMessage message = ProxyParseMessageBuilder.build(finalPlayer, toParse, streamlineUser);
                 message.registerEventCall((pm) -> {
-                     atomicString.set(pm.getString("parsed"));
+                    atomicString.set(pm.getString("parsed"));
                 });
                 return true;
-            });
+            }).join();
 
             return CompletableFuture.supplyAsync(() -> {
                 String s = atomicString.get();
@@ -387,16 +467,6 @@ public class MessageUtils {
         }
 
         return false;
-    }
-
-    public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
-        if (user == null) return of;
-
-        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).join();
-    }
-
-    public static String replaceAllPlayerBungee(String uuid, String of) {
-        return replaceAllPlayerBungee(UserUtils.getOrGetUser(uuid), of);
     }
 
     public static List<String> getStringListFromString(String string) {

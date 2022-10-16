@@ -11,8 +11,11 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.server.ServerStartEvent;
+import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -90,6 +93,14 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         getProxy().registerChannel(SLAPI.getApiChannel());
 
         this.enable();
+        fireStartEvent();
+    }
+
+    public void fireStartEvent() {
+        ServerStartEvent e = new ServerStartEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 
     @Override
@@ -99,6 +110,14 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         }
 
         this.disable();
+        fireStopEvent();
+    }
+
+    public void fireStopEvent() {
+        ServerStopEvent e = new ServerStopEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 
     abstract public void enable();

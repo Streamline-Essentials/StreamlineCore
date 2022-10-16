@@ -2,6 +2,7 @@ package net.streamline.api.events;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.modules.ModuleManager;
 
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
@@ -22,5 +23,16 @@ public abstract class StreamlineEvent {
 
     public String getEventName() {
         return getClass().getSimpleName();
+    }
+
+    public <T extends StreamlineEvent> T fire() {
+        try {
+            T t = (T) this;
+        } catch (Exception e) {
+            return null;
+        }
+
+        ModuleManager.fireEvent(this);
+        return (T) this;
     }
 }

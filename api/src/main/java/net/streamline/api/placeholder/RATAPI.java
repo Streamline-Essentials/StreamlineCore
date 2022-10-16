@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.AtomicString;
 import net.streamline.api.objects.DatedNumber;
@@ -91,13 +92,16 @@ public class RATAPI {
     }
 
     public CompletableFuture<String> parseAllPlaceholders(StreamlineUser of, String from) {
+        if (from.contains(GivenConfigs.getMainConfig().placeholderCacheReleaseInput())) {
+            getLoadedExpansions().forEach((integerDatedNumber, expansion) -> expansion.release());
+            from = from.replace(GivenConfigs.getMainConfig().placeholderCacheReleaseInput(), GivenConfigs.getMainConfig().placeholderCacheReleaseOutput());
+        }
+
+        String finalFrom = from;
         return CompletableFuture.supplyAsync(() -> {
-            AtomicString atomicString = new AtomicString(from);
+            AtomicString atomicString = new AtomicString(finalFrom);
             AtomicInteger integer = new AtomicInteger(0);
-//            for (RATResult result : PlaceholderUtils.getAllPlaceholderResults(of, from)) {
-//                integer.getAndAdd(result.parse(atomicString));
-//            }
-            PlaceholderUtils.getAllPlaceholderResults(of, from).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
+            PlaceholderUtils.getAllPlaceholderResults(of, finalFrom).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
 
             if (integer.get() > 0) atomicString.set(parseAllPlaceholders(of, atomicString.get()).join());
 
@@ -106,13 +110,19 @@ public class RATAPI {
     }
 
     public CompletableFuture<String> parseAllLogicalPlaceholders(String from) {
+        if (from.contains(GivenConfigs.getMainConfig().placeholderCacheReleaseInput())) {
+            getLoadedExpansions().forEach((integerDatedNumber, expansion) -> expansion.release());
+            from = from.replace(GivenConfigs.getMainConfig().placeholderCacheReleaseInput(), GivenConfigs.getMainConfig().placeholderCacheReleaseOutput());
+        }
+
+        String finalFrom = from;
         return CompletableFuture.supplyAsync(() -> {
-            AtomicString atomicString = new AtomicString(from);
+            AtomicString atomicString = new AtomicString(finalFrom);
             AtomicInteger integer = new AtomicInteger(0);
 //            for (RATResult result : PlaceholderUtils.getAllLogicalPlaceholderResults(from)) {
 //                integer.getAndAdd(result.parse(atomicString));
 //            }
-            PlaceholderUtils.getAllLogicalPlaceholderResults(from).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
+            PlaceholderUtils.getAllLogicalPlaceholderResults(finalFrom).forEach(result -> integer.getAndAdd(result.parse(atomicString)));
 
             if (integer.get() > 0) atomicString.set(parseAllLogicalPlaceholders(atomicString.get()).join());
 

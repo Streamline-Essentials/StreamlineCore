@@ -138,6 +138,26 @@ public abstract class StreamlineSpringModule extends SpringBootPlugin implements
         MessageUtils.logSevere(this, message);
     }
 
+    public void logDebug(String message) {
+        MessageUtils.logDebug(this, message);
+    }
+
+    public void logDebug(StackTraceElement[] elements) {
+        MessageUtils.logDebug(this, elements);
+    }
+
+    public void logInfo(StackTraceElement[] elements) {
+        MessageUtils.logInfo(this, elements);
+    }
+
+    public void logWarning(StackTraceElement[] elements) {
+        MessageUtils.logWarning(this, elements);
+    }
+
+    public void logSevere(StackTraceElement[] elements) {
+        MessageUtils.logSevere(this, elements);
+    }
+
     public InputStream getResourceAsStream(String filename) {
         return wrapper.getPluginClassLoader().getResourceAsStream(filename);
     }

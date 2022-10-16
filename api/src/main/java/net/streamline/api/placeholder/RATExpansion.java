@@ -3,6 +3,7 @@ package net.streamline.api.placeholder;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -15,21 +16,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class RATExpansion implements Comparable<RATExpansion> {
     public static class CacheTimer extends BaseRunnable {
-        @Getter
-        private static final int ticks = 36000;
 
         @Getter
         private final RATExpansion parent;
 
         public CacheTimer(RATExpansion parent) {
-            super(getTicks(), getTicks());
+            super(GivenConfigs.getMainConfig().placeholderCacheReleaseTicks(), GivenConfigs.getMainConfig().placeholderCacheReleaseTicks());
             this.parent = parent;
         }
 
         @Override
         public void run() {
             getParent().setCache(new ConcurrentSkipListMap<>());
+            this.setPeriod(GivenConfigs.getMainConfig().placeholderCacheReleaseTicks());
         }
+    }
+
+    public void release() {
+        setCache(new ConcurrentSkipListMap<>());
+        setCachedFutures(new ConcurrentSkipListMap<>());
     }
 
     @Getter @Setter
@@ -40,6 +45,15 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
         if (map == null) map = new ConcurrentSkipListMap<>();
         map.put(params, outcome);
         getCache().put(user, map);
+    }
+
+    public boolean containsCached(StreamlineUser user, String params) {
+        ConcurrentSkipListMap<String, String> map = getCache().get(user);
+        if (map == null) {
+            return false;
+        }
+        String cached = map.get(params);
+        return cached != null;
     }
 
     public String getCached(StreamlineUser user, String params) {
@@ -64,6 +78,15 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
         if (map == null) map = new ConcurrentSkipListMap<>();
         map.put(params, outcome);
         getCachedFutures().put(user, map);
+    }
+
+    public boolean containsCachedFuture(StreamlineUser user, String params) {
+        ConcurrentSkipListMap<String, CompletableFuture<String>> map = getCachedFutures().get(user);
+        if (map == null) {
+            return false;
+        }
+        CompletableFuture<String> cached = map.get(params);
+        return cached != null;
     }
 
     public CompletableFuture<String> getCachedFuture(StreamlineUser user, String params) {
@@ -146,7 +169,7 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
         if (params.equals("logic_calls_previous")) return String.valueOf(this.calls);
         this.calls++;
         if (params.equals("logic_calls_now")) return String.valueOf(this.calls);
-        if (params.equals("logic_checked_most")) return getMostUsedCheck().key;
+        if (params.equals("logic_checked_most")) return getMostUsedCheck().getKey();
 
         return onLogic(params);
     }
@@ -180,13 +203,13 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
         SingleSet<String, AtomicInteger> currentMostUsed = new SingleSet<>("", new AtomicInteger(0));
 
         getChecked().forEach((s, integer) -> {
-            if (integer > currentMostUsed.value.get()) {
-                currentMostUsed.value.set(integer);
-                currentMostUsed.key = s;
+            if (integer > currentMostUsed.getValue().get()) {
+                currentMostUsed.getValue().set(integer);
+                currentMostUsed.setKey(s);
             }
         });
 
-        return new SingleSet<>(currentMostUsed.key, currentMostUsed.value.get());
+        return new SingleSet<>(currentMostUsed.getKey(), currentMostUsed.getValue().get());
     }
 
     public boolean isRegistered() {

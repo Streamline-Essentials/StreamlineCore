@@ -88,7 +88,7 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
 
     public void write(String utf) {
         SingleSet<String, String> r = extrapolate(utf);
-        write(r.key, r.value);
+        write(r.getKey(), r.getValue());
     }
 
     public void writeAll(byte[] bytes) {
@@ -127,7 +127,7 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     }
 
     public String getArgument(int index) {
-        return getString(getArguments().get(index).key);
+        return getString(getArguments().get(index).getKey());
     }
 
     public boolean getBoolean(String key) {

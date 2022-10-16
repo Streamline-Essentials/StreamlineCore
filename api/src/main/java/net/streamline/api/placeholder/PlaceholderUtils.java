@@ -7,6 +7,7 @@ import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MatcherUtils;
 import net.streamline.api.utils.MathUtils;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,12 @@ public class PlaceholderUtils {
             String identifier = matcher.group(2);
             String params = matcher.group(3);
             if (total == null || identifier == null || params == null) continue;
+            if (expansion.containsCached(user, params)){
+                found.add(new RATReplacement(total, identifier, params, expansion.getCached(user, params)));
+                continue;
+            }
             String value = expansion.doRequest(user, params);
+            expansion.cache(user, params, value);
             if (value == null) continue;
             RATReplacement replacement = new RATReplacement(total, identifier, params, value);
             if (containsReplacement(found, replacement.getTotal())) continue;
@@ -77,7 +83,12 @@ public class PlaceholderUtils {
             String identifier = matcher.group(2);
             String params = matcher.group(3);
             if (total == null || identifier == null || params == null) continue;
+            if (expansion.containsCached(UserUtils.getConsole(), params)){
+                found.add(new RATReplacement(total, identifier, params, expansion.getCached(UserUtils.getConsole(), params)));
+                continue;
+            }
             String value = expansion.doLogic(params);
+            expansion.cache(UserUtils.getConsole(), params, value);
             if (value == null) continue;
             RATReplacement replacement = new RATReplacement(total, identifier, params, value);
             if (containsReplacement(found, replacement.getTotal())) continue;

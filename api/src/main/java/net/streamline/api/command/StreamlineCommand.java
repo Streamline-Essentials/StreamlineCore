@@ -8,6 +8,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -49,7 +50,19 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         CommandHandler.unregisterStreamlineCommand(this);
     }
 
+    public void baseRun(StreamlineUser sender, @Nullable String[] args) {
+        if (args == null) args = new String[] { "" };
+        if (args.length < 1) args = new String[] { "" };
+        run(sender, args);
+    }
+
     abstract public void run(StreamlineUser sender, String[] args);
+
+    public ConcurrentSkipListSet<String> baseTabComplete(StreamlineUser sender, @Nullable String[] args) {
+        if (args == null) args = new String[] { "" };
+        if (args.length < 1) args = new String[] { "" };
+        return doTabComplete(sender, args);
+    }
 
     abstract public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args);
 

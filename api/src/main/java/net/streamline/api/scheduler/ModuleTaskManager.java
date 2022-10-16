@@ -13,7 +13,7 @@ public class ModuleTaskManager {
         TreeMap<Integer, ModuleRunnable> map = currentRunnables.get(moduleRunnable.module);
         if (map == null) map = new TreeMap<>();
 
-        map.put(moduleRunnable.index, moduleRunnable);
+        map.put(moduleRunnable.getIndex(), moduleRunnable);
 
         currentRunnables.put(moduleRunnable.module, map);
     }
@@ -22,7 +22,7 @@ public class ModuleTaskManager {
         TreeMap<Integer, ModuleRunnable> map = currentRunnables.get(moduleRunnable.module);
         if (map == null) map = new TreeMap<>();
 
-        map.remove(moduleRunnable.index);
+        map.remove(moduleRunnable.getIndex());
 
         currentRunnables.put(moduleRunnable.module, map);
     }

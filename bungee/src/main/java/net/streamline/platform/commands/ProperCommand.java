@@ -30,15 +30,14 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        parent.run(UserManager.getInstance().getOrGetUser(sender), args);
+        parent.baseRun(UserManager.getInstance().getOrGetUser(sender), args);
     }
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args == null) return new ArrayList<>();
-        if (args.length <= 0) return new ArrayList<>();
-
-        ConcurrentSkipListSet<String> r = parent.doTabComplete(UserManager.getInstance().getOrGetUser(sender), args);
+        if (args == null) args = new String[] { "" };
+        if (args.length < 1) args = new String[] { "" };
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserManager.getInstance().getOrGetUser(sender), args);
 
         return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]);
     }

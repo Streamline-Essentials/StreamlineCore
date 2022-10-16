@@ -13,15 +13,12 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.events.server.*;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.events.server.LoginReceivedEvent;
-import net.streamline.api.events.server.LoginCompletedEvent;
-import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
@@ -56,7 +53,7 @@ public class PlatformListener implements Listener {
         ModuleUtils.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
-            loginReceivedEvent.getResult().validate();
+            if (! loginReceivedEvent.getResult().validate()) return;
 
             event.setCancelReason(Messenger.getInstance().codedText(loginReceivedEvent.getResult().getDisconnectMessage()));
             event.setCancelled(true);

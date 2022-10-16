@@ -6,8 +6,10 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -90,13 +92,13 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new SpigotProfiler());
 
-        registerListener(new PlatformListener());
         getProxy().getScheduler().scheduleSyncRepeatingTask(this, new Runner(), 0, 50);
 
         getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
 
         this.enable();
+        registerListener(new PlatformListener());
     }
 
     @Override
@@ -106,6 +108,14 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         }
 
         this.disable();
+        fireStopEvent();
+    }
+
+    public void fireStopEvent() {
+        ServerStopEvent e = new ServerStopEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 
     abstract public void enable();

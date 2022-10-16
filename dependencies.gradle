@@ -42,6 +42,6 @@ ext {
             "${project.rootProject.rootDir}/libs/sbp-spring-boot-starter.jar"/*,
             "${project.rootProject.rootDir}/libs/sbp-core.jar"*/
     ]
-    API_VER = "1.0.4-SNAPSHOT"
-    APIB_VER = "1.0.0-SNAPSHOT"
+//    API_VER = "1.0.4-SNAPSHOT"
+//    APIB_VER = "1.0.0-SNAPSHOT"
 }

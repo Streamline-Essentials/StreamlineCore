@@ -9,6 +9,8 @@ import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
 import net.streamline.api.SLAPI;
@@ -17,15 +19,12 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.events.server.LogoutEvent;
+import net.streamline.api.events.server.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.events.server.LoginReceivedEvent;
-import net.streamline.api.events.server.LoginCompletedEvent;
-import net.streamline.api.events.server.StreamlineChatEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
@@ -60,7 +59,7 @@ public class PlatformListener {
         ModuleUtils.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
-            loginReceivedEvent.getResult().validate();
+            if (! loginReceivedEvent.getResult().validate()) return;
 
             event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(loginReceivedEvent.getResult().getDisconnectMessage())));
         }
@@ -152,5 +151,21 @@ public class PlatformListener {
         } catch (Exception e) {
             // do nothing.
         }
+    }
+
+    @Subscribe
+    public void onStart(ProxyInitializeEvent event) {
+        ServerStartEvent e = new ServerStartEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+    }
+
+    @Subscribe
+    public void onStop(ProxyShutdownEvent event) {
+        ServerStopEvent e = new ServerStopEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 }

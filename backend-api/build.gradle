@@ -6,7 +6,7 @@
 //apply from: "$rootDir/../dependencies.gradle"
 
 group = 'net.streamline'
-project.version = APIB_VER
+project.version = "SLB" + version
 
 repositories {
     jcenter()
