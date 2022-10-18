@@ -1,3 +1,9 @@
+import net.mcparkour.migle.attributes.Dependency;
+
+plugins {
+    id("net.mcparkour.migle.migle-velocity") version "1.1.2"
+}
+
 repositories {
     //Velocity
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
@@ -20,4 +26,18 @@ dependencies {
     // Streamline API.
 //    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
     implementation(shadow(project(":StreamlineCore-API")))
+}
+
+net.mcparkour.migle.attributes.Dependency lp = new Dependency("luckperms", false)
+net.mcparkour.migle.attributes.Dependency geyser = new Dependency("geyser-velocity", true)
+
+migleVelocity {
+    id = 'streamlinecore'
+    name = 'StreamlineCore'
+    version = "${project.version}"
+    main = 'net.streamline.base.Streamline'
+    description = 'True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.'
+    authors = ['Quaint', 'RestonedLife']
+    url = 'https://github.com/Streamline-Essentials'
+    dependencies = [ lp, geyser ]
 }
