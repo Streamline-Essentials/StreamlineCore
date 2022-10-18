@@ -1,3 +1,7 @@
+plugins {
+    id("net.mcparkour.migle.migle-bungee") version "1.1.2"
+}
+
 repositories {
 }
 
@@ -17,4 +21,14 @@ dependencies {
     // Streamline API.
 //    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
     implementation(shadow(project(":StreamlineCore-API")))
+}
+
+migleBungee {
+    name = 'StreamlineCore'
+    main = 'net.streamline.base.Streamline'
+    author = 'Quaint'
+    version = "${project.version}"
+    description = 'True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.'
+    depends = ['LuckPerms']
+    softDepends = ['Geyser-Bungee']
 }

@@ -14,20 +14,20 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import java.nio.file.Path;
 
-@Plugin(
-        id = "streamlineapi",
-        name = "StreamlineAPI",
-        version = "${project.version}",
-        url = "https://github.com/Streamline-Essentials/StreamlineAPI",
-        description = "An Essentials plugin for Minecraft server proxies.",
-        authors = {
-                "Quaint"
-        },
-        dependencies = {
-                @Dependency(id = "luckperms"),
-                @Dependency(id = "geyser-velocity", optional = true)
-        }
-)
+//@Plugin(
+//        id = "streamlineapi",
+//        name = "StreamlineAPI",
+//        version = "${project.version}",
+//        url = "https://github.com/Streamline-Essentials/StreamlineAPI",
+//        description = "An Essentials plugin for Minecraft server proxies.",
+//        authors = {
+//                "Quaint"
+//        },
+//        dependencies = {
+//                @Dependency(id = "luckperms"),
+//                @Dependency(id = "geyser-velocity", optional = true)
+//        }
+//)
 public class Streamline extends BasePlugin {
     @Getter @Setter
     private static ServerPusher serverPusher;

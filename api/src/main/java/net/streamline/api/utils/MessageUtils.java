@@ -239,7 +239,7 @@ public class MessageUtils {
             CompletableFuture.supplyAsync(() -> {
                 ReturnableMessage message = ProxyParseMessageBuilder.build(finalPlayer, toParse, streamlineUser);
                 message.registerEventCall((pm) -> {
-                    atomicString.set(pm.getString("parsed"));
+                    if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) atomicString.set(pm.getString("parsed"));
                 });
                 return true;
             }).join();

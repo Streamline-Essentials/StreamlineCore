@@ -88,6 +88,23 @@ public abstract class BasePlugin implements IStreamline {
         this.proxy = s;
         this.logger = l;
         this.dataFolder = dd.toFile();
+
+        Path parentPath = dd.getParent();
+        if (parentPath != null) {
+            File parentFile = new File(parentPath.toUri());
+            File[] files = parentFile.listFiles((f) -> {
+                if (! f.isDirectory()) return false;
+                if (f.getName().equals("streamlineapi")) return true;
+                return false;
+            });
+
+            if (files != null) {
+                Arrays.stream(files).forEach(file -> {
+                    file.renameTo(new File(parentPath.toFile(), "streamlinecore"));
+                });
+            }
+        }
+
         onLoad();
     }
 

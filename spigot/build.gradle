@@ -1,5 +1,5 @@
 plugins {
-    id 'net.minecrell.plugin-yml.bukkit' version '0.3.0'
+    id("net.mcparkour.migle.migle-bukkit") version "1.1.2"
 }
 
 repositories {
@@ -50,12 +50,13 @@ dependencies {
     implementation(shadow(project(":StreamlineCore-APIB")))
 }
 
-bukkit {
-    name = 'StreamlineAPI'
+migleBukkit {
+    name = 'StreamlineCore'
     main = 'net.streamline.base.Streamline'
     authors = ['Quaint', 'RedstonedLife']
     website = 'https://github.com/Streamline-Essentials'
+    description = 'True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.'
     version = "${project.version}"
     depend = ['LuckPerms']
-    softDepend = ['Geyser', 'PlaceholderAPI']
+    softDepend = ['Geyser-Spigot', 'PlaceholderAPI']
 }

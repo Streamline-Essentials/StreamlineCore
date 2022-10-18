@@ -140,8 +140,10 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.startsWith("?R:")) {
             params = params.substring("?R:".length());
             params = params
-                    .replace("{", "%")
-                    .replace("}", "%")
+                    .replace("[[", "%")
+                    .replace("]]", "%")
+                    .replace("{{", "%")
+                    .replace("}}", "%")
                     .replace("*/*", "%")
             ;
             return ModuleUtils.parseOnProxy(user, params);

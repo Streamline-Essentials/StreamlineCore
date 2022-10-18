@@ -32,6 +32,7 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
@@ -73,6 +74,23 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Override
     public void onLoad() {
         instance = this;
+
+        String parentPath = getDataFolder().getParent();
+        if (parentPath != null) {
+            File parentFile = new File(parentPath);
+            File[] files = parentFile.listFiles((f) -> {
+                if (! f.isDirectory()) return false;
+                if (f.getName().equals("StreamlineAPI")) return true;
+                return false;
+            });
+
+            if (files != null) {
+                Arrays.stream(files).forEach(file -> {
+                    file.renameTo(new File(parentPath, "StreamlineCore"));
+                });
+            }
+        }
+
         name = "StreamlineAPI";
         version = "${{project.version}}";
 

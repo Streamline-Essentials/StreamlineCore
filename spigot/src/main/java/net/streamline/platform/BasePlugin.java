@@ -34,6 +34,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -78,6 +79,22 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public void onLoad() {
         instance = this;
+
+        String parentPath = getDataFolder().getParent();
+        if (parentPath != null) {
+            File parentFile = new File(parentPath);
+            File[] files = parentFile.listFiles((f) -> {
+                if (! f.isDirectory()) return false;
+                if (f.getName().equals("StreamlineAPI")) return true;
+                return false;
+            });
+
+            if (files != null) {
+                Arrays.stream(files).forEach(file -> {
+                    file.renameTo(new File(parentPath, "StreamlineCore"));
+                });
+            }
+        }
 
         this.load();
     }
