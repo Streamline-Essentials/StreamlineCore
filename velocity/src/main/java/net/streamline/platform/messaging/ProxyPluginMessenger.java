@@ -6,11 +6,13 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.streamline.api.messages.*;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
@@ -70,6 +72,8 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             ProxyParseMessageBuilder.handle(event.getMessage());
             return;
         }
-        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
+        if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
+            UserNameMessageBuilder.handle(event.getMessage());
+        }
     }
 }

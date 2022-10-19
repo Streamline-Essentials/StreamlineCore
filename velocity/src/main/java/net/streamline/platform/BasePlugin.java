@@ -32,6 +32,7 @@ import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -39,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.LogManager;
 
 public abstract class BasePlugin implements IStreamline {
     public static class Runner implements Runnable {

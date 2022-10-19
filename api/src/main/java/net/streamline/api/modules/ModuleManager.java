@@ -87,14 +87,13 @@ public class ModuleManager {
                     "&eare installable content &b(&7you can create your own&5!&b)%newline%" +
                     "&ethat either expand upon the core plugin or add%newline%" +
                     "&ecompletely new content to your server&b(&es&b)&7. &eYou %newline%" +
-                    "&ecan check them out on our &9&lDiscord &eor on our%newline%" +
-                    "&epublic folder&7! &eThank you&7!%newline%" +
+                    "&ecan check them out on our &9&lDiscord &eor on the%newline%" +
+                    "&e&7&cSpigotMC &ewebsite&7! &eThank you&7!%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&cDisable &ethis message in your &bmain-config.yml%newline%" +
                     "&a&m&l                                                 %newline%" +
-                    "&7Streamline &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
-                    "&7Streamline &5&lModules &b(&c&lOLD&b)&7: &bhttps://www.mediafire.com/folder/fmduksvzxqlcu/modules%newline%" +
-                    "&7Streamline &5&lModules &b(&a&lNEW&b)&7: &bhttps://github.com/Streamline-Essentials/StreamlineWiki/wiki/Modules#download" +
+                    "&7Streamline &9&lDiscord &dHub&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&7Streamline &5&lModules &bGuide&7: &bhttps://github.com/Streamline-Essentials/StreamlineWiki/wiki/Modules#download%newline%" +
                     "&a&m&l                                                 "
             ;
 
@@ -181,7 +180,6 @@ public class ModuleManager {
             if (SLAPI.getBaseModule() != null) SLAPI.getBaseModule().stop();
             BaseModule module = new BaseModule();
             SLAPI.setBaseModule(module);
-            registerModule(module);
             return;
         }
         Path path = safePluginManager().getPlugin(id).getPluginPath();

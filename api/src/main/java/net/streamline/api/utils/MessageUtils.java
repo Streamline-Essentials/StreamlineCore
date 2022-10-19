@@ -151,66 +151,6 @@ public class MessageUtils {
     @Getter @Setter
     private static ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
 
-//    private static void cache(StreamlineUser user, String params, String outcome) {
-//        ConcurrentSkipListMap<String, String> map = getCache().get(user);
-//        if (map == null) map = new ConcurrentSkipListMap<>();
-//        map.put(params, outcome);
-//        getCache().put(user, map);
-//    }
-//
-//    private static String getCached(StreamlineUser user, String params) {
-//        ConcurrentSkipListMap<String, String> map = getCache().get(user);
-//        if (map == null) {
-//            map = new ConcurrentSkipListMap<>();
-//            getCache().put(user, map);
-//            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
-//        }
-//        String cached = map.get(params);
-//        if (cached == null) {
-//            return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
-//        }
-//        return cached;
-//    }
-//
-//    private static String passResponse(StreamlineUser streamlineUser, String toParse) {
-//        Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
-//        if (entry == null) return null;
-//
-//        StreamlinePlayer player = entry.getValue();
-//
-//        CompletableFuture<Boolean> futureBool = CompletableFuture.supplyAsync(() -> {
-//            ReturnableMessage message = ProxyParseMessageBuilder.build(player, toParse, streamlineUser);
-//            message.registerEventCall((pm) -> cache(streamlineUser, toParse, pm.getString("parsed")));
-//            return true;
-//        });
-//
-//        if (! futureBool.join()) return null;
-//        return getCached(streamlineUser, toParse);
-//    }
-//
-//    public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
-//        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY)) return ModuleUtils.replaceAllPlayerBungee(streamlineUser, toParse);
-//
-//        return CompletableFuture.supplyAsync(() -> {
-//            passResponse(streamlineUser, toParse);
-//
-//            try {
-//                Thread.sleep(100);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//
-//            String r = passResponse(streamlineUser, toParse);
-//
-//            ConcurrentSkipListMap<String, String> map = getCache().get(streamlineUser);
-//            if (map == null) return r;
-//            map.remove(toParse);
-//            getCache().put(streamlineUser, map);
-//
-//            return r;
-//        }).join();
-//    }
-
     public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
         if (user == null) return of;
 
