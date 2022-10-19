@@ -18,6 +18,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
+        MessageUtils.logDebug("Sending ProxiedMessage...");
+
         if (Streamline.getInstance().getOnlinePlayers().size() == 0) return;
 
         if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
@@ -63,6 +65,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
+        MessageUtils.logDebug("Received ProxiedMessage...");
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             ServerConnectMessageBuilder.handle(event.getMessage());

@@ -88,6 +88,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
     @Getter @Setter
     private static boolean proxiedServer;
+    @Getter @Setter
+    private static boolean proxy;
 
     public SLAPI(P platform, U userManager, M messenger, File dataFolderExt) {
         instance = this;
@@ -97,6 +99,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         this.messenger = messenger;
 
         setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.PROXY));
+        setProxy(platform.getServerType().equals(IStreamline.ServerType.PROXY));
 
         dataFolder = dataFolderExt;
 

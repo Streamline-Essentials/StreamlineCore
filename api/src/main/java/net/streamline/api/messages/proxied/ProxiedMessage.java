@@ -262,6 +262,10 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
         return getLiteralContents().containsValue(value);
     }
 
+    public void send() {
+        SLAPI.getInstance().getProxyMessenger().sendMessage(this);
+    }
+
     @Override
     public int compareTo(@NotNull ProxiedMessage o) {
         return Long.compare(getGottenAt().getTime(), o.getGottenAt().getTime());
