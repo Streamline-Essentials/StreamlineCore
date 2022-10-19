@@ -4,6 +4,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.messages.*;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
@@ -18,14 +19,10 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
-        MessageUtils.logDebug("Sending ProxiedMessage...");
-
         if (Streamline.getInstance().getOnlinePlayers().size() == 0) return;
 
         if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
             Streamline.getInstance().getServerNames().forEach(a -> {
-//                Streamline.getInstance().getProxy().getServerInfo(a).sendData(message.getChannel(), message.getMessages());
-
                 if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
                     MessageUtils.logInfo(a + " server is empty...");
                     return;
@@ -65,7 +62,6 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
-        MessageUtils.logDebug("Received ProxiedMessage...");
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             ServerConnectMessageBuilder.handle(event.getMessage());
@@ -74,6 +70,10 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             ProxyParseMessageBuilder.handle(event.getMessage());
             return;
+        }
+        if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
+            MessageUtils.logDebug("Received UserNameMessageBuilder ProxiedMessageIn.");
+            UserNameMessageBuilder.handle(event.getMessage());
         }
     }
 }

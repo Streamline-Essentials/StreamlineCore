@@ -147,7 +147,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());
-        ModuleManager.registerModule(getBaseModule());
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

@@ -65,7 +65,7 @@ public class StreamlineListenerLayout {
             }
             final Class<?> checkClass;
             if (method.getParameterTypes().length != 1 || !StreamlineEvent.class.isAssignableFrom(checkClass = method.getParameterTypes()[0])) {
-                module.logSevere("Module '" + module.identifier() + "' attempted to register an invalid EventProcessor method signature \"" + method.toGenericString() + "\" in '" + this.getClass() + "'");
+                module.logSevere("Module '" + module.identifier() + "' attempted to register an invalid EventProcessor method signature \"" + method.toGenericString() + "\" in '" + getListener().getClass() + "'");
                 continue;
             }
             final Class<? extends StreamlineEvent> eventClass = checkClass.asSubclass(StreamlineEvent.class);
@@ -105,60 +105,6 @@ public class StreamlineListenerLayout {
                 eventSet.add(new RegisteredListener<>(getListener(), executor, eh.priority(), sm, eh.ignoreCancelled()));
             if (module instanceof StreamlineSpringModule ssm)
                 eventSet.add(new RegisteredListener<>(getListener(), executor, eh.priority(), ssm, eh.ignoreCancelled()));
-        }
-        return ret;
-    }
-
-    public ConcurrentHashMap<Class<? extends StreamlineEvent>, ConcurrentSkipListSet<SpringRegisteredListener>> setUp(StreamlineSpringModule module) {
-        ConcurrentHashMap<Class<? extends StreamlineEvent>, ConcurrentSkipListSet<SpringRegisteredListener>> ret = new ConcurrentHashMap<>();
-
-        for (final Method method : getMethods()) {
-            final EventProcessor eh = method.getAnnotation(EventProcessor.class);
-            if (eh == null) continue;
-            // Do not register bridge or synthetic methods to avoid event duplication
-            // Fixes SPIGOT-893
-            if (method.isBridge() || method.isSynthetic()) {
-                continue;
-            }
-            final Class<?> checkClass;
-            if (method.getParameterTypes().length != 1 || !StreamlineEvent.class.isAssignableFrom(checkClass = method.getParameterTypes()[0])) {
-                module.logSevere("Module '" + module.identifier() + "' attempted to register an invalid EventProcessor method signature \"" + method.toGenericString() + "\" in '" + this.getClass() + "'");
-                continue;
-            }
-            final Class<? extends StreamlineEvent> eventClass = checkClass.asSubclass(StreamlineEvent.class);
-            method.setAccessible(true);
-            ConcurrentSkipListSet<SpringRegisteredListener> eventSet = ret.computeIfAbsent(eventClass, k -> new ConcurrentSkipListSet<>());
-
-            for (Class<?> clazz = eventClass; StreamlineEvent.class.isAssignableFrom(clazz); clazz = clazz.getSuperclass()) {
-                // This loop checks for extending deprecated events
-                if (clazz.getAnnotation(Deprecated.class) != null) {
-                    module.logInfo(
-                            String.format(
-                                    "'%s' has registered a listener for '%s' on method '%s', but the event is Deprecated. Please notify these authors: %s.",
-                                    module.identifier(),
-                                    clazz.getName(),
-                                    method.toGenericString(),
-                                    module.getAuthorsStringed()));
-                    break;
-                }
-            }
-
-            EventExecutor executor = (listener1, event) -> {
-                try {
-                    if (!eventClass.isAssignableFrom(event.getClass())) {
-                        return;
-                    }
-                    method.invoke(listener1, event);
-                } catch (InvocationTargetException ex) {
-                    throw new EventException(ex.getCause());
-                } catch (Throwable t) {
-                    throw new EventException(t);
-                }
-
-                event.setCompleted(true);
-            };
-
-            eventSet.add(new SpringRegisteredListener(getListener(), executor, eh.priority(), module, eh.ignoreCancelled()));
         }
         return ret;
     }

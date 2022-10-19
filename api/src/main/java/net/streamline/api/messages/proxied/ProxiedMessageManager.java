@@ -34,7 +34,7 @@ public class ProxiedMessageManager {
 
     public static void sendReturnable(ReturnableMessage returnableMessage) {
         loadReturnableMessage(returnableMessage);
-        SLAPI.getInstance().getProxyMessenger().sendMessage(returnableMessage.getPayload());
+        returnableMessage.getPayload().send();
     }
 
     public static boolean killReturnable(ReturnableMessage returnableMessage) {

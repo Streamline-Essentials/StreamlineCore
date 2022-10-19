@@ -37,8 +37,6 @@ public class OneSecondTimer extends BaseRunnable {
                 UserNameUpdateEvent updateEvent = new UserNameUpdateEvent(user, UserUtils.getDisplayName(user.getLatestName(), user.getLatestName()), user.getDisplayName());
                 ModuleUtils.fireEvent(updateEvent);
                 if (! updateEvent.isCancelled()) {
-                    MessageUtils.logDebug("Changed to " + updateEvent.getChangeTo());
-
                     user.setDisplayName(updateEvent.getChangeTo());
                 }
 

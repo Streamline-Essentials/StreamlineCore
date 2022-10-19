@@ -277,7 +277,7 @@ public class ModuleUtils {
     }
 
     public static void fireEvent(StreamlineEvent event) {
-        SLAPI.getInstance().getPlatform().fireEvent(event);
+        ModuleManager.fireEvent(event);
     }
 
     public static void listen(StreamlineListener listener, StreamlineModule module) {

@@ -41,13 +41,10 @@ public class UserNameMessageBuilder {
             return;
         }
 
-        MessageUtils.logDebug("name = " + name);
-
         UserNameUpdateByOtherEvent event = new UserNameUpdateByOtherEvent(user, name, user.getDisplayName(), in);
         event = event.fire();
         if (event.isCancelled()) return;
 
         user.setDisplayName(event.getChangeTo());
-        MessageUtils.logDebug("Changed to " + event.getChangeTo());
     }
 }

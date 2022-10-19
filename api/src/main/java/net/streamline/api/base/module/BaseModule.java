@@ -74,8 +74,9 @@ public class BaseModule extends SimpleModule {
     public void onLoad() {
         instance = this;
         setBaseListener(new BaseListener());
+//        ModuleUtils.listen(getBaseListener(), this);
+
         setStreamlineExpansion(new StreamlineExpansion());
-        ModuleUtils.listen(getBaseListener(), this);
     }
 
     @Override

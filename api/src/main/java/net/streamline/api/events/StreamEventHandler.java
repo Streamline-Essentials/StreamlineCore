@@ -15,11 +15,15 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Function;
 
 /**
  * A list of event handlers, stored per-event.
  */
 public class StreamEventHandler {
+    @Getter @Setter
+    private static ConcurrentSkipListSet<FunctionedEvent<StreamlineEvent>> functions = new ConcurrentSkipListSet<>();
+
     @Getter @Setter
     private static ConcurrentSkipListMap<Integer, StreamlineListener> listeners = new ConcurrentSkipListMap<>();
 
@@ -82,5 +86,13 @@ public class StreamEventHandler {
                 ex.printStackTrace();
             }
         });
+
+        getFunctions().forEach((function) -> {
+            if (function.getClazz().isAssignableFrom(event.getClass())) function.fire(event);
+        });
+    }
+
+    public static <T extends StreamlineEvent> void loadFunction(FunctionedEvent<T> functionedEvent) {
+        getFunctions().add((FunctionedEvent<StreamlineEvent>) functionedEvent);
     }
 }
