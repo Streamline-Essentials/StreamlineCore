@@ -41,6 +41,7 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
     private ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
 
     public void cache(StreamlineUser user, String params, String outcome) {
+        if (outcome == null) return;
         ConcurrentSkipListMap<String, String> map = getCache().get(user);
         if (map == null) map = new ConcurrentSkipListMap<>();
         map.put(params, outcome);
@@ -74,6 +75,7 @@ public abstract class RATExpansion implements Comparable<RATExpansion> {
     private ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, CompletableFuture<String>>> cachedFutures = new ConcurrentSkipListMap<>();
 
     public void cacheFuture(StreamlineUser user, String params, CompletableFuture<String> outcome) {
+        if (outcome == null) return;
         ConcurrentSkipListMap<String, CompletableFuture<String>> map = getCachedFutures().get(user);
         if (map == null) map = new ConcurrentSkipListMap<>();
         map.put(params, outcome);

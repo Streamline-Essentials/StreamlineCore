@@ -4,14 +4,21 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.events.EventPriority;
 import net.streamline.api.events.EventProcessor;
 import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.events.server.LoginReceivedEvent;
+import net.streamline.api.messages.ProxiedStreamlinePlayer;
+import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
+import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.UserUtils;
 
 public class BaseListener implements StreamlineListener {
     @EventProcessor
@@ -42,6 +49,16 @@ public class BaseListener implements StreamlineListener {
             title.setFadeOut(MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_TITLE_OUT.getInt());
 
             SLAPI.getInstance().getMessenger().sendTitle(event.getResource(), title);
+        }
+    }
+
+    @EventProcessor(priority = EventPriority.HIGHEST)
+    public void onProxyMessage(ProxyMessageInEvent event) {
+        if (! SLAPI.isProxy()) {
+            if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
+                MessageUtils.logDebug("Received UserNameMessageBuilder ProxiedMessageIn.");
+                UserNameMessageBuilder.handle(event.getMessage());
+            }
         }
     }
 }

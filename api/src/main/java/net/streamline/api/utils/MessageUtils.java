@@ -251,8 +251,8 @@ public class MessageUtils {
                 }
 
                 return s;
-            }).completeOnTimeout(null, 200, TimeUnit.MILLISECONDS).join();
-        }).completeOnTimeout(null, 200, TimeUnit.MILLISECONDS).join();
+            }).completeOnTimeout(null, 1200, TimeUnit.MILLISECONDS).join();
+        }).completeOnTimeout(null, 1200, TimeUnit.MILLISECONDS).join();
     }
 
     public static String parseOnProxy(String toParse) {

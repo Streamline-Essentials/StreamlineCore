@@ -28,6 +28,7 @@ import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.security.core.parameters.P;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -70,8 +71,18 @@ public class UserUtils {
     }
 
     public static void unloadUser(StreamlineUser user) {
+        unloadUser(user.getUuid());
+    }
+
+    public static void unloadUser(String uuid) {
+        if (! isLoaded(uuid)) return;
+        StreamlineUser user = getUser(uuid);
         user.saveAll();
-        getLoadedUsers().remove(user.getUuid());
+        getLoadedUsers().remove(uuid);
+    }
+
+    public static boolean isLoaded(String uuid) {
+        return getUser(uuid) != null;
     }
 
     public static ConcurrentSkipListMap<String, StreamlineUser> getOnlineUsers() {

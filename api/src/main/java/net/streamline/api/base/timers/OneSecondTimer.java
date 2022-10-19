@@ -1,7 +1,11 @@
 package net.streamline.api.base.timers;
 
 
+import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.UserNameUpdateEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
@@ -32,10 +36,15 @@ public class OneSecondTimer extends BaseRunnable {
             if (GivenConfigs.getMainConfig().updatePlayerFormattedNames()) {
                 UserNameUpdateEvent updateEvent = new UserNameUpdateEvent(user, UserUtils.getDisplayName(user.getLatestName(), user.getLatestName()), user.getDisplayName());
                 ModuleUtils.fireEvent(updateEvent);
-                if (updateEvent.isCancelled()) return;
+                if (! updateEvent.isCancelled()) {
+                    MessageUtils.logDebug("Changed to " + updateEvent.getChangeTo());
 
-                user.setDisplayName(updateEvent.getChangeTo());
-//                MessageUtils.logInfo("Updated player name for '" + user.getUuid() + "' to '" + updateEvent.getChangeTo() + "'");
+                    user.setDisplayName(updateEvent.getChangeTo());
+                }
+
+                if (user instanceof StreamlinePlayer player && SLAPI.isProxy()) {
+                    UserNameMessageBuilder.build(player, user.getDisplayName(), player).send();
+                }
             }
         });
     }

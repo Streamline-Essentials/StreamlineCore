@@ -12,6 +12,7 @@ import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
+        MessageUtils.logDebug("Sending ProxiedMessage...");
         if (Streamline.getInstance().getProxy().getOnlinePlayers().isEmpty()) {
             ProxiedMessageManager.pendMessage(message);
             return;
@@ -33,14 +35,9 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
+        MessageUtils.logDebug("Received ProxiedMessage...");
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getMainChannel().equals(SLAPI.getApiChannel())) {
-            if (event.getMessage().getSubChannel().equals(SavablePlayerMessageBuilder.getSubChannel())) {
-                ProxiedStreamlinePlayer proxiedStreamlinePlayer = SavablePlayerMessageBuilder.unbuild(event.getMessage());
-                StreamlineUser user = UserUtils.getOrGetUser(proxiedStreamlinePlayer.getUuid());
-                if (user != null) UserUtils.unloadUser(user);
-                UserUtils.loadUser(new StreamlinePlayer(proxiedStreamlinePlayer));
-            }
             if (event.getMessage().getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
                 SingleSet<String, StreamlineResourcePack> set = ResourcePackMessageBuilder.unbuild(event.getMessage());
                 StreamlineResourcePack resourcePack = set.getValue();
@@ -49,6 +46,13 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             }
             if (event.getMessage().getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) {
                 ServerInfoMessageBuilder.handle(event.getMessage());
+            }
+            if (event.getMessage().getSubChannel().equals(SavablePlayerMessageBuilder.getSubChannel())) {
+                ProxiedStreamlinePlayer proxiedPlayer = SavablePlayerMessageBuilder.unbuild(event.getMessage());
+
+                UserUtils.unloadUser(proxiedPlayer.getUuid());
+                StreamlinePlayer player = new StreamlinePlayer(proxiedPlayer);
+                UserUtils.loadUser(player);
             }
         }
     }
