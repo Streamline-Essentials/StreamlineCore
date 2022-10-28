@@ -24,6 +24,7 @@ import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.UserUtils;
+import tv.quaint.objects.handling.derived.PluginEventable;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
-public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> {
+public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> extends PluginEventable {
     @Getter
     private static final String apiChannel = "streamline:api";
     @Getter
@@ -91,7 +92,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter @Setter
     private static boolean proxy;
 
-    public SLAPI(P platform, U userManager, M messenger, File dataFolderExt) {
+    public SLAPI(String identifier, P platform, U userManager, M messenger, File dataFolderExt) {
+        super(identifier);
         instance = this;
 
         this.platform = platform;

@@ -2,13 +2,11 @@ package net.streamline.api.savables;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.configs.StorageResource;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.CreateSavableResourceEvent;
 import net.streamline.api.savables.events.DeleteSavableResourceEvent;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.ref.Cleaner;
+import tv.quaint.storage.resources.StorageResource;
 
 public abstract class SavableResource implements StreamlineResource, Comparable<SavableResource> {
 

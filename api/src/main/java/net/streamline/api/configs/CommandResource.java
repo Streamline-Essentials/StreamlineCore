@@ -1,44 +1,55 @@
 package net.streamline.api.configs;
 
-import de.leonhard.storage.Config;
-import net.streamline.api.SLAPI;
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
+import tv.quaint.storage.resources.flat.FlatFileResource;
+import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
+import tv.quaint.thebase.lib.leonhard.storage.Config;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-public class CommandResource extends FlatFileResource<Config> {
-    public String identifier;
-    public StreamlineCommand command;
+public class CommandResource extends SimpleConfiguration {
+    @Getter
+    final String identifier;
+    @Getter @Setter
+    StreamlineCommand command;
+    @Getter @Setter
+    ModuleLike module;
+
 
     public CommandResource(StreamlineCommand command, File parentDirectory) {
-        super(Config.class, command.getIdentifier() + ".yml", parentDirectory, false);
+        super(command.getIdentifier() + ".yml", parentDirectory, false);
         this.identifier = command.getIdentifier();
         this.command = command;
 
         if (this.exists()) {
             if (this.empty()) {
-                defaults();
+                init();
             }
         } else {
-            defaults();
+            init();
         }
 
-        if (! resource.getBoolean("basic.enabled") && resource.getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
-            defaults();
+        if (! getResource().getBoolean("basic.enabled") && getResource().getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
+            init();
         }
 
         syncCommand();
     }
 
     public CommandResource(StreamlineModule module, StreamlineCommand command, File parentDirectory) {
-        super(module, Config.class, command.getIdentifier() + ".yml", parentDirectory, false);
+        this(command, parentDirectory);
+        this.module = module;
     }
 
-    public void defaults() {
+    @Override
+    public void init() {
         write("DO-NOT-TOUCH.version", 1d);
         write("basic.enabled", true);
         write("basic.label", command.getBase());
@@ -47,17 +58,17 @@ public class CommandResource extends FlatFileResource<Config> {
     }
 
     public void syncCommand() {
-        boolean enabled = resource.getBoolean("basic.enabled");
+        boolean enabled = getResource().getBoolean("basic.enabled");
 
-        if (! enabled && resource.getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
+        if (! enabled && getResource().getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
             enabled = true;
             write("basic.enabled", true);
             write("DO-NOT-TOUCH.version", 1d);
         }
 
-        String label = resource.getString("basic.label");
-        String defaultPermission = resource.getString("basic.permissions.default");
-        List<String> aliases = resource.getStringList("basic.aliases");
+        String label = getResource().getString("basic.label");
+        String defaultPermission = getResource().getString("basic.permissions.default");
+        List<String> aliases = getResource().getStringList("basic.aliases");
 
         if (this.command.isLoaded()) if (! enabled) CommandHandler.registerStreamlineCommand(this.command);
         if (! this.command.isLoaded()) if (enabled) CommandHandler.unregisterStreamlineCommand(this.command);

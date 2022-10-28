@@ -1,7 +1,5 @@
 package net.streamline.api.punishments;
 
-import net.streamline.api.SLAPI;
-
 public class BanPunishment extends AbstractPunishment {
     @Override
     public String type() {

@@ -1,8 +1,5 @@
 package net.streamline.api.utils;
 
-import de.leonhard.storage.Config;
-import de.leonhard.storage.Json;
-import de.leonhard.storage.Toml;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.model.group.Group;
@@ -12,28 +9,27 @@ import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.*;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.events.LoadStreamlineUserEvent;
-import net.streamline.api.savables.users.OperatorUser;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.savables.users.*;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.security.core.parameters.P;
+import tv.quaint.storage.StorageUtils;
+import tv.quaint.storage.resources.StorageResource;
+import tv.quaint.storage.resources.databases.MongoResource;
+import tv.quaint.storage.resources.databases.MySQLResource;
+import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
+import tv.quaint.storage.resources.databases.connections.MongoConnection;
+import tv.quaint.storage.resources.databases.connections.SQLConnection;
+import tv.quaint.storage.resources.flat.FlatFileResource;
+import tv.quaint.thebase.lib.leonhard.storage.Config;
+import tv.quaint.thebase.lib.leonhard.storage.Json;
+import tv.quaint.thebase.lib.leonhard.storage.Toml;
 
 import java.io.File;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -111,7 +107,8 @@ public class UserUtils {
 
     public static boolean userExists(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return getLoadedUsersSet().contains(getConsole());
-        StorageUtils.StorageType type = GivenConfigs.getMainConfig().userUseType();
+        StorageUtils.SupportedStorageType type = GivenConfigs.getMainConfig().userUseType();
+        DatabaseConfig config = GivenConfigs.getMainConfig().getConfiguredDatabase();
         File userFolder = SLAPI.getUserFolder();
         switch (type) {
             case YAML -> {
@@ -141,19 +138,9 @@ public class UserUtils {
                 }
                 return false;
             }
-            case MONGO -> {
-                return GivenConfigs.getMainConfig().getConfiguredDatabase().mongoConnection().exists(
-                        StreamlinePlayer.class.getSimpleName(),
-                        StorageUtils.getWhere("uuid", uuid)
-                );
-            }
-            case MYSQL -> {
-                return GivenConfigs.getMainConfig().getConfiguredDatabase().mySQLConnection().exists(
-                        new SQLCollection(StreamlinePlayer.class.getSimpleName(),
-                                "uuid",
-                                uuid
-                        )
-                );
+            case MONGO, MYSQL, SQLITE -> {
+                return GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection().exists(
+                        config.getTablePrefix() + "users", "uuid", uuid, "uuid");
             }
             default -> {
                 return false;
@@ -201,7 +188,7 @@ public class UserUtils {
         return StreamlinePlayer;
     }
 
-    public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
+    public static StorageResource<?> newUserStorageResource(String uuid) {
         switch (GivenConfigs.getMainConfig().userUseType()) {
             case YAML -> {
                 return new FlatFileResource<>(Config.class, uuid + ".yml", SLAPI.getUserFolder(), false);
@@ -213,10 +200,10 @@ public class UserUtils {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", SLAPI.getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), clazz.getSimpleName(), "uuid", uuid);
+                return new MongoResource("uuid", uuid, "users", DatabaseRealization.MONGO_PLAYER_TABLE_SCHEMATIC(), (MongoConnection) GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection());
             }
             case MYSQL -> {
-                return new MySQLResource(GivenConfigs.getMainConfig().getConfiguredDatabase(), new SQLCollection(clazz.getSimpleName(), "uuid", uuid));
+                return new MySQLResource("uuid", uuid, "users", DatabaseRealization.SQL_PLAYER_TABLE_SCHEMATIC(), (SQLConnection) GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection());
             }
         }
 

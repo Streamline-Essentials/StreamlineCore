@@ -1,6 +1,6 @@
 package net.streamline.api.savables;
 
-import net.streamline.api.configs.StorageResource;
+import tv.quaint.storage.resources.StorageResource;
 
 public interface StreamlineResource {
     StorageResource<?> getStorageResource();

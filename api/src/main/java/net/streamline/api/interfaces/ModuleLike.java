@@ -1,9 +1,11 @@
 package net.streamline.api.interfaces;
 
+import tv.quaint.objects.handling.IEventable;
+
 import java.io.File;
 import java.io.InputStream;
 
-public interface ModuleLike {
+public interface ModuleLike extends IEventable {
     String identifier();
 
     String getAuthorsStringed();

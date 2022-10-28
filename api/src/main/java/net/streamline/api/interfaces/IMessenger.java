@@ -1,15 +1,9 @@
 package net.streamline.api.interfaces;
 
-import com.mongodb.lang.Nullable;
-import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import org.jetbrains.annotations.Nullable;
 
 public interface IMessenger {
     void sendMessage(@Nullable StreamlineUser to, String message);

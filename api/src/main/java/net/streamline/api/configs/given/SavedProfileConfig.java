@@ -1,23 +1,39 @@
 package net.streamline.api.configs.given;
-import de.leonhard.storage.Json;
-import de.leonhard.storage.sections.FlatFileSection;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.APIProfile;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.UserUtils;
+import tv.quaint.storage.documents.SimpleJsonDocument;
+import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class SavedProfileConfig extends FlatFileResource<Json> {
+public class SavedProfileConfig extends SimpleJsonDocument {
+    @Override
+    public void onInit() {
+
+    }
+
+    @Override
+    public void onSave() {
+
+    }
+
+    @Override
+    public void onDelete() {
+        getSelfFile().delete();
+    }
+
+    @Override
+    public boolean onExists() {
+        return getSelfFile().exists();
+    }
+
     public static class Ticker extends BaseRunnable {
         @Getter @Setter
         private SavedProfileConfig parent;
@@ -40,7 +56,7 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
     private Ticker ticker;
 
     public SavedProfileConfig() {
-        super(Json.class, "saved-profile.json", SLAPI.getDataFolder(), false);
+        super("saved-profile.json", SLAPI.getDataFolder(), false);
         setCachedProfile(getProfile());
         ticker = new Ticker(this);
     }
@@ -48,7 +64,7 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
     private APIProfile getProfile() {
         APIProfile r = new APIProfile();
         r.setServers(getServerInfosFromConfig());
-        r.setToken(resource.getOrSetDefault("token", UUID.randomUUID().toString()));
+        r.setToken(getResource().getOrSetDefault("token", UUID.randomUUID().toString()));
         r.verifyToken();
         return r;
     }
@@ -58,12 +74,12 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
     }
 
     public void saveProfile(APIProfile profile) {
-        resource.set("token", profile.getToken());
+        getResource().set("token", profile.getToken());
         profile.getServers().forEach((s, serverInfo) -> {
-            resource.set("servers." + s + ".name", serverInfo.getName());
-            resource.set("servers." + s + ".motd", serverInfo.getMotd());
-            resource.set("servers." + s + ".address", serverInfo.getAddress());
-            resource.set("servers." + s + ".online", serverInfo.getOnlineUsers().stream().toList());
+            getResource().set("servers." + s + ".name", serverInfo.getName());
+            getResource().set("servers." + s + ".motd", serverInfo.getMotd());
+            getResource().set("servers." + s + ".address", serverInfo.getAddress());
+            getResource().set("servers." + s + ".online", serverInfo.getOnlineUsers().stream().toList());
         });
     }
 
@@ -79,7 +95,7 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
     }
 
     public StreamlineServerInfo getServerInfoFromConfig(String key) {
-        FlatFileSection section = resource.getSection("servers." + key);
+        FlatFileSection section = getResource().getSection("servers." + key);
 
         String name = section.getString("name");
         String motd = section.getString("motd");
@@ -118,7 +134,7 @@ public class SavedProfileConfig extends FlatFileResource<Json> {
     }
 
     public void saveServers() {
-        FlatFileSection serverSection = resource.getSection("servers");
+        FlatFileSection serverSection = getResource().getSection("servers");
 
         getServerInfosFromConfig().forEach((s, streamlineServerInfo) -> {
             serverSection.set(streamlineServerInfo.getIdentifier() + ".name", streamlineServerInfo.getName());

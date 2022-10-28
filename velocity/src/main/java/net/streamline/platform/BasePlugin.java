@@ -12,19 +12,16 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
-import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.VelocityProfiler;
@@ -32,7 +29,6 @@ import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -40,7 +36,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.LogManager;
 
 public abstract class BasePlugin implements IStreamline {
     public static class Runner implements Runnable {
@@ -112,7 +107,7 @@ public abstract class BasePlugin implements IStreamline {
 
     public void onLoad() {
         instance = this;
-        name = "StreamlineAPI";
+        name = "streamlinecore";
         version = "${{project.version}}";
 
         this.load();
@@ -122,7 +117,7 @@ public abstract class BasePlugin implements IStreamline {
     public void onEnable(ProxyInitializeEvent event) {
         userManager = new UserManager();
         messenger = new Messenger();
-        slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new VelocityProfiler());
 

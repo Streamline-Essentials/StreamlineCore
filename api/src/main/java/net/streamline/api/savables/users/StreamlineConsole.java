@@ -9,7 +9,7 @@ public class StreamlineConsole extends StreamlineUser {
     public List<String> savedKeys = new ArrayList<>();
 
     public StreamlineConsole() {
-        super("%");
+        super("%", null);
 
         if (this.getUuid() == null) return;
         if (this.getUuid().equals("")) return;

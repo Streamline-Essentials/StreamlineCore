@@ -2,13 +2,12 @@ package net.streamline.api.punishments;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
-import net.streamline.api.configs.StorageResource;
-import net.streamline.api.configs.StorageUtils;
+import net.streamline.api.configs.StreamlineStorageUtils;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.savables.SavableResource;
+import tv.quaint.storage.StorageUtils;
+import tv.quaint.storage.resources.StorageResource;
 
-import java.io.File;
 import java.util.Date;
 
 public abstract class AbstractPunishment extends SavableResource {
@@ -28,7 +27,7 @@ public abstract class AbstractPunishment extends SavableResource {
     public abstract String type();
 
     public AbstractPunishment(long id, String convict, String executioner, Date convictedAt) {
-        super(String.valueOf(id), StorageUtils.newStorageResource(String.valueOf(id),
+        super(String.valueOf(id), StreamlineStorageUtils.newStorageResource(String.valueOf(id),
                 AbstractPunishment.class, GivenConfigs.getPunishmentConfig().getUseType(),
                 GivenConfigs.getPunishmentFolder(), GivenConfigs.getPunishmentConfig().getConfiguredDatabase()));
 
@@ -87,6 +86,6 @@ public abstract class AbstractPunishment extends SavableResource {
 
     @Override
     public StorageResource<?> getStorageResource() {
-        return getStorageResource();
+        return super.getStorageResource();
     }
 }

@@ -8,9 +8,6 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.events.EventProcessor;
-import net.streamline.api.events.StreamEventHandler;
-import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.events.server.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
@@ -31,7 +28,7 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
-public class PlatformListener implements Listener, StreamlineListener {
+public class PlatformListener implements Listener {
     @Getter @Setter
     private static boolean messaged = false;
     @Getter @Setter
@@ -149,7 +146,6 @@ public class PlatformListener implements Listener, StreamlineListener {
         ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 
-    @EventProcessor
     public void onProxiedMessageReceived(ProxyMessageInEvent event) {
         setMessaged(true);
     }

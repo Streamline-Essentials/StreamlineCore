@@ -1,14 +1,24 @@
 package net.streamline.api.configs.given;
 
-import de.leonhard.storage.Config;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.FlatFileResource;
+import tv.quaint.storage.resources.flat.FlatFileResource;
+import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
+import tv.quaint.thebase.lib.leonhard.storage.Config;
 
+import java.util.Arrays;
 import java.util.List;
 
-public class MainMessagesHandler extends FlatFileResource<Config> {
+public class MainMessagesHandler extends SimpleConfiguration {
     public MainMessagesHandler() {
-        super(Config.class, "main-messages.yml", SLAPI.getInstance().getDataFolder(), true);
+        super("main-messages.yml", SLAPI.getDataFolder(), true);
+    }
+
+    @Override
+    public void init() {
+        Arrays.stream(MESSAGES.INVALID.values()).forEach(MESSAGES.INVALID::get);
+        Arrays.stream(MESSAGES.DEFAULTS.values()).forEach(MESSAGES.DEFAULTS::get);
+        Arrays.stream(MESSAGES.DEFAULTS.PLACEHOLDERS.values()).forEach(MESSAGES.DEFAULTS.PLACEHOLDERS::get);
+        Arrays.stream(MESSAGES.EXPERIENCE.values()).forEach(MESSAGES.EXPERIENCE::get);
     }
 
     public enum MESSAGES {
@@ -138,20 +148,20 @@ public class MainMessagesHandler extends FlatFileResource<Config> {
             }
 
             public int getInt() {
-                return GivenConfigs.getMainMessages().resource.getInt(this.key);
+                return GivenConfigs.getMainMessages().getResource().getInt(this.key);
             }
 
             public List<String> getStringList() {
-                return GivenConfigs.getMainMessages().resource.getStringList(this.key);
+                return GivenConfigs.getMainMessages().getResource().getStringList(this.key);
             }
         }
 
         public static String get(String key) {
-            return GivenConfigs.getMainMessages().resource.getString(key);
+            return GivenConfigs.getMainMessages().getResource().getString(key);
         }
 
         public static String get(String key, String def) {
-            return GivenConfigs.getMainMessages().resource.getOrSetDefault(key, def);
+            return GivenConfigs.getMainMessages().getResource().getOrSetDefault(key, def);
         }
     }
 }

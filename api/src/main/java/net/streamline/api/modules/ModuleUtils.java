@@ -1,10 +1,8 @@
 package net.streamline.api.modules;
 
-import com.mongodb.lang.Nullable;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.StorageResource;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.ModuleLike;
@@ -12,10 +10,8 @@ import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.placeholder.RATAPI;
-import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.users.OperatorUser;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
@@ -24,7 +20,9 @@ import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import tv.quaint.events.BaseEventListener;
+import tv.quaint.storage.resources.StorageResource;
 
 import java.util.Collection;
 import java.util.List;
@@ -236,8 +234,8 @@ public class ModuleUtils {
         return UserUtils.getOrGetPlayer(uuid);
     }
 
-    public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz) {
-        return UserUtils.newStorageResource(uuid, clazz);
+    public static StorageResource<?> newStorageResource(String uuid) {
+        return UserUtils.newUserStorageResource(uuid);
     }
 
     public static boolean isConsole(String uuid) {
@@ -280,7 +278,7 @@ public class ModuleUtils {
         ModuleManager.fireEvent(event);
     }
 
-    public static void listen(StreamlineListener listener, StreamlineModule module) {
+    public static void listen(BaseEventListener listener, StreamlineModule module) {
         ModuleManager.registerEvents(listener, module);
     }
 
