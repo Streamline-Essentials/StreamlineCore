@@ -1,17 +1,13 @@
 package net.streamline.api.configs.given;
 
-import de.leonhard.storage.Json;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.MathUtils;
+import tv.quaint.storage.resources.flat.FlatFileResource;
+import tv.quaint.thebase.lib.leonhard.storage.Json;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class CachedUUIDsHandler extends FlatFileResource<Json> {
     public static class Runner extends BaseRunnable {
@@ -172,6 +168,6 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     public static boolean isCached(String uuid) {
-        return getInstance().resource.singleLayerKeySet().contains(uuid);
+        return getInstance().getResource().singleLayerKeySet().contains(uuid);
     }
 }

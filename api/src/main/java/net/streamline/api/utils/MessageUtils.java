@@ -1,6 +1,5 @@
 package net.streamline.api.utils;
 
-import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -14,6 +13,7 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.AtomicString;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;

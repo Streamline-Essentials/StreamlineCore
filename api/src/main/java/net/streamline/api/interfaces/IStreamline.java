@@ -80,4 +80,6 @@ public interface IStreamline {
     void sendResourcePack(StreamlineResourcePack resourcePack, String uuid);
 
     ClassLoader getMainClassLoader();
+
+    String getName();
 }

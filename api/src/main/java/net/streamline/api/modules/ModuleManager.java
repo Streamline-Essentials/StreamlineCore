@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.listeners.BaseListener;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.ModuleCommand;
@@ -16,6 +17,8 @@ import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.laxture.sbp.SpringBootPluginManager;
 import org.pf4j.*;
+import tv.quaint.events.BaseEventHandler;
+import tv.quaint.events.BaseEventListener;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -203,15 +206,15 @@ public class ModuleManager {
     }
 
     public static void fireEvent(@NotNull StreamlineEvent event) {
-        StreamEventHandler.fireEvent(event);
+        BaseEventHandler.fireEvent(event);
     }
 
     public static <T extends ModuleLike> void unregisterHandlersOf(T module) {
-        StreamEventHandler.unbake(module);
+        BaseEventHandler.unbake(module);
     }
 
-    public static <T extends ModuleLike> void registerEvents(@NotNull StreamlineListener listener, @NotNull T module) {
-        StreamEventHandler.bake(listener, module);
+    public static <T extends ModuleLike> void registerEvents(@NotNull BaseEventListener listener, @NotNull T module) {
+        BaseEventHandler.bake(listener, module);
     }
 
     public static boolean hasModule(String identifier) {

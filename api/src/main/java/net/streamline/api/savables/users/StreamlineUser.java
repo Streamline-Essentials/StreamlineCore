@@ -1,17 +1,15 @@
 package net.streamline.api.savables.users;
 
-import de.leonhard.storage.internal.FlatFile;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.FlatFileResource;
-import net.streamline.api.configs.StorageResource;
-import net.streamline.api.configs.StorageUtils;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.utils.UserUtils;
+import tv.quaint.storage.StorageUtils;
+import tv.quaint.storage.resources.StorageResource;
 
 import java.util.List;
 import java.util.UUID;
@@ -61,12 +59,13 @@ public abstract class StreamlineUser extends SavableResource {
         return this.online;
     }
 
-    public StreamlineUser(String uuid) {
-        super(uuid, UserUtils.newStorageResource(uuid, uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())
-                ? StreamlineConsole.class : StreamlinePlayer.class));
+    public StreamlineUser(String uuid, StorageResource<?> storageResource) {
+        super(uuid, storageResource == null ? UserUtils.newUserStorageResource(uuid) : storageResource);
         this.savableUser = this;
 
-        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.StorageType.MONGO)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.MONGO)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.MYSQL)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.SQLITE)) getStorageResource().sync();
     }
 
     @Override
@@ -168,10 +167,7 @@ public abstract class StreamlineUser extends SavableResource {
         try {
             UserUtils.unloadUser(this);
             this.setUuid(null);
-            if (StorageUtils.areUsersFlatFiles()) {
-                FlatFileResource<? extends FlatFile> resource = (FlatFileResource<? extends FlatFile>) this.getStorageResource();
-                resource.delete();
-            }
+            getStorageResource().delete();
         } finally {
             super.finalize();
         }

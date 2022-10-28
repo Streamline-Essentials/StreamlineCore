@@ -1,15 +1,8 @@
 package net.streamline.api.interfaces;
 
-import net.luckperms.api.model.user.User;
-import net.streamline.api.configs.StorageResource;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.SavableResource;
-import net.streamline.api.savables.users.OperatorUser;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public interface IUserManager {

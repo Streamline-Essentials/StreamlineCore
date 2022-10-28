@@ -1,14 +1,20 @@
 package net.streamline.api.configs;
 
-import de.leonhard.storage.Config;
+import lombok.Getter;
+import lombok.Setter;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
+import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.io.File;
 
-public class ModularizedConfig extends FlatFileResource<Config> {
+public abstract class ModularizedConfig extends SimpleConfiguration {
+    @Getter
+    final ModuleLike module;
+
     public ModularizedConfig(ModuleLike module, String fileName, File parentDirectory, boolean selfContained) {
-        super(module, Config.class, fileName, parentDirectory, selfContained);
+        super(fileName, parentDirectory, selfContained);
+        this.module = module;
     }
 
     public ModularizedConfig(ModuleLike module, String fileName, boolean selfContained) {

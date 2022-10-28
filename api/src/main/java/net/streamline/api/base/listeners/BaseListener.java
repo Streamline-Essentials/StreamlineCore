@@ -5,19 +5,13 @@ import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.events.EventProcessor;
-import net.streamline.api.events.FunctionedEvent;
-import net.streamline.api.events.StreamEventHandler;
-import net.streamline.api.events.StreamlineListener;
 import net.streamline.api.events.server.LoginCompletedEvent;
-import net.streamline.api.messages.builders.UserNameMessageBuilder;
-import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
-public class BaseListener implements StreamlineListener {
+public class BaseListener {
     public BaseListener() {
         BaseModule.getInstance().logInfo("Loaded " + getClass().getSimpleName());
 

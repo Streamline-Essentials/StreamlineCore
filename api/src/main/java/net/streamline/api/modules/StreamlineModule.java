@@ -12,6 +12,7 @@ import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
+import tv.quaint.objects.handling.IEventable;
 
 import java.io.File;
 import java.io.InputStream;

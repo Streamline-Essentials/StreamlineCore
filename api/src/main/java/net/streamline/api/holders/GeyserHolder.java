@@ -1,37 +1,36 @@
 package net.streamline.api.holders;
 
-import de.leonhard.storage.Config;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.FlatFileResource;
 import net.streamline.api.utils.MessageUtils;
 import org.geysermc.api.Geyser;
 import org.geysermc.api.GeyserApiBase;
 import org.geysermc.api.session.Connection;
+import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.List;
 import java.util.TreeMap;
 
 public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
-    public static class Saver extends FlatFileResource<Config> {
+    public static class Saver extends SimpleConfiguration {
         public Saver() {
-            super(Config.class, "geyser-uuids.yml", SLAPI.getDataFolder(), false);
+            super("geyser-uuids.yml", SLAPI.getDataFolder(), false);
         }
 
         public void put(String uuid, String name) {
-            resource.set(uuid, name);
+            getResource().set(uuid, name);
         }
 
         public String getName(String uuid) {
             reloadResource();
 
-            return resource.getString(uuid);
+            return getResource().getString(uuid);
         }
 
         public TreeMap<String, String> getEntries() {
             TreeMap<String, String> r = new TreeMap<>();
 
-            for (String key : resource.singleLayerKeySet()) {
-                r.put(key, resource.getString(key));
+            for (String key : getResource().singleLayerKeySet()) {
+                r.put(key, getResource().getString(key));
             }
 
             return r;
@@ -39,10 +38,15 @@ public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
 
         public String getUUID(String name) {
             for (String uuid : getEntries().keySet()) {
-                if (resource.getString(uuid).equals(name)) return uuid;
+                if (getResource().getString(uuid).equals(name)) return uuid;
             }
 
             return null;
+        }
+
+        @Override
+        public void init() {
+
         }
     }
 

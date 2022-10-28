@@ -9,7 +9,6 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.events.StreamEventHandler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStartEvent;
 import net.streamline.api.events.server.ServerStopEvent;
@@ -17,12 +16,10 @@ import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
-import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.BungeeProfiler;
@@ -91,7 +88,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
             }
         }
 
-        name = "StreamlineAPI";
+        name = "StreamlineCore";
         version = "${{project.version}}";
 
         this.load();
@@ -101,7 +98,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     public void onEnable() {
         userManager = new UserManager();
         messenger = new Messenger();
-        slapi = new SLAPI<>(this, getUserManager(), getMessenger(), getDataFolder());
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getDataFolder());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new BungeeProfiler());
 
