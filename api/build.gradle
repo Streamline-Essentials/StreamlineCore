@@ -20,6 +20,8 @@ repositories {
 
 dependencies {
     // Defaults.
+    implementation(IMPL)
+    shadow(SHADOW)
     annotationProcessor(ANNO)
     compileOnly(COMP_ONLY)
 
