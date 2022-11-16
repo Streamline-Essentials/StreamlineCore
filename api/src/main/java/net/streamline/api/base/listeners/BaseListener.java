@@ -10,14 +10,15 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+import tv.quaint.events.BaseEventHandler;
+import tv.quaint.events.components.FunctionedCall;
 
 public class BaseListener {
     public BaseListener() {
         BaseModule.getInstance().logInfo("Loaded " + getClass().getSimpleName());
 
-        StreamEventHandler.loadFunction(new FunctionedEvent<>(this::onPlayerJoin, LoginCompletedEvent.class));
-        StreamEventHandler.loadFunction(new FunctionedEvent<>(this::onPlayerLevelChange, LevelChangePlayerEvent.class));
-//        StreamEventHandler.loadFunction(new FunctionedEvent<>(this::onProxyMessage, ProxyMessageInEvent.class));
+        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerJoin, LoginCompletedEvent.class));
+        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerLevelChange, LevelChangePlayerEvent.class));
     }
 
     public boolean onPlayerJoin(LoginCompletedEvent event) {

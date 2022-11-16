@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ServerPusher extends BaseRunnable {
     public ServerPusher() {
-        super(200, 200);
+        super(200, 3600);
     }
 
     @Override

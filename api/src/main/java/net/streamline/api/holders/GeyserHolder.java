@@ -13,7 +13,7 @@ import java.util.TreeMap;
 public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
     public static class Saver extends SimpleConfiguration {
         public Saver() {
-            super("geyser-uuids.yml", SLAPI.getDataFolder(), false);
+            super("geyser-uuids.yml", SLAPI.getInstance().getDataFolder(), false);
         }
 
         public void put(String uuid, String name) {

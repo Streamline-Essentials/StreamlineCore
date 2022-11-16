@@ -88,7 +88,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     public boolean isEnabled() {
-        return getCommandResource().resource.getBoolean("basic.enabled");
+        return getCommandResource().getResource().getBoolean("basic.enabled");
     }
 
     public void disable() {

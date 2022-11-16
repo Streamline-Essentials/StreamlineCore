@@ -1,9 +1,9 @@
 package net.streamline.apib.craft;
 
-import de.leonhard.storage.sections.FlatFileSection;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.util.EulerAngle;
+import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
 public class SavedEulerAngle {
     @Getter @Setter

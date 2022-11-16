@@ -234,10 +234,6 @@ public class ModuleUtils {
         return UserUtils.getOrGetPlayer(uuid);
     }
 
-    public static StorageResource<?> newStorageResource(String uuid) {
-        return UserUtils.newUserStorageResource(uuid);
-    }
-
     public static boolean isConsole(String uuid) {
         return UserUtils.isConsole(uuid);
     }

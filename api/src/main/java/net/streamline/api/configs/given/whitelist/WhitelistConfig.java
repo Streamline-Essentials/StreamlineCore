@@ -9,7 +9,7 @@ import java.util.Date;
 
 public class WhitelistConfig extends SimpleJsonDocument {
     public WhitelistConfig() {
-        super("whitelist.json", SLAPI.getDataFolder(), false);
+        super("whitelist.json", SLAPI.getInstance().getDataFolder(), false);
     }
 
     public void setEnabled(boolean bool) {

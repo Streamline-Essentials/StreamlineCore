@@ -10,15 +10,12 @@ import java.util.List;
 
 public class MainMessagesHandler extends SimpleConfiguration {
     public MainMessagesHandler() {
-        super("main-messages.yml", SLAPI.getDataFolder(), true);
+        super("main-messages.yml", SLAPI.getInstance().getDataFolder(), true);
     }
 
     @Override
     public void init() {
-        Arrays.stream(MESSAGES.INVALID.values()).forEach(MESSAGES.INVALID::get);
-        Arrays.stream(MESSAGES.DEFAULTS.values()).forEach(MESSAGES.DEFAULTS::get);
-        Arrays.stream(MESSAGES.DEFAULTS.PLACEHOLDERS.values()).forEach(MESSAGES.DEFAULTS.PLACEHOLDERS::get);
-        Arrays.stream(MESSAGES.EXPERIENCE.values()).forEach(MESSAGES.EXPERIENCE::get);
+
     }
 
     public enum MESSAGES {

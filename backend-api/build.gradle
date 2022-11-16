@@ -41,11 +41,14 @@ dependencies {
     // Streamline API.
     compileOnly(project(":StreamlineCore-API"))
     compileOnly 'me.clip:placeholderapi:2.11.2'
+
+    // Files.
+    compileOnly(files(FILES))
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 blossom {

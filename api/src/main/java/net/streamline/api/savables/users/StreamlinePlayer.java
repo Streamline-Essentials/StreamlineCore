@@ -40,7 +40,7 @@ public class StreamlinePlayer extends StreamlineUser {
     }
 
     public StreamlinePlayer(ProxiedStreamlinePlayer player){
-        super(player.getUuid(), null);
+        super(player.getUuid(), UserUtils.newUserStorageResource(player.getUuid(), StreamlinePlayer.class));
 
         setLatestName(player.getLatestName());
         setDisplayName(player.getDisplayName());
@@ -65,7 +65,7 @@ public class StreamlinePlayer extends StreamlineUser {
     }
 
     public StreamlinePlayer(String uuid){
-        super(uuid, null);
+        super(uuid, UserUtils.newUserStorageResource(uuid, StreamlinePlayer.class));
     }
 
     public StreamlinePlayer(UUID uuid) {

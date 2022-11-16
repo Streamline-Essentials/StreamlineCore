@@ -56,7 +56,7 @@ public class SavedProfileConfig extends SimpleJsonDocument {
     private Ticker ticker;
 
     public SavedProfileConfig() {
-        super("saved-profile.json", SLAPI.getDataFolder(), false);
+        super("saved-profile.json", SLAPI.getInstance().getDataFolder(), false);
         setCachedProfile(getProfile());
         ticker = new Ticker(this);
     }

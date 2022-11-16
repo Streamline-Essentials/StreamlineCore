@@ -36,7 +36,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     private static Runner runner;
 
     public CachedUUIDsHandler() {
-        super(Json.class, "cached-uuids.json", SLAPI.getDataFolder(), false);
+        super(Json.class, "cached-uuids.json", SLAPI.getInstance().getDataFolder(), false);
         setInstance(this);
         setRunner(new Runner());
     }

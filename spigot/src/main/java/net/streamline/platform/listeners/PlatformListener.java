@@ -27,12 +27,17 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
+import tv.quaint.events.BaseEventHandler;
+import tv.quaint.events.BaseEventListener;
+import tv.quaint.events.processing.BaseProcessor;
 
 public class PlatformListener implements Listener {
     @Getter @Setter
     private static boolean messaged = false;
     @Getter @Setter
     private static boolean joined = false;
+    @Getter @Setter
+    private static BaseProcessorListener processorListener;
 
     public static boolean isTested() {
         return isMessaged() && isJoined();
@@ -40,7 +45,8 @@ public class PlatformListener implements Listener {
 
     public PlatformListener() {
         MessageUtils.logInfo("BaseListener registered!");
-        ModuleUtils.listen(this, SLAPI.getBaseModule());
+        setProcessorListener(new BaseProcessorListener());
+        ModuleUtils.listen(getProcessorListener(), SLAPI.getBaseModule());
     }
 
     @EventHandler
@@ -58,7 +64,7 @@ public class PlatformListener implements Listener {
         }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
-        StreamEventHandler.fireEvent(loginReceivedEvent);
+        BaseEventHandler.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
             if (! loginReceivedEvent.getResult().validate()) return;
@@ -146,7 +152,14 @@ public class PlatformListener implements Listener {
         ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
     }
 
-    public void onProxiedMessageReceived(ProxyMessageInEvent event) {
-        setMessaged(true);
+    public static class BaseProcessorListener implements BaseEventListener {
+        public BaseProcessorListener() {
+            MessageUtils.logInfo("Registered " + getClass().getSimpleName() + "!");
+        }
+
+        @BaseProcessor
+        public void onProxiedMessageReceived(ProxyMessageInEvent event) {
+            setMessaged(true);
+        }
     }
 }

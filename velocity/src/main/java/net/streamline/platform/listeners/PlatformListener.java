@@ -20,6 +20,7 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
@@ -77,6 +78,8 @@ public class PlatformListener {
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
+
+        UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
     }
 
     @Subscribe
@@ -96,13 +99,14 @@ public class PlatformListener {
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
 
-        StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        savablePlayer.setLatestServer(event.getServer().getServerInfo().getName());
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamlinePlayer.setLatestServer(event.getServer().getServerInfo().getName());
 
         new BaseRunnable(20, 1) {
             @Override
             public void run() {
-                SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer, true));
+                SavablePlayerMessageBuilder.build(streamlinePlayer, true).send();
+                UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
                 this.cancel();
             }
         };
