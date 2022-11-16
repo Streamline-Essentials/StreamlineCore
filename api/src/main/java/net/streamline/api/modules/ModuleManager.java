@@ -5,17 +5,14 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.base.listeners.BaseListener;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
-import net.streamline.api.events.modules.SpringModuleLoadEvent;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
-import org.laxture.sbp.SpringBootPluginManager;
 import org.pf4j.*;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
@@ -36,7 +33,7 @@ public class ModuleManager {
     private static ConcurrentSkipListMap<String, ModuleLike> enabledModules = new ConcurrentSkipListMap<>();
 
     @Getter @Setter
-    private static SpringBootPluginManager pluginManager;
+    private static JarPluginManager pluginManager;
 
     public static ConcurrentSkipListMap<String, File> getModuleFiles() {
         ConcurrentSkipListMap<String, File> r = new ConcurrentSkipListMap<>();
@@ -63,10 +60,10 @@ public class ModuleManager {
         return r;
     }
 
-    public static SpringBootPluginManager safePluginManager() {
-        SpringBootPluginManager manager = getPluginManager();
+    public static JarPluginManager safePluginManager() {
+        JarPluginManager manager = getPluginManager();
         if (manager != null) return manager;
-        manager = new SpringBootPluginManager(SLAPI.getModuleFolder().toPath()) {
+        manager = new JarPluginManager(SLAPI.getModuleFolder().toPath()) {
             @Override
             protected PluginLoader createPluginLoader() {
                 return new JarPluginLoader(this);
@@ -108,7 +105,6 @@ public class ModuleManager {
 
         getLoadedModules().put(module.identifier(), module);
         if (module instanceof StreamlineModule m) ModuleUtils.fireEvent(new ModuleLoadEvent(m));
-        if (module instanceof StreamlineSpringModule sm) ModuleUtils.fireEvent(new SpringModuleLoadEvent(sm));
     }
 
     public static void registerExternalModules() {
