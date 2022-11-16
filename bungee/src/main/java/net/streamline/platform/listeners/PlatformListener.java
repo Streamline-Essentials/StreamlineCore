@@ -15,12 +15,14 @@ import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
+import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
@@ -72,6 +74,8 @@ public class PlatformListener implements Listener {
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
+
+        UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
     }
 
     @EventHandler
@@ -91,10 +95,17 @@ public class PlatformListener implements Listener {
     public void onServerSwitch(ServerConnectedEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        StreamlinePlayer savablePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        savablePlayer.setLatestServer(event.getServer().getInfo().getName());
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamlinePlayer.setLatestServer(event.getServer().getInfo().getName());
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(SavablePlayerMessageBuilder.build(savablePlayer, true));
+        new BaseRunnable(20, 1) {
+            @Override
+            public void run() {
+                SavablePlayerMessageBuilder.build(streamlinePlayer, true).send();
+                UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
+                this.cancel();
+            }
+        };
     }
 
     @EventHandler

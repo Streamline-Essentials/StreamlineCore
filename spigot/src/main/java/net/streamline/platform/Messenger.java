@@ -2,7 +2,6 @@ package net.streamline.platform;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
-import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -22,6 +21,7 @@ import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;

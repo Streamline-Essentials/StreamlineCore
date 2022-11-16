@@ -11,7 +11,7 @@ import java.util.List;
 
 public class MainConfigHandler extends SimpleConfiguration {
     public MainConfigHandler() {
-        super("main-config.yml", SLAPI.getDataFolder(), true);
+        super("main-config.yml", SLAPI.getInstance().getDataFolder(), true);
         init();
     }
 

@@ -14,22 +14,21 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
+import net.streamline.api.savables.MongoUserResource;
+import net.streamline.api.savables.SQLUserResource;
 import net.streamline.api.savables.events.LoadStreamlineUserEvent;
 import net.streamline.api.savables.users.*;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
-import tv.quaint.storage.resources.databases.MongoResource;
-import tv.quaint.storage.resources.databases.MySQLResource;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
-import tv.quaint.storage.resources.databases.connections.MongoConnection;
-import tv.quaint.storage.resources.databases.connections.SQLConnection;
 import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.thebase.lib.leonhard.storage.Config;
 import tv.quaint.thebase.lib.leonhard.storage.Json;
 import tv.quaint.thebase.lib.leonhard.storage.Toml;
 
 import java.io.File;
+import java.sql.PreparedStatement;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -138,9 +137,23 @@ public class UserUtils {
                 }
                 return false;
             }
-            case MONGO, MYSQL, SQLITE -> {
-                return GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection().exists(
-                        config.getTablePrefix() + "users", "uuid", uuid, "uuid");
+            case MONGO -> {
+                if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
+                    MongoUserResource<StreamlineConsole> resource = new MongoUserResource<>(uuid, config, StreamlineConsole.class);
+                    return resource.exists();
+                } else {
+                    MongoUserResource<StreamlinePlayer> resource = new MongoUserResource<>(uuid, config, StreamlinePlayer.class);
+                    return resource.exists();
+                }
+            }
+            case MYSQL, SQLITE -> {
+                if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
+                    SQLUserResource<StreamlineConsole> resource = new SQLUserResource<>(uuid, config, StreamlineConsole.class);
+                    return resource.exists();
+                } else {
+                    SQLUserResource<StreamlinePlayer> resource = new SQLUserResource<>(uuid, config, StreamlinePlayer.class);
+                    return resource.exists();
+                }
             }
             default -> {
                 return false;
@@ -188,7 +201,56 @@ public class UserUtils {
         return StreamlinePlayer;
     }
 
-    public static StorageResource<?> newUserStorageResource(String uuid) {
+    public static <T extends StreamlineUser> String getTableNameByUserType(Class<T> userClass) {
+        if (userClass == StreamlinePlayer.class) return "players";
+        if (userClass == StreamlineConsole.class) return "consoles";
+        return "users";
+    }
+
+    public static <T extends StreamlineUser> void ensureTable(T userClass, SQLUserResource<T> resource) {
+        if (userClass.getClass() == StreamlinePlayer.class) {
+            try {
+                PreparedStatement statement = resource.getProvider().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + resource.getTable() +
+                        " (uuid VARCHAR(36) PRIMARY KEY, " +
+                        "latestName VARCHAR(128)" +
+                        "displayName VARCHAR(128)" +
+                        "tags VARCHAR(4096)" +
+                        "points DOUBLE" +
+                        "lastMessage VARCHAR(4096)" +
+                        "latestServer VARCHAR(128)" +
+                        "totalXP DOUBLE" +
+                        "currentXP DOUBLE" +
+                        "level INT" +
+                        "playSeconds INT" +
+                        "latestIP VARCHAR(128)" +
+                        "ips VARCHAR(4096)" +
+                        "names VARCHAR(4096)" +
+                        ");");
+                statement.execute();
+                statement.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                PreparedStatement statement = resource.getProvider().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + resource.getTable() +
+                        " (uuid VARCHAR(36) PRIMARY KEY, " +
+                        "latestName VARCHAR(128)" +
+                        "displayName VARCHAR(128)" +
+                        "tags VARCHAR(4096)" +
+                        "points DOUBLE" +
+                        "lastMessage VARCHAR(4096)" +
+                        "latestServer VARCHAR(128)" +
+                        ");");
+                statement.execute();
+                statement.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static <T extends StreamlineUser> StorageResource<?> newUserStorageResource(String uuid, Class<T> user) {
         switch (GivenConfigs.getMainConfig().userUseType()) {
             case YAML -> {
                 return new FlatFileResource<>(Config.class, uuid + ".yml", SLAPI.getUserFolder(), false);
@@ -200,10 +262,10 @@ public class UserUtils {
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", SLAPI.getUserFolder(), false);
             }
             case MONGO -> {
-                return new MongoResource("uuid", uuid, "users", DatabaseRealization.MONGO_PLAYER_TABLE_SCHEMATIC(), (MongoConnection) GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection());
+                return new MongoUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
             }
-            case MYSQL -> {
-                return new MySQLResource("uuid", uuid, "users", DatabaseRealization.SQL_PLAYER_TABLE_SCHEMATIC(), (SQLConnection) GivenConfigs.getMainConfig().getConfiguredDatabase().createConnection());
+            case MYSQL, SQLITE -> {
+                return new SQLUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
             }
         }
 

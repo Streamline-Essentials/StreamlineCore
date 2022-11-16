@@ -2,7 +2,6 @@ package net.streamline.platform;
 
 import com.google.re2j.Matcher;
 import com.google.re2j.Pattern;
-import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -21,6 +20,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;

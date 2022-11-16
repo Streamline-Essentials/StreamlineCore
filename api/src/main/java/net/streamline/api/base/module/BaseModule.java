@@ -90,4 +90,9 @@ public class BaseModule extends SimpleModule {
         // nothing right now.
         getStreamlineExpansion().unregister();
     }
+
+    @Override
+    public String getIdentifier() {
+        return identifier();
+    }
 }

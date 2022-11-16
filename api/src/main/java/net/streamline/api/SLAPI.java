@@ -69,9 +69,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter @Setter
     private StreamlineProfiler profiler;
 
-    @Getter
-    private static File dataFolder;
-
     @Getter @Setter
     private static BaseModule baseModule;
 
@@ -92,7 +89,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter @Setter
     private static boolean proxy;
 
-    public SLAPI(String identifier, P platform, U userManager, M messenger, File dataFolderExt) {
+    public SLAPI(String identifier, P platform, U userManager, M messenger) {
         super(identifier);
         instance = this;
 
@@ -102,8 +99,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
         setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.PROXY));
         setProxy(platform.getServerType().equals(IStreamline.ServerType.PROXY));
-
-        dataFolder = dataFolderExt;
 
         userFolder = new File(getDataFolder(), "users" + File.separator);
         moduleFolder = new File(getDataFolder(), "modules" + File.separator);

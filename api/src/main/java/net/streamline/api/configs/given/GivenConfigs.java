@@ -38,7 +38,7 @@ public class GivenConfigs {
     }
 
     public static void ensureFolders() {
-        setPunishmentFolder(new File(SLAPI.getDataFolder(), "punishments" + File.separator));
+        setPunishmentFolder(new File(SLAPI.getInstance().getDataFolder(), "punishments" + File.separator));
         ensureFolder(getPunishmentFolder());
     }
 

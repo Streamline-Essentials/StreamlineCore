@@ -1,6 +1,5 @@
 package net.streamline.apib.craft;
 
-import de.leonhard.storage.sections.FlatFileSection;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.messenger.Messenger;
@@ -12,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
 import java.util.ArrayList;
 import java.util.Arrays;

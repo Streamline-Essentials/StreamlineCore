@@ -39,10 +39,6 @@ public class OneSecondTimer extends BaseRunnable {
                 if (! updateEvent.isCancelled()) {
                     user.setDisplayName(updateEvent.getChangeTo());
                 }
-
-                if (user instanceof StreamlinePlayer player && SLAPI.isProxy()) {
-                    UserNameMessageBuilder.build(player, user.getDisplayName(), player).send();
-                }
             }
         });
     }

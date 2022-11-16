@@ -30,6 +30,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
 import java.util.*;
@@ -100,7 +101,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public void onEnable() {
         userManager = new UserManager();
         messenger = new Messenger();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getDataFolder());
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());
         slapiB = new SLAPIB(getSlapi(), this);
 
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
@@ -302,7 +303,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public void fireEvent(StreamlineEvent event, boolean async) {
         try {
-            StreamEventHandler.fireEvent(event);
+            BaseEventHandler.fireEvent(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -310,7 +311,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void handleMisSync(StreamlineEvent event, boolean async) {
-        StreamEventHandler.fireEvent(event);
+        BaseEventHandler.fireEvent(event);
     }
 
     @Override

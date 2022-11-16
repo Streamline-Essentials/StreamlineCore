@@ -30,14 +30,14 @@ public class CommandResource extends SimpleConfiguration {
 
         if (this.exists()) {
             if (this.empty()) {
-                init();
+                afterInit();
             }
         } else {
-            init();
+            afterInit();
         }
 
         if (! getResource().getBoolean("basic.enabled") && getResource().getOrDefault("DO-NOT-TOUCH.version", 0d) < 1d) {
-            init();
+            afterInit();
         }
 
         syncCommand();
@@ -50,6 +50,10 @@ public class CommandResource extends SimpleConfiguration {
 
     @Override
     public void init() {
+
+    }
+
+    public void afterInit() {
         write("DO-NOT-TOUCH.version", 1d);
         write("basic.enabled", true);
         write("basic.label", command.getBase());
