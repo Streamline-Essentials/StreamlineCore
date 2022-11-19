@@ -27,7 +27,7 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
     @Getter @Setter
     private boolean enabled;
     @Getter @Setter
-    private boolean malleable;
+    private boolean malleable = true;
 
     @Getter @Setter
     private List<ModuleCommand> commands = new ArrayList<>();
