@@ -30,7 +30,7 @@ public abstract class ModuleCommand extends StreamlineCommand {
         List<String> newAliases = new ArrayList<>();
         for (String name : names) {
             newAliases.add(name);
-            newAliases.add(module.identifier() + ":" + name);
+            newAliases.add(module.getIdentifier() + ":" + name);
         }
 
         return newAliases.toArray(String[]::new);

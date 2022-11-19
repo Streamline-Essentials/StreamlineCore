@@ -81,7 +81,7 @@ public class MessageUtils {
     }
 
     public static String loggedModulePrefix(ModuleLike module) {
-        return "[" + module.identifier() + "] ";
+        return "[" + module.getIdentifier() + "] ";
     }
 
     public static void logInfo(ModuleLike module, String message) {

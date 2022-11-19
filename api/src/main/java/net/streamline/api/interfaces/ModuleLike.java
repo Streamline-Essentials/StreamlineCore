@@ -5,8 +5,8 @@ import tv.quaint.objects.handling.IEventable;
 import java.io.File;
 import java.io.InputStream;
 
-public interface ModuleLike extends IEventable {
-    String identifier();
+public interface ModuleLike extends IEventable, Comparable<ModuleLike> {
+    String getIdentifier();
 
     String getAuthorsStringed();
 
@@ -27,4 +27,6 @@ public interface ModuleLike extends IEventable {
     File getDataFolder();
 
     InputStream getResourceAsStream(String fileName);
+
+    boolean isMalleable();
 }

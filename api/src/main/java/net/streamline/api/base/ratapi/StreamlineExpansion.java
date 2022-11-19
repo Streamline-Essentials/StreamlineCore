@@ -10,6 +10,7 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.placeholder.RATExpansion;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,6 +27,10 @@ public class StreamlineExpansion extends RATExpansion {
         if (params.equals("users_online")) return String.valueOf(UserUtils.getOnlineUsers().size());
         if (params.equals("players_loaded")) return String.valueOf(UserUtils.getLoadedPlayers().size());
         if (params.equals("users_loaded")) return String.valueOf(UserUtils.getLoadedUsers().size());
+
+        if (params.equals("modules_loaded")) return ModuleUtils.getListAsFormattedString(ModuleManager.getLoadedModuleIdentifiers().stream().toList());
+        if (params.equals("modules_enabled")) return ModuleUtils.getListAsFormattedString(ModuleManager.getEnabledModuleIdentifiers().stream().toList());
+        if (params.equals("modules_colorized")) return ModuleUtils.getListAsFormattedString(ModuleManager.getColorizedLoadedModuleIdentifiers().stream().toList());
 
         if (params.equals("null")) {
             return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
