@@ -20,23 +20,35 @@ public class ModulesCommand extends StreamlineCommand {
     private final String messageResultReapplyOne;
     private final String messageResultReloadAll;
     private final String messageResultReloadOne;
+    private final String messageResultLoadAll;
+    private final String messageResultLoadOne;
+    private final String messageResultUnloadAll;
+    private final String messageResultUnloadOne;
 
     public ModulesCommand() {
         super(
-                "streamlinemodule",
-                "streamline.command.streamlinemodule.default",
-                "module", "pmodule", "slm"
+                "streamlinemodules",
+                "streamline.command.streamlinemodules.default",
+                "module", "modules", "pmodules", "slm"
         );
 
         this.messageResultReapplyAll = this.getCommandResource().getOrSetDefault("messages.result.reapply.all",
                 "&eRe-applied all modules&8!");
         this.messageResultReloadAll = this.getCommandResource().getOrSetDefault("messages.result.reload.all",
                 "&eReloaded all modules&8!");
+        this.messageResultLoadAll = this.getCommandResource().getOrSetDefault("messages.result.load.all",
+                "&eLoaded all modules&8!");
+        this.messageResultUnloadAll = this.getCommandResource().getOrSetDefault("messages.result.unload.all",
+                "&eUnloaded all modules&8!");
 
         this.messageResultReapplyOne = this.getCommandResource().getOrSetDefault("messages.result.reapply.one",
                 "&eRe-applied module &7'&c%this_identifier%&7'&8!");
         this.messageResultReloadOne = this.getCommandResource().getOrSetDefault("messages.result.reload.one",
                 "&eReloaded module &7'&c%this_identifier%&7'&8!");
+        this.messageResultLoadOne = this.getCommandResource().getOrSetDefault("messages.result.load.one",
+                "&eLoaded module &7'&c%this_identifier%&7'&8!");
+        this.messageResultUnloadOne = this.getCommandResource().getOrSetDefault("messages.result.unload.one",
+                "&eUnloaded module &7'&c%this_identifier%&7'&8!");
     }
 
     @Override
@@ -76,6 +88,34 @@ public class ModulesCommand extends StreamlineCommand {
                     });
                 }
             }
+            case "load" -> {
+                if (args.length == 1) {
+                    ModuleManager.registerExternalModules();
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultLoadAll);
+                } else {
+                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                        if (ModuleManager.hasModule(a)) return;
+                        ModuleManager.registerExternalModule(a);
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultLoadOne
+                                .replace("%this_identifier%", a)
+                        );
+                    });
+                }
+            }
+            case "unload" -> {
+                if (args.length == 1) {
+                    ModuleManager.getLoadedModules().forEach((s, module) -> ModuleManager.unregisterModule(module));
+                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultUnloadAll);
+                } else {
+                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                        if (! ModuleManager.hasModule(a)) return;
+                        ModuleManager.unregisterModule(ModuleManager.getModule(a));
+                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultUnloadOne
+                                .replace("%this_identifier%", a)
+                        );
+                    });
+                }
+            }
         }
     }
 
@@ -84,11 +124,18 @@ public class ModulesCommand extends StreamlineCommand {
         if (args.length <= 1) {
             return new ConcurrentSkipListSet<>(List.of(
                     "reapply",
-                    "reload"
+                    "reload",
+                    "load",
+                    "unload"
             ));
         }
         if (args.length == 2) {
-            return new ConcurrentSkipListSet<>(ModuleManager.getLoadedModules().keySet());
+            if (args[0].equalsIgnoreCase("reapply") || args[0].equalsIgnoreCase("reload") || args[0].equalsIgnoreCase("unload")) {
+                return new ConcurrentSkipListSet<>(ModuleManager.getLoadedModules().keySet());
+            }
+            if (args[0].equalsIgnoreCase("load")) {
+                return ModuleManager.getUnloadedExternalModuleIdentifiers();
+            }
         }
         return new ConcurrentSkipListSet<>();
     }

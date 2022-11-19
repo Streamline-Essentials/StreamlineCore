@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ModuleManager {
     @Getter @Setter
@@ -117,8 +118,54 @@ public class ModuleManager {
             MessageUtils.logInfo(getNoModulesMessage());
             return;
         }
-        safePluginManager().startPlugins();
         safePluginManager().loadPlugins();
+    }
+
+    public static void registerExternalModule(@NotNull String jarName) {
+        if (! jarName.endsWith(".jar")) jarName += ".jar";
+        safePluginManager().loadPlugin(safePluginManager().getPluginsRoot().resolve(jarName));
+        PluginWrapper plugin = getPluginWrapperByJarName(jarName);
+        safePluginManager().startPlugin(plugin.getPluginId());
+    }
+
+    public static PluginWrapper getPluginWrapperByJarName(String jarName) {
+        AtomicReference<PluginWrapper> r = new AtomicReference<>();
+        safePluginManager().getPlugins().forEach(plugin -> {
+            if (plugin.getPluginPath().endsWith(jarName)) r.set(plugin);
+        });
+        return r.get();
+    }
+
+    public static ConcurrentSkipListSet<String> getExternalModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+        File[] files = safePluginManager().getPluginsRoot().toFile().listFiles();
+        if (files == null) return r;
+
+        Arrays.asList(files).forEach(file -> {
+            if (file.isDirectory()) return;
+            if (! file.getName().endsWith(".jar")) return;
+            r.add(file.getName());
+        });
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getLoadedExternalModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+        getExternalModuleIdentifiers().forEach(identifier -> {
+            PluginWrapper pluginWrapper = getPluginWrapperByJarName(identifier);
+            if (pluginWrapper == null) return;
+            if (pluginWrapper.getPluginState() != PluginState.DISABLED) r.add(identifier);
+        });
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getUnloadedExternalModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+        getExternalModuleIdentifiers().forEach(identifier -> {
+            if (getLoadedExternalModuleIdentifiers().contains(identifier)) return;
+            r.add(identifier);
+        });
+        return r;
     }
 
     public static boolean hasNonBaseModules() {
