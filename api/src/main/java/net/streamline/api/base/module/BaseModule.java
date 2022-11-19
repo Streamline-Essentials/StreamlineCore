@@ -69,6 +69,7 @@ public class BaseModule extends SimpleModule {
             }
         }, SLAPI.getModuleFolder().toPath(), SLAPI.getInstance().getClass().getClassLoader()));
 
+        setMalleable(false);
         setEnabled(true);
         ModuleManager.getEnabledModules().put(getIdentifier(), this);
     }
