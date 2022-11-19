@@ -99,12 +99,12 @@ public class ModuleManager {
             ;
 
     public static void loadModule(@NonNull ModuleLike module) {
-        if (getLoadedModules().containsKey(module.identifier())) {
-            MessageUtils.logWarning("Module '" + module.identifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
+        if (getLoadedModules().containsKey(module.getIdentifier())) {
+            MessageUtils.logWarning("Module '" + module.getIdentifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
             return;
         }
 
-        getLoadedModules().put(module.identifier(), module);
+        getLoadedModules().put(module.getIdentifier(), module);
         if (module instanceof StreamlineModule m) ModuleUtils.fireEvent(new ModuleLoadEvent(m));
     }
 
@@ -193,9 +193,10 @@ public class ModuleManager {
 
     public static void unregisterModule(ModuleLike module) {
         try {
-            safePluginManager().stopPlugin(module.identifier());
+            safePluginManager().stopPlugin(module.getIdentifier());
+            safePluginManager().unloadPlugin(module.getIdentifier());
             unregisterHandlersOf(module);
-            getLoadedModules().remove(module.identifier());
+            getLoadedModules().remove(module.getIdentifier());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -209,7 +210,7 @@ public class ModuleManager {
         ConcurrentSkipListSet<ModuleCommand> r = new ConcurrentSkipListSet<>();
 
         CommandHandler.getLoadedModuleCommands().forEach((s, moduleCommand) -> {
-            if (moduleCommand.getOwningModule().identifier().equals(module.identifier())) r.add(moduleCommand);
+            if (moduleCommand.getOwningModule().getIdentifier().equals(module.getIdentifier())) r.add(moduleCommand);
         });
 
         return r;
@@ -222,7 +223,7 @@ public class ModuleManager {
     }
 
     public static void reapplyModule(String id) {
-        if (id.equals(SLAPI.getBaseModule().identifier())) {
+        if (id.equals(SLAPI.getBaseModule().getIdentifier())) {
             if (SLAPI.getBaseModule() != null) SLAPI.getBaseModule().stop();
             BaseModule module = new BaseModule();
             SLAPI.setBaseModule(module);
@@ -274,5 +275,73 @@ public class ModuleManager {
 
     public static boolean hasModuleLoadedAndEnabled(String identifier) {
         return hasModuleLoaded(identifier) && hasModuleEnabled(identifier);
+    }
+
+    public static void unregisterModule(String s, ModuleLike moduleLike) {
+        unregisterModule(moduleLike);
+    }
+
+    public static ConcurrentSkipListSet<ModuleLike> getOnlyMalleableModules() {
+        ConcurrentSkipListSet<ModuleLike> r = new ConcurrentSkipListSet<>();
+
+        getLoadedModules().forEach((s, moduleLike) -> {
+            if (moduleLike.isMalleable()) r.add(moduleLike);
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getOnlyMalleableModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getOnlyMalleableModules().forEach(moduleLike -> {
+            r.add(moduleLike.getIdentifier());
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getOnlyMalleableEnabledModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getOnlyMalleableModules().forEach(moduleLike -> {
+            if (moduleLike.isEnabled()) r.add(moduleLike.getIdentifier());
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getLoadedModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getLoadedModules().forEach((s, module) -> r.add(module.getIdentifier()));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getEnabledModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getEnabledModules().forEach((s, module) -> r.add(module.getIdentifier()));
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getColorizedLoadedModuleIdentifiers() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getLoadedModules().forEach((s, module) -> {
+            if (module.isMalleable()) {
+                if (module.isEnabled()) {
+                    r.add("&a" + module.getIdentifier());
+                } else {
+                    r.add("&c" + module.getIdentifier());
+                }
+            } else {
+                r.add("&7" + module.getIdentifier());
+            }
+        });
+
+        return r;
     }
 }

@@ -68,6 +68,9 @@ public class BaseModule extends SimpleModule {
                 return Collections.emptyList();
             }
         }, SLAPI.getModuleFolder().toPath(), SLAPI.getInstance().getClass().getClassLoader()));
+
+        setEnabled(true);
+        ModuleManager.getEnabledModules().put(getIdentifier(), this);
     }
 
     @Override
@@ -89,10 +92,5 @@ public class BaseModule extends SimpleModule {
     public void onDisable() {
         // nothing right now.
         getStreamlineExpansion().unregister();
-    }
-
-    @Override
-    public String getIdentifier() {
-        return identifier();
     }
 }
