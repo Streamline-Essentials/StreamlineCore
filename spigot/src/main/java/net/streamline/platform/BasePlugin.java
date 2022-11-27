@@ -18,6 +18,7 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.SpigotProfiler;
 import net.streamline.platform.savables.UserManager;
@@ -102,6 +103,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         userManager = new UserManager();
         messenger = new Messenger();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());
+        SLAPI.setBackendHandler(new BackendHandler());
         slapiB = new SLAPIB(getSlapi(), this);
 
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());

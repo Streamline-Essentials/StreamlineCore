@@ -34,6 +34,8 @@ public class StreamlinePlayer extends StreamlineUser {
     private ConcurrentSkipListSet<String> nameList;
     @Getter @Setter
     private int defaultLevel;
+    @Getter @Setter
+    private StreamlineLocation location;
 
     public String getLatestIP() {
         return SLAPI.getInstance().getUserManager().parsePlayerIP(this.getUuid());
@@ -58,6 +60,7 @@ public class StreamlinePlayer extends StreamlineUser {
         setIpList(player.getIpList());
         setNameList(player.getNameList());
 //        setDefaultLevel(player.getDefaultLevel());
+        setLocation(player.getLocation());
 
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(this);
@@ -89,14 +92,8 @@ public class StreamlinePlayer extends StreamlineUser {
         totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
-
-//        try {
-//            throw new RuntimeException("Check here:");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        MessageUtils.logWarning("Ran thingy");
+        // Location.
+        location = new StreamlineLocation(getOrSetDefault("player.location", ""));
     }
 
     @Override
@@ -111,6 +108,8 @@ public class StreamlinePlayer extends StreamlineUser {
         totalXP = getOrSetDefault("player.stats.experience.total", totalXP);
         currentXP = getOrSetDefault("player.stats.experience.current", currentXP);
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", playSeconds);
+        // Location.
+        location = new StreamlineLocation(getOrSetDefault("player.location", location.toString()));
     }
 
     @Override
@@ -125,6 +124,8 @@ public class StreamlinePlayer extends StreamlineUser {
         set("player.stats.experience.total", totalXP);
         set("player.stats.experience.current", currentXP);
         set("player.stats.playtime.seconds", playSeconds);
+        // Location.
+        set("player.location", location.toString());
     }
 
     @Override
