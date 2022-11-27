@@ -12,6 +12,7 @@ import net.streamline.api.command.GivenCommands;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.holders.GeyserHolder;
+import net.streamline.api.interfaces.IBackendHandler;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
@@ -83,6 +84,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     private static TaskManager mainScheduler;
     @Getter
     private static ModuleTaskManager moduleScheduler;
+
+    @Getter @Setter
+    private static IBackendHandler backendHandler;
 
     @Getter @Setter
     private static boolean proxiedServer;

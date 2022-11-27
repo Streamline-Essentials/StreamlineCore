@@ -79,14 +79,12 @@ public class PlatformListener implements Listener {
 
         CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
 
-        if (! SLAPI.isProxiedServer() && isTested()) {
-            StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-            streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
-            streamlinePlayer.setLatestName(player.getName());
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        streamlinePlayer.setLatestName(player.getName());
 
-            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
-            ModuleUtils.fireEvent(loginCompletedEvent);
-        }
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
+        ModuleUtils.fireEvent(loginCompletedEvent);
 
         setJoined(true);
     }

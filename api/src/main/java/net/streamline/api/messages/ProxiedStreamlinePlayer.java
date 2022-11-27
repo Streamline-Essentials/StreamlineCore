@@ -2,6 +2,7 @@ package net.streamline.api.messages;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.savables.users.StreamlineLocation;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -41,4 +42,6 @@ public class ProxiedStreamlinePlayer {
     private int defaultLevel;
     @Getter @Setter
     private String uuid;
+    @Getter @Setter
+    private StreamlineLocation location;
 }

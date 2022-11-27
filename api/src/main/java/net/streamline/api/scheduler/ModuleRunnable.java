@@ -1,12 +1,15 @@
 package net.streamline.api.scheduler;
 
+import lombok.Getter;
+import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.modules.StreamlineModule;
 
 public abstract class ModuleRunnable extends BaseRunnable {
-    public StreamlineModule module;
+    @Getter
+    private ModuleLike module;
 
-    public ModuleRunnable(StreamlineModule module, long delay, long period) {
+    public ModuleRunnable(ModuleLike module, long delay, long period) {
         super(delay, period);
         this.module = module;
         ModuleUtils.getModuleScheduler().start(this);
