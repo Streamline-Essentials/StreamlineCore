@@ -26,6 +26,10 @@ users:
     points:
       # The default amount a user will receive when their profile is first created.
       default: 0.0
+    # Settings for the user's nickname.
+    nickname:
+      # The default nickname.
+      default: "%streamline_user_prefix%%streamline_user_absolute%%streamline_user_suffix%"
   # Settings for the console user.
   console:
     # The server the console user will appear to be on. (Used when using the placeholder '%streamline_user_server%'.)

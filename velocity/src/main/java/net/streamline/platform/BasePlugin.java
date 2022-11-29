@@ -21,6 +21,7 @@ import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
+import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
@@ -81,11 +82,14 @@ public abstract class BasePlugin implements IStreamline {
     private final Logger logger;
     @Getter
     private final File dataFolder;
+    @Getter
+    private final Metrics.Factory metricsFactory;
 
-    public BasePlugin(ProxyServer s, Logger l, Path dd) {
+    public BasePlugin(ProxyServer s, Logger l, Path dd, Metrics.Factory mf) {
         this.proxy = s;
         this.logger = l;
         this.dataFolder = dd.toFile();
+        this.metricsFactory = mf;
 
         Path parentPath = dd.getParent();
         if (parentPath != null) {

@@ -438,8 +438,10 @@ public class UserUtils {
         return suffix;
     }
 
-    public static String getDisplayName(String username, String nickName) {
-        return getLuckPermsPrefix(username) + nickName + getLuckPermsSuffix(username);
+    public static String getFormattedDefaultNickname(StreamlineUser user) {
+        String defaultNick = GivenConfigs.getMainConfig().userCombinedNicknameDefault();
+
+        return ModuleUtils.replacePlaceholders(user, defaultNick);
     }
 
     public static StreamlineConsole getConsole() {

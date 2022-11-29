@@ -9,12 +9,13 @@ import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
+import net.streamline.api.savables.events.CreateSavableResourceEvent;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
-import tv.quaint.events.components.FunctionedCall;
 import tv.quaint.events.processing.BaseProcessor;
 
 public class BaseListener implements BaseEventListener {
@@ -59,10 +60,18 @@ public class BaseListener implements BaseEventListener {
 
     @BaseProcessor
     public void onProxyMessage(ProxyMessageInEvent event) {
+        if (event.getMessage() == null) return;
+        if (event.getSubChannel() == null) return;
+
         if (SLAPI.isProxy()) {
-            if (event.getMessage().getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
+            if (event.getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
                 PlayerLocationMessageBuilder.handle(event.getMessage());
             }
         }
+    }
+
+    @BaseProcessor
+    public void onResourceCreateStreamlineUser(CreateSavableResourceEvent<StreamlineUser> event) {
+        event.getResource().setDisplayName(UserUtils.getFormattedDefaultNickname(event.getResource()));
     }
 }

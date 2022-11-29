@@ -26,7 +26,7 @@ public class RATHandledString {
     public List<String> regexMatches(String input) {
         List<String> r = new ArrayList<>();
         Matcher matcher = MatcherUtils.matcherBuilder("(" + getRegex() + ")", input);
-        List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups());
+        List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups() + 1);
 
         for (String[] stringArray : stringArrays) {
             r.add(stringArray[0]);
@@ -37,7 +37,7 @@ public class RATHandledString {
 
     public List<String> getRegexMatchesForGroup(String input, int group) {
         List<String> r = new ArrayList<>();
-        Matcher matcher = MatcherUtils.matcherBuilder("(" + getRegex() + ")", input);
+        Matcher matcher = MatcherUtils.matcherBuilder(getRegex(), input);
         List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups());
 
         if (group > getGroups()) {

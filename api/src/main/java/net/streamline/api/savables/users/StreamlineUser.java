@@ -37,8 +37,12 @@ public abstract class StreamlineUser extends SavableResource {
     private double points;
     @Getter @Setter
     private String lastMessage;
-    @Getter @Setter
+    @Setter
     private boolean online;
+    public boolean isOnline() {
+        updateOnline();
+        return this.online;
+    }
     @Getter
     private String latestServer;
     @Getter @Setter

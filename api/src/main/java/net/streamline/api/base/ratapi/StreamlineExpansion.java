@@ -50,11 +50,14 @@ public class StreamlineExpansion extends RATExpansion {
 
         new IdentifiedReplaceable(this, MatcherUtils.makeLiteral("parse_") + "(.*?)", 1, (s) -> {
             try {
-                String[] things = s.get().split(":::", 2);
-                StreamlineUser user = UserUtils.getOrGetUserByName(things[0]);
-                String parse = things[1].replace("*/*", "%");
-                parse = parse.substring(0, parse.length() - 1);
-                return ModuleUtils.replacePlaceholders(user, parse);
+                if (s.get().contains(":::")) {
+                    String[] things = s.get().split(":::", 2);
+                    StreamlineUser user = UserUtils.getOrGetUserByName(things[0]);
+                    String parse = things[1].replace("*/*", "%");
+                    return ModuleUtils.replacePlaceholders(user, parse);
+                } else {
+                    return ModuleUtils.replacePlaceholders(s.get());
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return s.string();
