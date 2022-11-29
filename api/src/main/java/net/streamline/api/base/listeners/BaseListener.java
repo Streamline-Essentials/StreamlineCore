@@ -6,33 +6,38 @@ import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.events.server.LoginCompletedEvent;
+import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
+import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import tv.quaint.events.BaseEventHandler;
+import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.components.FunctionedCall;
+import tv.quaint.events.processing.BaseProcessor;
 
-public class BaseListener {
+public class BaseListener implements BaseEventListener {
     public BaseListener() {
         BaseModule.getInstance().logInfo("Loaded " + getClass().getSimpleName());
+        BaseEventHandler.bake(this, SLAPI.getInstance());
 
-        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerJoin, LoginCompletedEvent.class));
-        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerLevelChange, LevelChangePlayerEvent.class));
+//        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerJoin, LoginCompletedEvent.class));
+//        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerLevelChange, LevelChangePlayerEvent.class));
     }
 
-    public boolean onPlayerJoin(LoginCompletedEvent event) {
+    @BaseProcessor
+    public void onPlayerJoin(LoginCompletedEvent event) {
         StreamlineUser user = event.getResource();
         if (user.getUuid() == null) {
             MessageUtils.logWarning("Could not pass a player to the UUID handler! This is very serious! Please let the Quaint (the author) know immediately.");
-            return false;
+            return;
         }
         CachedUUIDsHandler.cachePlayer(user.getUuid(), user.getLatestName());
-
-        return true;
     }
 
-    public boolean onPlayerLevelChange(LevelChangePlayerEvent event) {
+    @BaseProcessor
+    public void onPlayerLevelChange(LevelChangePlayerEvent event) {
         if (GivenConfigs.getMainConfig().announceLevelChangeChat()) {
             for (String message : MainMessagesHandler.MESSAGES.EXPERIENCE.ONCHANGE_CHAT.getStringList()) {
                 SLAPI.getInstance().getMessenger().sendMessage(event.getResource(), MessageUtils.replaceAllPlayerBungee(event.getResource(), message));
@@ -50,18 +55,14 @@ public class BaseListener {
 
             SLAPI.getInstance().getMessenger().sendTitle(event.getResource(), title);
         }
-        return true;
     }
 
-//    public boolean onProxyMessage(ProxyMessageInEvent event) {
-//        MessageUtils.logDebug("Received message in...");
-//
-//        if (! SLAPI.isProxy()) {
-//            if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
-//                MessageUtils.logDebug("Received UserNameMessageBuilder ProxiedMessageIn.");
-//                UserNameMessageBuilder.handle(event.getMessage());
-//            }
-//        }
-//        return true;
-//    }
+    @BaseProcessor
+    public void onProxyMessage(ProxyMessageInEvent event) {
+        if (SLAPI.isProxy()) {
+            if (event.getMessage().getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
+                PlayerLocationMessageBuilder.handle(event.getMessage());
+            }
+        }
+    }
 }

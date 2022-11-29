@@ -50,7 +50,7 @@ public class StreamlineExpansion extends RATExpansion {
 
         new IdentifiedReplaceable(this, MatcherUtils.makeLiteral("parse_") + "(.*?)", 1, (s) -> {
             try {
-                String[] things = s.string().split(":::", 2);
+                String[] things = s.get().split(":::", 2);
                 StreamlineUser user = UserUtils.getOrGetUserByName(things[0]);
                 String parse = things[1].replace("*/*", "%");
                 parse = parse.substring(0, parse.length() - 1);
@@ -63,7 +63,7 @@ public class StreamlineExpansion extends RATExpansion {
 
         new IdentifiedReplaceable(this, "[?][L][:](.*?)", 1, (s) -> {
             try {
-                String params = s.string();
+                String params = s.get();
                 params = params
                         .replace("[[", "%")
                         .replace("]]", "%")
@@ -117,7 +117,7 @@ public class StreamlineExpansion extends RATExpansion {
 
         new IdentifiedUserReplaceable(this, "[?][R][:](.*?)", 1, (s, user) -> {
             try {
-                String params = s.string();
+                String params = s.get();
                 params = params
                         .replace("[[", "%")
                         .replace("]]", "%")
