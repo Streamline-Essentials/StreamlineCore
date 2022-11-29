@@ -38,7 +38,7 @@ public class Messenger implements IMessenger {
 
     public void sendMessage(@Nullable CommandSender to, String message) {
         if (to == null) return;
-        if (SLAPI.getRatAPI() == null) {
+        if (! SLAPI.isReady()) {
             to.sendMessage(MessageUtils.codedString(message));
         } else {
             to.sendMessage(MessageUtils.codedString(replaceAllPlayerBungee(to, message)));
@@ -47,7 +47,7 @@ public class Messenger implements IMessenger {
 
     public void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (SLAPI.getRatAPI() == null) {
+        if (! SLAPI.isReady()) {
             to.sendMessage(MessageUtils.codedString(message));
         } else {
             to.sendMessage(MessageUtils.codedString(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
@@ -55,7 +55,7 @@ public class Messenger implements IMessenger {
     }
     public void sendMessage(@Nullable CommandSender to, StreamlineUser other, String message) {
         if (to == null) return;
-        if (SLAPI.getRatAPI() == null) {
+        if (! SLAPI.isReady()) {
             to.sendMessage(MessageUtils.codedString(message));
         } else {
             to.sendMessage(MessageUtils.codedString(MessageUtils.replaceAllPlayerBungee(other, message)));

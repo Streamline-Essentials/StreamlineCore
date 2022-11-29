@@ -9,10 +9,10 @@ import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.messages.builders.TeleportMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
+import net.streamline.api.placeholders.RATRegistry;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.objects.StreamlineTitle;
-import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.savables.users.*;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
@@ -20,13 +20,11 @@ import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventListener;
-import tv.quaint.storage.resources.StorageResource;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -172,10 +170,6 @@ public class ModuleUtils {
         return MessageUtils.equalsAny(object, toEqual);
     }
 
-    public static CompletableFuture<String> replaceAllLogicalBungee(String of) {
-        return SLAPI.getRatAPI().parseAllLogicalPlaceholders(of);
-    }
-
     public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
         return MessageUtils.replaceAllPlayerBungee(user, of);
     }
@@ -287,10 +281,6 @@ public class ModuleUtils {
 
     public static LuckPerms getLuckPerms() {
         return SLAPI.getLuckPerms();
-    }
-
-    public static RATAPI getRATAPI() {
-        return SLAPI.getRatAPI();
     }
 
     public static StreamlineConsole getConsole() {
@@ -423,5 +413,13 @@ public class ModuleUtils {
 
     public static void teleport(StreamlinePlayer player, StreamlinePlayer target) {
         teleport(player, target.getLocation());
+    }
+
+    public static String replacePlaceholders(String string) {
+        return RATRegistry.fetch(string);
+    }
+
+    public static String replacePlaceholders(StreamlineUser user, String string) {
+        return RATRegistry.fetch(string, user);
     }
 }

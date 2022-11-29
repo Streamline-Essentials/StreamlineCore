@@ -30,7 +30,7 @@ users:
   console:
     # The server the console user will appear to be on. (Used when using the placeholder '%streamline_user_server%'.)
     server: "space"
-    # Settings for the console user's name.
+    # Settings for the console user'string name.
     name:
       # The name the console will have when using the placeholder '%streamline_user_name%'.
       regular: "Console"

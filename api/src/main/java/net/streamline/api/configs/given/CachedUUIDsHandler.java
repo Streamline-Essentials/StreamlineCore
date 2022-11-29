@@ -92,7 +92,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     public static String getCachedUUID(String username) {
-        if (username.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return username;
+        if (username.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return GivenConfigs.getMainConfig().userConsoleDiscriminator();
         if (username.contains("-")) return username;
 
         if (getCachedUUIDs().containsKey(username)) {

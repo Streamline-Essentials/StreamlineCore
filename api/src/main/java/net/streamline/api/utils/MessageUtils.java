@@ -5,22 +5,17 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.AtomicString;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class MessageUtils {
@@ -148,55 +143,101 @@ public class MessageUtils {
         SLAPI.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
 
+    /**
+     * < UUID , < ToParse , Parsed > >
+     */
     @Getter @Setter
-    private static ConcurrentSkipListMap<StreamlineUser, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
+    private static ConcurrentSkipListMap<String, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
 
     public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
         if (user == null) return of;
 
-        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).completeOnTimeout(of, 1000, TimeUnit.MILLISECONDS).join();
+//        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).completeOnTimeout(of, 77, TimeUnit.MILLISECONDS).join();
+        return ModuleUtils.replacePlaceholders(user, of);
     }
 
     public static String replaceAllPlayerBungee(String uuid, String of) {
         return replaceAllPlayerBungee(UserUtils.getOrGetUser(uuid), of);
     }
 
-    public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
-        if (SLAPI.getInstance().getPlatform().getServerType().equals(IStreamline.ServerType.PROXY))
-            return ModuleUtils.replaceAllPlayerBungee(streamlineUser, toParse);
+    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse) {
+        return parseOnProxyForNow(streamlineUser, toParse, 2);
+    }
 
-        return CompletableFuture.supplyAsync(() -> {
-            StreamlinePlayer player = UserUtils.getOrGetPlayer(streamlineUser.getUuid());
-            if (player == null) {
-                Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
-                if (entry == null) return null;
-                player = entry.getValue();
-            }
+    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
+        return parseOnProxyForNow(streamlineUser, toParse, 1, maxIterations);
+    }
 
-            AtomicString atomicString = new AtomicString(null);
+    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse,
+                                      @Range(from = 1, to = Integer.MAX_VALUE) int iterations, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
+        parseOnProxyForNowThenSet(streamlineUser, toParse);
 
-            StreamlinePlayer finalPlayer = player;
-            CompletableFuture.supplyAsync(() -> {
-                ReturnableMessage message = ProxyParseMessageBuilder.build(finalPlayer, toParse, streamlineUser);
-                message.registerEventCall((pm) -> {
-                    if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) atomicString.set(pm.getString("parsed"));
-                });
-                return true;
-            }).join();
+        if (iterations < maxIterations) {
+            return parseOnProxyForNow(streamlineUser, toParse, iterations + 1, maxIterations);
+        }
+        String parsed = getCachedValue(streamlineUser, toParse);
+        return parsed == null ? toParse : parsed;
+    }
 
-            return CompletableFuture.supplyAsync(() -> {
-                String s = atomicString.get();
-                while (s == null) {
-                    s = atomicString.get();
-                }
+    public static void parseOnProxyForNowThenSet(StreamlineUser streamlineUser, String toParse) {
+        StreamlinePlayer player = UserUtils.getOrGetPlayer(streamlineUser.getUuid());
+        if (player == null) {
+            Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
+            if (entry == null) return;
+            player = entry.getValue();
+        }
 
-                return s;
-            }).completeOnTimeout(null, 1200, TimeUnit.MILLISECONDS).join();
-        }).completeOnTimeout(null, 1200, TimeUnit.MILLISECONDS).join();
+        ReturnableMessage message = ProxyParseMessageBuilder.build(player, toParse, streamlineUser);
+        StreamlinePlayer finalPlayer = player;
+        message.registerEventCall((pm) -> {
+            if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) cacheValue(finalPlayer, toParse, pm.getString("parsed"));
+        });
+    }
+
+    public static String parseOnProxyForNowLimited(StreamlineUser user, String toParse) {
+        return parseOnProxyForNow(user, toParse, 1);
     }
 
     public static String parseOnProxy(String toParse) {
         return parseOnProxy(UserUtils.getConsole(), toParse);
+    }
+
+    public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
+//        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+//        final Future<String> future = executorService.submit(new ExpensiveProxyGet(streamlineUser, toParse));
+//        try {
+//            return future.get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//            return toParse;
+//        }
+        return parseOnProxyForNowLimited(streamlineUser, toParse);
+    }
+
+    public static void cacheValue(String userUuid, String toParse, String parsedAs) {
+        if (userUuid == null) return;
+
+        ConcurrentSkipListMap<String, String> map = cache.get(userUuid);
+        if (map == null) map = new ConcurrentSkipListMap<>();
+        map.put(toParse, parsedAs);
+        cache.put(userUuid, map);
+    }
+
+    public static String getCachedValue(String userUuid, String toParse) {
+        if (userUuid == null) return null;
+
+        ConcurrentSkipListMap<String, String> map = cache.get(userUuid);
+        if (map == null) return null;
+
+        return map.get(toParse);
+    }
+
+    public static void cacheValue(StreamlineUser user, String toParse, String parsedAs) {
+        cacheValue(user.getUuid(), toParse, parsedAs);
+    }
+
+    public static String getCachedValue(StreamlineUser user, String toParse) {
+        return getCachedValue(user.getUuid(), toParse);
     }
 
     public static String getListAsFormattedString(List<?> list) {

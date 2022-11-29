@@ -33,18 +33,18 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
     private List<ModuleCommand> commands = new ArrayList<>();
 
     /**
-     * This allows you to set the {@link Module}'s identifier.
+     * This allows you to set the {@link Module}'string identifier.
      *
-     * @return The {@link Module}'s identifier;
+     * @return The {@link Module}'string identifier;
      */
     public String getIdentifier() {
         return wrapper.getDescriptor().getPluginId();
     }
 
     /**
-     * This allows you to set the {@link Module}'s authors.
+     * This allows you to set the {@link Module}'string authors.
      *
-     * @return The {@link Module}'s authors;
+     * @return The {@link Module}'string authors;
      */
     public ConcurrentSkipListSet<String> authors() {
         return new ConcurrentSkipListSet<>(Arrays.stream(wrapper.getDescriptor().getProvider().replace(", ", ",").split(",")).toList());
