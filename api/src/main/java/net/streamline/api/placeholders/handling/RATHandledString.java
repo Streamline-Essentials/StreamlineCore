@@ -23,13 +23,33 @@ public class RATHandledString {
         return matcher.find();
     }
 
-    public List<String> isolateIn(String input) {
+    public List<String> regexMatches(String input) {
         List<String> r = new ArrayList<>();
         Matcher matcher = MatcherUtils.matcherBuilder("(" + getRegex() + ")", input);
         List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups());
 
         for (String[] stringArray : stringArrays) {
             r.add(stringArray[0]);
+        }
+
+        return r;
+    }
+
+    public List<String> getRegexMatchesForGroup(String input, int group) {
+        List<String> r = new ArrayList<>();
+        Matcher matcher = MatcherUtils.matcherBuilder("(" + getRegex() + ")", input);
+        List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups());
+
+        if (group > getGroups()) {
+            group = getGroups();
+        }
+        group -= 1;
+        if (group < 0) {
+            group = 0;
+        }
+
+        for (String[] stringArray : stringArrays) {
+            r.add(stringArray[group]);
         }
 
         return r;
