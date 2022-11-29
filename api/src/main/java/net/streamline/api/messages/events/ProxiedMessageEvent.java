@@ -12,4 +12,24 @@ public class ProxiedMessageEvent extends StreamlineEvent {
     public ProxiedMessageEvent(ProxiedMessage message) {
         this.message = message;
     }
+
+    public StreamlinePlayer getCarrier() {
+        return message.getCarrier();
+    }
+
+    public boolean isProxyOriginated() {
+        return message.isProxyOriginated();
+    }
+
+    public String getSubChannel() {
+        return message.getSubChannel();
+    }
+
+    public boolean hasKey(String key) {
+        return message.hasKey(key);
+    }
+
+    public String getString(String key) {
+        return message.getString(key);
+    }
 }

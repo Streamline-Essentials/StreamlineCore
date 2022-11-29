@@ -94,7 +94,12 @@ public class StreamlinePlayer extends StreamlineUser {
         currentXP = getOrSetDefault("player.stats.experience.current", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
         // Location.
-        location = new StreamlineLocation(getOrSetDefault("player.location", ""));
+        String locationString = getOrSetDefault("player.location", "");
+        if (locationString.equals("")) {
+            location = null;
+        } else {
+            location = new StreamlineLocation(locationString);
+        }
     }
 
     @Override
@@ -110,7 +115,12 @@ public class StreamlinePlayer extends StreamlineUser {
         currentXP = getOrSetDefault("player.stats.experience.current", currentXP);
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", playSeconds);
         // Location.
-        location = new StreamlineLocation(getOrSetDefault("player.location", location.toString()));
+        String locationString = getOrSetDefault("player.location", location == null ? "" : location.toString());
+        if (locationString.equals("")) {
+            location = null;
+        } else {
+            location = new StreamlineLocation(locationString);
+        }
     }
 
     @Override
@@ -126,7 +136,8 @@ public class StreamlinePlayer extends StreamlineUser {
         set("player.stats.experience.current", currentXP);
         set("player.stats.playtime.seconds", playSeconds);
         // Location.
-        set("player.location", location.toString());
+        String locationString = location == null ? "" : location.toString();
+        set("player.location", locationString);
     }
 
     @Override
