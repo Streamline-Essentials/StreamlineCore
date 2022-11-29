@@ -1,6 +1,5 @@
 package net.streamline.api.placeholders.replaceables;
 
-import lombok.Getter;
 import net.streamline.api.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.CallbackString;
 import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
@@ -20,7 +19,7 @@ public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback
 
         addTimesReplaced(getHandledString().count(string));
         AtomicString atomicString = new AtomicString(string);
-        getHandledString().isolateIn(string).forEach((s) -> {
+        getHandledString().regexMatches(string).forEach((s) -> {
             atomicString.set(atomicString.get().replace(s, getCallback().apply(new CallbackString(s, getHandledString()), user)));
         });
         return atomicString.get();

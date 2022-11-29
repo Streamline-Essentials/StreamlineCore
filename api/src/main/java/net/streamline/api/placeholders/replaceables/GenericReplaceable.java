@@ -19,7 +19,7 @@ public class GenericReplaceable extends AbstractReplaceable<PlaceholderCallback>
 
         addTimesReplaced(getHandledString().count(string));
         AtomicString atomicString = new AtomicString(string);
-        getHandledString().isolateIn(string).forEach((s) -> {
+        getHandledString().regexMatches(string).forEach((s) -> {
             atomicString.set(atomicString.get().replace(s, getCallback().apply(new CallbackString(s, getHandledString()))));
         });
         return atomicString.get();
