@@ -18,8 +18,6 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.placeholder.RATAPI;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.scheduler.ModuleTaskManager;
@@ -42,8 +40,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     private static LuckPerms luckPerms;
     @Getter
     private static GeyserHolder geyserHolder;
-    @Getter
-    private static RATAPI ratAPI;
 
     @Getter
     private static File userFolder;
@@ -93,6 +89,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter @Setter
     private static boolean proxy;
 
+    @Getter @Setter
+    private static boolean ready = false;
+
     public SLAPI(String identifier, P platform, U userManager, M messenger) {
         super(identifier);
         instance = this;
@@ -137,8 +136,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         luckPerms = LuckPermsProvider.get();
         geyserHolder = new GeyserHolder();
 
-        ratAPI = new RATAPI();
-
 //        baseModule = new BaseModule();
 //        ModuleManager.registerModule(getBaseModule());
 
@@ -148,6 +145,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());
+
+        setReady(true);
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

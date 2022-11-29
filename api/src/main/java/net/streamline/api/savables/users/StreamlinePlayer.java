@@ -2,6 +2,7 @@ package net.streamline.api.savables.users;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.objecthunter.exp4j.tokenizer.UnknownFunctionOrVariableException;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.server.LoginCompletedEvent;
@@ -238,7 +239,16 @@ public class StreamlinePlayer extends StreamlineUser {
         String function = ModuleUtils.replaceAllPlayerBungee(this, GivenConfigs.getMainConfig().playerLevelingEquation())
                 .replace("%default_level%", String.valueOf(GivenConfigs.getMainConfig().playerStartingLevel()));
 
-        needed = (float) MathUtils.eval(function);
+        try {
+            double result = MathUtils.eval(function);
+            needed = (float) result;
+        } catch (UnknownFunctionOrVariableException e) {
+            MessageUtils.logSevere("Error while calculating needed xp for player " + this.getLatestName() + " due to UnknownFunctionOrVariableException! Placeholders have probably been broken...");
+            needed = Float.MAX_VALUE;
+        } catch (Exception e) {
+            MessageUtils.logSevere("Error while calculating needed xp for player " + this.getLatestName() + "!");
+            needed = Float.MAX_VALUE;
+        }
 
         return needed;
     }

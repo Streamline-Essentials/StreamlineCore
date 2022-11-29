@@ -86,12 +86,12 @@ public class BaseModule extends SimpleModule {
     @Override
     public void onEnable() {
         // nothing right now.
-        getStreamlineExpansion().register();
+        getStreamlineExpansion().init();
     }
 
     @Override
     public void onDisable() {
         // nothing right now.
-        getStreamlineExpansion().unregister();
+        getStreamlineExpansion().stop();
     }
 }

@@ -64,7 +64,7 @@ defaults:
 experience:
   # Messages for level handling.
   level:
-    # Messages for when the savable player's level changes.
+    # Messages for when the savable player'string level changes.
     on-change:
       # The title to be shown. Can be turned off in "main-config.yml" file!
       title:
