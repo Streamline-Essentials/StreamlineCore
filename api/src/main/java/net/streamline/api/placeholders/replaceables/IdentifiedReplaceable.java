@@ -1,6 +1,7 @@
 package net.streamline.api.placeholders.replaceables;
 
 import lombok.Getter;
+import net.streamline.api.placeholders.RATRegistry;
 import net.streamline.api.placeholders.callbacks.PlaceholderCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import tv.quaint.utils.MatcherUtils;
@@ -14,8 +15,8 @@ public class IdentifiedReplaceable extends GenericReplaceable {
         this.identifier = identifier;
     }
 
-    public IdentifiedReplaceable(RATExpansion expansion, String separator, String from, PlaceholderCallback callback) {
-        super(expansion.getBuilder().getIdentifier() + separator + from, callback);
+    public IdentifiedReplaceable(RATExpansion expansion, String from, PlaceholderCallback callback) {
+        super(RATRegistry.getLiteralWithExpansion(from, expansion), callback);
         this.identifier = expansion.getBuilder().getIdentifier();
     }
 
@@ -24,9 +25,8 @@ public class IdentifiedReplaceable extends GenericReplaceable {
         this.identifier = identifier;
     }
 
-    public IdentifiedReplaceable(RATExpansion expansion, String separator, String regex, int groups, PlaceholderCallback callback) {
-        super(MatcherUtils.makeLiteral(expansion.getBuilder().getBoundingPrefix() +
-                expansion.getBuilder().getIdentifier() + separator) + regex + MatcherUtils.makeLiteral(expansion.getBuilder().getBoundingSuffix()), groups, callback);
+    public IdentifiedReplaceable(RATExpansion expansion, String regex, int groups, PlaceholderCallback callback) {
+        super(RATRegistry.getRegexWithExpansion(regex, expansion), groups, callback);
         this.identifier = expansion.getBuilder().getIdentifier();
     }
 }

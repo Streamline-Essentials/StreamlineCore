@@ -11,21 +11,24 @@ public abstract class RATExpansion {
         @Getter @Setter @NonNull
         private String identifier;
         @Getter @Setter @NonNull
+        private String separator;
+        @Getter @Setter @NonNull
         private String boundingPrefix;
         @Getter @Setter @NonNull
         private String boundingSuffix;
 
-        public RATExpansionBuilder(String identifier, @NotNull String boundingPrefix, @NotNull String boundingSuffix) {
+        public RATExpansionBuilder(@NonNull String identifier, @NonNull String separator, @NotNull String boundingPrefix, @NotNull String boundingSuffix) {
             this.identifier = identifier;
+            this.separator = separator;
             this.boundingPrefix = boundingPrefix;
             this.boundingSuffix = boundingSuffix;
         }
 
-        public RATExpansionBuilder(String identifier, @NotNull String bounding) {
-            this(identifier, bounding, bounding);
+        public RATExpansionBuilder(@NonNull String identifier, @NotNull String bounding) {
+            this(identifier, "_", bounding, bounding);
         }
 
-        public RATExpansionBuilder(String identifier) {
+        public RATExpansionBuilder(@NonNull String identifier) {
             this(identifier, "%");
         }
     }

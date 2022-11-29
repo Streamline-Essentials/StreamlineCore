@@ -416,10 +416,10 @@ public class ModuleUtils {
     }
 
     public static String replacePlaceholders(String string) {
-        return RATRegistry.fetch(string);
+        return RATRegistry.fetchDirty(string);
     }
 
     public static String replacePlaceholders(StreamlineUser user, String string) {
-        return RATRegistry.fetch(string, user);
+        return RATRegistry.fetchDirty(string, user);
     }
 }

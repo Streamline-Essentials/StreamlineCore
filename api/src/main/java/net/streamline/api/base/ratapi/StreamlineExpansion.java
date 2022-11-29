@@ -21,38 +21,39 @@ public class StreamlineExpansion extends RATExpansion {
 
     @Override
     public void init() {
-        new IdentifiedReplaceable(this, "_", "version", (s) -> SLAPI.getInstance().getPlatform().getVersion()).register();
-        new IdentifiedReplaceable(this, "_", "players_max", (s) -> String.valueOf(SLAPI.getInstance().getPlatform().getMaxPlayers())).register();
-        new IdentifiedReplaceable(this, "_", "players_online", (s) -> String.valueOf(UserUtils.getOnlinePlayers().size())).register();
-        new IdentifiedReplaceable(this, "_", "users_online", (s) -> String.valueOf(UserUtils.getOnlineUsers().size())).register();
-        new IdentifiedReplaceable(this, "_", "players_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
-        new IdentifiedReplaceable(this, "_", "users_loaded", (s) -> String.valueOf(UserUtils.getLoadedUsers().size())).register();
+        new IdentifiedReplaceable(this, "version", (s) -> SLAPI.getInstance().getPlatform().getVersion()).register();
+        new IdentifiedReplaceable(this, "players_max", (s) -> String.valueOf(SLAPI.getInstance().getPlatform().getMaxPlayers())).register();
+        new IdentifiedReplaceable(this, "players_online", (s) -> String.valueOf(UserUtils.getOnlinePlayers().size())).register();
+        new IdentifiedReplaceable(this, "users_online", (s) -> String.valueOf(UserUtils.getOnlineUsers().size())).register();
+        new IdentifiedReplaceable(this, "players_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
+        new IdentifiedReplaceable(this, "users_loaded", (s) -> String.valueOf(UserUtils.getLoadedUsers().size())).register();
 
-        new IdentifiedReplaceable(this, "_", "modules_loaded", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getLoadedModuleIdentifiers().stream().toList())).register();
-        new IdentifiedReplaceable(this, "_", "modules_enabled", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getEnabledModuleIdentifiers().stream().toList())).register();
-        new IdentifiedReplaceable(this, "_", "modules_colorized", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getColorizedLoadedModuleIdentifiers().stream().toList())).register();
+        new IdentifiedReplaceable(this, "modules_loaded", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getLoadedModuleIdentifiers().stream().toList())).register();
+        new IdentifiedReplaceable(this, "modules_enabled", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getEnabledModuleIdentifiers().stream().toList())).register();
+        new IdentifiedReplaceable(this, "modules_colorized", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getColorizedLoadedModuleIdentifiers().stream().toList())).register();
 
-        new IdentifiedReplaceable(this, "_", "modules_loaded_count", (s) -> String.valueOf(ModuleManager.getLoadedModuleIdentifiers().size())).register();
-        new IdentifiedReplaceable(this, "_", "modules_enabled_count", (s) -> String.valueOf(ModuleManager.getEnabledModuleIdentifiers().size())).register();
-        new IdentifiedReplaceable(this, "_", "modules_colorized_count", (s) -> String.valueOf(ModuleManager.getColorizedLoadedModuleIdentifiers().size())).register();
+        new IdentifiedReplaceable(this, "modules_loaded_count", (s) -> String.valueOf(ModuleManager.getLoadedModuleIdentifiers().size())).register();
+        new IdentifiedReplaceable(this, "modules_enabled_count", (s) -> String.valueOf(ModuleManager.getEnabledModuleIdentifiers().size())).register();
+        new IdentifiedReplaceable(this, "modules_colorized_count", (s) -> String.valueOf(ModuleManager.getColorizedLoadedModuleIdentifiers().size())).register();
 
-        new IdentifiedReplaceable(this, "_", "null", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get()).register();
-        new IdentifiedReplaceable(this, "_", "true", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_TRUE.get()).register();
-        new IdentifiedReplaceable(this, "_", "false", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_FALSE.get()).register();
-        new IdentifiedReplaceable(this, "_", "online", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_ONLINE.get()).register();
-        new IdentifiedReplaceable(this, "_", "offline", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_OFFLINE.get()).register();
+        new IdentifiedReplaceable(this, "null", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get()).register();
+        new IdentifiedReplaceable(this, "true", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_TRUE.get()).register();
+        new IdentifiedReplaceable(this, "false", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_FALSE.get()).register();
+        new IdentifiedReplaceable(this, "online", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_ONLINE.get()).register();
+        new IdentifiedReplaceable(this, "offline", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.IS_OFFLINE.get()).register();
 
-        new IdentifiedReplaceable(this, "_", "placeholders_null", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get()).register();
-        new IdentifiedReplaceable(this, "_", "placeholders_true", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_TRUE.get()).register();
-        new IdentifiedReplaceable(this, "_", "placeholders_false", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_FALSE.get()).register();
-        new IdentifiedReplaceable(this, "_", "placeholders_online", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get()).register();
-        new IdentifiedReplaceable(this, "_", "placeholders_offline", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get()).register();
+        new IdentifiedReplaceable(this, "placeholders_null", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get()).register();
+        new IdentifiedReplaceable(this, "placeholders_true", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_TRUE.get()).register();
+        new IdentifiedReplaceable(this, "placeholders_false", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_FALSE.get()).register();
+        new IdentifiedReplaceable(this, "placeholders_online", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get()).register();
+        new IdentifiedReplaceable(this, "placeholders_offline", (s) -> MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get()).register();
 
-        new IdentifiedReplaceable(this, "_", MatcherUtils.makeLiteral("parse_") + "(.*?)", 1, (s) -> {
+        new IdentifiedReplaceable(this, MatcherUtils.makeLiteral("parse_") + "(.*?)", 1, (s) -> {
             try {
                 String[] things = s.string().split(":::", 2);
                 StreamlineUser user = UserUtils.getOrGetUserByName(things[0]);
                 String parse = things[1].replace("*/*", "%");
+                parse = parse.substring(0, parse.length() - 1);
                 return ModuleUtils.replacePlaceholders(user, parse);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -60,7 +61,7 @@ public class StreamlineExpansion extends RATExpansion {
             }
         }).register();
 
-        new IdentifiedReplaceable(this, "_", "[?][L][:](.*?)", 1, (s) -> {
+        new IdentifiedReplaceable(this, "[?][L][:](.*?)", 1, (s) -> {
             try {
                 String params = s.string();
                 params = params
@@ -77,44 +78,44 @@ public class StreamlineExpansion extends RATExpansion {
             }
         }).register();
 
-        new IdentifiedUserReplaceable(this, "_", "user_ping", (s, user) -> {
+        new IdentifiedUserReplaceable(this, "user_ping", (s, user) -> {
             if (user.updateOnline()) return String.valueOf(SLAPI.getInstance().getUserManager().getPlayerPing(user.getUuid()));
             else return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
         }).register();
-        new IdentifiedUserReplaceable(this, "_", "user_online", (s, user) -> user.updateOnline() ?
+        new IdentifiedUserReplaceable(this, "user_online", (s, user) -> user.updateOnline() ?
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get() :
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_uuid", (s, user) -> user.getUuid()).register();
+        new IdentifiedUserReplaceable(this, "user_uuid", (s, user) -> user.getUuid()).register();
 
-        new IdentifiedUserReplaceable(this, "_", "user_absolute", (s, user) -> UserUtils.getAbsolute(user)).register();
-        new IdentifiedUserReplaceable(this, "_", "user_absolute_onlined", (s, user) -> UserUtils.getOffOnAbsolute(user)).register();
-        new IdentifiedUserReplaceable(this, "_", "user_formatted", (s, user) -> UserUtils.getFormatted(user)).register();
-        new IdentifiedUserReplaceable(this, "_", "user_formatted_onlined", (s, user) -> UserUtils.getOffOnFormatted(user)).register();
+        new IdentifiedUserReplaceable(this, "user_absolute", (s, user) -> UserUtils.getAbsolute(user)).register();
+        new IdentifiedUserReplaceable(this, "user_absolute_onlined", (s, user) -> UserUtils.getOffOnAbsolute(user)).register();
+        new IdentifiedUserReplaceable(this, "user_formatted", (s, user) -> UserUtils.getFormatted(user)).register();
+        new IdentifiedUserReplaceable(this, "user_formatted_onlined", (s, user) -> UserUtils.getOffOnFormatted(user)).register();
 
-        new IdentifiedUserReplaceable(this, "_", "user_prefix", (s, user) -> UserUtils.getLuckPermsPrefix(user.getLatestName())).register();
-        new IdentifiedUserReplaceable(this, "_", "user_suffix", (s, user) -> UserUtils.getLuckPermsSuffix(user.getLatestName())).register();
+        new IdentifiedUserReplaceable(this, "user_prefix", (s, user) -> UserUtils.getLuckPermsPrefix(user.getLatestName())).register();
+        new IdentifiedUserReplaceable(this, "user_suffix", (s, user) -> UserUtils.getLuckPermsSuffix(user.getLatestName())).register();
 
-        new IdentifiedUserReplaceable(this, "_", "user_level",
+        new IdentifiedUserReplaceable(this, "user_level",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getLevel()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_xp_current",
+        new IdentifiedUserReplaceable(this, "user_xp_current",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getCurrentXP()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_xp_total",
+        new IdentifiedUserReplaceable(this, "user_xp_total",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getTotalXP()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_play_seconds",
+        new IdentifiedUserReplaceable(this, "user_play_seconds",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlaySecondsAsString()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_play_minutes",
+        new IdentifiedUserReplaceable(this, "user_play_minutes",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayMinutesAsString()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_play_hours",
+        new IdentifiedUserReplaceable(this, "user_play_hours",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayHoursAsString()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_play_days",
+        new IdentifiedUserReplaceable(this, "user_play_days",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayDaysAsString()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_ip",
+        new IdentifiedUserReplaceable(this, "user_ip",
                 (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getLatestIP()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "_", "user_points", (s, user) -> String.valueOf(user.getPoints())).register();
-        new IdentifiedUserReplaceable(this, "_", "user_server", (s, user) -> String.valueOf(user.getLatestServer())).register();
-        new IdentifiedUserReplaceable(this, "_", "user_tags", (s, user) -> ModuleUtils.getListAsFormattedString(user.getTagList().stream().toList())).register();
+        new IdentifiedUserReplaceable(this, "user_points", (s, user) -> String.valueOf(user.getPoints())).register();
+        new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getLatestServer())).register();
+        new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> ModuleUtils.getListAsFormattedString(user.getTagList().stream().toList())).register();
 
-        new IdentifiedUserReplaceable(this, "_", "[?][R][:](.*?)", 1, (s, user) -> {
+        new IdentifiedUserReplaceable(this, "[?][R][:](.*?)", 1, (s, user) -> {
             try {
                 String params = s.string();
                 params = params
