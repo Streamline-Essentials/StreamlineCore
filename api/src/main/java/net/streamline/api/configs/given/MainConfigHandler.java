@@ -21,6 +21,9 @@ public class MainConfigHandler extends SimpleConfiguration {
         userDatabaseDatabase();
         userDatabasePrefix();
 
+        userCombinedPointsDefault();
+        userCombinedNicknameDefault();
+
         userConsoleNameRegular();
         userConsoleDefaultTags();
         userConsoleDiscriminator();
@@ -82,6 +85,12 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("users.combined.points.default", 0.0);
+    }
+
+    public String userCombinedNicknameDefault() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("users.combined.nickname.default", "%streamline_user_prefix%%streamline_user_absolute%%streamline_user_suffix%");
     }
 
     public String userConsoleServer() {

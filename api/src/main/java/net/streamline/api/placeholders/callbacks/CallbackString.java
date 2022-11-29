@@ -14,7 +14,7 @@ public record CallbackString(String string, RATHandledString handledString) {
     }
 
     public String get(int index) {
-        return get(index, 2);
+        return get(index, 1);
     }
 
     public String get() {

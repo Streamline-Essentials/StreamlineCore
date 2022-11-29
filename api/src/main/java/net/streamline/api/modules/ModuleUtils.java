@@ -258,8 +258,8 @@ public class ModuleUtils {
         return UserUtils.getLuckPermsSuffix(username);
     }
 
-    public static String getDisplayName(String username, String nickName) {
-        return UserUtils.getDisplayName(username, nickName);
+    public static String getDisplayName(StreamlineUser user) {
+        return UserUtils.getFormattedDefaultNickname(user);
     }
 
     public static void fireEvent(StreamlineEvent event) {

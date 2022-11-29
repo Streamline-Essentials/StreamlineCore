@@ -8,33 +8,22 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.runnables.ServerPusher;
+import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-//@Plugin(
-//        id = "streamlineapi",
-//        name = "StreamlineAPI",
-//        version = "${project.version}",
-//        url = "https://github.com/Streamline-Essentials/StreamlineAPI",
-//        description = "An Essentials plugin for Minecraft server proxies.",
-//        authors = {
-//                "Quaint"
-//        },
-//        dependencies = {
-//                @Dependency(id = "luckperms"),
-//                @Dependency(id = "geyser-velocity", optional = true)
-//        }
-//)
 public class Streamline extends BasePlugin {
     @Getter @Setter
     private static ServerPusher serverPusher;
 
     @Inject
-    public Streamline(ProxyServer s, Logger l, @DataDirectory Path dd) {
-        super(s, l, dd);
+    public Streamline(ProxyServer s, Logger l, @DataDirectory Path dd, Metrics.Factory mf) {
+        super(s, l, dd, mf);
     }
 
     @Override
@@ -46,7 +35,18 @@ public class Streamline extends BasePlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Metrics metrics = getMetricsFactory().make(this, 16971);
+        metrics.addCustomChart(new Metrics.SimplePie("plugin_version", () -> getProxy().getPluginManager().getPlugin("streamlinecore").get().getDescription().getVersion().get()));
+        metrics.addCustomChart(new Metrics.SimplePie("modules_loaded_count", () -> String.valueOf(ModuleManager.getLoadedModules().size())));
+        metrics.addCustomChart(new Metrics.SimplePie("modules_enabled_count", () -> String.valueOf(ModuleManager.getEnabledModules().size())));
     }
+
+//    public Map<String, Integer> getInstalledModulesCount() {
+//        Map<String, Integer> map = new HashMap<>();
+//
+//        return map;
+//    }
 
     @Override
     public void disable() {

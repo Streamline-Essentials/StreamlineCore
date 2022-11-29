@@ -16,6 +16,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
+import net.streamline.base.TenSecondTimer;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
@@ -87,6 +88,8 @@ public class PlatformListener implements Listener {
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         setJoined(true);
+
+        new TenSecondTimer(player);
     }
 
     @EventHandler

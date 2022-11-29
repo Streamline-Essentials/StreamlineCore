@@ -14,22 +14,27 @@ public class ProxiedMessageEvent extends StreamlineEvent {
     }
 
     public StreamlinePlayer getCarrier() {
+        if (message == null) return null;
         return message.getCarrier();
     }
 
     public boolean isProxyOriginated() {
+        if (message == null) return false;
         return message.isProxyOriginated();
     }
 
     public String getSubChannel() {
+        if (message == null) return null;
         return message.getSubChannel();
     }
 
     public boolean hasKey(String key) {
+        if (message == null) return false;
         return message.hasKey(key);
     }
 
     public String getString(String key) {
+        if (message == null) return null;
         return message.getString(key);
     }
 }

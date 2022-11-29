@@ -24,7 +24,7 @@ public abstract class AbstractReplaceable<C extends RATCallback> implements Comp
     }
 
     public AbstractReplaceable(String from, @Nullable C callback) {
-        this(MatcherUtils.makeLiteral(from), 1, callback);
+        this(MatcherUtils.makeLiteral(from), 0, callback);
     }
 
     public boolean isReplaceWorthy() {
