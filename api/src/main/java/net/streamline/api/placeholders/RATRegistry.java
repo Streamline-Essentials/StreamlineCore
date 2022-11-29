@@ -6,9 +6,11 @@ import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.RATCallback;
+import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.*;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
+import tv.quaint.utils.MatcherUtils;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -98,7 +100,17 @@ public class RATRegistry {
         return temp;
     }
 
-    public static String defaultModuledFrom(String from, StreamlineModule module) {
+    public static String getModuledDefault(String from, StreamlineModule module) {
         return module.getIdentifier() + "_" + from;
+    }
+
+    public static String getRegexWithExpansion(String regex, RATExpansion expansion) {
+        return MatcherUtils.makeLiteral(expansion.getBuilder().getBoundingPrefix() + expansion.getBuilder().getIdentifier() + expansion.getBuilder().getSeparator())
+                + regex + MatcherUtils.makeLiteral(expansion.getBuilder().getBoundingSuffix());
+    }
+
+    public static String getLiteralWithExpansion(String literal, RATExpansion expansion) {
+        return expansion.getBuilder().getBoundingPrefix() + expansion.getBuilder().getIdentifier()
+                + expansion.getBuilder().getSeparator() + literal + expansion.getBuilder().getBoundingSuffix();
     }
 }

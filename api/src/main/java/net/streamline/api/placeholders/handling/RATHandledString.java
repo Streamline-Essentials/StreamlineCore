@@ -26,7 +26,7 @@ public class RATHandledString {
     public List<String> isolateIn(String input) {
         List<String> r = new ArrayList<>();
         Matcher matcher = MatcherUtils.matcherBuilder("(" + getRegex() + ")", input);
-        List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups() + 1);
+        List<String[]> stringArrays = MatcherUtils.getGroups(matcher, getGroups());
 
         for (String[] stringArray : stringArrays) {
             r.add(stringArray[0]);
