@@ -19,6 +19,8 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
     @Getter
     @Setter
     private boolean enabled;
+    @Getter @Setter
+    private boolean isFirstLoad = false;
 
     public SavableResource(String uuid, StorageResource<?> storageResource) {
         this.uuid = uuid;
@@ -32,6 +34,7 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
         }
 
         if (getStorageResource().isEmpty()) {
+            setFirstLoad(true);
             CreateSavableResourceEvent<SavableResource> event = new CreateSavableResourceEvent<>(this);
             ModuleUtils.fireEvent(event);
             if (event.isCancelled()) {

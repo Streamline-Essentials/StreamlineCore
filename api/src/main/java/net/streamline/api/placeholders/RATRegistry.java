@@ -35,13 +35,13 @@ public class RATRegistry {
     }
 
     public static void unregisterAll(ModuleLike moduleLike) {
-        replacements.values().removeIf(replacement -> replacement instanceof ModuleReplaceable moduleReplaceable && moduleReplaceable.getModule().equals(moduleLike) ||
-                replacement instanceof UserModuleReplaceable userModuleReplaceable && userModuleReplaceable.getModule().equals(moduleLike));
+        replacements.values().removeIf(replacement -> replacement instanceof ModuleReplaceable && ((ModuleReplaceable) replacement).getModule().equals(moduleLike) ||
+                replacement instanceof UserModuleReplaceable && ((UserModuleReplaceable) replacement).getModule().equals(moduleLike));
     }
 
     public static void unregisterAll(String identifier) {
-        replacements.values().removeIf(replacement -> replacement instanceof IdentifiedReplaceable identifiedReplaceable && identifiedReplaceable.getIdentifier().equals(identifier) ||
-                replacement instanceof IdentifiedUserReplaceable identifiedUserReplaceable && identifiedUserReplaceable.getIdentifier().equals(identifier));
+        replacements.values().removeIf(replacement -> replacement instanceof IdentifiedReplaceable && ((IdentifiedReplaceable) replacement).getIdentifier().equals(identifier) ||
+                replacement instanceof IdentifiedUserReplaceable && ((IdentifiedUserReplaceable) replacement).getIdentifier().equals(identifier));
     }
 
     public static void unregisterAllStartsWith(String startsWith) {
@@ -57,10 +57,12 @@ public class RATRegistry {
         getReplacements().forEach((s, replacement) -> {
             if (replacement == null) return;
             if (! replacement.isReplaceWorthy()) return;
-            if (replacement instanceof GenericReplaceable generic) {
+            if (replacement instanceof GenericReplaceable) {
+                GenericReplaceable generic = (GenericReplaceable) replacement;
                 result.set(generic.fetch(result.get()));
             }
-            if (replacement instanceof UserReplaceable user) {
+            if (replacement instanceof UserReplaceable) {
+                UserReplaceable user = (UserReplaceable) replacement;
                 result.set(user.fetchAs(result.get(), UserUtils.getConsole()));
             }
         });
@@ -81,7 +83,8 @@ public class RATRegistry {
     public static String fetch(String from, StreamlineUser user) {
         AtomicString result = new AtomicString(from);
         getReplacements().forEach((s, replacement) -> {
-            if (replacement instanceof UserReplaceable userReplacement) {
+            if (replacement instanceof UserReplaceable) {
+                UserReplaceable userReplacement = (UserReplaceable) replacement;
                 result.set(userReplacement.fetchAs(result.get(), user));
             }
         });

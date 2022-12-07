@@ -70,7 +70,8 @@ public class MongoUserResource<T extends StreamlineUser> extends MongoResource {
 
     @Override
     public void insert() {
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             Document document = new Document();
             document.put("uuid", streamlinePlayer.getUuid());
             document.put("latestName", streamlinePlayer.getLatestName());
@@ -104,7 +105,8 @@ public class MongoUserResource<T extends StreamlineUser> extends MongoResource {
 
     @Override
     public void update() {
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             Document document = new Document();
             document.put("uuid", streamlinePlayer.getUuid());
             document.put("latestName", streamlinePlayer.getLatestName());
@@ -145,7 +147,8 @@ public class MongoUserResource<T extends StreamlineUser> extends MongoResource {
             return;
         }
 
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             streamlinePlayer.setLatestName(document.getString("latestName"));
             streamlinePlayer.setDisplayName(document.getString("displayName"));
             streamlinePlayer.setTagList(StringUtil.splitToConcurrentSet(document.getString("tags"), ","));

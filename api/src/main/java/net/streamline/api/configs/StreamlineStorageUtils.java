@@ -19,18 +19,16 @@ import java.nio.file.Files;
 public class StreamlineStorageUtils {
     public static StorageResource<?> newStorageResource(String uuid, Class<? extends SavableResource> clazz, StorageUtils.SupportedStorageType type, File folder, DatabaseConfig databaseConfig) {
         switch (type) {
-            case YAML -> {
+            case YAML:
                 return new FlatFileResource<>(Config.class, uuid + ".yml", folder, false);
-            }
-            case JSON -> {
+            case JSON:
                 return new FlatFileResource<>(Json.class, uuid + ".json", folder, false);
-            }
-            case TOML -> {
+            case TOML:
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", folder, false);
-            }
-            case MONGO, MYSQL, SQLITE -> {
+            case SQLITE:
+            case MYSQL:
+            case MONGO:
                 return null;
-            }
         }
 
         return null;

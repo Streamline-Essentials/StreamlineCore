@@ -75,7 +75,7 @@ public abstract class StreamlineUser extends SavableResource {
     @Override
     public void populateDefaults() {
         // Profile.
-        String username = CachedUUIDsHandler.getCachedName(this.getUuid());
+        String username = SLAPI.getInstance().getUserManager().getUsername(this.getUuid());
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);

@@ -28,7 +28,8 @@ public class PlayerExperienceTimer extends BaseRunnable {
 
     public void done() {
         for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            if (user instanceof StreamlinePlayer player) {
+            if (user instanceof StreamlinePlayer) {
+                StreamlinePlayer player = ((StreamlinePlayer) user);
                 player.addTotalXP(GivenConfigs.getMainConfig().playerPayoutExperienceAmount());
             }
         }

@@ -46,11 +46,6 @@ dependencies {
     compileOnly(files(FILES))
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
-}
-
 blossom {
     replaceToken '${version}', project.version, 'src/main/resources/plugin.yml'
 }

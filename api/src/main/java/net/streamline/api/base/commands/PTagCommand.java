@@ -66,17 +66,17 @@ public class PTagCommand extends StreamlineCommand {
         String[] actions = MessageUtils.argsToStringMinus(args, 0, 1).split(" ");
 
         switch (action) {
-            case "add" -> {
+            case "add":
                 Arrays.stream(actions).forEach(other::addTag);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsAdd, other));
-            }
-            case "remove" -> {
+                break;
+            case "remove":
                 Arrays.stream(actions).forEach(other::removeTag);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsRemove, other));
-            }
-            default -> {
+                break;
+            default:
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-            }
+                break;
         }
     }
 

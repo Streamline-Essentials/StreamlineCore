@@ -5,7 +5,29 @@ import net.streamline.api.configs.given.GivenConfigs;
 
 import java.util.Date;
 
-public record WhitelistEntry(String whitelistedUuid, Date whitelistedAt, String whitelistedBy) {
+public class WhitelistEntry {
+    final String whitelistedUuid;
+    final Date whitelistedAt;
+    final String whitelistedBy;
+
+    public WhitelistEntry(String whitelistedUuid, Date whitelistedAt, String whitelistedBy) {
+        this.whitelistedUuid = whitelistedUuid;
+        this.whitelistedAt = whitelistedAt;
+        this.whitelistedBy = whitelistedBy;
+    }
+
+    public String whitelistedUuid() {
+        return whitelistedUuid;
+    }
+
+    public Date whitelistedAt() {
+        return whitelistedAt;
+    }
+
+    public String whitelistedBy() {
+        return whitelistedBy;
+    }
+
     public void add() {
         GivenConfigs.getWhitelistConfig().addEntry(this);
     }
