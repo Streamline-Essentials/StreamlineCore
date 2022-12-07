@@ -53,7 +53,7 @@ public class UserUtils {
         ConcurrentSkipListMap<String, StreamlinePlayer> r = new ConcurrentSkipListMap<>();
 
         getLoadedUsers().forEach((s, user) -> {
-            if (user instanceof StreamlinePlayer player) r.put(user.getUuid(), player);
+            if (user instanceof StreamlinePlayer) r.put(user.getUuid(), (StreamlinePlayer) user);
         });
 
         return r;
@@ -94,7 +94,7 @@ public class UserUtils {
         ConcurrentSkipListMap<String, StreamlinePlayer> r = new ConcurrentSkipListMap<>();
 
         getOnlineUsers().forEach((s, user) -> {
-            if (user instanceof StreamlinePlayer player) r.put(user.getUuid(), player);
+            if (user instanceof StreamlinePlayer) r.put(user.getUuid(), (StreamlinePlayer) user);
         });
 
         return r;
@@ -110,7 +110,7 @@ public class UserUtils {
         DatabaseConfig config = GivenConfigs.getMainConfig().getConfiguredDatabase();
         File userFolder = SLAPI.getUserFolder();
         switch (type) {
-            case YAML -> {
+            case YAML:
                 File[] files = userFolder.listFiles();
                 if (files == null) return false;
 
@@ -118,26 +118,23 @@ public class UserUtils {
                     if (file.getName().equals(uuid + ".yml")) return true;
                 }
                 return false;
-            }
-            case JSON -> {
-                File[] files = userFolder.listFiles();
-                if (files == null) return false;
+            case JSON:
+                File[] files2 = userFolder.listFiles();
+                if (files2 == null) return false;
 
-                for (File file : files) {
+                for (File file : files2) {
                     if (file.getName().equals(uuid + ".json")) return true;
                 }
                 return false;
-            }
-            case TOML -> {
-                File[] files = userFolder.listFiles();
-                if (files == null) return false;
+            case TOML:
+                File[] files3 = userFolder.listFiles();
+                if (files3 == null) return false;
 
-                for (File file : files) {
+                for (File file : files3) {
                     if (file.getName().equals(uuid + ".toml")) return true;
                 }
                 return false;
-            }
-            case MONGO -> {
+            case MONGO:
                 if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
                     MongoUserResource<StreamlineConsole> resource = new MongoUserResource<>(uuid, config, StreamlineConsole.class);
                     return resource.exists();
@@ -145,8 +142,8 @@ public class UserUtils {
                     MongoUserResource<StreamlinePlayer> resource = new MongoUserResource<>(uuid, config, StreamlinePlayer.class);
                     return resource.exists();
                 }
-            }
-            case MYSQL, SQLITE -> {
+            case MYSQL:
+            case SQLITE:
                 if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
                     SQLUserResource<StreamlineConsole> resource = new SQLUserResource<>(uuid, config, StreamlineConsole.class);
                     return resource.exists();
@@ -154,10 +151,8 @@ public class UserUtils {
                     SQLUserResource<StreamlinePlayer> resource = new SQLUserResource<>(uuid, config, StreamlinePlayer.class);
                     return resource.exists();
                 }
-            }
-            default -> {
+            default:
                 return false;
-            }
         }
     }
 
@@ -196,9 +191,8 @@ public class UserUtils {
 
     public static StreamlinePlayer getOrGetPlayer(String uuid) {
         StreamlineUser user = getOrGetUser(uuid);
-        if (! (user instanceof StreamlinePlayer StreamlinePlayer)) return null;
-
-        return StreamlinePlayer;
+        if (! (user instanceof StreamlinePlayer)) return null;
+        return (StreamlinePlayer) user;
     }
 
     public static <T extends StreamlineUser> String getTableNameByUserType(Class<T> userClass) {
@@ -252,21 +246,17 @@ public class UserUtils {
 
     public static <T extends StreamlineUser> StorageResource<?> newUserStorageResource(String uuid, Class<T> user) {
         switch (GivenConfigs.getMainConfig().userUseType()) {
-            case YAML -> {
+            case YAML:
                 return new FlatFileResource<>(Config.class, uuid + ".yml", SLAPI.getUserFolder(), false);
-            }
-            case JSON -> {
+            case JSON:
                 return new FlatFileResource<>(Json.class, uuid + ".json", SLAPI.getUserFolder(), false);
-            }
-            case TOML -> {
+            case TOML:
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", SLAPI.getUserFolder(), false);
-            }
-            case MONGO -> {
+            case MONGO:
                 return new MongoUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
-            }
-            case MYSQL, SQLITE -> {
+            case MYSQL:
+            case SQLITE:
                 return new SQLUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
-            }
         }
 
         return null;
@@ -446,7 +436,7 @@ public class UserUtils {
 
     public static StreamlineConsole getConsole() {
         for (StreamlineUser user : getLoadedUsersSet()) {
-            if (user instanceof StreamlineConsole console) return console;
+            if (user instanceof StreamlineConsole) return (StreamlineConsole) user;
         }
 
         return (StreamlineConsole) loadUser(new StreamlineConsole());

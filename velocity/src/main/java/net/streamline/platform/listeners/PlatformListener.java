@@ -43,8 +43,9 @@ public class PlatformListener {
     @Subscribe
     public void onPreJoin(PreLoginEvent event) {
         InboundConnection connection = event.getConnection();
+        if (! (connection instanceof Player p)) return;
 
-        StreamlineUser user = UserUtils.getOrGetUserByName(event.getUsername());
+        StreamlineUser user = UserUtils.getOrGetUserByName(p.getUniqueId().toString());
         if (! (user instanceof StreamlinePlayer player)) return;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();

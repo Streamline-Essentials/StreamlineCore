@@ -8,6 +8,7 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.messages.ProxiedStreamlinePlayer;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.savables.events.CreatePlayerEvent;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
 import net.streamline.api.utils.MathUtils;
@@ -63,9 +64,10 @@ public class StreamlinePlayer extends StreamlineUser {
 //        setDefaultLevel(player.getDefaultLevel());
         setLocation(player.getLocation());
 
-
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(this);
-        ModuleUtils.fireEvent(loginCompletedEvent);
+        if (isFirstLoad()) {
+            new CreatePlayerEvent(this).fire();
+            setDisplayName(UserUtils.getFormattedDefaultNickname(this));
+        }
     }
 
     public StreamlinePlayer(String uuid){

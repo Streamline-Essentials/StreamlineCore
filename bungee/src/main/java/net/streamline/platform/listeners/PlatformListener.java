@@ -38,8 +38,11 @@ public class PlatformListener implements Listener {
     public void onPreJoin(PreLoginEvent event) {
         PendingConnection connection = event.getConnection();
 
+        if (connection == null) return;
+
         StreamlineUser user = UserUtils.getOrGetUserByName(connection.getName());
-        if (! (user instanceof StreamlinePlayer player)) return;
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = ((StreamlinePlayer) user);
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -129,7 +132,8 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
-        if (! (event.getReceiver() instanceof ProxiedPlayer player)) return;
+        if (! (event.getReceiver() instanceof ProxiedPlayer)) return;
+        ProxiedPlayer player = ((ProxiedPlayer) event.getReceiver());
 
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 

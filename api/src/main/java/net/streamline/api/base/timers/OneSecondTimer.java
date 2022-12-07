@@ -19,7 +19,8 @@ public class OneSecondTimer extends BaseRunnable {
         UserUtils.getLoadedUsersSet().forEach(user -> {
             if (! user.updateOnline()) return;
 
-            if (user instanceof StreamlinePlayer player) {
+            if (user instanceof StreamlinePlayer) {
+                StreamlinePlayer player = ((StreamlinePlayer) user);
                 player.addPlaySecond(1);
             }
 

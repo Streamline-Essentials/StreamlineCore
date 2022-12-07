@@ -75,7 +75,7 @@ public class ModulesCommand extends StreamlineCommand {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "reapply" -> {
+            case "reapply":
                 if (args.length == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> ModuleManager.unregisterModule(module));
                     ModuleManager.registerExternalModules();
@@ -89,8 +89,8 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            case "reload" -> {
+                break;
+            case "reload":
                 if (args.length == 1) {
                     ModuleManager.restartModules();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadAll);
@@ -103,8 +103,8 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            case "load" -> {
+                break;
+            case "load":
                 if (args.length == 1) {
                     ModuleManager.registerExternalModules();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultLoadAll);
@@ -117,8 +117,8 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            case "unload" -> {
+                break;
+            case "unload":
                 if (args.length == 1) {
                     ModuleManager.getLoadedModules().forEach(ModuleManager::unregisterModule);
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultUnloadAll);
@@ -131,8 +131,8 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            case "enable" -> {
+                break;
+            case "enable":
                 if (args.length == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> module.start());
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultEnableAll);
@@ -145,8 +145,8 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            case "disable" -> {
+                break;
+            case "disable":
                 if (args.length == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> module.stop());
                     SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultDisableAll);
@@ -159,10 +159,10 @@ public class ModulesCommand extends StreamlineCommand {
                         );
                     });
                 }
-            }
-            default -> {
+                break;
+            default:
                 ModuleUtils.sendMessage(sender, getWithOther(sender, messageResultListAll, sender));
-            }
+                break;
         }
     }
 

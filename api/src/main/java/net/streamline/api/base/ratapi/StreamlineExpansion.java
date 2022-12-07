@@ -13,6 +13,9 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.api.modules.ModuleManager;
 import tv.quaint.utils.MatcherUtils;
 
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 public class StreamlineExpansion extends RATExpansion {
     public StreamlineExpansion() {
         super(new RATExpansionBuilder("streamline"));
@@ -28,9 +31,9 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedReplaceable(this, "players_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
         new IdentifiedReplaceable(this, "users_loaded", (s) -> String.valueOf(UserUtils.getLoadedUsers().size())).register();
 
-        new IdentifiedReplaceable(this, "modules_loaded", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getLoadedModuleIdentifiers().stream().toList())).register();
-        new IdentifiedReplaceable(this, "modules_enabled", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getEnabledModuleIdentifiers().stream().toList())).register();
-        new IdentifiedReplaceable(this, "modules_colorized", (s) -> ModuleUtils.getListAsFormattedString(ModuleManager.getColorizedLoadedModuleIdentifiers().stream().toList())).register();
+        new IdentifiedReplaceable(this, "modules_loaded", (s) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(ModuleManager.getLoadedModuleIdentifiers()))).register();
+        new IdentifiedReplaceable(this, "modules_enabled", (s) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(ModuleManager.getEnabledModuleIdentifiers()))).register();
+        new IdentifiedReplaceable(this, "modules_colorized", (s) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(ModuleManager.getColorizedLoadedModuleIdentifiers()))).register();
 
         new IdentifiedReplaceable(this, "modules_loaded_count", (s) -> String.valueOf(ModuleManager.getLoadedModuleIdentifiers().size())).register();
         new IdentifiedReplaceable(this, "modules_enabled_count", (s) -> String.valueOf(ModuleManager.getEnabledModuleIdentifiers().size())).register();
@@ -99,24 +102,24 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedUserReplaceable(this, "user_suffix", (s, user) -> UserUtils.getLuckPermsSuffix(user.getLatestName())).register();
 
         new IdentifiedUserReplaceable(this, "user_level",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getLevel()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getLevel()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_xp_current",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getCurrentXP()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getCurrentXP()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_xp_total",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getTotalXP()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getTotalXP()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_seconds",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlaySecondsAsString()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getPlaySecondsAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_minutes",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayMinutesAsString()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getPlayMinutesAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_hours",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayHoursAsString()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getPlayHoursAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_days",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getPlayDaysAsString()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getPlayDaysAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_ip",
-                (s, user) -> user instanceof StreamlinePlayer player ? String.valueOf(player.getLatestIP()) : s.string()).register();
+                (s, user) -> user instanceof StreamlinePlayer ? String.valueOf(((StreamlinePlayer) user).getLatestIP()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_points", (s, user) -> String.valueOf(user.getPoints())).register();
         new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getLatestServer())).register();
-        new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> ModuleUtils.getListAsFormattedString(user.getTagList().stream().toList())).register();
+        new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(user.getTagList()))).register();
 
         new IdentifiedUserReplaceable(this, "[?][R][:](.*?)", 1, (s, user) -> {
             try {

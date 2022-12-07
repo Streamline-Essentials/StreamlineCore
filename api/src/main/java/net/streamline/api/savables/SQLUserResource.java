@@ -85,7 +85,8 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
 
     @Override
     public void insert() {
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             try {
                 PreparedStatement statement = getProvider().getConnection().prepareStatement("INSERT INTO " + getTable() + " " +
                         "(uuid, latestName, displayName, tags, points, lastMessage, latestServer, totalXP, currentXP, level, playSeconds, latestIP, ips, names)" +
@@ -137,7 +138,8 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
 
     @Override
     public void update() {
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             try {
                 PreparedStatement statement = getProvider().getConnection().prepareStatement("UPDATE " + getTable() + " SET " +
                         "latestName = ?, displayName = ?, tags = ?, points = ?, lastMessage = ?, latestServer = ?, totalXP = ?, currentXP = ?, level = ?, playSeconds = ?, latestIP = ?, ips = ?, names = ? " +
@@ -187,7 +189,8 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
 
     @Override
     public void continueReloadResource() {
-        if (user instanceof StreamlinePlayer streamlinePlayer) {
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer streamlinePlayer = (StreamlinePlayer) user;
             try {
                 PreparedStatement statement = getProvider().getConnection().prepareStatement("SELECT * FROM " + getTable() + " WHERE uuid = ?;");
                 statement.setString(1, streamlinePlayer.getUuid());

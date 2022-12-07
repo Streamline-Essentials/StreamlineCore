@@ -9,8 +9,10 @@ import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
+import net.streamline.api.savables.events.CreatePlayerEvent;
 import net.streamline.api.savables.events.CreateSavableResourceEvent;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -68,10 +70,5 @@ public class BaseListener implements BaseEventListener {
                 PlayerLocationMessageBuilder.handle(event.getMessage());
             }
         }
-    }
-
-    @BaseProcessor
-    public void onResourceCreateStreamlineUser(CreateSavableResourceEvent<StreamlineUser> event) {
-        event.getResource().setDisplayName(UserUtils.getFormattedDefaultNickname(event.getResource()));
     }
 }

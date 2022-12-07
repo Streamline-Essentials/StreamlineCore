@@ -66,27 +66,27 @@ public class PointsCommand extends StreamlineCommand {
         }
 
         switch (action) {
-            case "set" -> {
+            case "set":
                 other.setPoints(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet
                                 .replace("%this_value%", args[2])
                         , other));
-            }
-            case "add" -> {
+                break;
+            case "add":
                 other.addPoints(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd
                                 .replace("%this_value%", args[2])
                         , other));
-            }
-            case "remove" -> {
+                break;
+            case "remove":
                 other.removePoints(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove
                                 .replace("%this_value%", args[2])
                         , other));
-            }
-            default -> {
+                break;
+            default:
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-            }
+                break;
         }
     }
 

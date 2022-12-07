@@ -73,7 +73,7 @@ public class PXPCommand extends StreamlineCommand {
         String type = args[1].toLowerCase();
 
         switch (type) {
-            case "level" -> {
+            case "level":
                 if (args.length == 2) {
                     SLAPI.getInstance().getMessenger().sendMessage(sender, player,
                             getWithOther(sender, this.messageLevelGet, player));
@@ -96,24 +96,24 @@ public class PXPCommand extends StreamlineCommand {
                 }
 
                 switch (action) {
-                    case "set" -> {
+                    case "set":
                         player.setLevel(amount);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelSet, player));
-                    }
-                    case "add" -> {
+                        break;
+                    case "add":
                         player.addLevel(amount);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelAdd, player));
-                    }
-                    case "remove" -> {
+                        break;
+                    case "remove":
                         player.removeLevel(amount);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelRemove, player));
-                    }
-                    default -> {
+                        break;
+                    default:
                         SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-                    }
+                        break;
                 }
-            }
-            case "xp" -> {
+                break;
+            case "xp":
                 if (args.length == 2) {
                     SLAPI.getInstance().getMessenger().sendMessage(sender, player,
                             getWithOther(sender, this.messageXPGet, player));
@@ -125,37 +125,36 @@ public class PXPCommand extends StreamlineCommand {
                     return;
                 }
 
-                String action = args[2];
-                double amount = 0;
+                String action2 = args[2];
+                double amount2 = 0;
                 try {
-                    amount = Double.parseDouble(args[3]);
+                    amount2 = Double.parseDouble(args[3]);
                 } catch (Exception e) {
                     e.printStackTrace();
                     SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
                     return;
                 }
 
-                switch (action) {
-                    case "set" -> {
-                        player.setTotalXP(amount);
+                switch (action2) {
+                    case "set":
+                        player.setTotalXP(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, player));
-                    }
-                    case "add" -> {
-                        player.addTotalXP(amount);
+                        break;
+                    case "add":
+                        player.addTotalXP(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, player));
-                    }
-                    case "remove" -> {
-                        player.removeTotalXP(amount);
+                        break;
+                    case "remove":
+                        player.removeTotalXP(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, player));
-                    }
-                    default -> {
+                        break;
+                    default:
                         SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-                    }
+                        break;
                 }
-            }
-            default -> {
+            default:
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-            }
+                break;
         }
     }
 

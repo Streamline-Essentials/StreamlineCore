@@ -11,6 +11,7 @@ import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.pf4j.*;
@@ -105,7 +106,7 @@ public class ModuleManager {
         }
 
         getLoadedModules().put(module.getIdentifier(), module);
-        if (module instanceof StreamlineModule m) ModuleUtils.fireEvent(new ModuleLoadEvent(m));
+        if (module instanceof StreamlineModule) ModuleUtils.fireEvent(new ModuleLoadEvent((StreamlineModule) module));
     }
 
     public static void registerExternalModules() {

@@ -4,7 +4,23 @@ import net.streamline.api.placeholders.handling.RATHandledString;
 
 import java.util.List;
 
-public record CallbackString(String string, RATHandledString handledString) {
+public class CallbackString {
+    private final String string;
+    private final RATHandledString handledString;
+
+    public String string() {
+        return string;
+    }
+
+    public RATHandledString handledString() {
+        return handledString;
+    }
+
+    public CallbackString(String string, RATHandledString handledString) {
+        this.string = string;
+        this.handledString = handledString;
+    }
+
     public List<String> simplyGet(int group) {
         return handledString.getRegexMatchesForGroup(string, group);
     }

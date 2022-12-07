@@ -67,21 +67,21 @@ public class PlaytimeCommand extends StreamlineCommand {
         }
 
         switch (action) {
-            case "set" -> {
+            case "set":
                 other.setPlaySeconds(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, other));
-            }
-            case "add" -> {
+                break;
+            case "add":
                 other.addPlaySecond(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, other));
-            }
-            case "remove" -> {
+                break;
+            case "remove":
                 other.removePlaySecond(amount);
                 SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, other));
-            }
-            default -> {
+                break;
+            default:
                 SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
-            }
+                break;
         }
     }
 
