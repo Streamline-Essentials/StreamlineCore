@@ -2,6 +2,8 @@ package net.streamline.platform.listeners;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
+import net.md_5.bungee.api.Favicon;
+import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.*;
@@ -14,12 +16,14 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
+import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.objects.PingedResponse;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
@@ -28,6 +32,9 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
@@ -149,5 +156,46 @@ public class PlatformListener implements Listener {
         } catch (Exception e) {
             // do nothing.
         }
+    }
+
+    @EventHandler
+    public void onPing(ProxyPingEvent event) {
+        ServerPing ping = event.getResponse();
+
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol(ping.getVersion().getName(), ping.getVersion().getProtocol());
+        List<PingedResponse.PlayerInfo> infos = new ArrayList<>();
+        for (ServerPing.PlayerInfo info : ping.getPlayers().getSample()) {
+            infos.add(new PingedResponse.PlayerInfo(info.getName(), info.getId()));
+        }
+        PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getOnline(), ping.getPlayers().getMax(),
+                infos.toArray(new PingedResponse.PlayerInfo[0]));
+        PingedResponse response = new PingedResponse(protocol, players, ping.getDescription(), ping.getFavicon());
+
+        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
+
+        if (pingReceivedEvent.isCancelled()) {
+            return;
+        }
+
+        ServerPing.Protocol protocolServer = new ServerPing.Protocol(pingReceivedEvent.getResponse().getVersion().getName(),
+                pingReceivedEvent.getResponse().getVersion().getProtocol());
+        ping.setVersion(protocolServer);
+
+        ServerPing.PlayerInfo[] infosServer = new ServerPing.PlayerInfo[pingReceivedEvent.getResponse().getPlayers().getSample().length];
+        for (int i = 0; i < pingReceivedEvent.getResponse().getPlayers().getSample().length; i++) {
+            PingedResponse.PlayerInfo info = pingReceivedEvent.getResponse().getPlayers().getSample()[i];
+            infosServer[i] = new ServerPing.PlayerInfo(info.getName(), info.getId());
+        }
+        ServerPing.Players playersServer = new ServerPing.Players(pingReceivedEvent.getResponse().getPlayers().getOnline(),
+                pingReceivedEvent.getResponse().getPlayers().getMax(), infosServer);
+
+        ping.setPlayers(playersServer);
+
+        ping.setDescriptionComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription()));
+
+        Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());
+        ping.setFavicon(favicon);
+
+        event.setResponse(ping);
     }
 }

@@ -176,19 +176,8 @@ public class Messenger implements IMessenger {
         return textComponent.hoverEvent(HoverEvent.showText(codedText(hoverText)));
     }
 
-    public TreeMap<Integer, Player> getTaggedPlayersIndexed(String[] args, String serverName) {
-        TreeMap<Integer, Player> toIndex = new TreeMap<>();
-        List<Player> players = BasePlugin.playersOnServer(serverName);
-
-        for (Player player : players) {
-            for (int i = 0; i < args.length; i ++) {
-                if (player.getUsername().equals(args[i])) {
-                    toIndex.put(i, player);
-                }
-            }
-        }
-
-        return toIndex;
+    public String asString(Component textComponent){
+        return LegacyComponentSerializer.legacySection().serialize(textComponent);
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {
