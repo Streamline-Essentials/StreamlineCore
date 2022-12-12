@@ -9,28 +9,36 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
+import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.objects.PingedResponse;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.base.TenSecondTimer;
+import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.platform.savables.UserManager;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
+import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.processing.BaseProcessor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PlatformListener implements Listener {
     @Getter @Setter
@@ -52,7 +60,7 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
-        StreamlineUser user = UserUtils.getOrGetUserByName(event.getUniqueId().toString());
+        StreamlineUser user = UserUtils.getOrGetUserByName(event.getName());
         if (! (user instanceof StreamlinePlayer player)) return;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
@@ -162,5 +170,30 @@ public class PlatformListener implements Listener {
         public void onProxiedMessageReceived(ProxyMessageInEvent event) {
             setMessaged(true);
         }
+    }
+
+    @EventHandler
+    public void onPing(ServerListPingEvent event) {
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol("latest", 1);
+
+        List<PingedResponse.PlayerInfo> playerInfos = new ArrayList<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            playerInfos.add(new PingedResponse.PlayerInfo(player.getName(), player.getUniqueId().toString()));
+        }
+
+        PingedResponse.Players players = new PingedResponse.Players(event.getMaxPlayers(), event.getNumPlayers(),
+                playerInfos.toArray(new PingedResponse.PlayerInfo[0]));
+
+        PingedResponse response = new PingedResponse(protocol, players, event.getMotd(), "");
+
+        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
+
+        if (pingReceivedEvent.isCancelled()) {
+            return;
+        }
+
+        event.setMotd(pingReceivedEvent.getResponse().getDescription());
+        event.setMaxPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
+//        event.setNumPlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
     }
 }

@@ -10,9 +10,12 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.ServerPing;
+import com.velocitypowered.api.util.Favicon;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
@@ -20,12 +23,14 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
+import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.objects.PingedResponse;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
@@ -34,6 +39,11 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
+
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class PlatformListener {
     public PlatformListener() {
@@ -45,8 +55,10 @@ public class PlatformListener {
         InboundConnection connection = event.getConnection();
         if (! (connection instanceof Player p)) return;
 
-        StreamlineUser user = UserUtils.getOrGetUserByName(p.getUniqueId().toString());
-        if (! (user instanceof StreamlinePlayer player)) return;
+
+        StreamlineUser user = UserUtils.getOrGetUserByName(p.getUsername());
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = ((StreamlinePlayer) user);
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -172,5 +184,56 @@ public class PlatformListener {
         if (e.isCancelled()) return;
         if (! e.isSendable()) return;
         ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+    }
+
+    @Subscribe
+    public void onPing(ProxyPingEvent event) {
+        ServerPing ping = event.getPing();
+
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol(ping.getVersion().getName(), ping.getVersion().getProtocol());
+        PingedResponse.Players players;
+        List<PingedResponse.PlayerInfo> infos = new ArrayList<>();
+        if (ping.getPlayers().isPresent()) {
+            for (ServerPing.SamplePlayer info : ping.getPlayers().get().getSample()) {
+                infos.add(new PingedResponse.PlayerInfo(info.getName(), info.getId()));
+            }
+            players = new PingedResponse.Players(ping.getPlayers().get().getOnline(), ping.getPlayers().get().getMax(),
+                    infos.toArray(new PingedResponse.PlayerInfo[0]));
+        } else {
+            players = new PingedResponse.Players(0, 0, new PingedResponse.PlayerInfo[0]);
+        }
+        PingedResponse response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().toString());
+
+        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
+
+        if (pingReceivedEvent.isCancelled()) {
+            return;
+        }
+
+        ServerPing.Builder builder = ping.asBuilder();
+        ServerPing.Version protocolServer = new ServerPing.Version(pingReceivedEvent.getResponse().getVersion().getProtocol(),
+                pingReceivedEvent.getResponse().getVersion().getName());
+        builder.version(protocolServer);
+
+        ServerPing.SamplePlayer[] infosServer = new ServerPing.SamplePlayer[pingReceivedEvent.getResponse().getPlayers().getSample().length];
+        for (int i = 0; i < pingReceivedEvent.getResponse().getPlayers().getSample().length; i++) {
+            PingedResponse.PlayerInfo info = pingReceivedEvent.getResponse().getPlayers().getSample()[i];
+            infosServer[i] = new ServerPing.SamplePlayer(info.getName(), info.getUniqueId());
+        }
+
+        builder.samplePlayers(infosServer);
+        builder.onlinePlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
+        builder.maximumPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
+
+        builder.description(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription()));
+
+        try {
+            Favicon favicon = Favicon.create(Paths.get(pingReceivedEvent.getResponse().getFavicon().getEncoded()));
+            builder.favicon(favicon);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        event.setPing(builder.build());
     }
 }
