@@ -44,22 +44,13 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
     }
 
     public void register() {
-//        Streamline.getInstance().getConfig().set("commands." + getParent().getBase() + ".permission", getParent().getPermission());
-//        PluginCommand command = Streamline.getInstance().getCommand(getParent().getBase());
-//        if (command == null) {
-//            MessageUtils.logWarning("Unable to register command with parent base '" + getParent().getBase() + "' because the command getter returned null!");
-//            return;
-//        }
-//        command.setExecutor(this);
-//        command.setAliases(Arrays.stream(getParent().getAliases()).toList());
-//        command.setPermission(getParent().getPermission());
         try {
             final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
 
             bukkitCommandMap.setAccessible(true);
             CommandMap commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
 
-            commandMap.register(getParent().getBase(), this);
+            commandMap.register(getParent().getLabel(), this);
         } catch(Exception e) {
             e.printStackTrace();
         }

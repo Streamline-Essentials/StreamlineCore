@@ -18,6 +18,8 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     @Getter @Setter
     private String identifier;
     @Getter @Setter
+    private String label;
+    @Getter @Setter
     private String base;
     @Getter @Setter
     private String permission;
@@ -26,7 +28,8 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     @Getter
     private final CommandResource commandResource;
 
-    public StreamlineCommand(String base, String permission, File parentDirectory, String... aliases) {
+    public StreamlineCommand(String label, String base, String permission, File parentDirectory, String... aliases) {
+        this.label = label;
         this.identifier = base;
         this.base = base;
         this.permission = permission;
@@ -34,8 +37,8 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         this.commandResource = new CommandResource(this, parentDirectory);
     }
 
-    public StreamlineCommand(String base, String permission, String... aliases) {
-        this(base, permission, SLAPI.getMainCommandsFolder(), aliases);
+    public StreamlineCommand(String label, String base, String permission, String... aliases) {
+        this(label, base, permission, SLAPI.getMainCommandsFolder(), aliases);
     }
 
     public void register() {
