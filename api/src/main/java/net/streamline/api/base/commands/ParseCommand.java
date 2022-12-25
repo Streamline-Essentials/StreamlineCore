@@ -17,6 +17,7 @@ public class ParseCommand extends StreamlineCommand {
 
     public ParseCommand() {
         super(
+                "streamline-base",
                 "parse",
                 "streamline.command.parse.default",
                 "par", "rat-parse"

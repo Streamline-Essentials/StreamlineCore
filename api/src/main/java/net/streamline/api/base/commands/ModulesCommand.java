@@ -33,6 +33,7 @@ public class ModulesCommand extends StreamlineCommand {
 
     public ModulesCommand() {
         super(
+                "streamline-base",
                 "streamlinemodules",
                 "streamline.command.streamlinemodules.default",
                 "module", "modules", "pmodules", "slm"

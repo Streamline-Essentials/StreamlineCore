@@ -19,6 +19,7 @@ public class PlaytimeCommand extends StreamlineCommand {
 
     public PlaytimeCommand() {
         super(
+                "streamline-base",
                 "proxyplaytime",
                 "streamline.command.playtime.default",
                 "pplaytime", "pplay", "proxyplay"

@@ -16,6 +16,7 @@ public class ReloadCommand extends StreamlineCommand {
 
     public ReloadCommand() {
         super(
+                "streamline-base",
                 "streamlinereload",
                 "streamline.command.streamlinereload.default",
                 "slrl", "slreload", "slr"

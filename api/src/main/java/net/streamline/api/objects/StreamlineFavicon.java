@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 
 public class StreamlineFavicon {
     private static final TypeAdapter<StreamlineFavicon> FAVICON_TYPE_ADAPTER = new TypeAdapter<StreamlineFavicon>()
@@ -99,5 +100,9 @@ public class StreamlineFavicon {
     public static StreamlineFavicon create(String encodedString)
     {
         return new StreamlineFavicon( encodedString );
+    }
+
+    public static StreamlineFavicon createFromURL(URL url) throws IOException {
+        return create(ImageIO.read(url));
     }
 }

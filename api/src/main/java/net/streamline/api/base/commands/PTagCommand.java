@@ -20,6 +20,7 @@ public class PTagCommand extends StreamlineCommand {
 
     public PTagCommand() {
         super(
+                "streamline-base",
                 "ptag",
                 "streamline.command.tag.default",
                 "proxytag"
