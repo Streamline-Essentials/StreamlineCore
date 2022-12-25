@@ -23,6 +23,7 @@ public class PXPCommand extends StreamlineCommand {
 
     public PXPCommand() {
         super(
+                "streamline-base",
                 "proxyexperience",
                 "streamline.command.proxyexperience.default",
                 "pexp", "proxyxp", "pxp", "px"

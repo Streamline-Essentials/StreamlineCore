@@ -18,6 +18,7 @@ public class PointsCommand extends StreamlineCommand {
 
     public PointsCommand() {
         super(
+                "streamline-base",
                 "ppoints",
                 "streamline.command.points.default",
                 "proxypoints", "ppts"
