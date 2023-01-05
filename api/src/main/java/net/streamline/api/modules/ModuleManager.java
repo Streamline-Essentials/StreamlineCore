@@ -96,6 +96,7 @@ public class ModuleManager {
                     "&a&m&l                                                 %newline%" +
                     "&7Streamline &9&lDiscord &dHub&7: &bhttps://dsc.gg/streamline%newline%" +
                     "&7Streamline &5&lModules &bGuide&7: &bhttps://github.com/Streamline-Essentials/StreamlineWiki/wiki/Modules#download%newline%" +
+                    "&7Streamline &5&lModules &cDownload&7: &bhttps://site.plasmere.net/resources/category/2%newline%" +
                     "&a&m&l                                                 "
             ;
 
