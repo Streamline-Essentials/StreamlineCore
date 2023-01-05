@@ -303,6 +303,10 @@ public class ModuleUtils {
         return UserUtils.runAs(user, command);
     }
 
+    public static void queueRunAs(StreamlineUser user, String command) {
+        SLAPI.addCachedCommand(command, user);
+    }
+
     public static boolean runAs(StreamlineUser user, boolean bypass, String command) {
         return SLAPI.getInstance().getUserManager().runAs(user, bypass, command);
     }

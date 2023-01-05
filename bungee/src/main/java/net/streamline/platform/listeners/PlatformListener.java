@@ -193,8 +193,12 @@ public class PlatformListener implements Listener {
 
         ping.setDescriptionComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription()));
 
-        Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());
-        ping.setFavicon(favicon);
+        try {
+            Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());
+            ping.setFavicon(favicon);
+        } catch (Exception e) {
+            // do nothing.
+        }
 
         event.setResponse(ping);
     }

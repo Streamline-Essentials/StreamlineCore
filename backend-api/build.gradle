@@ -36,7 +36,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Inventories.
-    implementation(shadow("fr.minuskube.inv:smart-invs:1.2.7"))
+    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.9-fix'
 
     // Streamline API.
     compileOnly(project(":StreamlineCore-API"))
@@ -56,6 +56,8 @@ shadowJar {
 
     destinationDirectory = file("${rootDir}/backend-api/build/libs")
     archiveClassifier.set('')
+
+    relocate("mc.obliviate", "streamline.libs.mc.obliviate")
 
     archiveFileName = finalName;
 }

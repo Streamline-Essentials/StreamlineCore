@@ -231,7 +231,7 @@ public class PlatformListener {
             Favicon favicon = Favicon.create(Paths.get(pingReceivedEvent.getResponse().getFavicon().getEncoded()));
             builder.favicon(favicon);
         } catch (Exception e) {
-            e.printStackTrace();
+            // do nothing.
         }
 
         event.setPing(builder.build());
