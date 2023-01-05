@@ -9,6 +9,7 @@ import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import org.bukkit.Bukkit;
 import org.bukkit.command.*;
+import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class ProperCommand extends Command implements TabExecutor, IProperCommand {
+public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
     @Getter
     private final StreamlineCommand parent;
 
     public ProperCommand(StreamlineCommand parent) {
-        super(parent.getBase());
+        super(parent.getBase(), "Not defined.", "Not defined.", List.of(parent.getAliases()));
         this.parent = parent;
     }
 
@@ -45,19 +46,24 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     public void register() {
         try {
-            final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-
-            bukkitCommandMap.setAccessible(true);
-            CommandMap commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
-
-            commandMap.register(getParent().getLabel(), this);
+            getCommandMap().register(getParent().getBase(), getParent().getLabel(), this);
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
+    private CommandMap getCommandMap() throws Exception {
+        Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+        field.setAccessible(true);
+        return (CommandMap) field.get(Bukkit.getServer());
+    }
+
     public void unregister() {
-        Streamline.getInstance().getConfig().set("commands." + getParent().getBase(), null);
+        try {
+            unregister(getCommandMap());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -32,11 +32,14 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.processing.BaseProcessor;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -195,5 +198,12 @@ public class PlatformListener implements Listener {
         event.setMotd(pingReceivedEvent.getResponse().getDescription());
         event.setMaxPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
 //        event.setNumPlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
+
+        try {
+            CachedServerIcon icon = Bukkit.loadServerIcon(Paths.get(pingReceivedEvent.getResponse().getFaviconString()).toFile());
+            event.setServerIcon(icon);
+        } catch (Exception e) {
+            // do nothing.
+        }
     }
 }

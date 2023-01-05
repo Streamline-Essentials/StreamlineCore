@@ -53,7 +53,7 @@ public class GeyserHolder extends StreamlineDependencyHolder<GeyserApiBase> {
     public Saver saver;
 
     public GeyserHolder() {
-        super("Geyser", "Geyser-BungeeCord", "Geyser-Velocity", "Geyser-Spigot");
+        super("Geyser", "Geyser-BungeeCord", "Geyser-Velocity", "Geyser-Spigot", "geyser", "Geyser");
         if (super.isPresent()) {
             tryLoad(() -> {
                 setApi(Geyser.api());

@@ -18,11 +18,17 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.savables.users.OperatorUser;
 import net.streamline.api.savables.users.StreamlineConsole;
+import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.scheduler.ModuleRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.UserUtils;
+import tv.quaint.objects.SingleSet;
 import tv.quaint.objects.handling.derived.PluginEventable;
 
 import java.io.File;
@@ -30,12 +36,90 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
 public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> extends PluginEventable {
+    public static class CommandRunner extends BaseRunnable {
+        public CommandRunner() {
+            super(0, 1);
+        }
+
+        @Override
+        public void run() {
+            List<Integer> toRemove = new ArrayList<>();
+
+            for (int i : getCachedCommands().keySet()) {
+                toRemove.add(i);
+
+                SingleSet<String, StreamlineUser> set = getCachedCommands().get(i);
+                String command = set.getKey();
+                StreamlineUser user = set.getValue();
+                command = ModuleUtils.replacePlaceholders(user, command);
+
+                RunType runType = RunType.CONSOLE_COMMAND;
+                if (command.startsWith("@ ")) {
+                    runType = RunType.NORMAL_COMMAND;
+                    command = command.substring(2);
+                } else if (command.startsWith("? ")) {
+                    runType = RunType.CONSOLE_COMMAND;
+                    command = command.substring(3);
+                } else if (command.startsWith("! ")) {
+                    runType = RunType.OPERATOR_COMMAND;
+                    command = command.substring(2);
+                } else if (command.startsWith("# ")) {
+                    runType = RunType.NORMAL_CHAT;
+                    command = command.substring(2);
+                }
+
+                switch (runType) {
+                    case CONSOLE_COMMAND -> ModuleUtils.runAs(ModuleUtils.getConsole(), command);
+                    case NORMAL_COMMAND -> ModuleUtils.runAs(user, command);
+                    case OPERATOR_COMMAND -> {
+                        OperatorUser operatorUser = new OperatorUser(user);
+                        ModuleUtils.runAs(operatorUser, command);
+                    }
+                    case NORMAL_CHAT -> ModuleUtils.chatAs(user, command);
+                }
+            }
+
+            for (int i : toRemove) {
+                removeCachedCommand(i);
+            }
+        }
+    }
+
+    public enum RunType {
+        NORMAL_COMMAND,
+        NORMAL_CHAT,
+
+        OPERATOR_COMMAND,
+
+        CONSOLE_COMMAND,
+        ;
+    }
+
     @Getter
     private static final String apiChannel = "streamline:api";
+
+    @Getter @Setter
+    private static CommandRunner commandRunner;
+
+    @Getter @Setter
+    private static LinkedHashMap<Integer, SingleSet<String, StreamlineUser>> cachedCommands = new LinkedHashMap<>();
+
+    public static void addCachedCommand(String command, StreamlineUser user) {
+        int lastId = getCachedCommands().keySet().stream().max(Integer::compareTo).orElse(0);
+        getCachedCommands().put(lastId + 1, new SingleSet<>(command, user));
+    }
+
+    public static void removeCachedCommand(int id) {
+        cachedCommands.remove(id);
+    }
+
     @Getter
     private static LuckPerms luckPerms;
     @Getter
@@ -145,6 +229,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());
+
+        setCommandRunner(new CommandRunner());
 
         setReady(true);
     }
