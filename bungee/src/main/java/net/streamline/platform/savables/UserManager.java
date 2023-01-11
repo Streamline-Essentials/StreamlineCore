@@ -5,6 +5,7 @@ import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
@@ -140,7 +141,7 @@ public class UserManager implements IUserManager {
             return;
         }
 
-        player.connect(serverInfo);
+        player.connect(serverInfo, ServerConnectEvent.Reason.PLUGIN);
     }
 
     @Override

@@ -197,7 +197,7 @@ public class PlatformListener {
             for (ServerPing.SamplePlayer info : ping.getPlayers().get().getSample()) {
                 infos.add(new PingedResponse.PlayerInfo(info.getName(), info.getId()));
             }
-            players = new PingedResponse.Players(ping.getPlayers().get().getOnline(), ping.getPlayers().get().getMax(),
+            players = new PingedResponse.Players(ping.getPlayers().get().getMax(), ping.getPlayers().get().getOnline(),
                     infos.toArray(new PingedResponse.PlayerInfo[0]));
         } else {
             players = new PingedResponse.Players(0, 0, new PingedResponse.PlayerInfo[0]);

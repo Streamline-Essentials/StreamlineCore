@@ -201,8 +201,8 @@ public class UserUtils {
         return "users";
     }
 
-    public static <T extends StreamlineUser> void ensureTable(T userClass, SQLUserResource<T> resource) {
-        if (userClass.getClass() == StreamlinePlayer.class) {
+    public static <T extends StreamlineUser> void ensureTable(Class<T> userClass, SQLUserResource<T> resource) {
+        if (userClass == StreamlinePlayer.class) {
             try {
                 PreparedStatement statement = resource.getProvider().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + resource.getTable() +
                         " (uuid VARCHAR(36) PRIMARY KEY, " +

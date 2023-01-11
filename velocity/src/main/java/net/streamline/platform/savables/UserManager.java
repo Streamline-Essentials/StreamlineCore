@@ -131,7 +131,7 @@ public class UserManager implements IUserManager {
             return;
         }
 
-        player.createConnectionRequest(serverOptional.get());
+        player.createConnectionRequest(serverOptional.get()).connect();
     }
 
     @Override
