@@ -40,12 +40,16 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
         return dataSource;
     }
 
+    /**
+     * Creates a new HikariDataSource instance with the current configuration.
+     * @return A new HikariDataSource instance.
+     */
     private HikariDataSource createNewDataSource() {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl("jdbc:mysql://" + getConfig().getHost() + ":" + getConfig().getPort() + "/" + getConfig().getDatabase());
         hikariConfig.setUsername(getConfig().getUsername());
         hikariConfig.setPassword(getConfig().getPassword());
-        hikariConfig.setDriverClassName("com.mysql.jdbc.Driver");
+        hikariConfig.setDriverClassName("tv.quaint.thebase.lib.mysql.cj.jdbc.Driver");
         hikariConfig.setMaximumPoolSize(10);
         hikariConfig.setConnectionTimeout(10000);
         hikariConfig.setValidationTimeout(10000);
@@ -73,7 +77,7 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
 
     @Override
     public void createTable() {
-        UserUtils.ensureTable(user, this);
+        UserUtils.ensureTable(userClass, this);
     }
 
     @Override
@@ -184,6 +188,21 @@ public class SQLUserResource<T extends StreamlineUser> extends MySQLResource {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    @Override
+    public <O> O get(String s, Class<O> aClass) {
+        try {
+            PreparedStatement statement = getProvider().getConnection().prepareStatement("SELECT " + s + " FROM " + getTable() + " WHERE uuid = ?;");
+            statement.setString(1, user.getUuid());
+
+            ResultSet resultSet = statement.executeQuery();
+            resultSet.next();
+            return aClass.cast(resultSet.getObject(s));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

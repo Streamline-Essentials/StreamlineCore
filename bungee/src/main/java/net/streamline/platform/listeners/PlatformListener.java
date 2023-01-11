@@ -186,8 +186,8 @@ public class PlatformListener implements Listener {
             PingedResponse.PlayerInfo info = pingReceivedEvent.getResponse().getPlayers().getSample()[i];
             infosServer[i] = new ServerPing.PlayerInfo(info.getName(), info.getId());
         }
-        ServerPing.Players playersServer = new ServerPing.Players(pingReceivedEvent.getResponse().getPlayers().getOnline(),
-                pingReceivedEvent.getResponse().getPlayers().getMax(), infosServer);
+        ServerPing.Players playersServer = new ServerPing.Players(pingReceivedEvent.getResponse().getPlayers().getMax(),
+                pingReceivedEvent.getResponse().getPlayers().getOnline(), infosServer);
 
         ping.setPlayers(playersServer);
 

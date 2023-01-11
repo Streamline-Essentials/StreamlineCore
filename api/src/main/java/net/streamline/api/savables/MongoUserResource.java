@@ -139,6 +139,19 @@ public class MongoUserResource<T extends StreamlineUser> extends MongoResource {
     }
 
     @Override
+    public <O> O get(String s, Class<O> aClass) {
+        try {
+//            return aClass.cast(getProvider().getDatabase(getConfig().getDatabase()).getCollection(getTable()).find(new Document("uuid", user.getUuid())).first().get(s));
+            // can you put the above line in, but split it out into multiple lines? I'm having trouble with it
+            Document document = getProvider().getDatabase(getConfig().getDatabase()).getCollection(getTable()).find(new Document("uuid", user.getUuid())).first();
+            if (document == null) return null;
+            return aClass.cast(document.get(s));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @Override
     public void continueReloadResource() {
         Document document = getProvider().getDatabase(getConfig().getDatabase()).getCollection(getTable()).find(new Document("uuid", user.getUuid())).first();
 
