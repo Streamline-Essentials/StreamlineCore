@@ -81,14 +81,4 @@ public class WhitelistConfig extends SimpleJsonDocument {
     public void onSave() {
 
     }
-
-    @Override
-    public void onDelete() {
-        getSelfFile().delete();
-    }
-
-    @Override
-    public boolean onExists() {
-        return getSelfFile().exists();
-    }
 }

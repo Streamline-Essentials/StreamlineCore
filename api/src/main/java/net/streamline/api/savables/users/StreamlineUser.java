@@ -3,7 +3,6 @@ package net.streamline.api.savables.users;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.SavableResource;
@@ -67,9 +66,9 @@ public abstract class StreamlineUser extends SavableResource {
         super(uuid, storageResource == null ? UserUtils.newUserStorageResource(uuid, StreamlineUser.class) : storageResource);
         this.savableUser = this;
 
-        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.MONGO)) getStorageResource().sync();
-        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.MYSQL)) getStorageResource().sync();
-        if (GivenConfigs.getMainConfig().userUseType().equals(StorageUtils.SupportedStorageType.SQLITE)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.MONGO)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.MYSQL)) getStorageResource().sync();
+        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.SQLITE)) getStorageResource().sync();
     }
 
     @Override

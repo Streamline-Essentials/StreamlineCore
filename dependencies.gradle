@@ -1,14 +1,14 @@
 ext {
     IMPL = [
-            "org.pf4j:pf4j:3.8.0"
+            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
     ]
     SHADOW = [
-            "org.pf4j:pf4j:3.8.0"
+            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
     ]
     ANNO = [
             "org.projectlombok:lombok:1.18.24",
             "org.mongodb:mongo-java-driver:3.12.11",
-            "org.pf4j:pf4j:3.8.0"
+            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
     ]
     COMP_ONLY = [
             "net.luckperms:api:5.4",

@@ -30,6 +30,7 @@ import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.SingleSet;
 import tv.quaint.objects.handling.derived.PluginEventable;
+import tv.quaint.storage.resources.databases.DatabaseResource;
 
 import java.io.File;
 import java.io.IOException;
@@ -176,6 +177,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     @Getter @Setter
     private static boolean ready = false;
 
+    @Getter @Setter
+    private static DatabaseResource<?> mainDatabase;
+
     public SLAPI(String identifier, P platform, U userManager, M messenger) {
         super(identifier);
         instance = this;
@@ -212,6 +216,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         moduleScheduler = new ModuleTaskManager();
 
         GivenConfigs.init();
+        setMainDatabase(GivenConfigs.getMainDatabase());
         GivenCommands.init();
 
         CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());

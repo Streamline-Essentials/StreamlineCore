@@ -1,6 +1,6 @@
 package net.streamline.api.modules;
 
-import com.google.common.io.ByteStreams;
+import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import net.streamline.api.SLAPI;
 import org.jetbrains.annotations.Nullable;
 

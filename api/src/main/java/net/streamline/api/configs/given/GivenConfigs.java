@@ -5,8 +5,12 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.punishments.PunishmentConfig;
+import net.streamline.api.savables.MongoMainResource;
+import net.streamline.api.savables.MySQLMainResource;
+import net.streamline.api.savables.SQLiteMainResource;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
+import tv.quaint.storage.resources.databases.DatabaseResource;
 
 import java.io.File;
 
@@ -28,6 +32,9 @@ public class GivenConfigs {
     @Getter @Setter
     private static File punishmentFolder;
 
+    @Getter @Setter
+    private static DatabaseResource<?> mainDatabase;
+
     public static void init() {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
@@ -35,6 +42,18 @@ public class GivenConfigs {
         setPunishmentConfig(new PunishmentConfig());
         setCachedUUIDsHandler(new CachedUUIDsHandler());
         setProfileConfig(new SavedProfileConfig());
+
+        switch (getMainConfig().savingUseType()) {
+            case MONGO -> {
+                setMainDatabase(new MongoMainResource(getMainConfig().getConfiguredDatabase()));
+            }
+            case MYSQL -> {
+                setMainDatabase(new MySQLMainResource(getMainConfig().getConfiguredDatabase()));
+            }
+            case SQLITE -> {
+                setMainDatabase(new SQLiteMainResource(getMainConfig().getConfiguredDatabase()));
+            }
+        }
     }
 
     public static void ensureFolders() {

@@ -1,23 +1,22 @@
+# Settings for saving users.
+saving:
+  # The type of storage to use.
+  # Can be:
+  # YAML (Default) (Flat file)
+  # JSON (Flat file)
+  # TOML (Flat file)
+  # MONGO (NoSQL database)
+  # MYSQL (SQL database)
+  use: YAML
+  # Settings for only if using MONGO or MYSQL above.
+  databases:
+    # Connection URL for connecting to the database.
+    connection-uri: "jdbc:mysql://<host>:<port>/<database>?user=<user>&password=<pass>"
+    # The table (MYSQL) or collection (MONGO) prefix.
+    prefix: "sl_"
+
 # Settings for users.
 users:
-  # Settings for saving users.
-  saving:
-    # The type of storage to use.
-    # Can be:
-    # YAML (Default) (Flat file)
-    # JSON (Flat file)
-    # TOML (Flat file)
-    # MONGO (NoSQL database)
-    # MYSQL (SQL database)
-    use: YAML
-    # Settings for only if using MONGO or MYSQL above.
-    databases:
-      # Connection URL for connecting to the database.
-      connection-uri: "mongodb://<user>:<pass>@<host>:<port>/?authSource=admin&readPreference=primary&appname=StreamlineAPI&ssl=false"
-      # The actual database to use.
-      database: "streamline_users"
-      # The table (MYSQL) or collection (MONGO) prefix.
-      prefix: "sl_"
   # Settings for all users.
   combined:
     # Settings for points.

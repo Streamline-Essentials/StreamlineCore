@@ -1,7 +1,7 @@
 package net.streamline.api.utils;
 
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
+import tv.quaint.thebase.lib.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Pattern;
 
 import java.util.ArrayList;
 import java.util.List;

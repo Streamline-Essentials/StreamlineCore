@@ -1,7 +1,7 @@
 package net.streamline.platform;
 
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
+import tv.quaint.thebase.lib.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Pattern;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;

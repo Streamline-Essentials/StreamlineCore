@@ -1,12 +1,12 @@
 package net.streamline.api.objects;
 
-import com.google.common.io.BaseEncoding;
-import com.google.gson.TypeAdapter;
-import com.google.gson.internal.bind.TypeAdapters;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import lombok.Getter;
 import lombok.NonNull;
+import tv.quaint.thebase.lib.google.common.io.BaseEncoding;
+import tv.quaint.thebase.lib.google.gson.TypeAdapter;
+import tv.quaint.thebase.lib.google.gson.internal.bind.TypeAdapters;
+import tv.quaint.thebase.lib.google.gson.stream.JsonReader;
+import tv.quaint.thebase.lib.google.gson.stream.JsonWriter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

@@ -1,7 +1,7 @@
 package net.streamline.api.utils;
 
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
+import tv.quaint.thebase.lib.exp4j.Expression;
+import tv.quaint.thebase.lib.exp4j.ExpressionBuilder;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

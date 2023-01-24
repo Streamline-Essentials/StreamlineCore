@@ -1,7 +1,7 @@
 package net.streamline.platform.listeners;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
+import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
+import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;

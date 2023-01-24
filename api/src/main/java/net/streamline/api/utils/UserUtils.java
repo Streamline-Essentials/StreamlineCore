@@ -14,21 +14,25 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.MongoUserResource;
-import net.streamline.api.savables.SQLUserResource;
+import net.streamline.api.savables.MongoMainResource;
+import net.streamline.api.savables.MySQLMainResource;
 import net.streamline.api.savables.events.LoadStreamlineUserEvent;
 import net.streamline.api.savables.users.*;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
+import tv.quaint.storage.resources.cache.CachedResource;
+import tv.quaint.storage.resources.cache.CachedResourceUtils;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
+import tv.quaint.storage.resources.databases.singled.DatabaseSingle;
 import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.thebase.lib.leonhard.storage.Config;
 import tv.quaint.thebase.lib.leonhard.storage.Json;
 import tv.quaint.thebase.lib.leonhard.storage.Toml;
+import tv.quaint.thebase.lib.mongodb.MongoClient;
 
 import java.io.File;
-import java.sql.PreparedStatement;
+import java.sql.Connection;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -73,6 +77,18 @@ public class UserUtils {
         if (! isLoaded(uuid)) return;
         StreamlineUser user = getUser(uuid);
         user.saveAll();
+
+        switch (GivenConfigs.getMainConfig().savingUseType()) {
+            case MONGO, MYSQL, YAML -> {
+                CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
+                if (user instanceof StreamlinePlayer player) {
+                    DatabaseSingle<?, ?> databaseSingle = CachedResourceUtils.pushToDatabase("players", "uuid", player.getUuid(), cachedResource, SLAPI.getMainDatabase());
+                } else if (user instanceof StreamlineConsole console) {
+                    DatabaseSingle<?, ?> databaseSingle = CachedResourceUtils.pushToDatabase("consoles", "uuid", console.getUuid(), cachedResource, SLAPI.getMainDatabase());
+                }
+            }
+        }
+
         getLoadedUsers().remove(uuid);
     }
 
@@ -106,7 +122,7 @@ public class UserUtils {
 
     public static boolean userExists(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return getLoadedUsersSet().contains(getConsole());
-        StorageUtils.SupportedStorageType type = GivenConfigs.getMainConfig().userUseType();
+        StorageUtils.SupportedStorageType type = GivenConfigs.getMainConfig().savingUseType();
         DatabaseConfig config = GivenConfigs.getMainConfig().getConfiguredDatabase();
         File userFolder = SLAPI.getUserFolder();
         switch (type) {
@@ -135,22 +151,9 @@ public class UserUtils {
                 }
                 return false;
             case MONGO:
-                if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
-                    MongoUserResource<StreamlineConsole> resource = new MongoUserResource<>(uuid, config, StreamlineConsole.class);
-                    return resource.exists();
-                } else {
-                    MongoUserResource<StreamlinePlayer> resource = new MongoUserResource<>(uuid, config, StreamlinePlayer.class);
-                    return resource.exists();
-                }
             case MYSQL:
             case SQLITE:
-                if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) {
-                    SQLUserResource<StreamlineConsole> resource = new SQLUserResource<>(uuid, config, StreamlineConsole.class);
-                    return resource.exists();
-                } else {
-                    SQLUserResource<StreamlinePlayer> resource = new SQLUserResource<>(uuid, config, StreamlinePlayer.class);
-                    return resource.exists();
-                }
+                return SLAPI.getMainDatabase().exists(SLAPI.getMainDatabase().getConfig().getTablePrefix() + "users", "uuid", uuid);
             default:
                 return false;
         }
@@ -201,51 +204,8 @@ public class UserUtils {
         return "users";
     }
 
-    public static <T extends StreamlineUser> void ensureTable(Class<T> userClass, SQLUserResource<T> resource) {
-        if (userClass == StreamlinePlayer.class) {
-            try {
-                PreparedStatement statement = resource.getProvider().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + resource.getTable() +
-                        " (uuid VARCHAR(36) PRIMARY KEY, " +
-                        "latestName VARCHAR(128)" +
-                        "displayName VARCHAR(128)" +
-                        "tags VARCHAR(4096)" +
-                        "points DOUBLE" +
-                        "lastMessage VARCHAR(4096)" +
-                        "latestServer VARCHAR(128)" +
-                        "totalXP DOUBLE" +
-                        "currentXP DOUBLE" +
-                        "level INT" +
-                        "playSeconds INT" +
-                        "latestIP VARCHAR(128)" +
-                        "ips VARCHAR(4096)" +
-                        "names VARCHAR(4096)" +
-                        ");");
-                statement.execute();
-                statement.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            try {
-                PreparedStatement statement = resource.getProvider().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + resource.getTable() +
-                        " (uuid VARCHAR(36) PRIMARY KEY, " +
-                        "latestName VARCHAR(128)" +
-                        "displayName VARCHAR(128)" +
-                        "tags VARCHAR(4096)" +
-                        "points DOUBLE" +
-                        "lastMessage VARCHAR(4096)" +
-                        "latestServer VARCHAR(128)" +
-                        ");");
-                statement.execute();
-                statement.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public static <T extends StreamlineUser> StorageResource<?> newUserStorageResource(String uuid, Class<T> user) {
-        switch (GivenConfigs.getMainConfig().userUseType()) {
+        switch (GivenConfigs.getMainConfig().savingUseType()) {
             case YAML:
                 return new FlatFileResource<>(Config.class, uuid + ".yml", SLAPI.getUserFolder(), false);
             case JSON:
@@ -253,10 +213,10 @@ public class UserUtils {
             case TOML:
                 return new FlatFileResource<>(Toml.class, uuid + ".toml", SLAPI.getUserFolder(), false);
             case MONGO:
-                return new MongoUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
+                return new CachedResource<>(MongoClient.class, "uuid", uuid);
             case MYSQL:
             case SQLITE:
-                return new SQLUserResource<>(uuid, GivenConfigs.getMainConfig().getConfiguredDatabase(), user);
+                return new CachedResource<>(Connection.class, "uuid", uuid);
         }
 
         return null;

@@ -1,7 +1,7 @@
 package net.streamline.platform;
 
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
+import tv.quaint.thebase.lib.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Pattern;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;

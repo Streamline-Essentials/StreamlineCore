@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.stream-lined</groupId>
+    <artifactId>streamlinecore</artifactId>
+    <version>2.0.3.0</version>
+    <packaging>pom</packaging>
+
+    <name>StreamlineCore</name>
+
+    <properties>
+        <java.version>16</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>apache.snapshots</id>
+            <url>https://repository.apache.org/snapshots/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>apache.releases</id>
+            <url>https://repository.apache.org/releases/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <includes>
+                    <include>included/*.jar</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>16</source>
+                    <target>16</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>jcenter</id>
+            <url>https://jcenter.bintray.com/</url>
+        </repository>
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io/</url>
+        </repository>
+        <repository>
+            <id>github</id>
+            <url>https://mvn.pkg.github.com/</url>
+        </repository>
+        <repository>
+            <id>opencollab-releases</id>
+            <url>https://repo.opencollab.dev/maven-releases/</url>
+        </repository>
+        <repository>
+            <id>opencollab-snapshots</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
+        </repository>
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+    </repositories>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- TheBase -->
+            <dependency>
+                <groupId>com.github.server-utilities</groupId>
+                <artifactId>thebase</artifactId>
+                <version>1.0.18</version>
+                <scope>compile</scope>
+            </dependency>
+            <!-- LuckPerms -->
+            <dependency>
+                <groupId>net.luckperms</groupId>
+                <artifactId>api</artifactId>
+                <version>5.4</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- PlaceholderAPI -->
+            <dependency>
+                <groupId>me.clip</groupId>
+                <artifactId>placeholderapi</artifactId>
+                <version>2.11.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- ObliviateInvs -->
+            <dependency>
+                <groupId>com.github.hamza-cskn.obliviate-invs</groupId>
+                <artifactId>core</artifactId>
+                <version>4.1.10</version>
+            </dependency>
+            <!-- Geyser Base API -->
+            <dependency>
+                <groupId>org.geysermc</groupId>
+                <artifactId>base-api</artifactId>
+                <version>2.0.4-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+            <!-- Geyser API -->
+            <dependency>
+                <groupId>org.geysermc</groupId>
+                <artifactId>geyser-api</artifactId>
+                <version>2.0.4-SNAPSHOT</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+    <modules>
+        <module>api</module>
+        <module>backend-api</module>
+        <module>bungee</module>
+        <module>spigot</module>
+        <module>velocity</module>
+    </modules>
+</project>

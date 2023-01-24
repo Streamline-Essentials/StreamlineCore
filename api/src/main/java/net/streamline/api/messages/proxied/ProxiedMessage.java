@@ -1,8 +1,6 @@
 package net.streamline.api.messages.proxied;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
+import tv.quaint.thebase.lib.google.common.io.*;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
