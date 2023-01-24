@@ -1,20 +1,13 @@
 package net.streamline.api.messages.builders;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import lombok.Getter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
-import org.apache.commons.codec.binary.Hex;
-
-import java.util.ArrayList;
-import java.util.List;
+import tv.quaint.thebase.lib.apache.commons.codec.binary.Hex;
 
 public class ResourcePackMessageBuilder {
     @Getter

@@ -1,7 +1,7 @@
 package net.streamline.platform.listeners;
 
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
+import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
+import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import net.md_5.bungee.api.Favicon;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.connection.PendingConnection;
@@ -164,12 +164,16 @@ public class PlatformListener implements Listener {
 
         PingedResponse.Protocol protocol = new PingedResponse.Protocol(ping.getVersion().getName(), ping.getVersion().getProtocol());
         List<PingedResponse.PlayerInfo> infos = new ArrayList<>();
-        for (ServerPing.PlayerInfo info : ping.getPlayers().getSample()) {
-            infos.add(new PingedResponse.PlayerInfo(info.getName(), info.getId()));
+        if (ping.getPlayers() != null) {
+            if (ping.getPlayers().getSample() != null) {
+                for (ServerPing.PlayerInfo info : ping.getPlayers().getSample()) {
+                    infos.add(new PingedResponse.PlayerInfo(info.getName(), info.getId()));
+                }
+            }
         }
-        PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getOnline(), ping.getPlayers().getMax(),
+        PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getMax(), ping.getPlayers().getOnline(),
                 infos.toArray(new PingedResponse.PlayerInfo[0]));
-        PingedResponse response = new PingedResponse(protocol, players, ping.getDescription(), ping.getFavicon());
+        PingedResponse response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
 
         PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
 

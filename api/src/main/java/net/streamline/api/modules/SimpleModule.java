@@ -1,6 +1,6 @@
 package net.streamline.api.modules;
 
-import org.pf4j.PluginWrapper;
+import tv.quaint.thebase.lib.pf4j.PluginWrapper;
 
 public abstract class SimpleModule extends StreamlineModule {
 

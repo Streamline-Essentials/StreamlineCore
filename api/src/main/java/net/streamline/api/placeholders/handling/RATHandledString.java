@@ -1,6 +1,6 @@
 package net.streamline.api.placeholders.handling;
 
-import com.google.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Matcher;
 import lombok.Getter;
 import tv.quaint.utils.MatcherUtils;
 

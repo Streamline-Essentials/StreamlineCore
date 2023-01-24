@@ -1,7 +1,6 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.StreamlineStorageUtils;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
@@ -16,10 +15,25 @@ public class MainConfigHandler extends SimpleConfiguration {
     }
 
     public void init() {
-        userUseType();
-        userDatabaseConnectionUri();
-        userDatabaseDatabase();
-        userDatabasePrefix();
+        String use = getResource().getString("users.saving.use");
+        if (use != null) {
+            getResource().set("saving.use", use);
+            getResource().remove("users.saving.use");
+        }
+        String dCUri = getResource().getString("users.saving.databases.connection-uri");
+        if (dCUri != null) {
+            getResource().set("saving.databases.connection-uri", dCUri);
+            getResource().remove("users.saving.databases.connection-uri");
+        }
+        String dCPrefix = getResource().getString("users.saving.databases.prefix");
+        if (dCPrefix != null) {
+            getResource().set("saving.databases.prefix", dCPrefix);
+            getResource().remove("users.saving.databases.prefix");
+        }
+
+        savingUseType();
+        savingDatabaseConnectionUri();
+        savingDatabasePrefix();
 
         userCombinedPointsDefault();
         userCombinedNicknameDefault();
@@ -57,25 +71,19 @@ public class MainConfigHandler extends SimpleConfiguration {
         placeholderCacheReleaseOutput();
     }
 
-    public StorageUtils.SupportedStorageType userUseType() {
+    public StorageUtils.SupportedStorageType savingUseType() {
         reloadResource();
 
-        return StorageUtils.SupportedStorageType.valueOf(getResource().getOrSetDefault("users.saving.use", StorageUtils.SupportedStorageType.YAML.toString()));
+        return StorageUtils.SupportedStorageType.valueOf(getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString()));
     }
 
-    public String userDatabaseConnectionUri() {
+    public String savingDatabaseConnectionUri() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.saving.databases.connection-uri", "mongodb://<user>:<pass>@<host>:<port>/?authSource=admin&readPreference=primary&appname=StreamlineAPI&ssl=false");
+        return getResource().getOrSetDefault("saving.databases.connection-uri", "jdbc:mysql://<host>:<port>/<database>?user=<user>&password=<pass>");
     }
 
-    public String userDatabaseDatabase() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("users.saving.databases.database", "streamline_users");
-    }
-
-    public String userDatabasePrefix() {
+    public String savingDatabasePrefix() {
         reloadResource();
 
         return getResource().getOrSetDefault("users.saving.databases.prefix", "sl_");
@@ -190,33 +198,16 @@ public class MainConfigHandler extends SimpleConfiguration {
     }
 
     public DatabaseConfig getConfiguredDatabase() {
-        FlatFileSection section = getResource().getSection("database");
+        DatabaseConfig.Builder builder = new DatabaseConfig.Builder();
 
-        StorageUtils.SupportedDatabaseType type = StorageUtils.SupportedDatabaseType.valueOf(section.getOrSetDefault("type", StorageUtils.SupportedDatabaseType.SQLITE.toString()));
-        String link;
-        switch (type) {
-            case MONGO:
-                link = section.getOrDefault("link", "mongodb://{{user}}:{{pass}}@{{host}}:{{port}}/{{database}}");
-                break;
-            case MYSQL:
-                link = section.getOrDefault("link", "jdbc:mysql://{{host}}:{{port}}/{{database}}{{options}}");
-                break;
-            case SQLITE:
-                link = section.getOrDefault("link", "jdbc:sqlite:{{database}}.db");
-                break;
-            default:
-                link = section.getOrSetDefault("link", "jdbc:sqlite:{{database}}.db");
-                break;
-        }
-        String host = section.getOrSetDefault("host", "localhost");
-        int port = section.getOrSetDefault("port", 3306);
-        String username = section.getOrSetDefault("username", "user");
-        String password = section.getOrSetDefault("password", "pass1234");
-        String database = section.getOrSetDefault("database", "streamline");
-        String tablePrefix = section.getOrSetDefault("table-prefix", "sl_");
-        String options = section.getOrSetDefault("options", "?useSSL=false&serverTimezone=UTC");
+        String typeString = savingUseType().toString();
+        StorageUtils.SupportedDatabaseType type = StorageUtils.SupportedDatabaseType.valueOf(typeString);
 
-        return new DatabaseConfig(type, link, host, port, username, password, database, tablePrefix, options);
+        builder.setType(type);
+        builder.setLink(savingDatabaseConnectionUri());
+        builder.setTablePrefix(savingDatabasePrefix());
+
+        return builder.build();
     }
 
     public boolean debugNotifyNoModules() {

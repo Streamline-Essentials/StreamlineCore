@@ -24,16 +24,6 @@ public class SavedProfileConfig extends SimpleJsonDocument {
 
     }
 
-    @Override
-    public void onDelete() {
-        getSelfFile().delete();
-    }
-
-    @Override
-    public boolean onExists() {
-        return getSelfFile().exists();
-    }
-
     public static class Ticker extends BaseRunnable {
         @Getter @Setter
         private SavedProfileConfig parent;
