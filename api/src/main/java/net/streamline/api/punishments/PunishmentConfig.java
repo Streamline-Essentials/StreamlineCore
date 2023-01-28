@@ -20,7 +20,16 @@ public class PunishmentConfig extends SimpleConfiguration {
     public StorageUtils.SupportedStorageType getUseType() {
         reloadResource();
 
-        return StorageUtils.SupportedStorageType.valueOf(getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString()));
+        String use = getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString());
+        if (use == null) {
+            use = StorageUtils.SupportedStorageType.YAML.toString();
+        } else {
+            if (use.equals("")) {
+                use = StorageUtils.SupportedStorageType.YAML.toString();
+            }
+        }
+
+        return StorageUtils.SupportedStorageType.valueOf(use);
     }
 
     public String getDatabaseConnectionUri() {

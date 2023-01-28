@@ -17,6 +17,8 @@ public class GivenCommands {
     private static PXPCommand pxpCommand;
     @Getter @Setter
     private static ReloadCommand reloadCommand;
+    @Getter @Setter
+    private static SyncCommand syncCommand;
 
     public static void init() {
         setModulesCommand(new ModulesCommand());
@@ -25,6 +27,7 @@ public class GivenCommands {
         setPointsCommand(new PointsCommand());
         setPxpCommand(new PXPCommand());
         setReloadCommand(new ReloadCommand());
+        setSyncCommand(new SyncCommand());
 
         getModulesCommand().register();
         getParseCommand().register();
@@ -32,5 +35,6 @@ public class GivenCommands {
         getPointsCommand().register();
         getPxpCommand().register();
         getReloadCommand().register();
+        getSyncCommand().register();
     }
 }

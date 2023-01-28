@@ -15,22 +15,6 @@ public class MainConfigHandler extends SimpleConfiguration {
     }
 
     public void init() {
-        String use = getResource().getString("users.saving.use");
-        if (use != null) {
-            getResource().set("saving.use", use);
-            getResource().remove("users.saving.use");
-        }
-        String dCUri = getResource().getString("users.saving.databases.connection-uri");
-        if (dCUri != null) {
-            getResource().set("saving.databases.connection-uri", dCUri);
-            getResource().remove("users.saving.databases.connection-uri");
-        }
-        String dCPrefix = getResource().getString("users.saving.databases.prefix");
-        if (dCPrefix != null) {
-            getResource().set("saving.databases.prefix", dCPrefix);
-            getResource().remove("users.saving.databases.prefix");
-        }
-
         savingUseType();
         savingDatabaseConnectionUri();
         savingDatabasePrefix();
@@ -74,7 +58,9 @@ public class MainConfigHandler extends SimpleConfiguration {
     public StorageUtils.SupportedStorageType savingUseType() {
         reloadResource();
 
-        return StorageUtils.SupportedStorageType.valueOf(getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString()));
+        String use = getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString());
+
+        return StorageUtils.SupportedStorageType.valueOf(use);
     }
 
     public String savingDatabaseConnectionUri() {
