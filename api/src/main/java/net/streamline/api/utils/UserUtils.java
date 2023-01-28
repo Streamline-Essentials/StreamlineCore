@@ -99,25 +99,8 @@ public class UserUtils {
         try {
             boolean changed = false;
             switch (GivenConfigs.getMainConfig().savingUseType()) {
-                case MYSQL -> {
-                    MySQLSingle single = new MySQLSingle((MySQLResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
-                    cachedResource.getCachedData().forEach((s, o) -> {
-                        cachedResource.write(s, single.get(o.getClass()));
-                    });
-                    changed = true;
-                }
-                case MONGO -> {
-                    MongoSingle single = new MongoSingle((MongoResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
-                    cachedResource.getCachedData().forEach((s, o) -> {
-                        cachedResource.write(s, single.get(o.getClass()));
-                    });
-                    changed = true;
-                }
-                case SQLITE -> {
-                    SQLiteSingle single = new SQLiteSingle((SQLiteResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
-                    cachedResource.getCachedData().forEach((s, o) -> {
-                        cachedResource.write(s, single.get(o.getClass()));
-                    });
+                case MYSQL, SQLITE, MONGO -> {
+                    CachedResourceUtils.updateCache(tableName, cachedResource.getDiscriminatorKey(), cachedResource.getDiscriminatorAsString(), cachedResource, SLAPI.getMainDatabase());
                     changed = true;
                 }
             }
@@ -142,12 +125,10 @@ public class UserUtils {
                 CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
                 if (user instanceof StreamlinePlayer player) {
                     String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
-                    SLAPI.getMainDatabase().create(tableName, CachedResourceUtils.getValues(cachedResource));
-                    SLAPI.getMainDatabase().insert(tableName, CachedResourceUtils.getValues(cachedResource));
+                    CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
                 } else {
                     String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
-                    SLAPI.getMainDatabase().create(tableName, CachedResourceUtils.getValues(cachedResource));
-                    SLAPI.getMainDatabase().insert(tableName, CachedResourceUtils.getValues(cachedResource));
+                    CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
                 }
             }
         }

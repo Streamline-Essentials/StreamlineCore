@@ -19,6 +19,7 @@ import net.streamline.api.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.processing.BaseProcessor;
+import tv.quaint.storage.resources.databases.events.MongoResourceStatementEvent;
 import tv.quaint.storage.resources.databases.events.SQLResourceStatementEvent;
 
 public class BaseListener implements BaseEventListener {
@@ -74,5 +75,10 @@ public class BaseListener implements BaseEventListener {
     @BaseProcessor
     public void onSQLStatement(SQLResourceStatementEvent event) {
         MessageUtils.logDebug("&fSQL Statement&7: &2" + event.getStatement());
+    }
+
+    @BaseProcessor
+    public void onMongoStatement(MongoResourceStatementEvent event) {
+        MessageUtils.logDebug("&fMongo Statement&7: &2" + event.getStatement());
     }
 }

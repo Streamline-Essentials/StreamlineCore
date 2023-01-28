@@ -11,6 +11,7 @@ import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
 import tv.quaint.storage.resources.cache.CachedResource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -92,26 +93,36 @@ public abstract class StreamlineUser extends SavableResource {
     public List<String> getStringListFromResource(String key, List<String> def){
         if (getStorageResource() instanceof CachedResource<?>) {
             try {
-                String s = getStorageResource().get(key, String.class);
-                if (s == null) {
+                Object o = getStorageResource().get(key, Object.class);
+                if (o == null) {
                     set(key, def);
-                    Object o = getStorageResource().get(key, Object.class);
-                    if (o instanceof List<?>) {
-                        return (List<String>) o;
-                    } else {
-                        if (o instanceof String) {
-                            s = (String) o;
-                        } else {
-                            return def;
-                        }
-                    }
+                    o = getStorageResource().get(key, Object.class);
                 }
-                return List.of(s.split(", "));
+                return testString(o, def);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         return getOrSetDefault(key, def);
+    }
+
+    public List<String> testString(Object o, List<String> def) {
+        String s;
+        try {
+            if (o instanceof List<?>) {
+                return (List<String>) o;
+            } else {
+                if (o instanceof String) {
+                    s = (String) o;
+                    return List.of(s.split(", "));
+                } else {
+                    return def;
+                }
+            }
+        } catch (Exception e) {
+            s = null;
+        }
+        return def;
     }
 
     abstract public List<String> getTagsFromConfig();
