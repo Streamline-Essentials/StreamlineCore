@@ -28,6 +28,8 @@
     </pluginRepositories>
 
     <build>
+        <finalName>${project.name}</finalName>
+
         <resources>
             <resource>
                 <directory>${project.basedir}</directory>
@@ -51,6 +53,16 @@
                     <target>16</target>
                 </configuration>
             </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-jar-plugin</artifactId>-->
+<!--                <version>3.3.0</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>default-jar</id>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -61,11 +73,12 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <finalName>${build.finalName}-${project.version}</finalName>
+                            <outputDirectory>../compiled</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -103,7 +116,7 @@
             <dependency>
                 <groupId>com.github.server-utilities</groupId>
                 <artifactId>thebase</artifactId>
-                <version>1.0.18</version>
+                <version>1.1.13</version>
                 <scope>compile</scope>
             </dependency>
             <!-- LuckPerms -->
@@ -151,4 +164,12 @@
         <module>spigot</module>
         <module>velocity</module>
     </modules>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/Streamline-Essentials/StreamlineCore</url>
+        </repository>
+    </distributionManagement>
 </project>

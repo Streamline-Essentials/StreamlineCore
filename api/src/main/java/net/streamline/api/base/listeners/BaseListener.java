@@ -19,14 +19,12 @@ import net.streamline.api.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.processing.BaseProcessor;
+import tv.quaint.storage.resources.databases.events.SQLResourceStatementEvent;
 
 public class BaseListener implements BaseEventListener {
     public BaseListener() {
         BaseModule.getInstance().logInfo("Loaded " + getClass().getSimpleName());
         BaseEventHandler.bake(this, SLAPI.getInstance());
-
-//        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerJoin, LoginCompletedEvent.class));
-//        BaseEventHandler.loadFunction(new FunctionedCall<>(this::onPlayerLevelChange, LevelChangePlayerEvent.class));
     }
 
     @BaseProcessor
@@ -37,6 +35,7 @@ public class BaseListener implements BaseEventListener {
             return;
         }
         CachedUUIDsHandler.cachePlayer(user.getUuid(), user.getLatestName());
+        UserUtils.getUserFromDatabase(user);
     }
 
     @BaseProcessor
@@ -70,5 +69,10 @@ public class BaseListener implements BaseEventListener {
                 PlayerLocationMessageBuilder.handle(event.getMessage());
             }
         }
+    }
+
+    @BaseProcessor
+    public void onSQLStatement(SQLResourceStatementEvent event) {
+        MessageUtils.logDebug("&fSQL Statement&7: &2" + event.getStatement());
     }
 }

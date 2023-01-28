@@ -14,11 +14,19 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
+@Plugin(
+        id = "streamlinecore",
+        name = "StreamlineCore",
+        version = "${project.version}",
+        dependencies = {
+                @Dependency(id = "luckperms"),
+                @Dependency(id = "geyser", optional = true)
+        }
+)
 public class Streamline extends BasePlugin {
-    @Getter @Setter
+    @Getter
+    @Setter
     private static ServerPusher serverPusher;
 
     @Inject

@@ -219,8 +219,12 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         setMainDatabase(GivenConfigs.getMainDatabase());
         GivenCommands.init();
 
-        CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());
-        UserUtils.loadUser(new StreamlineConsole());
+        try {
+            CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());
+            UserUtils.loadUser(new StreamlineConsole());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         luckPerms = LuckPermsProvider.get();
         geyserHolder = new GeyserHolder();

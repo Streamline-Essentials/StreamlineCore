@@ -32,46 +32,7 @@
     </pluginRepositories>
 
     <build>
-        <resources>
-            <resource>
-                <directory>${project.basedir}</directory>
-                <includes>
-                    <include>included/*.jar</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>16</source>
-                    <target>16</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                </configuration>
-            </plugin>
-        </plugins>
+        <finalName>${project.name}</finalName>
     </build>
 
     <repositories>
@@ -103,7 +64,7 @@
             <groupId>io.stream-lined</groupId>
             <artifactId>api</artifactId>
             <version>2.0.3.0</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <!-- LuckPerms -->
         <dependency>

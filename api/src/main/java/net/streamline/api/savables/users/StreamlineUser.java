@@ -9,6 +9,7 @@ import net.streamline.api.savables.SavableResource;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
+import tv.quaint.storage.resources.cache.CachedResource;
 
 import java.util.List;
 import java.util.UUID;
@@ -78,10 +79,39 @@ public abstract class StreamlineUser extends SavableResource {
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
         latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
         displayName = getOrSetDefault("profile.display-name", latestName);
-        tagList = new ConcurrentSkipListSet<>(getOrSetDefault("profile.tags", getTagsFromConfig().stream().toList()));
+        tagList = new ConcurrentSkipListSet<>(getTagsFromResource());
         points = getOrSetDefault("profile.points", GivenConfigs.getMainConfig().userCombinedPointsDefault());
 
         populateMoreDefaults();
+    }
+
+    public List<String> getTagsFromResource(){
+        return getStringListFromResource("profile.tags", getTagsFromConfig().stream().toList());
+    }
+
+    public List<String> getStringListFromResource(String key, List<String> def){
+        if (getStorageResource() instanceof CachedResource<?>) {
+            try {
+                String s = getStorageResource().get(key, String.class);
+                if (s == null) {
+                    set(key, def);
+                    Object o = getStorageResource().get(key, Object.class);
+                    if (o instanceof List<?>) {
+                        return (List<String>) o;
+                    } else {
+                        if (o instanceof String) {
+                            s = (String) o;
+                        } else {
+                            return def;
+                        }
+                    }
+                }
+                return List.of(s.split(", "));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return getOrSetDefault(key, def);
     }
 
     abstract public List<String> getTagsFromConfig();
@@ -94,7 +124,7 @@ public abstract class StreamlineUser extends SavableResource {
         latestName = getOrSetDefault("profile.latest.name", latestName);
         latestServer = getOrSetDefault("profile.latest.server", latestServer);
         displayName = getOrSetDefault("profile.display-name", displayName);
-        tagList = new ConcurrentSkipListSet<>(getOrSetDefault("profile.tags", tagList.stream().toList()));
+        tagList = new ConcurrentSkipListSet<>(getTagsFromResource());
         points = getOrSetDefault("profile.points", points);
         // Online.
         online = updateOnline();
@@ -114,6 +144,11 @@ public abstract class StreamlineUser extends SavableResource {
         // More.
         saveMore();
         getStorageResource().push();
+        sync();
+    }
+
+    public void sync() {
+        UserUtils.syncUser(this);
     }
 
     abstract public void saveMore();

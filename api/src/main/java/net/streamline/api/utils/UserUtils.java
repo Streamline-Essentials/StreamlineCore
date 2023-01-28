@@ -25,6 +25,12 @@ import tv.quaint.storage.resources.cache.CachedResource;
 import tv.quaint.storage.resources.cache.CachedResourceUtils;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 import tv.quaint.storage.resources.databases.singled.DatabaseSingle;
+import tv.quaint.storage.resources.databases.singled.MongoSingle;
+import tv.quaint.storage.resources.databases.singled.MySQLSingle;
+import tv.quaint.storage.resources.databases.singled.SQLiteSingle;
+import tv.quaint.storage.resources.databases.specific.MongoResource;
+import tv.quaint.storage.resources.databases.specific.MySQLResource;
+import tv.quaint.storage.resources.databases.specific.SQLiteResource;
 import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.thebase.lib.leonhard.storage.Config;
 import tv.quaint.thebase.lib.leonhard.storage.Json;
@@ -78,18 +84,82 @@ public class UserUtils {
         StreamlineUser user = getUser(uuid);
         user.saveAll();
 
+        getLoadedUsers().remove(uuid);
+    }
+
+    public static void getUserFromDatabase(StreamlineUser user) {
+        CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
+        String tableName;
+        if (user instanceof StreamlinePlayer player) {
+            tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
+        } else {
+            tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
+        }
+
+        try {
+            boolean changed = false;
+            switch (GivenConfigs.getMainConfig().savingUseType()) {
+                case MYSQL -> {
+                    MySQLSingle single = new MySQLSingle((MySQLResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
+                    cachedResource.getCachedData().forEach((s, o) -> {
+                        cachedResource.write(s, single.get(o.getClass()));
+                    });
+                    changed = true;
+                }
+                case MONGO -> {
+                    MongoSingle single = new MongoSingle((MongoResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
+                    cachedResource.getCachedData().forEach((s, o) -> {
+                        cachedResource.write(s, single.get(o.getClass()));
+                    });
+                    changed = true;
+                }
+                case SQLITE -> {
+                    SQLiteSingle single = new SQLiteSingle((SQLiteResource) SLAPI.getMainDatabase(), tableName, "uuid", user.getUuid());
+                    cachedResource.getCachedData().forEach((s, o) -> {
+                        cachedResource.write(s, single.get(o.getClass()));
+                    });
+                    changed = true;
+                }
+            }
+            if (changed) user.loadValues();
+        } catch (Exception e) {
+            syncUser(user);
+        }
+    }
+
+    public static void getUserFromDatabase(String uuid) {
+        if (! isLoaded(uuid)) return;
+        getUserFromDatabase(getUser(uuid));
+    }
+
+    public static void getAllUsersFromDatabase() {
+        getLoadedUsersSet().forEach(UserUtils::getUserFromDatabase);
+    }
+
+    public static void syncUser(StreamlineUser user) {
         switch (GivenConfigs.getMainConfig().savingUseType()) {
-            case MONGO, MYSQL, YAML -> {
+            case MONGO, MYSQL, SQLITE -> {
                 CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
                 if (user instanceof StreamlinePlayer player) {
-                    DatabaseSingle<?, ?> databaseSingle = CachedResourceUtils.pushToDatabase("players", "uuid", player.getUuid(), cachedResource, SLAPI.getMainDatabase());
-                } else if (user instanceof StreamlineConsole console) {
-                    DatabaseSingle<?, ?> databaseSingle = CachedResourceUtils.pushToDatabase("consoles", "uuid", console.getUuid(), cachedResource, SLAPI.getMainDatabase());
+                    String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
+                    SLAPI.getMainDatabase().create(tableName, CachedResourceUtils.getValues(cachedResource));
+                    SLAPI.getMainDatabase().insert(tableName, CachedResourceUtils.getValues(cachedResource));
+                } else {
+                    String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
+                    SLAPI.getMainDatabase().create(tableName, CachedResourceUtils.getValues(cachedResource));
+                    SLAPI.getMainDatabase().insert(tableName, CachedResourceUtils.getValues(cachedResource));
                 }
             }
         }
+    }
 
-        getLoadedUsers().remove(uuid);
+    public static void syncUser(String uuid) {
+        if (! isLoaded(uuid)) return;
+        syncUser(getUser(uuid));
+    }
+
+    public static void syncAllUsers() {
+        getLoadedUsersSet().forEach(UserUtils::syncUser);
     }
 
     public static boolean isLoaded(String uuid) {

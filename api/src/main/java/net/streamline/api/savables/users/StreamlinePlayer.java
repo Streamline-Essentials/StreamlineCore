@@ -86,9 +86,9 @@ public class StreamlinePlayer extends StreamlineUser {
     public void populateMoreDefaults() {
         // Ips.
         latestIP = getOrSetDefault("player.ips.latest", getLatestIP());
-        ipList = new ConcurrentSkipListSet<>(getOrSetDefault("player.ips.list", new ArrayList<>()));
+        ipList = new ConcurrentSkipListSet<>(getStringListFromResource("player.ips.list", new ArrayList<>()));
         // Names.
-        nameList = new ConcurrentSkipListSet<>(getOrSetDefault("player.names", List.of(this.getLatestName())));
+        nameList = new ConcurrentSkipListSet<>(getStringListFromResource("player.names", List.of(this.getLatestName())));
         // Stats.
         level = getOrSetDefault("player.stats.level", GivenConfigs.getMainConfig().playerStartingLevel());
         totalXP = getOrSetDefault("player.stats.experience.total", GivenConfigs.getMainConfig().playerStartingExperienceAmount());
@@ -107,9 +107,9 @@ public class StreamlinePlayer extends StreamlineUser {
     public void loadMoreValues() {
         // Ips.
         latestIP = getOrSetDefault("player.ips.latest", latestIP);
-        ipList = new ConcurrentSkipListSet<>(getOrSetDefault("player.ips.list", ipList.stream().toList()));
+        ipList = new ConcurrentSkipListSet<>(getStringListFromResource("player.ips.list", ipList.stream().toList()));
         // Names.
-        nameList = new ConcurrentSkipListSet<>(getOrSetDefault("player.names", nameList.stream().toList()));
+        nameList = new ConcurrentSkipListSet<>(getStringListFromResource("player.names", nameList.stream().toList()));
         // Stats.
         level = getOrSetDefault("player.stats.level", level);
         totalXP = getOrSetDefault("player.stats.experience.total", totalXP);
