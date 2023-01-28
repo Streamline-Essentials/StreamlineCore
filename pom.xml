@@ -53,16 +53,21 @@
                     <target>16</target>
                 </configuration>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-jar-plugin</artifactId>-->
-<!--                <version>3.3.0</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>default-jar</id>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>./compiled</directory>
+                            <includes>
+                                <include>**/*.*</include>
+                            </includes>
+                            <followSymlinks>true</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -116,7 +121,7 @@
             <dependency>
                 <groupId>com.github.server-utilities</groupId>
                 <artifactId>thebase</artifactId>
-                <version>1.1.13</version>
+                <version>1.1.23</version>
                 <scope>compile</scope>
             </dependency>
             <!-- LuckPerms -->
