@@ -8,10 +8,10 @@ import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.PlayerExperienceTimer;
 import net.streamline.api.base.timers.UserSaveTimer;
+import net.streamline.api.base.timers.UserSyncTimer;
 import net.streamline.api.command.GivenCommands;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.holders.GeyserHolder;
 import net.streamline.api.interfaces.IBackendHandler;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.interfaces.IStreamline;
@@ -77,13 +77,19 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
                 }
 
                 switch (runType) {
-                    case CONSOLE_COMMAND -> ModuleUtils.runAs(ModuleUtils.getConsole(), command);
-                    case NORMAL_COMMAND -> ModuleUtils.runAs(user, command);
-                    case OPERATOR_COMMAND -> {
+                    case CONSOLE_COMMAND:
+                        ModuleUtils.runAs(ModuleUtils.getConsole(), command);
+                        break;
+                    case NORMAL_COMMAND:
+                        ModuleUtils.runAs(user, command);
+                        break;
+                    case OPERATOR_COMMAND:
                         OperatorUser operatorUser = new OperatorUser(user);
                         ModuleUtils.runAs(operatorUser, command);
-                    }
-                    case NORMAL_CHAT -> ModuleUtils.chatAs(user, command);
+                        break;
+                    case NORMAL_CHAT:
+                        ModuleUtils.chatAs(user, command);
+                        break;
                 }
             }
 
@@ -123,8 +129,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
 
     @Getter
     private static LuckPerms luckPerms;
-    @Getter
-    private static GeyserHolder geyserHolder;
 
     @Getter
     private static File userFolder;
@@ -160,6 +164,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
     private static PlayerExperienceTimer playerExperienceTimer;
     @Getter
     private static UserSaveTimer userSaveTimer;
+    @Getter
+    private static UserSyncTimer userSyncTimer;
 
     @Getter
     private static TaskManager mainScheduler;
@@ -222,12 +228,16 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         try {
             CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());
             UserUtils.loadUser(new StreamlineConsole());
+            if (getMainDatabase() != null) {
+                if (getMainDatabase().getConfig().getType() != null) {
+                    UserUtils.getUserFromDatabase(UserUtils.getConsole());
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         luckPerms = LuckPermsProvider.get();
-        geyserHolder = new GeyserHolder();
 
 //        baseModule = new BaseModule();
 //        ModuleManager.registerModule(getBaseModule());
@@ -235,6 +245,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMes
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
+        userSyncTimer = new UserSyncTimer();
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());

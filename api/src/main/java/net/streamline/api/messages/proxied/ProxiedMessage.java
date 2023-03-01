@@ -12,11 +12,13 @@ import net.streamline.api.utils.MatcherUtils;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class ProxiedMessage implements Comparable<ProxiedMessage> {
     @Getter
@@ -209,7 +211,7 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     }
 
     public List<String> getStringList(String key, String separator) {
-        return Arrays.stream(getString(key).split(separator)).toList();
+        return Arrays.stream(getString(key).split(separator)).collect(Collectors.toList());
     }
 
     public List<String> getStringList(String key) {
@@ -231,7 +233,7 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     }
 
     public void write(String key, ConcurrentSkipListSet<String> stringList, String separator) {
-        write(key, stringList.stream().toList(), separator);
+        write(key, new ArrayList<>(stringList), separator);
     }
 
     public void write(String key, ConcurrentSkipListSet<String> stringList) {

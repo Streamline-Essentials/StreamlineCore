@@ -8,10 +8,12 @@ import net.streamline.api.scheduler.BaseRunnable;
 import tv.quaint.storage.documents.SimpleJsonDocument;
 import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class SavedProfileConfig extends SimpleJsonDocument {
     @Override
@@ -69,7 +71,7 @@ public class SavedProfileConfig extends SimpleJsonDocument {
             getResource().set("servers." + s + ".name", serverInfo.getName());
             getResource().set("servers." + s + ".motd", serverInfo.getMotd());
             getResource().set("servers." + s + ".address", serverInfo.getAddress());
-            getResource().set("servers." + s + ".online", serverInfo.getOnlineUsers().stream().toList());
+            getResource().set("servers." + s + ".online", new ArrayList<>(serverInfo.getOnlineUsers()));
         });
     }
 
@@ -130,7 +132,7 @@ public class SavedProfileConfig extends SimpleJsonDocument {
             serverSection.set(streamlineServerInfo.getIdentifier() + ".name", streamlineServerInfo.getName());
             serverSection.set(streamlineServerInfo.getIdentifier() + ".motd", streamlineServerInfo.getMotd());
             serverSection.set(streamlineServerInfo.getIdentifier() + ".address", streamlineServerInfo.getAddress());
-            serverSection.set(streamlineServerInfo.getIdentifier() + ".online-users", streamlineServerInfo.getOnlineUsers().stream().toList());
+            serverSection.set(streamlineServerInfo.getIdentifier() + ".online-users", new ArrayList<>(streamlineServerInfo.getOnlineUsers()));
         });
     }
 }

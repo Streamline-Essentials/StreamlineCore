@@ -15,6 +15,7 @@ public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback
     }
 
     public String fetchAs(String string, StreamlineUser user) {
+        if (user == null) return string;
         if (! isReplaceWorthy()) return string;
 
         addTimesReplaced(getHandledString().count(string));

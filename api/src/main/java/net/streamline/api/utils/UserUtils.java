@@ -23,7 +23,9 @@ import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
 import tv.quaint.storage.resources.cache.CachedResource;
 import tv.quaint.storage.resources.cache.CachedResourceUtils;
+import tv.quaint.storage.resources.databases.DatabaseResource;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
+import tv.quaint.storage.resources.databases.processing.DatabaseValue;
 import tv.quaint.storage.resources.databases.singled.DatabaseSingle;
 import tv.quaint.storage.resources.databases.singled.MongoSingle;
 import tv.quaint.storage.resources.databases.singled.MySQLSingle;
@@ -88,9 +90,11 @@ public class UserUtils {
     }
 
     public static void getUserFromDatabase(StreamlineUser user) {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
+
         CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
         String tableName;
-        if (user instanceof StreamlinePlayer player) {
+        if (user instanceof StreamlinePlayer) {
             tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
         } else {
             tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
@@ -99,10 +103,15 @@ public class UserUtils {
         try {
             boolean changed = false;
             switch (GivenConfigs.getMainConfig().savingUseType()) {
-                case MYSQL, SQLITE, MONGO -> {
+                case MYSQL:
+                case SQLITE:
+                case MONGO:
+                    if (! SLAPI.getMainDatabase().exists(tableName)) {
+                        return;
+                    }
                     CachedResourceUtils.updateCache(tableName, cachedResource.getDiscriminatorKey(), cachedResource.getDiscriminatorAsString(), cachedResource, SLAPI.getMainDatabase());
                     changed = true;
-                }
+                    break;
             }
             if (changed) user.loadValues();
         } catch (Exception e) {
@@ -111,35 +120,42 @@ public class UserUtils {
     }
 
     public static void getUserFromDatabase(String uuid) {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
         if (! isLoaded(uuid)) return;
         getUserFromDatabase(getUser(uuid));
     }
 
     public static void getAllUsersFromDatabase() {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
         getLoadedUsersSet().forEach(UserUtils::getUserFromDatabase);
     }
 
     public static void syncUser(StreamlineUser user) {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
         switch (GivenConfigs.getMainConfig().savingUseType()) {
-            case MONGO, MYSQL, SQLITE -> {
+            case MYSQL:
+            case SQLITE:
+            case MONGO:
                 CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
-                if (user instanceof StreamlinePlayer player) {
+                if (user instanceof StreamlinePlayer) {
                     String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
                     CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
                 } else {
                     String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
                     CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
                 }
-            }
+                break;
         }
     }
 
     public static void syncUser(String uuid) {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
         if (! isLoaded(uuid)) return;
         syncUser(getUser(uuid));
     }
 
     public static void syncAllUsers() {
+        if (! ModuleUtils.hasDatabaseConfigured()) return;
         getLoadedUsersSet().forEach(UserUtils::syncUser);
     }
 
@@ -349,9 +365,18 @@ public class UserUtils {
         return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
     }
 
+    public static boolean isUUID(String possibleUUID) {
+        try {
+            UUID.fromString(possibleUUID);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static String getLuckPermsPrefix(String username){
         User user;
-        if (username.contains("-")) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
+        if (isUUID(username)) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
         else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
         if (user == null) {
             return "";
@@ -398,7 +423,7 @@ public class UserUtils {
 
     public static String getLuckPermsSuffix(String username){
         User user;
-        if (username.contains("-")) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
+        if (isUUID(username)) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
         else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
         if (user == null) return "";
 
@@ -533,6 +558,6 @@ public class UserUtils {
     }
 
     public static boolean isGeyserPlayer(String uuid) {
-        return SLAPI.getGeyserHolder().isPresent() && SLAPI.getGeyserHolder().isGeyserPlayerByUUID(uuid);
+        return uuid.startsWith("0000");
     }
 }

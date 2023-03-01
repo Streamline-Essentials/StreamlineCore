@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.scheduler.BaseRunnable;
+import net.streamline.api.utils.UserUtils;
 import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.thebase.lib.leonhard.storage.Json;
 
@@ -93,7 +94,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
     public static String getCachedUUID(String username) {
         if (username.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return GivenConfigs.getMainConfig().userConsoleDiscriminator();
-        if (username.contains("-")) return username;
+        if (UserUtils.isUUID(username)) return username;
 
         if (getCachedUUIDs().containsKey(username)) {
             return getCachedUUIDs().get(username);
@@ -109,7 +110,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
     public static String getCachedName(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return GivenConfigs.getMainConfig().userConsoleNameRegular();
-        if (! uuid.contains("-")) return uuid;
+        if (! UserUtils.isUUID(uuid)) return uuid;
 
         if (getCachedCurrentNames().containsKey(uuid)) {
             return getCachedCurrentNames().get(uuid);
@@ -122,11 +123,6 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     private static String getUUID(String username) {
-        if (SLAPI.getGeyserHolder().isPresent()) {
-            String r = SLAPI.getGeyserHolder().getUUID(username);
-            if (r != null) return r;
-        }
-
         for (String key : getInstance().singleLayerKeySet()) {
             if (getInstance().get(key + ".current", String.class).equals(username)) return key;
         }
@@ -135,11 +131,6 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     private static String getName(String uuid) {
-        if (SLAPI.getGeyserHolder().isPresent()) {
-            String r = SLAPI.getGeyserHolder().getName(uuid);
-            if (r != null) return r;
-        }
-
         try {
             return getInstance().get(uuid + ".current", String.class);
         } catch (Exception e) {

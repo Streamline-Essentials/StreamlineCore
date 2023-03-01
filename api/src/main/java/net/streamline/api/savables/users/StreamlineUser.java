@@ -5,16 +5,20 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.SavableResource;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
 import tv.quaint.storage.resources.cache.CachedResource;
+import tv.quaint.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public abstract class StreamlineUser extends SavableResource {
     @Override
@@ -28,9 +32,7 @@ public abstract class StreamlineUser extends SavableResource {
 
     @Getter
     private final StreamlineUser savableUser;
-    @Getter
     private String latestName;
-    @Getter
     private String displayName;
     @Getter @Setter
     private ConcurrentSkipListSet<String> tagList;
@@ -67,19 +69,24 @@ public abstract class StreamlineUser extends SavableResource {
     public StreamlineUser(String uuid, StorageResource<?> storageResource) {
         super(uuid, storageResource == null ? UserUtils.newUserStorageResource(uuid, StreamlineUser.class) : storageResource);
         this.savableUser = this;
-
-        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.MONGO)) getStorageResource().sync();
-        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.MYSQL)) getStorageResource().sync();
-        if (GivenConfigs.getMainConfig().savingUseType().equals(StorageUtils.SupportedStorageType.SQLITE)) getStorageResource().sync();
     }
 
     @Override
     public void populateDefaults() {
         // Profile.
         String username = SLAPI.getInstance().getUserManager().getUsername(this.getUuid());
+        if (getUuid() == null) {
+            SLAPI.getBaseModule().logDebug("UUID is null for user " + username + "!");
+        }
         latestName = getOrSetDefault("profile.latest.name", username == null ? "null" : username);
-        latestServer = getOrSetDefault("profile.latest.server", MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get());
-        displayName = getOrSetDefault("profile.display-name", latestName);
+
+        if (! isOnline()) {
+            latestServer = getOrSetDefault("profile.latest.server", "null");
+            displayName = getOrSetDefault("profile.display-name", latestName);
+        } else {
+            latestServer = SLAPI.getInstance().getUserManager().getServerPlayerIsOn(this.getUuid());
+            displayName = SLAPI.getInstance().getUserManager().getDisplayName(this.getUuid());
+        }
         tagList = new ConcurrentSkipListSet<>(getTagsFromResource());
         points = getOrSetDefault("profile.points", GivenConfigs.getMainConfig().userCombinedPointsDefault());
 
@@ -87,42 +94,13 @@ public abstract class StreamlineUser extends SavableResource {
     }
 
     public List<String> getTagsFromResource(){
-        return getStringListFromResource("profile.tags", getTagsFromConfig().stream().toList());
+        return getStringListFromResource("profile.tags", new ArrayList<>(getTagsFromConfig()));
     }
 
     public List<String> getStringListFromResource(String key, List<String> def){
-        if (getStorageResource() instanceof CachedResource<?>) {
-            try {
-                Object o = getStorageResource().get(key, Object.class);
-                if (o == null) {
-                    set(key, def);
-                    o = getStorageResource().get(key, Object.class);
-                }
-                return testString(o, def);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return getOrSetDefault(key, def);
-    }
-
-    public List<String> testString(Object o, List<String> def) {
-        String s;
-        try {
-            if (o instanceof List<?>) {
-                return (List<String>) o;
-            } else {
-                if (o instanceof String) {
-                    s = (String) o;
-                    return List.of(s.split(", "));
-                } else {
-                    return def;
-                }
-            }
-        } catch (Exception e) {
-            s = null;
-        }
-        return def;
+        String defString = StringUtils.listToString(def, ",");
+        String s = getStorageResource().getOrSetDefault(key, defString);
+        return StringUtils.stringToList(s, ",");
     }
 
     abstract public List<String> getTagsFromConfig();
@@ -133,8 +111,15 @@ public abstract class StreamlineUser extends SavableResource {
     public void loadValues() {
         // Profile.
         latestName = getOrSetDefault("profile.latest.name", latestName);
-        latestServer = getOrSetDefault("profile.latest.server", latestServer);
-        displayName = getOrSetDefault("profile.display-name", displayName);
+
+        if (! isOnline()) {
+            latestServer = getOrSetDefault("profile.latest.server", latestServer);
+            displayName = getOrSetDefault("profile.display-name", displayName);
+        } else {
+            latestServer = SLAPI.getInstance().getUserManager().getServerPlayerIsOn(this.getUuid());
+            displayName = SLAPI.getInstance().getUserManager().getDisplayName(this.getUuid());
+        }
+
         tagList = new ConcurrentSkipListSet<>(getTagsFromResource());
         points = getOrSetDefault("profile.points", points);
         // Online.
@@ -150,7 +135,8 @@ public abstract class StreamlineUser extends SavableResource {
         set("profile.latest.name", latestName);
         set("profile.latest.server", latestServer);
         set("profile.display-name", displayName);
-        set("profile.tags", tagList);
+        String tags = StringUtils.listToString(new ArrayList<>(tagList), ",");
+        set("profile.tags", tags);
         set("profile.points", points);
         // More.
         saveMore();
@@ -200,8 +186,48 @@ public abstract class StreamlineUser extends SavableResource {
         latestServer = server;
     }
 
+    public String getLatestName() {
+        if (online) {
+            setLatestName(SLAPI.getInstance().getUserManager().getUsername(getUuid()));
+            if (displayName == null) {
+                if (this instanceof StreamlinePlayer) {
+                    StreamlinePlayer player = (StreamlinePlayer) this;
+                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
+                }
+                return latestName;
+            }
+            if (displayName.equals("null")) {
+                if (this instanceof StreamlinePlayer) {
+                    StreamlinePlayer player = (StreamlinePlayer) this;
+                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
+                }
+            }
+        }
+        return latestName;
+    }
+
     public void setLatestName(String name) {
         latestName = name;
+    }
+
+    public String getDisplayName() {
+        if (online) {
+            setLatestName(SLAPI.getInstance().getUserManager().getUsername(getUuid()));
+            if (displayName == null) {
+                if (this instanceof StreamlinePlayer) {
+                    StreamlinePlayer player = (StreamlinePlayer) this;
+                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
+                }
+                return displayName;
+            }
+            if (displayName.equals("null")) {
+                if (this instanceof StreamlinePlayer) {
+                    StreamlinePlayer player = (StreamlinePlayer) this;
+                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
+                }
+            }
+        }
+        return displayName;
     }
 
     public void setDisplayName(String name) {

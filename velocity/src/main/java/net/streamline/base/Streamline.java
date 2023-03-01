@@ -20,8 +20,7 @@ import java.nio.file.Path;
         name = "StreamlineCore",
         version = "${project.version}",
         dependencies = {
-                @Dependency(id = "luckperms"),
-                @Dependency(id = "geyser", optional = true)
+                @Dependency(id = "luckperms")
         }
 )
 public class Streamline extends BasePlugin {
