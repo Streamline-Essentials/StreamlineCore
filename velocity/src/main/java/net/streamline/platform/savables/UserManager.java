@@ -11,6 +11,7 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
+import net.streamline.api.objects.AtomicString;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class UserManager implements IUserManager {
+public class UserManager implements IUserManager<Player> {
     @Getter
     private static UserManager instance;
 
@@ -82,12 +83,16 @@ public class UserManager implements IUserManager {
     @Override
     public boolean runAs(StreamlineUser user, boolean bypass, String command) {
         CommandSource source;
-        if (user instanceof StreamlinePlayer player) source = Streamline.getPlayer(player.getUuid());
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer player = (StreamlinePlayer) user;
+            source = Streamline.getPlayer(player.getUuid());
+        }
         else {
             source = Streamline.getInstance().getProxy().getConsoleCommandSource();
             Streamline.getInstance().getProxy().getCommandManager().executeImmediatelyAsync(source, command);
             return true;
         }
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
@@ -136,7 +141,8 @@ public class UserManager implements IUserManager {
 
     @Override
     public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
-        if (! (user instanceof StreamlinePlayer player)) return;
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (! player.updateOnline()) return;
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
@@ -170,5 +176,29 @@ public class UserManager implements IUserManager {
         Optional<Player> playerOptional = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
         if (playerOptional.isEmpty()) return;
         playerOptional.get().disconnect(Messenger.getInstance().codedText(message));
+    }
+
+    @Override
+    public Player getPlayer(String uuid) {
+        return Streamline.getPlayer(uuid);
+    }
+
+    @Override
+    public String getServerPlayerIsOn(String uuid) {
+        Player player = getPlayer(uuid);
+        if (player == null) return null;
+
+        AtomicString server = new AtomicString(null);
+        player.getCurrentServer().ifPresent(a -> server.set(a.getServerInfo().getName()));
+
+        return server.get();
+    }
+
+    @Override
+    public String getDisplayName(String uuid) {
+        Player player = getPlayer(uuid);
+        if (player == null) return null;
+
+        return player.getUsername();
     }
 }

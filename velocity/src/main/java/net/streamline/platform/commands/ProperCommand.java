@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class ProperCommand implements SimpleCommand, IProperCommand {
     @Getter
@@ -45,7 +46,7 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
         if (args.length < 1) args = new String[] { "" };
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments());
 
-        return CompletableFuture.completedFuture(r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]).stream().toList());
+        return CompletableFuture.completedFuture(r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1])));
     }
 
     @Override

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class SavedItemStack {
     @Getter @Setter
@@ -32,7 +33,7 @@ public class SavedItemStack {
 
     public void loreFrom(String[] lore) {
         this.lore = new ArrayList<>();
-        this.lore.addAll(Arrays.stream(lore).toList());
+        this.lore.addAll(Arrays.stream(lore).collect(Collectors.toList()));
     }
 
     public void addLore(String line) {

@@ -3,3 +3,5 @@ main: net.streamline.base.Streamline
 version: '${project.version}'
 author: Quaint
 authors: [ Quaint, RedstonedLife ]
+depend: [ LuckPerms ]
+load: POSTWORLD

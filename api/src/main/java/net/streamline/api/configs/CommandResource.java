@@ -13,6 +13,7 @@ import tv.quaint.thebase.lib.leonhard.storage.Config;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CommandResource extends SimpleConfiguration {
     @Getter
@@ -58,7 +59,7 @@ public class CommandResource extends SimpleConfiguration {
         write("basic.enabled", true);
         write("basic.label", command.getBase());
         write("basic.permissions.default", command.getPermission());
-        write("basic.aliases", Arrays.stream(command.getAliases()).toList());
+        write("basic.aliases", Arrays.stream(command.getAliases()).collect(Collectors.toList()));
     }
 
     public void syncCommand() {

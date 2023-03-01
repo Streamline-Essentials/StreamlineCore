@@ -5,7 +5,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public interface IUserManager {
+public interface IUserManager<T> {
     String getUsername(String uuid);
 
     boolean isOnline(String uuid);
@@ -23,4 +23,10 @@ public interface IUserManager {
     String parsePlayerIP(String uuid);
 
     double getPlayerPing(String uuid);
+
+    String getServerPlayerIsOn(String uuid);
+
+    String getDisplayName(String uuid);
+
+    T getPlayer(String uuid);
 }

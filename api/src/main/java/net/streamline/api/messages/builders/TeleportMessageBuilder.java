@@ -51,6 +51,8 @@ public class TeleportMessageBuilder {
             return;
         }
 
+        MessageUtils.logDebug("Teleporting player '" + player.getUuid() + "' to '" + streamlineLocation + "'.");
+
         backendHandler.teleport(player, streamlineLocation);
     }
 }

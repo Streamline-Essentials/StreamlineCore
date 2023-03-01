@@ -1,8 +1,10 @@
 package net.streamline.api.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class StringUtil {
     public static String concat(List<String> list, String separator) {
@@ -15,7 +17,7 @@ public class StringUtil {
     }
 
     public static String concat(ConcurrentSkipListSet<String> list, String separator) {
-        return concat(list.stream().toList(), separator);
+        return concat(new ArrayList<>(list), separator);
     }
 
     public static String concat(String[] list, String separator) {

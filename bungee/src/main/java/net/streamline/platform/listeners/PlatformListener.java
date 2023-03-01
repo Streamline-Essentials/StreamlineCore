@@ -51,6 +51,16 @@ public class PlatformListener implements Listener {
         if (! (user instanceof StreamlinePlayer)) return;
         StreamlinePlayer player = ((StreamlinePlayer) user);
 
+        if (connection instanceof ProxiedPlayer) {
+            try {
+                ProxiedPlayer proxiedPlayer = (ProxiedPlayer) connection;
+                player.setLatestName(proxiedPlayer.getName());
+                player.setLatestServer(proxiedPlayer.getServer().getInfo().getName());
+            } catch (Exception e) {
+//                e.printStackTrace(); // no errors in console.
+            }
+        }
+
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
             WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
@@ -81,6 +91,7 @@ public class PlatformListener implements Listener {
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
         streamlinePlayer.setLatestName(event.getPlayer().getName());
+        streamlinePlayer.setLatestServer(event.getPlayer().getServer().getInfo().getName());
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);

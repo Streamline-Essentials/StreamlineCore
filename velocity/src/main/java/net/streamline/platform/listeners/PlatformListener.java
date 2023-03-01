@@ -1,5 +1,7 @@
 package net.streamline.platform.listeners;
 
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
 import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.Subscribe;
@@ -43,6 +45,7 @@ import net.streamline.platform.savables.UserManager;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PlatformListener {
@@ -53,12 +56,13 @@ public class PlatformListener {
     @Subscribe
     public void onPreJoin(PreLoginEvent event) {
         InboundConnection connection = event.getConnection();
-        if (! (connection instanceof Player p)) return;
-
+        if (! (connection instanceof Player)) return;
+        Player p = (Player) connection;
 
         StreamlineUser user = UserUtils.getOrGetUserByName(p.getUsername());
         if (! (user instanceof StreamlinePlayer)) return;
         StreamlinePlayer player = ((StreamlinePlayer) user);
+        p.getCurrentServer().ifPresent(serverConnection -> player.setLatestServer(serverConnection.getServerInfo().getName()));
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -88,6 +92,7 @@ public class PlatformListener {
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
         streamlinePlayer.setLatestName(event.getPlayer().getUsername());
+        player.getCurrentServer().ifPresent(serverConnection -> streamlinePlayer.setLatestServer(serverConnection.getServerInfo().getName()));
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
@@ -156,7 +161,8 @@ public class PlatformListener {
     @Subscribe
     public void onPluginMessage(PluginMessageEvent event) {
         String tag = event.getIdentifier().getId();
-        if (! (event.getTarget() instanceof Player player)) return;
+        if (! (event.getTarget() instanceof Player)) return;
+        Player player = (Player) event.getTarget();
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
 
         try {

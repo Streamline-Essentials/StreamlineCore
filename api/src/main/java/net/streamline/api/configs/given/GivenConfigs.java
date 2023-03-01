@@ -44,15 +44,15 @@ public class GivenConfigs {
         setProfileConfig(new SavedProfileConfig());
 
         switch (getMainConfig().savingUseType()) {
-            case MONGO -> {
+            case MONGO:
                 setMainDatabase(new MongoMainResource(getMainConfig().getConfiguredDatabase()));
-            }
-            case MYSQL -> {
+                break;
+            case MYSQL:
                 setMainDatabase(new MySQLMainResource(getMainConfig().getConfiguredDatabase()));
-            }
-            case SQLITE -> {
+                break;
+            case SQLITE:
                 setMainDatabase(new SQLiteMainResource(getMainConfig().getConfiguredDatabase()));
-            }
+                break;
         }
     }
 

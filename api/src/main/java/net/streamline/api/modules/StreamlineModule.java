@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public abstract class StreamlineModule extends Plugin implements ModuleLike {
     @Getter
@@ -47,7 +48,7 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
      * @return The {@link Module}'string authors;
      */
     public ConcurrentSkipListSet<String> authors() {
-        return new ConcurrentSkipListSet<>(Arrays.stream(wrapper.getDescriptor().getProvider().replace(", ", ",").split(",")).toList());
+        return new ConcurrentSkipListSet<>(Arrays.stream(wrapper.getDescriptor().getProvider().replace(", ", ",").split(",")).collect(Collectors.toList()));
     }
 
     protected abstract void registerCommands();

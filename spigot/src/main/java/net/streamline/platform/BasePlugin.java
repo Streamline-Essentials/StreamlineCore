@@ -293,7 +293,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void fireEvent(IProperEvent<?> event) {
-        if (! (event.getEvent() instanceof Event e)) return;
+        if (! (event.getEvent() instanceof Event)) return;
+        Event e = (Event) event.getEvent();
         getInstance().getProxy().getPluginManager().callEvent(e);
     }
 

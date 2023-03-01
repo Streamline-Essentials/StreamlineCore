@@ -20,6 +20,9 @@ import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventListener;
+import tv.quaint.storage.StorageUtils;
+import tv.quaint.storage.resources.databases.DatabaseResource;
+import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 
 import java.util.Collection;
 import java.util.List;
@@ -425,5 +428,14 @@ public class ModuleUtils {
 
     public static String replacePlaceholders(StreamlineUser user, String string) {
         return RATRegistry.fetchDirty(string, user);
+    }
+
+    public static boolean hasDatabaseConfigured() {
+        DatabaseResource<?> databaseResource = SLAPI.getMainDatabase();
+        if (databaseResource == null) return false;
+        DatabaseConfig config = databaseResource.getConfig();
+        if (config == null) return false;
+        StorageUtils.SupportedDatabaseType type = config.getType();
+        return type != null;
     }
 }

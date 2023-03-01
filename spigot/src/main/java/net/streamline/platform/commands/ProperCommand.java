@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
     @Getter
@@ -41,7 +42,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         if (args.length < 1) args = new String[] { "" };
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
 
-        return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]).stream().toList();
+        return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
     }
 
     public void register() {

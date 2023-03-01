@@ -28,8 +28,10 @@ public class UserSaveTimer extends BaseRunnable {
     }
 
     public void done() {
+        UserUtils.syncAllUsers();
         UserUtils.getLoadedUsersSet().forEach(UserUtils::unloadUser);
 
         SLAPI.getInstance().getPlatform().getOnlinePlayerNames().forEach(UserUtils::getOrGetUserByName);
+        UserUtils.getAllUsersFromDatabase();
     }
 }

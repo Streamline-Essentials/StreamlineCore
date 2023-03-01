@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PunishmentManager {
     @Getter @Setter
@@ -35,7 +36,7 @@ public class PunishmentManager {
     }
 
     public static <T extends AbstractPunishment> ConcurrentSkipListMap<Long, T> filterPunishments(Predicate<AbstractPunishment> predicate) {
-        List<AbstractPunishment> list = getPunishments().values().stream().filter(predicate).toList();
+        List<AbstractPunishment> list = getPunishments().values().stream().filter(predicate).collect(Collectors.toList());
 
         ConcurrentSkipListMap<Long, T> r = new ConcurrentSkipListMap<>();
 

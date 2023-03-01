@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 public class StreamlineServerInfo {
     @Getter
@@ -35,6 +36,6 @@ public class StreamlineServerInfo {
     }
 
     public void updateUsersTo(StreamlineUser... users) {
-        updateUsersTo(Arrays.stream(users).toList());
+        updateUsersTo(Arrays.stream(users).collect(Collectors.toList()));
     }
 }

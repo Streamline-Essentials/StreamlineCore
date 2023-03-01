@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class UserManager implements IUserManager {
+public class UserManager implements IUserManager<Player> {
     @Getter
     private static UserManager instance;
 
@@ -87,12 +87,16 @@ public class UserManager implements IUserManager {
 
     public boolean runAs(StreamlineUser user, boolean bypass, String command) {
         CommandSender source;
-        if (user instanceof StreamlinePlayer player) source = Streamline.getPlayer(player.getUuid());
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer player = (StreamlinePlayer) user;
+            source = Streamline.getPlayer(player.getUuid());
+        }
         else {
             source = Streamline.getInstance().getProxy().getConsoleSender();
             Streamline.getInstance().getProxy().dispatchCommand(source, command);
             return true;
         }
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
@@ -132,7 +136,8 @@ public class UserManager implements IUserManager {
     }
 
     public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
-        if (! (user instanceof StreamlinePlayer player)) return;
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (! player.updateOnline()) return;
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
@@ -166,5 +171,23 @@ public class UserManager implements IUserManager {
         Player player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.kickPlayer(Messenger.getInstance().codedString(message));
+    }
+
+    @Override
+    public Player getPlayer(String uuid) {
+        return Streamline.getPlayer(uuid);
+    }
+
+    @Override
+    public String getServerPlayerIsOn(String uuid) {
+        return "null";
+    }
+
+    @Override
+    public String getDisplayName(String uuid) {
+        Player player = getPlayer(uuid);
+        if (player == null) return null;
+
+        return player.getDisplayName();
     }
 }

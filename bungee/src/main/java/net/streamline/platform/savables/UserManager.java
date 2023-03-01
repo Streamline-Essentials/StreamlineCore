@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class UserManager implements IUserManager {
+public class UserManager implements IUserManager<ProxiedPlayer> {
     @Getter
     private static UserManager instance;
 
@@ -92,12 +92,16 @@ public class UserManager implements IUserManager {
     @Override
     public boolean runAs(StreamlineUser user, boolean bypass, String command) {
         CommandSender source;
-        if (user instanceof StreamlinePlayer player) source = Streamline.getPlayer(player.getUuid());
+        if (user instanceof StreamlinePlayer) {
+            StreamlinePlayer player = (StreamlinePlayer) user;
+            source = Streamline.getPlayer(player.getUuid());
+        }
         else {
             source = Streamline.getInstance().getProxy().getConsole();
             Streamline.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
             return true;
         }
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
@@ -146,7 +150,8 @@ public class UserManager implements IUserManager {
 
     @Override
     public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
-        if (! (user instanceof StreamlinePlayer player)) return;
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = (StreamlinePlayer) user;
         if (! player.updateOnline()) return;
         ProxiedPlayer p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
@@ -181,5 +186,26 @@ public class UserManager implements IUserManager {
         ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.disconnect(Messenger.getInstance().codedText(message));
+    }
+
+    @Override
+    public ProxiedPlayer getPlayer(String uuid) {
+        return Streamline.getPlayer(uuid);
+    }
+
+    @Override
+    public String getServerPlayerIsOn(String uuid) {
+        ProxiedPlayer player = getPlayer(uuid);
+        if (player == null) return null;
+
+        return player.getServer().getInfo().getName();
+    }
+
+    @Override
+    public String getDisplayName(String uuid) {
+        ProxiedPlayer player = getPlayer(uuid);
+        if (player == null) return null;
+
+        return player.getDisplayName();
     }
 }

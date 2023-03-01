@@ -64,7 +64,8 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         StreamlineUser user = UserUtils.getOrGetUserByName(event.getName());
-        if (! (user instanceof StreamlinePlayer player)) return;
+        if (! (user instanceof StreamlinePlayer)) return;
+        StreamlinePlayer player = (StreamlinePlayer) user;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {

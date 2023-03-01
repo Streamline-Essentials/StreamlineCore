@@ -13,6 +13,7 @@ import net.streamline.api.utils.MathUtils;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.thebase.lib.exp4j.tokenizer.UnknownFunctionOrVariableException;
+import tv.quaint.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,9 +108,9 @@ public class StreamlinePlayer extends StreamlineUser {
     public void loadMoreValues() {
         // Ips.
         latestIP = getOrSetDefault("player.ips.latest", latestIP);
-        ipList = new ConcurrentSkipListSet<>(getStringListFromResource("player.ips.list", ipList.stream().toList()));
+        ipList = new ConcurrentSkipListSet<>(getStringListFromResource("player.ips.list", new ArrayList<>(ipList)));
         // Names.
-        nameList = new ConcurrentSkipListSet<>(getStringListFromResource("player.names", nameList.stream().toList()));
+        nameList = new ConcurrentSkipListSet<>(getStringListFromResource("player.names", new ArrayList<>(nameList)));
         // Stats.
         level = getOrSetDefault("player.stats.level", level);
         totalXP = getOrSetDefault("player.stats.experience.total", totalXP);
@@ -128,9 +129,11 @@ public class StreamlinePlayer extends StreamlineUser {
     public void saveMore() {
         // Ips.
         set("player.ips.latest", latestIP);
-        set("player.ips.list", ipList);
+        String ips = StringUtils.listToString(new ArrayList<>(ipList));
+        set("player.ips.list", ips);
         // Names.
-        set("player.names", nameList);
+        String names = StringUtils.listToString(new ArrayList<>(nameList));
+        set("player.names", names);
         // Stats.
         set("player.stats.level", level);
         set("player.stats.experience.total", totalXP);
@@ -148,12 +151,18 @@ public class StreamlinePlayer extends StreamlineUser {
     }
 
     public void addName(String name){
+        if (name == null) return;
+
+        if (nameList == null) nameList = new ConcurrentSkipListSet<>();
         if (nameList.contains(name)) return;
 
         nameList.add(name);
     }
 
     public void removeName(String name){
+        if (name == null) return;
+
+        if (nameList == null) nameList = new ConcurrentSkipListSet<>();
         if (! nameList.contains(name)) return;
 
         nameList.remove(name);
@@ -162,16 +171,23 @@ public class StreamlinePlayer extends StreamlineUser {
     public void setLatestIP(String ip) {
         this.latestIP = ip;
         this.addIP(ip);
-        saveAll();
     }
 
     public void addIP(String ip){
+        if (ip == null) ip = getLatestIP();
+        if (ip == null) return;
+
+        if (ipList == null) ipList = new ConcurrentSkipListSet<>();
         if (ipList.contains(ip)) return;
 
         ipList.add(ip);
     }
 
     public void removeIP(String ip){
+        if (ip == null) ip = getLatestIP();
+        if (ip == null) return;
+
+        if (ipList == null) ipList = new ConcurrentSkipListSet<>();
         if (! ipList.contains(ip)) return;
 
         ipList.remove(ip);

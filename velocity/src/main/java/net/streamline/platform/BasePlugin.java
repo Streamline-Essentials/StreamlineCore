@@ -305,7 +305,8 @@ public abstract class BasePlugin implements IStreamline {
 
     @Override
     public void fireEvent(IProperEvent<?> event) {
-        if (! (event.getEvent() instanceof CompletableFuture<?> e)) return;
+        if (! (event.getEvent() instanceof CompletableFuture<?>)) return;
+        CompletableFuture<?> e = (CompletableFuture<?>) event.getEvent();
         getInstance().getProxy().getEventManager().fire(e).join();
     }
 

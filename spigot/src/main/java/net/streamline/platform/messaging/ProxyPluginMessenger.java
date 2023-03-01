@@ -2,10 +2,7 @@ package net.streamline.platform.messaging;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.*;
-import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
-import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
-import net.streamline.api.messages.builders.UserNameMessageBuilder;
+import net.streamline.api.messages.builders.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
@@ -55,6 +52,9 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             }
             if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
                 UserNameMessageBuilder.handle(event.getMessage());
+            }
+            if (event.getMessage().getSubChannel().equals(TeleportMessageBuilder.getSubChannel())) {
+                TeleportMessageBuilder.handle(event.getMessage());
             }
         }
     }
