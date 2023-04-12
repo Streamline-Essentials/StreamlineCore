@@ -99,8 +99,17 @@ public abstract class StreamlineUser extends SavableResource {
 
     public List<String> getStringListFromResource(String key, List<String> def){
         String defString = StringUtils.listToString(def, ",");
-        String s = getStorageResource().getOrSetDefault(key, defString);
-        return StringUtils.stringToList(s, ",");
+        try {
+            String s = getStorageResource().getOrSetDefault(key, defString);
+            return StringUtils.stringToList(s, ",");
+        } catch (ClassCastException e) {
+            List<String> list = getStorageResource().getOrSetDefault(key, def);
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+
+            return list;
+        }
     }
 
     abstract public List<String> getTagsFromConfig();

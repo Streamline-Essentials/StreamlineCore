@@ -1,5 +1,6 @@
 package net.streamline.platform.listeners;
 
+import net.md_5.bungee.api.connection.Server;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
 import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import net.md_5.bungee.api.Favicon;
@@ -91,7 +92,8 @@ public class PlatformListener implements Listener {
         StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
         streamlinePlayer.setLatestName(event.getPlayer().getName());
-        streamlinePlayer.setLatestServer(event.getPlayer().getServer().getInfo().getName());
+        Server server = player.getServer();
+        if (server != null) streamlinePlayer.setLatestServer(server.getInfo().getName());
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);

@@ -236,7 +236,8 @@ public class UserUtils {
             if (CachedUUIDsHandler.isCached(uuid) || userExists(uuid)) {
                 user = new StreamlinePlayer(uuid);
             } else {
-                return null;
+                MessageUtils.logDebug("User " + uuid + " is not cached and does not exist in the database, but we are still going to create a new user for them.");
+                user = new StreamlinePlayer(uuid);
             }
         }
 
