@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
-import net.streamline.api.punishments.PunishmentConfig;
 import net.streamline.api.savables.MongoMainResource;
 import net.streamline.api.savables.MySQLMainResource;
 import net.streamline.api.savables.SQLiteMainResource;
@@ -21,8 +20,6 @@ public class GivenConfigs {
     private static MainMessagesHandler mainMessages;
     @Getter @Setter
     private static WhitelistConfig whitelistConfig;
-    @Getter @Setter
-    private static PunishmentConfig punishmentConfig;
 
     @Getter @Setter
     private static CachedUUIDsHandler cachedUUIDsHandler;
@@ -39,7 +36,6 @@ public class GivenConfigs {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
-        setPunishmentConfig(new PunishmentConfig());
         setCachedUUIDsHandler(new CachedUUIDsHandler());
         setProfileConfig(new SavedProfileConfig());
 
