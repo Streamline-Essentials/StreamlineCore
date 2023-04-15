@@ -98,6 +98,8 @@ public class PlatformListener {
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
+
+        UserUtils.ensureLoadedUsers();
     }
 
     @Subscribe
@@ -208,7 +210,12 @@ public class PlatformListener {
         } else {
             players = new PingedResponse.Players(0, 0, new PingedResponse.PlayerInfo[0]);
         }
-        PingedResponse response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().toString());
+        PingedResponse response;
+        if (ping.getFavicon().isEmpty()) {
+            response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()));
+        } else {
+            response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().toString());
+        }
 
         PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
 

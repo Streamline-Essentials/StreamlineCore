@@ -1,8 +1,10 @@
 package net.streamline.api.interfaces;
 
 import net.streamline.api.objects.StreamlineResourcePack;
+import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlineUser;
 
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public interface IUserManager<T> {
@@ -29,4 +31,10 @@ public interface IUserManager<T> {
     String getDisplayName(String uuid);
 
     T getPlayer(String uuid);
+
+    default StreamlineConsole getConsole() {
+        return new StreamlineConsole();
+    }
+
+    void ensurePlayers(ConcurrentSkipListMap<String, StreamlineUser> into);
 }

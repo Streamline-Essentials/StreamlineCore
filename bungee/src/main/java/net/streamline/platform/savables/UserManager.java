@@ -3,6 +3,7 @@ package net.streamline.platform.savables;
 import lombok.Getter;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
@@ -26,6 +27,7 @@ import net.streamline.platform.Messenger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class UserManager implements IUserManager<ProxiedPlayer> {
@@ -37,7 +39,13 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
     }
 
     public StreamlinePlayer getOrGetPlayer(ProxiedPlayer player) {
-        return UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+        StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+        if (p == null) {
+            p = new StreamlinePlayer(player.getUniqueId().toString());
+            UserUtils.loadUser(p);
+        }
+
+        return p;
     }
 
     public StreamlineUser getOrGetUser(CommandSender sender) {
@@ -191,6 +199,18 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
     @Override
     public ProxiedPlayer getPlayer(String uuid) {
         return Streamline.getPlayer(uuid);
+    }
+
+    @Override
+    public void ensurePlayers(ConcurrentSkipListMap<String, StreamlineUser> into) {
+        for (ProxiedPlayer player : BasePlugin.onlinePlayers()) {
+            StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+            if (p == null) {
+                p = new StreamlinePlayer(player.getUniqueId().toString());
+                UserUtils.loadUser(p);
+            }
+            into.put(p.getUuid(), p);
+        }
     }
 
     @Override
