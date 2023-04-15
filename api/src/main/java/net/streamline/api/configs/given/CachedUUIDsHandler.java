@@ -95,8 +95,11 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     public static String getCachedUUID(String username) {
         if (username.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return GivenConfigs.getMainConfig().userConsoleDiscriminator();
         if (UserUtils.isUUID(username)) return username;
+        ConcurrentSkipListMap<String, String> u = new ConcurrentSkipListMap<>();
 
-        if (getCachedUUIDs().containsKey(username)) {
+        getCachedUUIDs().forEach((k, v) -> u.put(v.toUpperCase(), k));
+
+        if (u.containsKey(username)) {
             return getCachedUUIDs().get(username);
         } else {
             String uuid = getUUID(username);
