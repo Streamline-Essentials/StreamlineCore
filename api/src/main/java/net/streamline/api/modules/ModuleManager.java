@@ -194,6 +194,7 @@ public class ModuleManager {
 
     public static void unregisterModule(ModuleLike module) {
         try {
+            BaseEventHandler.unbake(module);
             safePluginManager().stopPlugin(module.getIdentifier());
             safePluginManager().unloadPlugin(module.getIdentifier());
             unregisterHandlersOf(module);
@@ -224,13 +225,27 @@ public class ModuleManager {
     }
 
     public static void reapplyModule(String id) {
-        if (id.equals(SLAPI.getBaseModule().getIdentifier())) {
-            if (SLAPI.getBaseModule() != null) SLAPI.getBaseModule().stop();
-            BaseModule module = new BaseModule();
-            SLAPI.setBaseModule(module);
-            return;
+        ModuleLike moduleLike = getModule(id);
+
+        if (SLAPI.getBaseModule() != null) {
+            if (moduleLike.equals(SLAPI.getBaseModule())) {
+                SLAPI.getBaseModule().stop();
+                BaseModule module = new BaseModule();
+                SLAPI.setBaseModule(module);
+                return;
+            }
+        } else {
+            if (id.equals("streamline-base")) {
+                BaseModule module = new BaseModule();
+                SLAPI.setBaseModule(module);
+                return;
+            }
         }
+
+        BaseEventHandler.unbake(moduleLike);
+
         Path path = safePluginManager().getPlugin(id).getPluginPath();
+        safePluginManager().stopPlugin(id);
         safePluginManager().unloadPlugin(id);
         safePluginManager().loadPlugin(path);
         safePluginManager().startPlugin(id);

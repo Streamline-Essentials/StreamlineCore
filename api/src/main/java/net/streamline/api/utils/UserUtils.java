@@ -45,6 +45,7 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UserUtils {
 //    @Getter
@@ -56,6 +57,27 @@ public class UserUtils {
 
     @Getter @Setter
     private static ConcurrentSkipListMap<String, StreamlineUser> loadedUsers = new ConcurrentSkipListMap<>();
+
+    public static void ensureLoadedUsers() {
+        if (loadedUsers == null) loadedUsers = new ConcurrentSkipListMap<>();
+
+        if (! hasConsole()) {
+            StreamlineConsole console = SLAPI.getInstance().getUserManager().getConsole();
+            loadedUsers.put(console.getUuid(), console);
+        }
+
+        SLAPI.getInstance().getUserManager().ensurePlayers(loadedUsers);
+    }
+
+    public static boolean hasConsole() {
+        AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+
+        getLoadedUsers().forEach((s, user) -> {
+            if (user.getUuid().equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) atomicBoolean.set(true);
+        });
+
+        return atomicBoolean.get();
+    }
 
     public static ConcurrentSkipListSet<StreamlineUser> getLoadedUsersSet() {
         return new ConcurrentSkipListSet<>(getLoadedUsers().values());

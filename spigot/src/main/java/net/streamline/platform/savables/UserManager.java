@@ -24,6 +24,7 @@ import org.bukkit.entity.Player;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class UserManager implements IUserManager<Player> {
@@ -35,7 +36,13 @@ public class UserManager implements IUserManager<Player> {
     }
 
     public StreamlinePlayer getOrGetPlayer(Player player) {
-        return UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+        StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+        if (p == null) {
+            p = new StreamlinePlayer(player.getUniqueId().toString());
+            UserUtils.loadUser(p);
+        }
+
+        return p;
     }
 
     public StreamlineUser getOrGetUser(CommandSender sender) {
@@ -176,6 +183,18 @@ public class UserManager implements IUserManager<Player> {
     @Override
     public Player getPlayer(String uuid) {
         return Streamline.getPlayer(uuid);
+    }
+
+    @Override
+    public void ensurePlayers(ConcurrentSkipListMap<String, StreamlineUser> into) {
+        for (Player player : BasePlugin.onlinePlayers()) {
+            StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+            if (p == null) {
+                p = new StreamlinePlayer(player.getUniqueId().toString());
+                UserUtils.loadUser(p);
+            }
+            into.put(p.getUuid(), p);
+        }
     }
 
     @Override

@@ -99,6 +99,8 @@ public class PlatformListener implements Listener {
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
+
+        UserUtils.ensureLoadedUsers();
     }
 
     @EventHandler
@@ -186,7 +188,12 @@ public class PlatformListener implements Listener {
         }
         PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getMax(), ping.getPlayers().getOnline(),
                 infos.toArray(new PingedResponse.PlayerInfo[0]));
-        PingedResponse response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
+        PingedResponse response;
+        if (ping.getFaviconObject() != null) {
+            response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
+        } else {
+            response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText());
+        }
 
         PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
 

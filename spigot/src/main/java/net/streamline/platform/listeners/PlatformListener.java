@@ -102,6 +102,8 @@ public class PlatformListener implements Listener {
         setJoined(true);
 
         new TenSecondTimer(player);
+
+        UserUtils.ensureLoadedUsers();
     }
 
     @EventHandler
@@ -188,7 +190,7 @@ public class PlatformListener implements Listener {
         PingedResponse.Players players = new PingedResponse.Players(event.getMaxPlayers(), event.getNumPlayers(),
                 playerInfos.toArray(new PingedResponse.PlayerInfo[0]));
 
-        PingedResponse response = new PingedResponse(protocol, players, event.getMotd(), "");
+        PingedResponse response = new PingedResponse(protocol, players, event.getMotd());
 
         PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
 

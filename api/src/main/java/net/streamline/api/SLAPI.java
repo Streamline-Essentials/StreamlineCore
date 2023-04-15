@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
-public class SLAPI<P extends IStreamline, U extends IUserManager, M extends IMessenger> extends PluginEventable {
+public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
         public CommandRunner() {
             super(0, 1);
