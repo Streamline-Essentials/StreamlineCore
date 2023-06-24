@@ -45,7 +45,7 @@ dependencies {
 
     // Streamline API.
 //    shadow(implementation project(":api"))
-    implementation project(path: ':bapi', configuration: 'shadow')
+    implementation project(path: ':StreamlineCore-BAPI', configuration: 'shadow')
 }
 
 migleBukkit {

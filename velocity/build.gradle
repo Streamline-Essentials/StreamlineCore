@@ -23,7 +23,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(path: ':api', configuration: 'shadow')
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
     //    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 

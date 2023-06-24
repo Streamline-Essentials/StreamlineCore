@@ -116,3 +116,8 @@ run/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+/velocity/target/
+/spigot/target/
+/bungee/target/
+/api/target/
+/backend-api/target/
