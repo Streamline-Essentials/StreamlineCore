@@ -164,7 +164,7 @@ public class Messenger implements IMessenger {
 
     @Override
     public String codedString(String from) {
-        return ModuleUtils.newLined(from.replace('&', '§'));
+        return ModuleUtils.newLined(from.replace("&", "§"));
     }
 
     public String stripColor(String string){

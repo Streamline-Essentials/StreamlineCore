@@ -18,7 +18,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(path: ':api', configuration: 'shadow')
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 }
 
 migleBungee {
