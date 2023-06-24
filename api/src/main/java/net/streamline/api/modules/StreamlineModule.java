@@ -63,16 +63,17 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
     @Override
     public void start() {
         if (isEnabled()) return;
-        if (getCommands().isEmpty()) registerCommands();
-
-        for (ModuleCommand command : this.getCommands()) {
-            command.register();
-        }
 
         ModuleUtils.fireEvent(new ModuleEnableEvent(this));
         onEnable();
         setEnabled(true);
         ModuleManager.getEnabledModules().put(getIdentifier(), this);
+
+        if (getCommands().isEmpty()) registerCommands();
+
+        for (ModuleCommand command : this.getCommands()) {
+            command.register();
+        }
     }
 
     @Override
@@ -166,6 +167,33 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
 
     public boolean isRegisteredByIdentifier() {
         return ModuleManager.getLoadedModules().containsKey(getIdentifier());
+    }
+
+    @Override
+    public ModifierType getModifierType() {
+        return ModifierType.STREAMLINE;
+    }
+
+    @Override
+    public boolean isPlugin() {
+        return false;
+    }
+
+    @Override
+    public boolean isMod() {
+        return false;
+    }
+
+    @Override
+    public boolean isStreamline() {
+        return true;
+    }
+
+    @Override
+    public void initializeDataFolder() {
+        if (! getDataFolder().exists()) {
+            getDataFolder().mkdirs();
+        }
     }
 
     @Override

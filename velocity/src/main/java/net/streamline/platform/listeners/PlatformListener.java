@@ -1,7 +1,10 @@
 package net.streamline.platform.listeners;
 
+import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.proxy.server.ServerInfo;
+import net.streamline.base.Streamline;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
 import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.Subscribe;
@@ -98,8 +101,6 @@ public class PlatformListener {
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
-
-        UserUtils.ensureLoadedUsers();
     }
 
     @Subscribe
@@ -248,5 +249,30 @@ public class PlatformListener {
         }
 
         event.setPing(builder.build());
+    }
+
+    @Subscribe
+    public void onServerKick(com.velocitypowered.api.event.player.KickedFromServerEvent event) {
+        Player player = event.getPlayer();
+        RegisteredServer from = event.getServer();
+        String kickedReason = event.getServerKickReason().isPresent() ? Messenger.getInstance().asString(event.getServerKickReason().get()) : "none";
+
+        String fromName = from == null ? "none" : from.getServerInfo().getName();
+        String toName = "none";
+
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+
+        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamlinePlayer, fromName, kickedReason, toName).fire();
+
+        if (kickedFromServerEvent.isCancelled()) {
+            return;
+        }
+
+        if (kickedFromServerEvent.getToServer() != null) {
+            if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
+                Optional<RegisteredServer> serverInfo = Streamline.getInstance().getProxy().getServer(kickedFromServerEvent.getToServer());
+                serverInfo.ifPresent(registeredServer -> event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(registeredServer)));
+            }
+        }
     }
 }

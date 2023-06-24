@@ -66,7 +66,8 @@ public class UserUtils {
             loadedUsers.put(console.getUuid(), console);
         }
 
-        SLAPI.getInstance().getUserManager().ensurePlayers(loadedUsers);
+        ConcurrentSkipListMap<String, StreamlineUser> ensured = SLAPI.getInstance().getUserManager().ensurePlayers();
+        loadedUsers.putAll(ensured);
     }
 
     public static boolean hasConsole() {
@@ -212,7 +213,6 @@ public class UserUtils {
     public static boolean userExists(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return getLoadedUsersSet().contains(getConsole());
         StorageUtils.SupportedStorageType type = GivenConfigs.getMainConfig().savingUseType();
-        DatabaseConfig config = GivenConfigs.getMainConfig().getConfiguredDatabase();
         File userFolder = SLAPI.getUserFolder();
         switch (type) {
             case YAML:

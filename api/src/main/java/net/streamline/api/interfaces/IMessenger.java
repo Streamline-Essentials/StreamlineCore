@@ -12,6 +12,12 @@ public interface IMessenger {
 
     void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message);
 
+    void sendMessageRaw(@Nullable StreamlineUser to, String message);
+
+    void sendMessageRaw(@Nullable StreamlineUser to, String otherUUID, String message);
+
+    void sendMessageRaw(@Nullable StreamlineUser to, StreamlineUser other, String message);
+
     void sendTitle(StreamlinePlayer user, StreamlineTitle title);
 
     String codedString(String from);

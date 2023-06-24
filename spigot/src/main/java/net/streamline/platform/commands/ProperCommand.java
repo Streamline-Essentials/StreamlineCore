@@ -47,21 +47,15 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     public void register() {
         try {
-            getCommandMap().register(getParent().getBase(), getParent().getLabel(), this);
+            Streamline.registerCommands(this);
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
-    private CommandMap getCommandMap() throws Exception {
-        Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-        field.setAccessible(true);
-        return (CommandMap) field.get(Bukkit.getServer());
-    }
-
     public void unregister() {
         try {
-            unregister(getCommandMap());
+            Streamline.unregisterCommands(getParent().getBase());
         } catch(Exception e) {
             e.printStackTrace();
         }

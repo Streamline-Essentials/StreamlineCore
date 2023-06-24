@@ -36,5 +36,5 @@ public interface IUserManager<T> {
         return new StreamlineConsole();
     }
 
-    void ensurePlayers(ConcurrentSkipListMap<String, StreamlineUser> into);
+    ConcurrentSkipListMap<String, StreamlineUser> ensurePlayers();
 }

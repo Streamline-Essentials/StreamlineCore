@@ -1,5 +1,7 @@
 package net.streamline.platform.listeners;
 
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.Server;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
 import tv.quaint.thebase.lib.google.common.io.ByteStreams;
@@ -99,8 +101,6 @@ public class PlatformListener implements Listener {
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
-
-        UserUtils.ensureLoadedUsers();
     }
 
     @EventHandler
@@ -215,7 +215,7 @@ public class PlatformListener implements Listener {
 
         ping.setPlayers(playersServer);
 
-        ping.setDescriptionComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription()));
+        ping.setDescriptionComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription())[0]);
 
         try {
             Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());
@@ -225,5 +225,42 @@ public class PlatformListener implements Listener {
         }
 
         event.setResponse(ping);
+    }
+
+    @EventHandler
+    public void onServerKick(ServerKickEvent event) {
+        ProxiedPlayer player = event.getPlayer();
+        ServerInfo from = event.getKickedFrom();
+        String kickedReason = event.getKickReason();
+
+        String fromName = from == null ? "none" : from.getName();
+        String toName = "none";
+
+        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+
+        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamlinePlayer, fromName, kickedReason, toName);
+        ModuleUtils.fireEvent(kickedFromServerEvent);
+
+        if (kickedFromServerEvent.isCancelled()) {
+            MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the event was cancelled.");
+            return;
+        }
+
+        event.setKickReason(kickedFromServerEvent.getReason());
+
+        if (kickedFromServerEvent.getToServer() != null) {
+            if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
+                ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(kickedFromServerEvent.getToServer());
+                if (serverInfo != null) {
+                    event.setCancelled(true);
+                    event.setCancelServer(serverInfo);
+                    MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " and sent them to " + kickedFromServerEvent.getToServer());
+                } else {
+                    MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the server " + kickedFromServerEvent.getToServer() + " was not found.");
+                }
+            } else {
+                MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but no server was specified to send them to.");
+            }
+        }
     }
 }
