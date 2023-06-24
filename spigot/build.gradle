@@ -32,7 +32,7 @@ repositories {
 dependencies {
     // -x :StreamlineCore-Spigot:compileJava
     // Platform.
-    compileOnly "org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT" // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT" // The Spigot API with no shadowing. Requires the OSS repo.
 
     // Defaults.
     compileOnly(files(FILES))
@@ -41,12 +41,11 @@ dependencies {
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
+    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.11'
 
     // Streamline API.
-//    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
-    implementation(shadow(project(":StreamlineCore-API")))
-//    implementation(shadow(files("${rootDir}\\backend-api\\build\\libs\\StreamlineCore-APIB-${APIB_VER}.jar")))
-    implementation(shadow(project(":StreamlineCore-APIB")))
+//    shadow(implementation project(":api"))
+    implementation project(path: ':bapi', configuration: 'shadow')
 }
 
 migleBukkit {

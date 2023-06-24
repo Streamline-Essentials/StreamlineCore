@@ -1,13 +1,3 @@
-//plugins {
-//    id 'java'
-//    id "com.github.johnrengelman.shadow" version "7.1.1"
-//    id "net.kyori.blossom" version "1.3.1"
-//}
-//apply from: "$rootDir/../dependencies.gradle"
-
-group = 'net.streamline'
-project.version = "SLB" + version
-
 repositories {
     jcenter()
     mavenCentral()
@@ -36,32 +26,13 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Inventories.
-    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.9-fix'
+    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.11'
 
     // Streamline API.
-    compileOnly(project(":StreamlineCore-API"))
+    implementation project(path: ':api', configuration: 'shadow')
+
     compileOnly 'me.clip:placeholderapi:2.11.2'
 
     // Files.
     compileOnly(files(FILES))
-}
-
-blossom {
-    replaceToken '${version}', project.version, 'src/main/resources/plugin.yml'
-}
-
-jar.enabled = false
-shadowJar {
-    String finalName = "StreamlineCore-APIB-${project.version}.jar"
-
-    destinationDirectory = file("${rootDir}/backend-api/build/libs")
-    archiveClassifier.set('')
-
-    relocate("mc.obliviate", "streamline.libs.mc.obliviate")
-
-    archiveFileName = finalName;
-}
-
-artifacts {
-    archives shadowJar
 }

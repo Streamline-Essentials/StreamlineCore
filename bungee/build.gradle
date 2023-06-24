@@ -7,7 +7,7 @@ repositories {
 
 dependencies {
     // Platform.
-    compileOnly "net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT"
+    compileOnly "net.md-5:bungeecord-api:1.20-R0.1-SNAPSHOT"
 
     // Defaults.
     compileOnly(files(FILES))
@@ -18,8 +18,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-//    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
-    implementation(shadow(project(":StreamlineCore-API")))
+    implementation project(path: ':api', configuration: 'shadow')
 }
 
 migleBungee {

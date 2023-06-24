@@ -2,10 +2,7 @@ package net.streamline.apib.craft;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.luckperms.api.messenger.Messenger;
-import net.streamline.api.SLAPI;
 import net.streamline.api.utils.MessageUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;

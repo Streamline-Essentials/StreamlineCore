@@ -371,7 +371,7 @@ public class MessageUtils {
     }
 
     public static String codedString(String text){
-        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text))).replace('&', '§');
+        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text))).replace("&", "§");
     }
 
     public static String formatted(String string) {
