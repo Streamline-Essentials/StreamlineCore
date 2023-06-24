@@ -23,8 +23,8 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-//    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
-    implementation(shadow(project(":StreamlineCore-API")))
+    implementation project(path: ':api', configuration: 'shadow')
+    //    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 
 net.mcparkour.migle.attributes.Dependency lp = new Dependency("luckperms", false)

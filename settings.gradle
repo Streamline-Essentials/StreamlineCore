@@ -1,0 +1,15 @@
+rootProject.name = 'StreamlineCore'
+
+include ':api'
+include ':backend-api'
+include ':bungee'
+include ':spigot'
+include ':velocity'
+
+findProject(":backend-api").name = "bapi"
+
+//findProject(":api").name = "StreamlineCore-API"
+//findProject(":backend-api").name = "StreamlineCore-BAPI"
+//findProject(":bungee").name = "StreamlineCore-Bungee"
+//findProject(":spigot").name = "StreamlineCore-Spigot"
+//findProject(":velocity").name = "StreamlineCore-Velocity"

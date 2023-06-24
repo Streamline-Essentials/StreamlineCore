@@ -1,25 +1,26 @@
 ext {
     IMPL = [
-            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
+            "com.github.server-utilities:TheBase:master-SNAPSHOT"
     ]
     SHADOW = [
-            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
+            "com.github.server-utilities:TheBase:master-SNAPSHOT"
     ]
     ANNO = [
             "org.projectlombok:lombok:1.18.24",
-            "org.mongodb:mongo-java-driver:3.12.11",
-            "tv.quaint.thebase.lib.pf4j:pf4j:3.8.0"
+            "com.github.server-utilities:thebase:1.5.0"
     ]
     COMP_ONLY = [
             "net.luckperms:api:5.4",
-            "org.projectlombok:lombok:1.18.24"
+            "org.projectlombok:lombok:1.18.24",
+            "com.github.server-utilities:TheBase:master-SNAPSHOT"
     ]
     OTHER_PLUGINS = [
+            "me.clip:placeholderapi:2.11.3",
             "org.geysermc:base-api:2.0.4-SNAPSHOT",
             "org.geysermc:geyser-api:2.0.4-SNAPSHOT"
     ]
     FILES = [
-            "${project.rootProject.rootDir}/libs/TheBase.jar"
+//            "${project.rootProject.rootDir}/libs/TheBase.jar"
     ]
 //    API_VER = "1.0.4-SNAPSHOT"
 //    APIB_VER = "1.0.0-SNAPSHOT"

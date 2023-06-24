@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.holders.StreamlineDependencyHolder;
 import net.streamline.api.modules.ModuleUtils;
