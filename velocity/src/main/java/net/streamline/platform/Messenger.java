@@ -1,36 +1,33 @@
 package net.streamline.platform;
 
-import tv.quaint.thebase.lib.re2j.Matcher;
-import tv.quaint.thebase.lib.re2j.Pattern;
+import net.kyori.adventure.key.Key;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.text.ChatComponent;
+import net.streamline.api.text.SLComponent;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IMessenger;
-import net.streamline.api.modules.StreamlineModule;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -84,6 +81,63 @@ public class Messenger implements IMessenger {
         sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
     }
 
+    public void sendMessageRaw(CommandSource to, String message) {
+        if (to == null) return;
+
+        Component component;
+        if (! SLAPI.isReady()) {
+            component = Component.text(message);
+        } else {
+            component = Component.text(replaceAllPlayerBungee(to, message));
+        }
+
+        to.sendMessage(component);
+    }
+
+    public void sendMessageRaw(CommandSource to, String otherUUID, String message) {
+        if (to == null) return;
+
+        Component component;
+        if (! SLAPI.isReady()) {
+            component = Component.text(message);
+        } else {
+            component = Component.text(MessageUtils.replaceAllPlayerBungee(otherUUID, message));
+        }
+
+        to.sendMessage(component);
+    }
+
+    public void sendMessageRaw(CommandSource to, StreamlineUser other, String message) {
+        if (to == null) return;
+
+        Component component;
+        if (! SLAPI.isReady()) {
+            component = Component.text(message);
+        } else {
+            component = Component.text(MessageUtils.replaceAllPlayerBungee(other, message));
+        }
+
+        to.sendMessage(component);
+    }
+
+    public void sendMessageRaw(@Nullable StreamlineUser to, String message) {
+        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsoleCommandSource(), message);
+        if (to == null) return;
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
+    }
+
+    public void sendMessageRaw(@Nullable StreamlineUser to, String otherUUID, String message) {
+        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
+        if (to == null) return;
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+    }
+
+    public void sendMessageRaw(@Nullable StreamlineUser to, StreamlineUser other, String message) {
+        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsoleCommandSource(), other, message);
+        if (to == null) return;
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
+    }
+
     @Override
     public void sendTitle(StreamlinePlayer player, StreamlineTitle title) {
         Player p = Streamline.getPlayer(player.getUuid());
@@ -110,7 +164,7 @@ public class Messenger implements IMessenger {
 
     @Override
     public String codedString(String from) {
-        return from.replace('&', '\u00a7');
+        return ModuleUtils.newLined(from.replace('&', '§'));
     }
 
     public String stripColor(String string){
@@ -119,65 +173,85 @@ public class Messenger implements IMessenger {
                 .replaceAll("[&][1-9a-f]", "");
     }
 
-    public TextComponent codedText(String text) {
-        TextComponent tc = LegacyComponentSerializer.legacy('&').deserialize(MessageUtils.newLined(text));
+    public Component codedText(String from) {
+        String raw = codedString(from);
 
-        try {
-            //String ntext = text.replace(ConfigUtils.linkPre, "").replace(ConfigUtils.linkSuff, "");
+        ConcurrentSkipListMap<Integer, SLComponent> components = SLComponent.extract(raw);
 
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?", java.util.regex.Pattern.CASE_INSENSITIVE);
-            java.util.regex.Matcher matcher = pattern.matcher(stripColor(text));
-            String foundUrl = "";
-
-            while (matcher.find()) {
-                foundUrl = matcher.group(0);
-
-                return makeLinked(tc, foundUrl);
-            }
-        } catch (Exception e) {
-            return tc;
+        int sub = raw.length();
+        if (! components.isEmpty()) {
+            sub = components.firstKey();
         }
-        return tc;
-    }
 
-    public TextComponent clhText(String text, String hoverPrefix){
-        TextComponent tc = LegacyComponentSerializer.legacy('&').deserialize(MessageUtils.newLined(text));
+        Component builder = legacyCode(raw.substring(0, sub));
 
-        try {
-            //String ntext = text.replace(ConfigUtils.linkPre, "").replace(ConfigUtils.linkSuff, "");
-
-            Pattern pattern = Pattern.compile("(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?", Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(stripColor(text));
-            String foundUrl = "";
-
-            while (matcher.find()) {
-                foundUrl = matcher.group(0);
-                return makeHoverable(makeLinked(tc, foundUrl), hoverPrefix + foundUrl);
+        for (int start : components.keySet()) {
+            SLComponent component = components.get(start);
+            if (component == null) {
+                continue;
             }
-        } catch (Exception e) {
-            return tc;
+
+            if (component instanceof ChatComponent) {
+                ChatComponent chatComponent = (ChatComponent) component;
+
+                String simpleText = chatComponent.getSimpleText();
+                Component chatBuilder = legacyCode(simpleText);
+
+                if (chatComponent.isCompleteHover()) {
+                    String value = chatComponent.getHoverValue();
+                    ChatComponent.HoverAction action = chatComponent.getHoverAction();
+
+                    if (action == ChatComponent.HoverAction.SHOW_TEXT) {
+                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showText(legacyCode(value)));
+                    } else if (action == ChatComponent.HoverAction.SHOW_ITEM) {
+                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showItem(HoverEvent.ShowItem.of(Key.key(value), 1)));
+                    } else if (action == ChatComponent.HoverAction.SHOW_ENTITY) {
+                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showEntity(HoverEvent.ShowEntity.of(Key.key(value), UUID.randomUUID())));
+                    } else {
+                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showText(legacyCode(value)));
+                    }
+                }
+                if (chatComponent.isCompleteClick()) {
+                    String value = chatComponent.getClickValue();
+                    ChatComponent.ClickAction action = chatComponent.getClickAction();
+
+                    if (action == ChatComponent.ClickAction.OPEN_URL) {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.openUrl(value));
+                    } else if (action == ChatComponent.ClickAction.OPEN_FILE) {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.openFile(value));
+                    } else if (action == ChatComponent.ClickAction.RUN_COMMAND) {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.runCommand(value));
+                    } else if (action == ChatComponent.ClickAction.SUGGEST_COMMAND) {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.suggestCommand(value));
+                    } else if (action == ChatComponent.ClickAction.CHANGE_PAGE) {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.changePage(Integer.parseInt(value)));
+                    } else {
+                        chatBuilder = chatBuilder.clickEvent(ClickEvent.runCommand(value));
+                    }
+                }
+
+                builder = builder.append(chatBuilder);
+            }
+
+            Integer next = components.higherKey(start);
+            if (next == null) {
+                Component baseComponent = legacyCode(raw.substring(component.realEnd())).hoverEvent(null).clickEvent(null);
+                builder = builder.append(baseComponent);
+            } else {
+                Component baseComponent = legacyCode(raw.substring(component.realEnd(), next)).hoverEvent(null).clickEvent(null);
+                builder = builder.append(baseComponent);
+            }
         }
-        return tc;
-    }
 
-    public TextComponent makeLinked(String text, String url){
-        return Component.text(text).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.OPEN_URL, url));
-    }
-
-    public TextComponent makeLinked(TextComponent textComponent, String url){
-        return textComponent.clickEvent(ClickEvent.clickEvent(ClickEvent.Action.OPEN_URL, url));
-    }
-
-    public TextComponent makeHoverable(String text, String hoverText){
-        return Component.text(text).hoverEvent(HoverEvent.showText(codedText(hoverText)));
-    }
-
-    public TextComponent makeHoverable(TextComponent textComponent, String hoverText){
-        return textComponent.hoverEvent(HoverEvent.showText(codedText(hoverText)));
+        return builder;
     }
 
     public String asString(Component textComponent){
         return LegacyComponentSerializer.legacySection().serialize(textComponent);
+    }
+
+    public Component legacyCode(String from) {
+        return LegacyComponentSerializer.builder().extractUrls().character('&').hexColors().build().deserialize(from);
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {

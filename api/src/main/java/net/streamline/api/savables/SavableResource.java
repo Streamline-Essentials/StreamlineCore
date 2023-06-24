@@ -2,25 +2,36 @@ package net.streamline.api.savables;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.registries.Identifiable;
+import net.streamline.api.registries.RegistryKeys;
+import net.streamline.api.registries.SavablesRegistry;
 import net.streamline.api.savables.events.CreateSavableResourceEvent;
 import net.streamline.api.savables.events.DeleteSavableResourceEvent;
+import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.storage.resources.StorageResource;
 
-public abstract class SavableResource implements StreamlineResource, Comparable<SavableResource> {
-
-    @Getter
-    @Setter
+public abstract class SavableResource implements StreamlineResource, Identifiable {
+    @Getter @Setter
     private StorageResource<?> storageResource;
-    @Getter
-    @Setter
+    @Getter @Setter
     private String uuid;
-    @Getter
-    @Setter
+    @Getter @Setter
     private boolean enabled;
     @Getter @Setter
     private boolean isFirstLoad = false;
+
+    @Override
+    public String getIdentifier() {
+        return uuid;
+    }
+
+    @Override
+    public void setIdentifier(String identifier) {
+        this.uuid = identifier;
+    }
 
     public SavableResource(String uuid, StorageResource<?> storageResource) {
         this.uuid = uuid;
@@ -49,6 +60,19 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
         this.populateDefaults();
 
         this.loadValues();
+
+        try {
+            SavablesRegistry registry = RegistryKeys.SAVABLES.getRegistry();
+            if (registry == null) {
+                registry = SLAPI.getSavablesRegistry();
+                if (registry == null) {
+                    MessageUtils.logWarning("SavablesRegistry is null! Did you try using it before it was initialized?");
+                }
+            }
+            registry.register(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void reload() {
@@ -83,11 +107,6 @@ public abstract class SavableResource implements StreamlineResource, Comparable<
         } catch (Throwable t) {
             t.printStackTrace();
         }
-    }
-
-    @Override
-    public int compareTo(@NotNull SavableResource other) {
-        return Long.compare(getStorageResource().getInitializeDate().getTime(), other.getStorageResource().getInitializeDate().getTime());
     }
 }
 

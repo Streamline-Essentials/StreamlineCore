@@ -42,8 +42,9 @@ public class ParseCommand extends StreamlineCommand {
         }
 
         SLAPI.getInstance().getMessenger().sendMessage(sender, MessageUtils.replaceAllPlayerBungee(sender,
-                getWithOther(sender, this.messageResult, player)
+                getWithOther(sender, this.messageResult
                         .replace("%this_parsed%", MessageUtils.replaceAllPlayerBungee(player, MessageUtils.argsToStringMinus(args, 0)))
+                        , player)
         ));
     }
 

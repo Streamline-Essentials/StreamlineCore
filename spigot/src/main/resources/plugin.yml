@@ -7,4 +7,5 @@ depend:
   - LuckPerms
 softdepend:
   - PlaceholderAPI
+  - Geyser
 load: POSTWORLD

@@ -247,6 +247,10 @@ public abstract class StreamlineUser extends SavableResource {
         return latestName;
     }
 
+    public void sendMessage(String message) {
+        ModuleUtils.sendMessage(this, message);
+    }
+
     public void dispose() throws Throwable {
         try {
             UserUtils.unloadUser(this);
@@ -255,5 +259,17 @@ public abstract class StreamlineUser extends SavableResource {
         } finally {
             super.finalize();
         }
+    }
+
+    public void set(String key, Object value) {
+        getStorageResource().write(key, value);
+    }
+
+    public <T> T getOrSetDefault(String key, T def) {
+        return getStorageResource().getOrSetDefault(key, def);
+    }
+
+    public boolean hasPermission(String permission) {
+        return ModuleUtils.hasPermission(this, permission);
     }
 }

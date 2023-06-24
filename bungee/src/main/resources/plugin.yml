@@ -4,4 +4,6 @@ version: '${project.version}'
 author: Quaint
 authors: [ Quaint, RedstonedLife ]
 depend: [ LuckPerms ]
+softdepend:
+  - Geyser
 load: POSTWORLD

@@ -23,7 +23,10 @@ import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.SpigotProfiler;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.platform.listeners.PlatformListener;
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -34,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class BasePlugin extends JavaPlugin implements IStreamline {
@@ -109,7 +115,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new SpigotProfiler());
 
-        getProxy().getScheduler().scheduleSyncRepeatingTask(this, new Runner(), 0, 50);
+        getProxy().getScheduler().scheduleSyncRepeatingTask(this, new Runner(), 0, 1);
 
         getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
@@ -363,5 +369,69 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Override
     public ClassLoader getMainClassLoader() {
         return getProxy().getClass().getClassLoader();
+    }
+
+    @Getter @Setter
+    private static boolean commandsNeedToBeSynced = false;
+
+    /**
+     * Register command(s) into the server command map.
+     * @param commands The command(s) to register
+     */
+    public static void registerCommands(Command... commands) {
+        // Get the commandMap
+        try {
+            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
+
+            // Register all the commands into the map
+            for (final Command command : commands) {
+                commandMap.register(command.getLabel(), command);
+            }
+
+            CompletableFuture.runAsync(BasePlugin::syncCommands);
+        } catch (final Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    /**
+     * Unregister command(s) from the server command map.
+     * @param commands The command(s) to unregister
+     */
+    public static void unregisterCommands(String... commands) {
+        // Get the commandMap
+        try {
+            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
+
+            // Register all the commands into the map
+            for (final String command : commands) {
+                Command com = commandMap.getCommand(command);
+                if (com == null) {
+                    MessageUtils.logWarning("Tried to unregister a command that does not exist: " + command);
+                    continue;
+                }
+
+                com.unregister(commandMap);
+            }
+
+            CompletableFuture.runAsync(BasePlugin::syncCommands);
+        } catch (final Exception e) {
+            MessageUtils.logWarningWithInfo("Failed to unregister commands: ", e);
+        }
+    }
+
+    public static void syncCommands() {
+        try {
+            Class<?> craftServer = Bukkit.getServer().getClass();
+            Method syncCommandsMethod = craftServer.getDeclaredMethod("syncCommands");
+            syncCommandsMethod.setAccessible(true);
+            syncCommandsMethod.invoke(Bukkit.getServer());
+        } catch (Exception e) {
+            MessageUtils.logWarningWithInfo("Failed to sync commands: ", e);
+        }
     }
 }

@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.stream-lined</groupId>
-    <artifactId>streamlinecore</artifactId>
-    <version>2.0.3.5</version>
+    <groupId>com.github.Streamline-Essentials</groupId>
+    <artifactId>StreamlineCore</artifactId>
+    <version>2.0.3.5-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>StreamlineCore</name>
@@ -27,8 +27,6 @@
     </pluginRepositories>
 
     <build>
-        <finalName>${project.name}</finalName>
-
         <resources>
             <resource>
                 <directory>${project.basedir}</directory>
@@ -120,7 +118,7 @@
             <dependency>
                 <groupId>com.github.server-utilities</groupId>
                 <artifactId>thebase</artifactId>
-                <version>1.2-SNAPSHOT</version>
+                <version>1.5-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
             <!-- LuckPerms -->
@@ -141,7 +139,7 @@
             <dependency>
                 <groupId>com.github.hamza-cskn.obliviate-invs</groupId>
                 <artifactId>core</artifactId>
-                <version>4.1.10</version>
+                <version>4.1.11</version>
             </dependency>
             <!-- Geyser Base API -->
             <dependency>
@@ -165,6 +163,7 @@
         <module>api</module>
         <module>backend-api</module>
         <module>bungee</module>
+        <module>singularity-api</module>
         <module>spigot</module>
         <module>velocity</module>
     </modules>

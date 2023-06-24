@@ -75,6 +75,42 @@ public class MessageUtils {
         });
     }
 
+    public static void logInfo(String message, Throwable throwable) {
+        logInfo(message);
+        logInfo(throwable.getStackTrace());
+    }
+
+    public static void logWarning(String message, Throwable throwable) {
+        logWarning(message);
+        logWarning(throwable.getStackTrace());
+    }
+
+    public static void logSevere(String message, Throwable throwable) {
+        logSevere(message);
+        logSevere(throwable.getStackTrace());
+    }
+
+    public static void logDebug(String message, Throwable throwable) {
+        logDebug(message);
+        logDebug(throwable.getStackTrace());
+    }
+
+    public static void logInfoWithInfo(String message, Throwable throwable) {
+        logInfo(message + (message.endsWith(" ") ? "" : " ") + throwable.getMessage(), throwable);
+    }
+
+    public static void logWarningWithInfo(String message, Throwable throwable) {
+        logWarning(message + (message.endsWith(" ") ? "" : " ") + throwable.getMessage(), throwable);
+    }
+
+    public static void logSevereWithInfo(String message, Throwable throwable) {
+        logSevere(message + (message.endsWith(" ") ? "" : " ") + throwable.getMessage(), throwable);
+    }
+
+    public static void logDebugWithInfo(String message, Throwable throwable) {
+        logDebug(message + (message.endsWith(" ") ? "" : " ") + throwable.getMessage(), throwable);
+    }
+
     public static String loggedModulePrefix(ModuleLike module) {
         return "[" + module.getIdentifier() + "] ";
     }
@@ -335,7 +371,7 @@ public class MessageUtils {
     }
 
     public static String codedString(String text){
-        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text))).replace('&', '\u00a7');
+        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text))).replace('&', '§');
     }
 
     public static String formatted(String string) {

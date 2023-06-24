@@ -102,8 +102,6 @@ public class PlatformListener implements Listener {
         setJoined(true);
 
         new TenSecondTimer(player);
-
-        UserUtils.ensureLoadedUsers();
     }
 
     @EventHandler

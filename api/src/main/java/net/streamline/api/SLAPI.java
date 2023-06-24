@@ -5,10 +5,7 @@ import lombok.Setter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.base.module.BaseModule;
-import net.streamline.api.base.timers.OneSecondTimer;
-import net.streamline.api.base.timers.PlayerExperienceTimer;
-import net.streamline.api.base.timers.UserSaveTimer;
-import net.streamline.api.base.timers.UserSyncTimer;
+import net.streamline.api.base.timers.*;
 import net.streamline.api.command.GivenCommands;
 import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
@@ -20,6 +17,8 @@ import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.profile.StreamlineProfiler;
+import net.streamline.api.registries.MasterRegistry;
+import net.streamline.api.registries.SavablesRegistry;
 import net.streamline.api.savables.users.OperatorUser;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -166,6 +165,8 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
     private static UserSaveTimer userSaveTimer;
     @Getter
     private static UserSyncTimer userSyncTimer;
+    @Getter
+    private static UserEnsureTimer userEnsureTimer;
 
     @Getter
     private static TaskManager mainScheduler;
@@ -186,6 +187,11 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
     @Getter @Setter
     private static DatabaseResource<?> mainDatabase;
 
+    @Getter @Setter
+    private static MasterRegistry masterRegistry;
+    @Getter @Setter
+    private static SavablesRegistry savablesRegistry;
+
     public SLAPI(String identifier, P platform, U userManager, M messenger) {
         super(identifier);
         instance = this;
@@ -193,6 +199,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
         this.platform = platform;
         this.userManager = userManager;
         this.messenger = messenger;
+
+        masterRegistry = new MasterRegistry();
+        savablesRegistry = new SavablesRegistry();
 
         setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.PROXY));
         setProxy(platform.getServerType().equals(IStreamline.ServerType.PROXY));
@@ -246,6 +255,7 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
         playerExperienceTimer = new PlayerExperienceTimer();
         userSaveTimer = new UserSaveTimer();
         userSyncTimer = new UserSyncTimer();
+        userEnsureTimer = new UserEnsureTimer();
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());

@@ -186,15 +186,21 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public void ensurePlayers(ConcurrentSkipListMap<String, StreamlineUser> into) {
+    public ConcurrentSkipListMap<String, StreamlineUser> ensurePlayers() {
+        ConcurrentSkipListMap<String, StreamlineUser> r = new ConcurrentSkipListMap<>();
+
         for (Player player : BasePlugin.onlinePlayers()) {
-            StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
-            if (p == null) {
-                p = new StreamlinePlayer(player.getUniqueId().toString());
-                UserUtils.loadUser(p);
+            if (UserUtils.isLoaded(player.getUniqueId().toString())) {
+                StreamlinePlayer p = getOrGetPlayer(player);
+                r.put(player.getUniqueId().toString(), p);
+                continue;
             }
-            into.put(p.getUuid(), p);
+
+            StreamlinePlayer p = new StreamlinePlayer(player.getUniqueId().toString());
+            r.put(player.getUniqueId().toString(), p);
         }
+
+        return r;
     }
 
     @Override
