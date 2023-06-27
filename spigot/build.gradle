@@ -1,3 +1,5 @@
+import net.mcparkour.migle.attributes.Command;
+
 plugins {
     id("net.mcparkour.migle.migle-bukkit") version "1.1.2"
 }
@@ -45,8 +47,14 @@ dependencies {
 
     // Streamline API.
 //    shadow(implementation project(":api"))
+    implementation project(path: ':StreamlineCore-API')
     implementation project(path: ':StreamlineCore-BAPI', configuration: 'shadow')
 }
+
+Map<String, Command> commandMap = new HashMap<>();
+commandMap.put("streamlinespigot",
+        new Command("Main Spigot command for Streamline.", List.of("sls", "streamlinespigot", "streamline", "sl"), "streamline.command.base.default", null, null)
+);
 
 migleBukkit {
     name = 'StreamlineCore'
@@ -57,4 +65,5 @@ migleBukkit {
     version = "${project.version}"
     depend = ['LuckPerms']
     softDepend = ['Geyser-Spigot', 'PlaceholderAPI']
+    commands = commandMap
 }
