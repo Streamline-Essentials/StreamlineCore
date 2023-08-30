@@ -31,7 +31,7 @@ subprojects {
     apply from: "$rootDir/dependencies.gradle"
 
     group = 'com.github.streamline-essentials'
-    version = '2.0.3.5-SNAPSHOT'
+    version = '2.0.3.6-SNAPSHOT'
 
     repositories {
         mavenCentral()
@@ -50,10 +50,7 @@ subprojects {
         maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
     }
 
-    jar.enabled = false
     shadowJar {
-        destinationDirectory  = file("$rootDir/build/libs")
-        archiveClassifier.set('')
         manifest {
             attributes(
                     'Implementation-Title': "$project.name",
