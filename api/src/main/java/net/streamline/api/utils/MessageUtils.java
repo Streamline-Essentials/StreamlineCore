@@ -75,6 +75,22 @@ public class MessageUtils {
         });
     }
 
+    public static void logInfo(Exception e) {
+        logInfo(e.getStackTrace());
+    }
+
+    public static void logWarning(Exception e) {
+        logWarning(e.getStackTrace());
+    }
+
+    public static void logSevere(Exception e) {
+        logSevere(e.getStackTrace());
+    }
+
+    public static void logDebug(Exception e) {
+        logDebug(e.getStackTrace());
+    }
+
     public static void logInfo(String message, Throwable throwable) {
         logInfo(message);
         logInfo(throwable.getStackTrace());

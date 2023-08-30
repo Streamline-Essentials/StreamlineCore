@@ -27,6 +27,8 @@ dependencies {
     //    implementation(shadow(files("${rootDir}\\api\\build\\libs\\StreamlineCore-API-${API_VER}.jar")))
 }
 
+jar.enabled = false
+
 net.mcparkour.migle.attributes.Dependency lp = new Dependency("luckperms", false)
 net.mcparkour.migle.attributes.Dependency geyser = new Dependency("geyser-velocity", true)
 
