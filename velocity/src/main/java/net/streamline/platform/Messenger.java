@@ -1,9 +1,9 @@
 package net.streamline.platform;
 
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.text.ChatComponent;
-import net.streamline.api.text.SLComponent;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
@@ -19,10 +19,14 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.text.HexResulter;
+import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
+import tv.quaint.thebase.lib.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Pattern;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -173,85 +177,70 @@ public class Messenger implements IMessenger {
                 .replaceAll("[&][1-9a-f]", "");
     }
 
-    public Component codedText(String from) {
-        String raw = codedString(from);
-
-        ConcurrentSkipListMap<Integer, SLComponent> components = SLComponent.extract(raw);
-
-        int sub = raw.length();
-        if (! components.isEmpty()) {
-            sub = components.firstKey();
-        }
-
-        Component builder = legacyCode(raw.substring(0, sub));
-
-        for (int start : components.keySet()) {
-            SLComponent component = components.get(start);
-            if (component == null) {
-                continue;
-            }
-
-            if (component instanceof ChatComponent) {
-                ChatComponent chatComponent = (ChatComponent) component;
-
-                String simpleText = chatComponent.getSimpleText();
-                Component chatBuilder = legacyCode(simpleText);
-
-                if (chatComponent.isCompleteHover()) {
-                    String value = chatComponent.getHoverValue();
-                    ChatComponent.HoverAction action = chatComponent.getHoverAction();
-
-                    if (action == ChatComponent.HoverAction.SHOW_TEXT) {
-                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showText(legacyCode(value)));
-                    } else if (action == ChatComponent.HoverAction.SHOW_ITEM) {
-                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showItem(HoverEvent.ShowItem.of(Key.key(value), 1)));
-                    } else if (action == ChatComponent.HoverAction.SHOW_ENTITY) {
-                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showEntity(HoverEvent.ShowEntity.of(Key.key(value), UUID.randomUUID())));
-                    } else {
-                        chatBuilder = chatBuilder.hoverEvent(HoverEvent.showText(legacyCode(value)));
-                    }
-                }
-                if (chatComponent.isCompleteClick()) {
-                    String value = chatComponent.getClickValue();
-                    ChatComponent.ClickAction action = chatComponent.getClickAction();
-
-                    if (action == ChatComponent.ClickAction.OPEN_URL) {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.openUrl(value));
-                    } else if (action == ChatComponent.ClickAction.OPEN_FILE) {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.openFile(value));
-                    } else if (action == ChatComponent.ClickAction.RUN_COMMAND) {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.runCommand(value));
-                    } else if (action == ChatComponent.ClickAction.SUGGEST_COMMAND) {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.suggestCommand(value));
-                    } else if (action == ChatComponent.ClickAction.CHANGE_PAGE) {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.changePage(Integer.parseInt(value)));
-                    } else {
-                        chatBuilder = chatBuilder.clickEvent(ClickEvent.runCommand(value));
-                    }
-                }
-
-                builder = builder.append(chatBuilder);
-            }
-
-            Integer next = components.higherKey(start);
-            if (next == null) {
-                Component baseComponent = legacyCode(raw.substring(component.realEnd())).hoverEvent(null).clickEvent(null);
-                builder = builder.append(baseComponent);
-            } else {
-                Component baseComponent = legacyCode(raw.substring(component.realEnd(), next)).hoverEvent(null).clickEvent(null);
-                builder = builder.append(baseComponent);
-            }
-        }
-
-        return builder;
-    }
-
     public String asString(Component textComponent){
         return LegacyComponentSerializer.legacySection().serialize(textComponent);
     }
 
-    public Component legacyCode(String from) {
+    public static Component legacyCode(String from) {
         return LegacyComponentSerializer.builder().extractUrls().character('&').hexColors().build().deserialize(from);
+    }
+
+    public static String replaceHex(String text) {
+        for (HexResulter resulter : TextManager.getHexResulters()) {
+            Pattern pattern = Pattern.compile(Pattern.quote(resulter.getStarter()) + "([0-9a-fA-F]{6})" + Pattern.quote(resulter.getEnder()));
+            Matcher matcher = pattern.matcher(text);
+            StringBuffer sb = new StringBuffer();
+
+            while (matcher.find()) {
+                String colorCode = matcher.group(1);
+                // Parse the hex string to an RGB integer
+                int rgb = Integer.parseInt(colorCode, 16);
+                // Convert the RGB integer to a Component
+                String minecraftColor = LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.color(rgb)));
+                // Replace the hex code in the text
+                matcher.appendReplacement(sb, minecraftColor);
+            }
+
+            matcher.appendTail(sb);
+            text = sb.toString();
+        }
+
+        return text;
+    }
+
+    public Component codedText(String from) {
+        String raw = codedString(from); // Assuming codedString is another method you've implemented
+        raw = replaceHex(raw);
+
+        List<Component> componentsList = new ArrayList<>();
+
+        Pattern pattern = Pattern.compile("!!json:(\\{[^}]*\\})");
+        Matcher matcher = pattern.matcher(from);
+
+        int lastEnd = 0;
+
+        while (matcher.find()) {
+            String before = from.substring(lastEnd, matcher.start());
+            String jsonStr = matcher.group(1);
+
+            Component beforeComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(MessageUtils.codedString(before));
+
+            // Use Adventure's JSON deserializer here if GsonComponentSerializer is not available
+            Component jsonComponent = JSONComponentSerializer.json().deserialize(jsonStr);
+
+            componentsList.add(beforeComponent);
+            componentsList.add(jsonComponent);
+
+            lastEnd = matcher.end();
+        }
+
+        // Append any remaining text after the last JSON block
+        if (lastEnd < from.length()) {
+            Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(MessageUtils.codedString(from.substring(lastEnd)));
+            componentsList.add(remainingComponent);
+        }
+
+        return Component.empty().children(componentsList);
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {

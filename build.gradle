@@ -31,7 +31,7 @@ subprojects {
     apply from: "$rootDir/dependencies.gradle"
 
     group = 'com.github.streamline-essentials'
-    version = '2.0.3.6-SNAPSHOT'
+    version = '2.0.3.7-SNAPSHOT'
 
     repositories {
         mavenCentral()

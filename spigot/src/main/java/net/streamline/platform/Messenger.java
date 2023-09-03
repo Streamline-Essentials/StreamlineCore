@@ -2,9 +2,10 @@ package net.streamline.platform;
 
 import net.md_5.bungee.api.chat.hover.content.Entity;
 import net.md_5.bungee.api.chat.hover.content.Item;
+import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.text.ChatComponent;
-import net.streamline.api.text.SLComponent;
+import net.streamline.api.text.HexResulter;
+import net.streamline.api.text.TextManager;
 import org.bukkit.Bukkit;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
@@ -22,6 +23,8 @@ import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import tv.quaint.thebase.lib.re2j.Matcher;
+import tv.quaint.thebase.lib.re2j.Pattern;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -178,83 +181,64 @@ public class Messenger implements IMessenger {
         return ChatColor.stripColor(string).replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "");
     }
 
+
+
+    public static String replaceHex(String text) {
+        for (HexResulter resulter : TextManager.getHexResulters()) {
+            Pattern pattern = Pattern.compile(Pattern.quote(resulter.getStarter()) + "([0-9a-fA-F]{6})" + Pattern.quote(resulter.getEnder()));
+            Matcher matcher = pattern.matcher(text);
+            StringBuffer sb = new StringBuffer();
+
+            while (matcher.find()) {
+                String colorCode = matcher.group(1);
+                String minecraftColor = ChatColor.of("#" + colorCode).toString();
+                matcher.appendReplacement(sb, minecraftColor);
+            }
+
+            matcher.appendTail(sb);
+            text = sb.toString();
+        }
+
+        return text;
+    }
+
     public BaseComponent[] codedText(String from) {
         String raw = codedString(from);
+        raw = replaceHex(raw);
 
-        ConcurrentSkipListMap<Integer, SLComponent> components = SLComponent.extract(raw);
+        List<BaseComponent> componentsList = new ArrayList<>();
 
-        int sub = raw.length();
-        if (! components.isEmpty()) {
-            sub = components.firstKey();
+        Pattern pattern = Pattern.compile("!!json:(\\{[^}]*\\})");
+        Matcher matcher = pattern.matcher(from);
+
+        int lastEnd = 0;
+
+        while (matcher.find()) {
+            String before = from.substring(lastEnd, matcher.start());
+            String jsonStr = matcher.group(1);
+
+            BaseComponent[] beforeComponent = TextComponent.fromLegacyText(MessageUtils.codedString(before));
+            BaseComponent[] jsonComponent = ComponentSerializer.parse(jsonStr);
+
+            for (BaseComponent component : beforeComponent) {
+                componentsList.add(component);
+            }
+            for (BaseComponent component : jsonComponent) {
+                componentsList.add(component);
+            }
+
+            lastEnd = matcher.end();
         }
 
-        ComponentBuilder builder = new ComponentBuilder(raw.substring(0, sub));
-
-        for (int start : components.keySet()) {
-            SLComponent component = components.get(start);
-            if (component == null) {
-                continue;
-            }
-
-            if (component instanceof ChatComponent) {
-                ChatComponent chatComponent = (ChatComponent) component;
-
-                String simpleText = chatComponent.getSimpleText();
-                ComponentBuilder chatBuilder = new ComponentBuilder(simpleText);
-
-                if (chatComponent.isCompleteHover()) {
-                    String value = chatComponent.getHoverValue();
-                    ChatComponent.HoverAction action = chatComponent.getHoverAction();
-
-                    if (action == ChatComponent.HoverAction.SHOW_TEXT) {
-                        chatBuilder.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                new Text(value)));
-                    } else if (action == ChatComponent.HoverAction.SHOW_ITEM) {
-                        chatBuilder.event(new HoverEvent(HoverEvent.Action.SHOW_ITEM,
-                                new Item(value, 1, null)));
-                    } else if (action == ChatComponent.HoverAction.SHOW_ENTITY) {
-                        chatBuilder.event(new HoverEvent(HoverEvent.Action.SHOW_ENTITY,
-                                new Entity(value, UUID.randomUUID().toString(), new ComponentBuilder().create()[0])));
-                    } else {
-                        chatBuilder.event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                new Text(value)));
-                    }
-                }
-                if (chatComponent.isCompleteClick()) {
-                    String value = chatComponent.getClickValue();
-                    ChatComponent.ClickAction action = chatComponent.getClickAction();
-
-                    if (action == ChatComponent.ClickAction.OPEN_URL) {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.OPEN_URL, value));
-                    } else if (action == ChatComponent.ClickAction.OPEN_FILE) {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.OPEN_FILE, value));
-                    } else if (action == ChatComponent.ClickAction.RUN_COMMAND) {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, value));
-                    } else if (action == ChatComponent.ClickAction.SUGGEST_COMMAND) {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, value));
-                    } else if (action == ChatComponent.ClickAction.CHANGE_PAGE) {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.CHANGE_PAGE, value));
-                    } else {
-                        chatBuilder.event(new ClickEvent(ClickEvent.Action.OPEN_URL, value));
-                    }
-                }
-
-                builder.append(chatBuilder.create());
-            }
-
-            Integer next = components.higherKey(start);
-            if (next == null) {
-                BaseComponent[] baseComponent = new ComponentBuilder(raw.substring(component.realEnd()))
-                        .event((HoverEvent) null).event((ClickEvent) null).create();
-                builder.append(baseComponent);
-            } else {
-                BaseComponent[] baseComponent = new ComponentBuilder(raw.substring(component.realEnd(), next))
-                        .event((HoverEvent) null).event((ClickEvent) null).create();
-                builder.append(baseComponent);
+        // Append any remaining text after the last JSON block.
+        if (lastEnd < from.length()) {
+            BaseComponent[] remainingComponent = TextComponent.fromLegacyText(MessageUtils.codedString(raw.substring(lastEnd)));
+            for (BaseComponent component : remainingComponent) {
+                componentsList.add(component);
             }
         }
 
-        return builder.create();
+        return componentsList.toArray(new BaseComponent[0]);
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
