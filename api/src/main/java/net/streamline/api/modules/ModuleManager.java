@@ -89,13 +89,11 @@ public class ModuleManager {
                     "&ethat either expand upon the core plugin or add%newline%" +
                     "&ecompletely new content to your server&b(&es&b)&7. &eYou %newline%" +
                     "&ecan check them out on our &9&lDiscord &eor on the%newline%" +
-                    "&e&7&cSpigotMC &ewebsite&7! &eThank you&7!%newline%" +
+                    "&e&7&cSpigotMC &epages for each&7. &eThank you&7!%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&cDisable &ethis message in your &bmain-config.yml%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&7Streamline &9&lDiscord &dHub&7: &bhttps://dsc.gg/streamline%newline%" +
-                    "&7Streamline &5&lModules &bGuide&7: &bhttps://github.com/Streamline-Essentials/StreamlineWiki/wiki/Modules#download%newline%" +
-                    "&7Streamline &5&lModules &cDownload&7: &bhttps://site.plasmere.net/resources/category/2%newline%" +
                     "&a&m&l                                                 "
             ;
 
