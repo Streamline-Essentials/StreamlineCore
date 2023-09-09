@@ -1,6 +1,8 @@
 package net.streamline.platform.listeners;
 
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.Server;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
@@ -201,9 +203,11 @@ public class PlatformListener implements Listener {
             return;
         }
 
-        ServerPing.Protocol protocolServer = new ServerPing.Protocol(pingReceivedEvent.getResponse().getVersion().getName(),
-                pingReceivedEvent.getResponse().getVersion().getProtocol());
-        ping.setVersion(protocolServer);
+        if (pingReceivedEvent.getResponse().getVersion().getProtocol() != -1) {
+            ServerPing.Protocol protocolServer = new ServerPing.Protocol(pingReceivedEvent.getResponse().getVersion().getName(),
+                    pingReceivedEvent.getResponse().getVersion().getProtocol());
+            ping.setVersion(protocolServer);
+        }
 
         ServerPing.PlayerInfo[] infosServer = new ServerPing.PlayerInfo[pingReceivedEvent.getResponse().getPlayers().getSample().length];
         for (int i = 0; i < pingReceivedEvent.getResponse().getPlayers().getSample().length; i++) {
@@ -215,7 +219,7 @@ public class PlatformListener implements Listener {
 
         ping.setPlayers(playersServer);
 
-        ping.setDescriptionComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription())[0]);
+        ping.setDescriptionComponent(new TextComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription())));
 
         try {
             Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());

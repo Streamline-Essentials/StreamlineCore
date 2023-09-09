@@ -1,6 +1,5 @@
 package net.streamline.platform;
 
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import net.streamline.api.modules.ModuleUtils;
@@ -8,8 +7,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
@@ -19,7 +16,7 @@ import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.api.text.HexResulter;
+import net.streamline.api.text.HexPolicy;
 import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
@@ -31,7 +28,6 @@ import tv.quaint.thebase.lib.re2j.Pattern;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -185,58 +181,47 @@ public class Messenger implements IMessenger {
         return LegacyComponentSerializer.builder().extractUrls().character('&').hexColors().build().deserialize(from);
     }
 
-    public static String replaceHex(String text) {
-        for (HexResulter resulter : TextManager.getHexResulters()) {
-            Pattern pattern = Pattern.compile(Pattern.quote(resulter.getStarter()) + "([0-9a-fA-F]{6})" + Pattern.quote(resulter.getEnder()));
-            Matcher matcher = pattern.matcher(text);
-            StringBuffer sb = new StringBuffer();
-
-            while (matcher.find()) {
-                String colorCode = matcher.group(1);
-                // Parse the hex string to an RGB integer
-                int rgb = Integer.parseInt(colorCode, 16);
-                // Convert the RGB integer to a Component
-                String minecraftColor = LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.color(rgb)));
-                // Replace the hex code in the text
-                matcher.appendReplacement(sb, minecraftColor);
-            }
-
-            matcher.appendTail(sb);
-            text = sb.toString();
-        }
-
-        return text;
-    }
-
     public Component codedText(String from) {
         String raw = codedString(from); // Assuming codedString is another method you've implemented
-        raw = replaceHex(raw);
+
+        String legacy = MessageUtils.codedString(raw); // Replace this with your actual legacy converter
 
         List<Component> componentsList = new ArrayList<>();
 
-        Pattern pattern = Pattern.compile("!!json:(\\{[^}]*\\})");
-        Matcher matcher = pattern.matcher(from);
+        // Handle hex codes
+        for (HexPolicy policy : TextManager.getHexPolicies()) {
+            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
+                String original = hexCode;
+                if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
+                legacy = legacy.replace(policy.getResult(original),
+                        LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.fromCSSHexString(hexCode))));
+            }
+        }
+
+        List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 
         int lastEnd = 0;
 
-        while (matcher.find()) {
-            String before = from.substring(lastEnd, matcher.start());
-            String jsonStr = matcher.group(1);
-
-            Component beforeComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(MessageUtils.codedString(before));
-
-            // Use Adventure's JSON deserializer here if GsonComponentSerializer is not available
-            Component jsonComponent = JSONComponentSerializer.json().deserialize(jsonStr);
-
+        for (String jsonStr : jsonStrings) {
+            int index = legacy.indexOf("!!json:" + jsonStr);
+            String before = legacy.substring(lastEnd, index);
+            Component beforeComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(before);
             componentsList.add(beforeComponent);
-            componentsList.add(jsonComponent);
 
-            lastEnd = matcher.end();
+            try {
+                Component jsonComponent = JSONComponentSerializer.json().deserialize(jsonStr);
+                componentsList.add(jsonComponent);
+            } catch (Exception e) {
+                // Handle exception
+                e.printStackTrace();
+            }
+
+            lastEnd = index + jsonStr.length() + 7; // 7 is the length of "!!json:"
         }
 
         // Append any remaining text after the last JSON block
-        if (lastEnd < from.length()) {
-            Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(MessageUtils.codedString(from.substring(lastEnd)));
+        if (lastEnd < legacy.length()) {
+            Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(legacy.substring(lastEnd));
             componentsList.add(remainingComponent);
         }
 

@@ -225,9 +225,12 @@ public class PlatformListener {
         }
 
         ServerPing.Builder builder = ping.asBuilder();
-        ServerPing.Version protocolServer = new ServerPing.Version(pingReceivedEvent.getResponse().getVersion().getProtocol(),
-                pingReceivedEvent.getResponse().getVersion().getName());
-        builder.version(protocolServer);
+
+        if (pingReceivedEvent.getResponse().getVersion().getProtocol() != -1) {
+            ServerPing.Version protocolServer = new ServerPing.Version(pingReceivedEvent.getResponse().getVersion().getProtocol(),
+                    pingReceivedEvent.getResponse().getVersion().getName());
+            builder.version(protocolServer);
+        }
 
         ServerPing.SamplePlayer[] infosServer = new ServerPing.SamplePlayer[pingReceivedEvent.getResponse().getPlayers().getSample().length];
         for (int i = 0; i < pingReceivedEvent.getResponse().getPlayers().getSample().length; i++) {

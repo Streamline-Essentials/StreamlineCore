@@ -1,16 +1,14 @@
 package net.streamline.platform;
 
-import net.md_5.bungee.api.chat.hover.content.Entity;
-import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.text.HexResulter;
+import net.streamline.api.objects.AtomicString;
+import net.streamline.api.text.HexPolicy;
 import net.streamline.api.text.TextManager;
 import org.bukkit.Bukkit;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import net.streamline.api.SLAPI;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.objects.StreamlineTitle;
@@ -27,7 +25,6 @@ import tv.quaint.thebase.lib.re2j.Matcher;
 import tv.quaint.thebase.lib.re2j.Pattern;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -181,61 +178,49 @@ public class Messenger implements IMessenger {
         return ChatColor.stripColor(string).replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "");
     }
 
-
-
-    public static String replaceHex(String text) {
-        for (HexResulter resulter : TextManager.getHexResulters()) {
-            Pattern pattern = Pattern.compile(Pattern.quote(resulter.getStarter()) + "([0-9a-fA-F]{6})" + Pattern.quote(resulter.getEnder()));
-            Matcher matcher = pattern.matcher(text);
-            StringBuffer sb = new StringBuffer();
-
-            while (matcher.find()) {
-                String colorCode = matcher.group(1);
-                String minecraftColor = ChatColor.of("#" + colorCode).toString();
-                matcher.appendReplacement(sb, minecraftColor);
-            }
-
-            matcher.appendTail(sb);
-            text = sb.toString();
-        }
-
-        return text;
-    }
-
     public BaseComponent[] codedText(String from) {
         String raw = codedString(from);
-        raw = replaceHex(raw);
+
+        // Assuming codedString is another method you've implemented to replace color codes etc.
+        String legacy = MessageUtils.codedString(raw);
 
         List<BaseComponent> componentsList = new ArrayList<>();
 
-        Pattern pattern = Pattern.compile("!!json:(\\{[^}]*\\})");
-        Matcher matcher = pattern.matcher(from);
+        // Handle hex codes
+        for (HexPolicy policy : TextManager.getHexPolicies()) {
+            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
+                String original = hexCode;
+                if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
+                String replacement = ChatColor.of(hexCode).toString();
+                legacy = legacy.replace(policy.getResult(original), replacement);
+            }
+        }
+
+        List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 
         int lastEnd = 0;
 
-        while (matcher.find()) {
-            String before = from.substring(lastEnd, matcher.start());
-            String jsonStr = matcher.group(1);
+        for (String jsonStr : jsonStrings) {
+            int index = legacy.indexOf("!!json:" + jsonStr);
+            String before = legacy.substring(lastEnd, index);
+            BaseComponent[] beforeComponent = TextComponent.fromLegacyText(before);
+            Collections.addAll(componentsList, beforeComponent);
 
-            BaseComponent[] beforeComponent = TextComponent.fromLegacyText(MessageUtils.codedString(before));
-            BaseComponent[] jsonComponent = ComponentSerializer.parse(jsonStr);
-
-            for (BaseComponent component : beforeComponent) {
-                componentsList.add(component);
+            try {
+                BaseComponent[] jsonComponent = ComponentSerializer.parse(jsonStr);
+                Collections.addAll(componentsList, jsonComponent);
+            } catch (Exception e) {
+                // Handle exception
+                e.printStackTrace();
             }
-            for (BaseComponent component : jsonComponent) {
-                componentsList.add(component);
-            }
 
-            lastEnd = matcher.end();
+            lastEnd = index + jsonStr.length() + 7; // 7 is the length of "!!json:"
         }
 
-        // Append any remaining text after the last JSON block.
-        if (lastEnd < from.length()) {
-            BaseComponent[] remainingComponent = TextComponent.fromLegacyText(MessageUtils.codedString(raw.substring(lastEnd)));
-            for (BaseComponent component : remainingComponent) {
-                componentsList.add(component);
-            }
+        // Append any remaining text after the last JSON block
+        if (lastEnd < legacy.length()) {
+            BaseComponent[] remainingComponent = TextComponent.fromLegacyText(legacy.substring(lastEnd));
+            Collections.addAll(componentsList, remainingComponent);
         }
 
         return componentsList.toArray(new BaseComponent[0]);

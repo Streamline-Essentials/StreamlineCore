@@ -4,18 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
-public class HexResulter implements Comparable<HexResulter> {
+@Getter
+public class HexPolicy implements Comparable<HexPolicy> {
     @Getter @Setter
     private String starter;
     @Getter @Setter
     private String ender;
 
-    public HexResulter(String starter, String ender) {
+    public HexPolicy(String starter, String ender) {
         this.starter = starter;
         this.ender = ender;
     }
 
-    public HexResulter() {
+    public HexPolicy() {
         this("{#", "}");
     }
 
@@ -28,7 +29,7 @@ public class HexResulter implements Comparable<HexResulter> {
     }
 
     @Override
-    public int compareTo(@NotNull HexResulter o) {
+    public int compareTo(@NotNull HexPolicy o) {
         return getIdentifiably().compareTo(o.getIdentifiably());
     }
 }

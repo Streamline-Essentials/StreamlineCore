@@ -1,12 +1,14 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.text.HexPolicy;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class MainConfigHandler extends SimpleConfiguration {
     public MainConfigHandler() {
@@ -53,6 +55,8 @@ public class MainConfigHandler extends SimpleConfiguration {
         placeholderCacheReleaseTicks();
         placeholderCacheReleaseInput();
         placeholderCacheReleaseOutput();
+
+//        getHexPolicies();
     }
 
     public StorageUtils.SupportedStorageType savingUseType() {
@@ -267,4 +271,18 @@ public class MainConfigHandler extends SimpleConfiguration {
 
         return getResource().getOrSetDefault("placeholders.cache.release-after.placeholder.output", "");
     }
+
+//    public ConcurrentSkipListSet<HexPolicy> getHexPolicies() {
+//        ConcurrentSkipListSet<HexPolicy> hexPolicies = new ConcurrentSkipListSet<>();
+//
+//        getResource().singleLayerKeySet("hex.policies").forEach(key -> {
+//            String starter = getResource().getOrSetDefault("hex.policies." + key + ".starter", "{#");
+//            String ender = getResource().getOrSetDefault("hex.policies." + key + ".ender", "}");
+//            String setTo = getResource().getOrSetDefault("hex.policies." + key + ".set-to", "<#%hex%>");
+//
+//            hexPolicies.add(new HexPolicy(starter, ender, setTo));
+//        });
+//
+//        return hexPolicies;
+//    }
 }
