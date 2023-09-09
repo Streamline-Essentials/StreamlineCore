@@ -93,7 +93,7 @@ public class ModuleManager {
                     "&a&m&l                                                 %newline%" +
                     "&cDisable &ethis message in your &bmain-config.yml%newline%" +
                     "&a&m&l                                                 %newline%" +
-                    "&7Streamline &9&lDiscord &dHub&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&6Get Modules here&7: &bhttps://dsc.gg/streamline%newline%" +
                     "&a&m&l                                                 "
             ;
 
