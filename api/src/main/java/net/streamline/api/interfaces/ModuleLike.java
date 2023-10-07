@@ -1,5 +1,6 @@
 package net.streamline.api.interfaces;
 
+import net.streamline.api.command.ModuleCommand;
 import tv.quaint.objects.handling.IEventable;
 import tv.quaint.objects.handling.derived.IModifierEventable;
 
@@ -30,4 +31,10 @@ public interface ModuleLike extends IModifierEventable, Comparable<ModuleLike> {
     InputStream getResourceAsStream(String fileName);
 
     boolean isMalleable();
+
+    void setMalleable(boolean malleable);
+
+    void addCommand(ModuleCommand command);
+
+    void removeCommand(ModuleCommand command);
 }

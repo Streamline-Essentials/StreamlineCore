@@ -14,10 +14,11 @@ import tv.quaint.thebase.lib.pf4j.PluginWrapper;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public abstract class StreamlineModule extends Plugin implements ModuleLike {
@@ -30,8 +31,16 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
     @Getter @Setter
     private boolean malleable = true;
 
-    @Getter @Setter
-    private List<ModuleCommand> commands = new ArrayList<>();
+    @Getter
+    private ConcurrentSkipListSet<ModuleCommand> commands = new ConcurrentSkipListSet<>();
+
+    public <C extends Collection<ModuleCommand>> void setCommands(C commands) {
+        this.commands = new ConcurrentSkipListSet<>(commands);
+    }
+
+    public <C extends List<ModuleCommand>> void setCommands(C commands) {
+        this.commands = new ConcurrentSkipListSet<>(commands);
+    }
 
     /**
      * This allows you to set the {@link Module}'string identifier.
@@ -194,6 +203,32 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
         if (! getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
+    }
+
+    public ModuleCommand getCommand(String identifier) {
+        AtomicReference<ModuleCommand> command = new AtomicReference<>(null);
+
+        getCommands().forEach(moduleCommand -> {
+            if (moduleCommand.getIdentifier().equalsIgnoreCase(identifier)) {
+                command.set(moduleCommand);
+            }
+        });
+
+        return command.get();
+    }
+
+    public void addCommand(ModuleCommand command) {
+        removeCommand(command.getIdentifier());
+
+        getCommands().add(command);
+    }
+
+    public void removeCommand(String identifier) {
+        getCommands().removeIf(moduleCommand -> moduleCommand.getIdentifier().equalsIgnoreCase(identifier));
+    }
+
+    public void removeCommand(ModuleCommand command) {
+        removeCommand(command.getIdentifier());
     }
 
     @Override
