@@ -9,8 +9,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public abstract class ModuleCommand extends StreamlineCommand {
-    @Getter
     private final ModuleLike owningModule;
 
     public ModuleCommand(ModuleLike module, String base, String permission, String... aliases) {

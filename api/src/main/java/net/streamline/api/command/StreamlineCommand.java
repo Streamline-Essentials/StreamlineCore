@@ -3,7 +3,11 @@ package net.streamline.api.command;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.command.context.CommandArgument;
+import net.streamline.api.command.context.CommandContext;
+import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.configs.CommandResource;
+import net.streamline.api.events.command.CommandResultedEvent;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -14,18 +18,18 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+@Getter
 public abstract class StreamlineCommand implements Comparable<StreamlineCommand> {
-    @Getter @Setter
+    @Setter
     private String identifier;
-    @Getter @Setter
+    @Setter
     private String label;
-    @Getter @Setter
+    @Setter
     private String base;
-    @Getter @Setter
+    @Setter
     private String permission;
-    @Getter @Setter
+    @Setter
     private String[] aliases;
-    @Getter
     private final CommandResource commandResource;
 
     public StreamlineCommand(String label, String base, String permission, File parentDirectory, String... aliases) {
@@ -53,21 +57,52 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         CommandHandler.unregisterStreamlineCommand(this);
     }
 
-    public void baseRun(StreamlineUser sender, @Nullable String[] args) {
+    public CommandResult<?> baseRun(StreamlineUser sender, @Nullable String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
-        run(sender, args);
+
+        CommandContext<StreamlineCommand> context = new CommandContext<>(sender, this, notSet(), args);
+
+        CommandResult<StreamlineCommand> result = resultedRun(context);
+        if (result != null) {
+            context.setResult(result);
+        }
+
+        CommandResultedEvent<StreamlineCommand> event = new CommandResultedEvent<>(context);
+        event.fire();
+
+        return context.getResult();
     }
 
-    abstract public void run(StreamlineUser sender, String[] args);
+    @Deprecated
+    public void run(StreamlineUser sender, String[] args) {
+        // Nothing.
+    }
+
+    @Deprecated
+    public void run(CommandContext<StreamlineCommand> context) {
+        run(context.getSender(), context.getArgs().stream().map(CommandArgument::getContent).toArray(String[]::new));
+    }
+
+    public CommandResult<StreamlineCommand> resultedRun(CommandContext<StreamlineCommand> context) {
+        run(context);
+        return null;
+    }
 
     public ConcurrentSkipListSet<String> baseTabComplete(StreamlineUser sender, @Nullable String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
-        return doTabComplete(sender, args);
+        return doTabComplete(new CommandContext<>(sender, this, notSet(), args));
     }
 
-    abstract public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args);
+    @Deprecated
+    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+        return new ConcurrentSkipListSet<>();
+    }
+
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        return doTabComplete(context.getSender(), context.getArgs().stream().map(CommandArgument::getContent).toArray(String[]::new));
+    }
 
     public String getWithOther(StreamlineUser sender, String base, StreamlineUser other) {
         base = base.replace("%this_other%", other.getName());
@@ -140,5 +175,25 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         r.add(String.valueOf(max));
 
         return r;
+    }
+
+    public static <T> CommandResult<T> result(String key, T result) {
+        return new CommandResult<>(key, result);
+    }
+
+    public static CommandResult.Success success() {
+        return CommandResult.Success.get();
+    }
+
+    public static CommandResult.Failure failure() {
+        return CommandResult.Failure.get();
+    }
+
+    public static CommandResult.Error error() {
+        return CommandResult.Error.get();
+    }
+
+    public static CommandResult.NotSet notSet() {
+        return CommandResult.NotSet.get();
     }
 }
