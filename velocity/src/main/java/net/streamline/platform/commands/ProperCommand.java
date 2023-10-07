@@ -3,7 +3,6 @@ package net.streamline.platform.commands;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import lombok.Getter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
@@ -11,20 +10,15 @@ import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
+@Getter
 public class ProperCommand implements SimpleCommand, IProperCommand {
-    @Getter
     private final StreamlineCommand parent;
-    @Getter
     private final String base;
-    @Getter
     private final String permission;
-    @Getter
     private final String[] aliases;
 
     public ProperCommand(StreamlineCommand parent) {
