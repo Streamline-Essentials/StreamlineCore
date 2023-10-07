@@ -14,6 +14,7 @@ import net.streamline.api.events.server.ServerStartEvent;
 import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -324,6 +325,9 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
         // nothing right now
+        StreamlinePlayer p = getUserManager().getOrGetPlayer(player);
+
+        ResourcePackMessageBuilder.build(p, true, p, resourcePack).send();
     }
 
     @Override

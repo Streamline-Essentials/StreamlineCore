@@ -36,6 +36,18 @@ public abstract class ModuleCommand extends StreamlineCommand {
 //        return newAliases.toArray(String[]::new);
 //    }
 
+    public void modulize() {
+        if (isEnabled()) return;
+
+        getOwningModule().addCommand(this);
+    }
+
+    public void demodulize() {
+        if (! isEnabled()) return;
+
+        getOwningModule().removeCommand(this);
+    }
+
     @Override
     public void register() {
         if (! isEnabled()) return;

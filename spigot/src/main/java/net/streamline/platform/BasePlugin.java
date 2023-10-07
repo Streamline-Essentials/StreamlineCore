@@ -38,13 +38,14 @@ import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class BasePlugin extends JavaPlugin implements IStreamline {
-    public class Runner implements Runnable {
+    public static class Runner implements Runnable {
         public Runner() {
             MessageUtils.logInfo("Task Runner registered!");
         }
@@ -426,12 +427,21 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     public static void syncCommands() {
         try {
-            Class<?> craftServer = Bukkit.getServer().getClass();
-            Method syncCommandsMethod = craftServer.getDeclaredMethod("syncCommands");
-            syncCommandsMethod.setAccessible(true);
-            syncCommandsMethod.invoke(Bukkit.getServer());
+            Class<?> craftServerClass = Bukkit.getServer().getClass();
+
+            try {
+                Method syncCommandsMethod = craftServerClass.getDeclaredMethod("syncCommands");
+                try {
+                    syncCommandsMethod.setAccessible(true);
+                    syncCommandsMethod.invoke(Bukkit.getServer());
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    MessageUtils.logWarningWithInfo("Failed to invoke syncCommands method: ", e);
+                }
+            } catch (NoSuchMethodException e) {
+                MessageUtils.logWarningWithInfo("syncCommands method not found: ", e);
+            }
         } catch (Exception e) {
-            MessageUtils.logWarningWithInfo("Failed to sync commands: ", e);
+            MessageUtils.logWarningWithInfo("An unknown error occurred: ", e);
         }
     }
 }

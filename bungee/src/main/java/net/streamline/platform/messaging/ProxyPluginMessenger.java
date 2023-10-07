@@ -23,10 +23,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
         if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
             Streamline.getInstance().getServerNames().forEach(a -> {
-                if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
-                    MessageUtils.logInfo(a + " server is empty...");
-                    return;
-                }
+                if (UserManager.getInstance().getUsersOn(a).size() <= 0) return;
                 ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
                 if (player == null) {
                     return;
