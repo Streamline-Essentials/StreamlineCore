@@ -63,7 +63,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
 
         CommandContext<StreamlineCommand> context = new CommandContext<>(sender, this, notSet(), args);
 
-        CommandResult<StreamlineCommand> result = resultedRun(context);
+        CommandResult<?> result = resultedRun(context);
         if (result != null) {
             context.setResult(result);
         }
@@ -84,7 +84,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         run(context.getSender(), context.getArgs().stream().map(CommandArgument::getContent).toArray(String[]::new));
     }
 
-    public CommandResult<StreamlineCommand> resultedRun(CommandContext<StreamlineCommand> context) {
+    public CommandResult<?> resultedRun(CommandContext<StreamlineCommand> context) {
         run(context);
         return null;
     }
