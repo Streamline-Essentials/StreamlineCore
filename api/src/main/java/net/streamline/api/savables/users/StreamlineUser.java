@@ -247,8 +247,14 @@ public abstract class StreamlineUser extends SavableResource {
         return latestName;
     }
 
-    public void sendMessage(String message) {
+    public void sendMessage(String message, boolean format) {
+        if (format) message = MessageUtils.codedString(message);
+
         ModuleUtils.sendMessage(this, message);
+    }
+
+    public void sendMessage(String message) {
+        sendMessage(message, true);
     }
 
     public void dispose() throws Throwable {
@@ -271,5 +277,13 @@ public abstract class StreamlineUser extends SavableResource {
 
     public boolean hasPermission(String permission) {
         return ModuleUtils.hasPermission(this, permission);
+    }
+
+    public boolean isConsole() {
+        return getUuid().equals(GivenConfigs.getMainConfig().userConsoleDiscriminator());
+    }
+
+    public boolean isPlayer() {
+        return ! isConsole();
     }
 }

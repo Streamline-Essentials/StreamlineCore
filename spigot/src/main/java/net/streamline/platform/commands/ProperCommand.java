@@ -1,27 +1,25 @@
 package net.streamline.platform.commands;
 
 import lombok.Getter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
-import org.bukkit.Bukkit;
-import org.bukkit.command.*;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
+@Getter
 public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
-    @Getter
     private final StreamlineCommand parent;
 
     public ProperCommand(StreamlineCommand parent) {
@@ -31,8 +29,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
-        return true;
+        return execute(sender, label, args);
     }
 
     @Nullable
@@ -63,7 +60,12 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
-        return true;
+        CommandResult<?> result = parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
+
+        if (result == null) return false;
+        if (result == StreamlineCommand.notSet()) return true;
+        if (result == StreamlineCommand.error()) return false;
+        if (result == StreamlineCommand.failure()) return false;
+        return result == StreamlineCommand.success();
     }
 }
