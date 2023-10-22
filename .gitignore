@@ -121,3 +121,4 @@ run/
 /bungee/target/
 /api/target/
 /backend-api/target/
+/.fastRequest/

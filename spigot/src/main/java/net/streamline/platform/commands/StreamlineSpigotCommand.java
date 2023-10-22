@@ -5,7 +5,6 @@ import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
