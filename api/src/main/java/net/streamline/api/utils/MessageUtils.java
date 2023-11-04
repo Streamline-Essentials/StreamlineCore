@@ -339,11 +339,7 @@ public class MessageUtils {
     }
 
     public static int getDigits(int start, int otherSize){
-        if (start <= otherSize) {
-            return start;
-        } else {
-            return otherSize;
-        }
+        return Math.min(start, otherSize);
     }
 
     public static ConcurrentSkipListSet<String> getCompletion(List<String> of, String param){
@@ -433,7 +429,7 @@ public class MessageUtils {
 
         for (String split : splitMsg){
             i++;
-            if (split.equals("")) continue;
+            if (split.isEmpty()) continue;
 
             if (i < splitMsg.length)
                 text.append(split).append(" ");
@@ -450,7 +446,7 @@ public class MessageUtils {
 
         for (String split : splitMsg){
             i++;
-            if (split.equals("")) continue;
+            if (split.isEmpty()) continue;
 
             if (i < splitMsg.size())
                 text.append(split).append(" ");
@@ -467,7 +463,7 @@ public class MessageUtils {
 
         for (Integer split : splitMsg.keySet()){
             i++;
-            if (splitMsg.get(split).equals("")) continue;
+            if (splitMsg.get(split).isEmpty()) continue;
 
             if (i < splitMsg.size())
                 text.append(splitMsg.get(split)).append(" ");

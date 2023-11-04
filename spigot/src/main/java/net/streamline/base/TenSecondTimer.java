@@ -10,10 +10,9 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+@Getter
 public class TenSecondTimer implements Runnable {
-    @Getter
     final Player player;
-    @Getter
     final int taskId;
 
     public TenSecondTimer(Player player) {

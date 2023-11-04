@@ -4,10 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.savables.users.StreamlineUser;
 
+@Getter
 public class UserNameUpdateEvent extends StreamlineUserEvent<StreamlineUser> {
-    @Getter @Setter
+    @Setter
     private String changeTo;
-    @Getter
     private final String changeFrom;
 
     public UserNameUpdateEvent(StreamlineUser user, String changeTo, String changeFrom) {

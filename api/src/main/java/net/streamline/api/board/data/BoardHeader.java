@@ -3,12 +3,11 @@ package net.streamline.api.board.data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.ConcurrentHashMap;
-
+@Getter
 public class BoardHeader {
     public static final String EMPTY = ">>EMPTY<<";
 
-    @Getter @Setter
+    @Setter
     private String header;
 
     public BoardHeader(String header) {

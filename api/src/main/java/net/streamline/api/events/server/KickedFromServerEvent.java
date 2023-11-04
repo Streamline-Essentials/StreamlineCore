@@ -5,14 +5,15 @@ import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 
+@Getter
 public class KickedFromServerEvent extends StreamlineEvent {
-    @Getter @Setter
+    @Setter
     private StreamlinePlayer player;
-    @Getter @Setter
+    @Setter
     private String fromServer;
-    @Getter @Setter
+    @Setter
     private String reason;
-    @Getter @Setter
+    @Setter
     private String toServer;
 
     public KickedFromServerEvent(StreamlinePlayer player, String fromServer, String reason, String toServer) {

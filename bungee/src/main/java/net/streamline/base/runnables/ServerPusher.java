@@ -43,7 +43,7 @@ public class ServerPusher extends BaseRunnable {
             });
 
             StreamlineServerInfo ssi = new StreamlineServerInfo(
-                    serverInfo.getName(), serverInfo.getName(), serverInfo.getMotd(), serverInfo.getAddress().toString(), uuids);
+                    serverInfo.getName(), serverInfo.getName(), serverInfo.getMotd(), serverInfo.getSocketAddress().toString(), uuids);
 
             GivenConfigs.getProfileConfig().updateServerInfo(ssi);
 

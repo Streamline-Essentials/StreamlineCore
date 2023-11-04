@@ -6,13 +6,16 @@ plugins {
 
 repositories {
     //Velocity
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
 }
 
 dependencies {
     // Platform.
-    compileOnly("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
-    annotationProcessor("com.velocitypowered:velocity-api:3.1.2-SNAPSHOT")
+    compileOnly("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
+    annotationProcessor("com.velocitypowered:velocity-api:3.2.0-SNAPSHOT")
 
     implementation "net.kyori:adventure-text-serializer-gson:4.14.0"
 
@@ -31,8 +34,8 @@ dependencies {
 
 jar.enabled = false
 
-net.mcparkour.migle.attributes.Dependency lp = new Dependency("luckperms", false)
-net.mcparkour.migle.attributes.Dependency geyser = new Dependency("geyser-velocity", true)
+Dependency lp = new Dependency("luckperms", false)
+Dependency geyser = new Dependency("geyser-velocity", true)
 
 migleVelocity {
     id = 'streamlinecore'

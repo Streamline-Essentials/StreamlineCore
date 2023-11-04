@@ -1,6 +1,6 @@
 package net.streamline.api.placeholders.replaceables;
 
-import net.streamline.api.objects.AtomicString;
+import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.CallbackString;
 import net.streamline.api.placeholders.callbacks.PlaceholderCallback;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +20,8 @@ public class GenericReplaceable extends AbstractReplaceable<PlaceholderCallback>
         addTimesReplaced(getHandledString().count(string));
         AtomicString atomicString = new AtomicString(string);
         getHandledString().regexMatches(string).forEach((s) -> {
+            if (getCallback() == null) return;
+
             atomicString.set(atomicString.get().replace(s, getCallback().apply(new CallbackString(s, getHandledString()))));
         });
         return atomicString.get();

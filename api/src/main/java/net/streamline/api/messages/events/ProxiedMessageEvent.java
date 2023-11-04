@@ -5,8 +5,8 @@ import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.savables.users.StreamlinePlayer;
 
+@Getter
 public class ProxiedMessageEvent extends StreamlineEvent {
-    @Getter
     private final ProxiedMessage message;
 
     public ProxiedMessageEvent(ProxiedMessage message) {

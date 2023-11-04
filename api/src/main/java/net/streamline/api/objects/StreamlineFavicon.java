@@ -14,20 +14,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 
+@Getter
 public class StreamlineFavicon {
-    private static final TypeAdapter<StreamlineFavicon> FAVICON_TYPE_ADAPTER = new TypeAdapter<StreamlineFavicon>()
-    {
+    private static final TypeAdapter<StreamlineFavicon> FAVICON_TYPE_ADAPTER = new TypeAdapter<>() {
         @Override
-        public void write(JsonWriter out, StreamlineFavicon value) throws IOException
-        {
-            TypeAdapters.STRING.write( out, value == null ? null : value.getEncoded() );
+        public void write(JsonWriter out, StreamlineFavicon value) throws IOException {
+            TypeAdapters.STRING.write(out, value == null ? null : value.getEncoded());
         }
 
         @Override
-        public StreamlineFavicon read(JsonReader in) throws IOException
-        {
-            String enc = TypeAdapters.STRING.read( in );
-            return enc == null ? null : create( enc );
+        public StreamlineFavicon read(JsonReader in) throws IOException {
+            String enc = TypeAdapters.STRING.read(in);
+            return enc == null ? null : create(enc);
         }
     };
 
@@ -44,7 +42,6 @@ public class StreamlineFavicon {
      * The base64 encoded favicon, including MIME header.
      */
     @NonNull
-    @Getter
     private final String encoded;
 
     /**

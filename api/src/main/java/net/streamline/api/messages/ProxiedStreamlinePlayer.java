@@ -6,41 +6,42 @@ import net.streamline.api.savables.users.StreamlineLocation;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+@Getter
 public class ProxiedStreamlinePlayer {
-    @Getter @Setter
+    @Setter
     private String latestName;
-    @Getter @Setter
+    @Setter
     private String displayName;
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListSet<String> tagList;
-    @Getter @Setter
+    @Setter
     private double points;
-    @Getter @Setter
+    @Setter
     private String lastMessage;
-    @Getter @Setter
+    @Setter
     private boolean online;
-    @Getter @Setter
+    @Setter
     private String latestServer;
-    @Getter @Setter
+    @Setter
     private boolean bypassPermissions;
-    @Getter @Setter
+    @Setter
     private double totalXP;
-    @Getter @Setter
+    @Setter
     private double currentXP;
-    @Getter @Setter
+    @Setter
     private int level;
-    @Getter @Setter
+    @Setter
     private int playSeconds;
-    @Getter @Setter
+    @Setter
     private String latestIP;
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListSet<String> ipList;
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListSet<String> nameList;
-    @Getter @Setter
+    @Setter
     private int defaultLevel;
-    @Getter @Setter
+    @Setter
     private String uuid;
-    @Getter @Setter
+    @Setter
     private StreamlineLocation location;
 }

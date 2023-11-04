@@ -3,11 +3,10 @@ package net.streamline.api.scheduler;
 import lombok.Getter;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.modules.StreamlineModule;
 
+@Getter
 public abstract class ModuleRunnable extends BaseRunnable {
-    @Getter
-    private ModuleLike module;
+    private final ModuleLike module;
 
     public ModuleRunnable(ModuleLike module, long delay, long period) {
         super(delay, period);

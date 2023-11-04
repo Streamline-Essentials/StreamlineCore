@@ -5,8 +5,9 @@ import lombok.Setter;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.savables.users.StreamlineUser;
 
+@Getter
 public class UserNameUpdateByOtherEvent extends UserNameUpdateEvent {
-    @Getter @Setter
+    @Setter
     ProxiedMessage proxiedMessage;
 
     public UserNameUpdateByOtherEvent(StreamlineUser user, String changeTo, String changeFrom, ProxiedMessage message) {

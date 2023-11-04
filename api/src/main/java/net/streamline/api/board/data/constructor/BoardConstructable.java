@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.utils.MessageUtils;
 
+@Getter
 public class BoardConstructable<C> {
-    @Getter @Setter
+    @Setter
     private C of;
-    @Getter @Setter
+    @Setter
     private BoardDataConstructor<?, C> constructor;
 
     public BoardConstructable(C of, BoardDataConstructor<?, C> constructor) {

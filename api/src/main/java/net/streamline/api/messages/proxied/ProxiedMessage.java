@@ -1,16 +1,16 @@
 package net.streamline.api.messages.proxied;
 
-import tv.quaint.thebase.lib.google.common.io.*;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.messages.answered.ReturnableMessage;
-import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.utils.MatcherUtils;
-import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
+import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
+import tv.quaint.thebase.lib.google.common.io.ByteArrayDataOutput;
+import tv.quaint.thebase.lib.google.common.io.ByteStreams;
+import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,20 +20,18 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
+@Getter
 public class ProxiedMessage implements Comparable<ProxiedMessage> {
-    @Getter
     private final String defaultListSeparator = "{{,}}";
-    @Getter
     private final String argumentKeyMaster = "{{arg[%index%]}}";
-    @Getter
     private final String subChannelKey = "{{sub-channel}}";
 
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListMap<Integer, SingleSet<String, String>> arguments = new ConcurrentSkipListMap<>();
 
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListMap<String, String> literalContents = new ConcurrentSkipListMap<>();
-    @Getter @Setter
+    @Setter
     private String server = "lobby";
 
     public void setSubChannel(String subChannel) {
@@ -44,13 +42,9 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
         return getString(getSubChannelKey());
     }
 
-    @Getter
     private final StreamlinePlayer carrier;
-    @Getter
     private final boolean proxyOriginated;
-    @Getter
     private final String mainChannel;
-    @Getter
     private final Date gottenAt;
 
     public ProxiedMessage(StreamlinePlayer carrier, boolean proxyOriginated, String mainChannel) {

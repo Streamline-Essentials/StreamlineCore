@@ -15,12 +15,13 @@ import tv.quaint.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class StreamlineSpigotCommand implements TabExecutor {
     public StreamlineSpigotCommand() {
         try {
-            Streamline.getInstance().getCommand("streamlinespigot").setExecutor(this);
+            Objects.requireNonNull(Streamline.getInstance().getCommand("streamlinespigot")).setExecutor(this);
         } catch (Exception e) {
             e.printStackTrace();
         }

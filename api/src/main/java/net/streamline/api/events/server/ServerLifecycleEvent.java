@@ -4,8 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
 
+@Getter
 public class ServerLifecycleEvent extends StreamlineEvent {
-    @Getter @Setter
+    @Setter
     private String message;
 
     public ServerLifecycleEvent(String message) {

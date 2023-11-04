@@ -7,7 +7,7 @@ import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.MathUtils;
+import tv.quaint.utils.MathUtils;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Date;

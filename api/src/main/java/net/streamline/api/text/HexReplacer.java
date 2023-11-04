@@ -2,7 +2,7 @@ package net.streamline.api.text;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.objects.AtomicString;
+import tv.quaint.objects.AtomicString;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.thebase.lib.re2j.Matcher;
 import tv.quaint.utils.MatcherUtils;

@@ -2,11 +2,8 @@ package net.streamline.api.base.timers;
 
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.UserUtils;
-
-import java.util.ArrayList;
 
 public class UserSaveTimer extends BaseRunnable {
     public int coolDown;

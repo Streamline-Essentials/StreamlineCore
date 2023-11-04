@@ -2,7 +2,6 @@ package net.streamline.api.holders;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
@@ -11,12 +10,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Getter
 public abstract class ModuleDependencyHolder<T> {
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListMap<Integer, String> keysToTry;
-    @Getter @Setter
+    @Setter
     private T api;
-    @Getter @Setter
+    @Setter
     private String identifier;
 
     public ModuleDependencyHolder(String identifier, String... keysToTry) {

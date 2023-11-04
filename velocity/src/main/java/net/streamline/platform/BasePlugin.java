@@ -8,6 +8,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -201,7 +202,8 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     public static List<Player> playersOnServer(String serverName) {
-        return new ArrayList<>(/*getInstance().getProxy().gets(serverName).getPlayers()*/);
+        Optional<RegisteredServer> serverOpt = getInstance().getProxy().getServer(serverName);
+        return serverOpt.map(registeredServer -> new ArrayList<>(registeredServer.getPlayersConnected())).orElseGet(ArrayList::new);
     }
 
     public static Player getPlayer(String uuid) {
@@ -233,8 +235,7 @@ public abstract class BasePlugin implements IStreamline {
 
     public static Player getPlayer(CommandSource sender) {
         Optional<Player> player = getInstance().getProxy().getPlayer(getInstance().getUserManager().getUsername(sender));
-        if (player.isEmpty()) return null;
-        return player.get();
+        return player.orElse(null);
     }
 
     @Override
@@ -356,7 +357,7 @@ public abstract class BasePlugin implements IStreamline {
         try {
             ResourcePackInfo.Builder infoBuilder = getInstance().getProxy().createResourcePackBuilder(resourcePack.getUrl()).setShouldForce(resourcePack.isForce());
             if (resourcePack.getHash().length > 0) infoBuilder.setHash(resourcePack.getHash());
-            if (! resourcePack.getPrompt().equals("")) infoBuilder.setPrompt(getMessenger().codedText(resourcePack.getPrompt()));
+            if (! resourcePack.getPrompt().isEmpty()) infoBuilder.setPrompt(getMessenger().codedText(resourcePack.getPrompt()));
             player.sendResourcePackOffer(infoBuilder.build());
         } catch (Exception e) {
             MessageUtils.logWarning("Sent '" + player.getUsername() + "' a resourcepack, but it returned null! This is probably due to an incorrect link to the pack.");

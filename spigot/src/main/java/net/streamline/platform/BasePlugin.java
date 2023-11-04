@@ -8,6 +8,7 @@ import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlineConsole;
@@ -107,6 +108,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void onEnable() {
+        getLogger().addHandler(new StreamlineLogHandler());
+
         userManager = new UserManager();
         messenger = new Messenger();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());
@@ -354,7 +357,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
         try {
             if (resourcePack.getHash().length > 0) {
-                if (! resourcePack.getPrompt().equals("")) {
+                if (! resourcePack.getPrompt().isEmpty()) {
                     player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
                     return;
                 }

@@ -9,11 +9,6 @@ public abstract class SimpleModule extends StreamlineModule {
     }
 
     @Override
-    public void onLoad() {
-
-    }
-
-    @Override
     public void onEnable() {
 
     }

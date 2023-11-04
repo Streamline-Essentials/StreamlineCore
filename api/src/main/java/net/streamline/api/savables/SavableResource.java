@@ -10,17 +10,17 @@ import net.streamline.api.registries.SavablesRegistry;
 import net.streamline.api.savables.events.CreateSavableResourceEvent;
 import net.streamline.api.savables.events.DeleteSavableResourceEvent;
 import net.streamline.api.utils.MessageUtils;
-import org.jetbrains.annotations.NotNull;
 import tv.quaint.storage.resources.StorageResource;
 
+@Getter
 public abstract class SavableResource implements StreamlineResource, Identifiable {
-    @Getter @Setter
+    @Setter
     private StorageResource<?> storageResource;
-    @Getter @Setter
+    @Setter
     private String uuid;
-    @Getter @Setter
+    @Setter
     private boolean enabled;
-    @Getter @Setter
+    @Setter
     private boolean isFirstLoad = false;
 
     @Override
@@ -69,6 +69,12 @@ public abstract class SavableResource implements StreamlineResource, Identifiabl
                     MessageUtils.logWarning("SavablesRegistry is null! Did you try using it before it was initialized?");
                 }
             }
+
+            if (registry == null) {
+                MessageUtils.logWarning("SavablesRegistry is still null! Did you try using it before it was initialized?");
+                return;
+            }
+
             registry.register(this);
         } catch (Exception e) {
             e.printStackTrace();

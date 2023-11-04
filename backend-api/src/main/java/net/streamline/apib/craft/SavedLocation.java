@@ -5,16 +5,19 @@ import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import java.util.Objects;
+
+@Getter
 public class SavedLocation {
-    @Getter @Setter
+    @Setter
     private String world;
-    @Getter @Setter
+    @Setter
     private double x, y, z;
-    @Getter @Setter
+    @Setter
     private float yaw, pitch;
 
     public SavedLocation(Location from) {
-        setWorld(from.getWorld().getName());
+        setWorld(Objects.requireNonNull(from.getWorld()).getName());
         setX(from.getX());
         setY(from.getY());
         setZ(from.getZ());

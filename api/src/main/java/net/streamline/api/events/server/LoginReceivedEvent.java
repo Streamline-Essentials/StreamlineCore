@@ -3,12 +3,12 @@ package net.streamline.api.events.server;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MessageUtils;
 
+@Getter
 public class LoginReceivedEvent extends LoginEvent {
-    @Getter @Setter
+    @Setter
     private ConnectionResult result;
 
     public LoginReceivedEvent(StreamlinePlayer resource) {
@@ -16,10 +16,11 @@ public class LoginReceivedEvent extends LoginEvent {
         this.result = new ConnectionResult();
     }
 
+    @Getter
     public static class ConnectionResult {
-        @Getter @Setter
+        @Setter
         private boolean cancelled;
-        @Getter @Setter @NonNull
+        @Setter @NonNull
         private String disconnectMessage;
 
         public ConnectionResult() {
@@ -28,7 +29,7 @@ public class LoginReceivedEvent extends LoginEvent {
         }
 
         public boolean validate() {
-            if (isCancelled() && disconnectMessage.equals("")) {
+            if (isCancelled() && disconnectMessage.isEmpty()) {
                 MessageUtils.logWarning("LoginReceivedEvent has an invalid ConnectionResult! This is due to being set to cancelled while the disconnectMessage is empty!");
                 return false;
             }

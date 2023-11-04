@@ -6,8 +6,8 @@ import net.streamline.api.placeholders.callbacks.PlaceholderCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import tv.quaint.utils.MatcherUtils;
 
+@Getter
 public class IdentifiedReplaceable extends GenericReplaceable {
-    @Getter
     private final String identifier;
 
     public IdentifiedReplaceable(String identifier, String separator, String from, PlaceholderCallback callback) {

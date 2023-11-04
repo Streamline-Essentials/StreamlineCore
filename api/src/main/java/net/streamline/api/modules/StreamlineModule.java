@@ -21,17 +21,16 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+@Getter
 public abstract class StreamlineModule extends Plugin implements ModuleLike {
-    @Getter
     private final File dataFolder;
-    @Getter @Setter
+    @Setter
     private boolean initialized;
-    @Getter @Setter
+    @Setter
     private boolean enabled;
-    @Getter @Setter
+    @Setter
     private boolean malleable = true;
 
-    @Getter
     private ConcurrentSkipListSet<ModuleCommand> commands = new ConcurrentSkipListSet<>();
 
     public <C extends Collection<ModuleCommand>> void setCommands(C commands) {

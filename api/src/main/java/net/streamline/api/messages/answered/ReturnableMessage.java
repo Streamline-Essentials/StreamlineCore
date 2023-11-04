@@ -6,15 +6,12 @@ import net.streamline.api.messages.events.AnsweredMessageEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
@@ -111,8 +108,9 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
         return Long.compare(getPayload().getGottenAt().getTime(), o.getPayload().getGottenAt().getTime());
     }
 
+    @Getter
     public static class TimeoutTimer extends BaseRunnable {
-        @Getter @Setter
+        @Setter
         private ReturnableMessage parent;
 
         public TimeoutTimer(ReturnableMessage returnableMessage) {

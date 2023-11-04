@@ -7,10 +7,11 @@ import net.streamline.api.interfaces.IProperEvent;
 
 import java.util.concurrent.CompletableFuture;
 
+@Getter
 public class ProperEvent extends CompletableFuture<Void> implements IProperEvent<CompletableFuture<Void>> {
-        @Getter @Setter
+        @Setter
         private CompletableFuture<Void> event;
-        @Getter @Setter
+        @Setter
         StreamlineEvent streamlineEvent;
 
         public ProperEvent(StreamlineEvent streamlineEvent) {

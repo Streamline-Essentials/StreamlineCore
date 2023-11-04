@@ -6,11 +6,11 @@ import net.streamline.api.board.data.BoardData;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+@Getter
 public class MessageBoard<T> {
-    @Getter
     private final T of;
 
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListSet<BoardData> data;
 
     public MessageBoard(T of, ConcurrentSkipListSet<BoardData> data) {

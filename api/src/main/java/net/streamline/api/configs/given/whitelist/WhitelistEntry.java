@@ -1,6 +1,5 @@
 package net.streamline.api.configs.given.whitelist;
 
-import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 
 import java.util.Date;

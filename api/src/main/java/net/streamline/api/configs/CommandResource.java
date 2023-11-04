@@ -6,21 +6,19 @@ import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
-import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
-import tv.quaint.thebase.lib.leonhard.storage.Config;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Getter
 public class CommandResource extends SimpleConfiguration {
-    @Getter
     final String identifier;
-    @Getter @Setter
+    @Setter
     StreamlineCommand command;
-    @Getter @Setter
+    @Setter
     ModuleLike module;
 
 

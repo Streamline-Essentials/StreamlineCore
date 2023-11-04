@@ -9,12 +9,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tv.quaint.utils.MatcherUtils;
 
+@Getter
 public abstract class AbstractReplaceable<C extends RATCallback> implements Comparable<AbstractReplaceable<?>> {
-    @Getter @Setter
+    @Setter
     private RATHandledString handledString;
-    @Getter @Setter @Nullable
+    @Setter @Nullable
     private C callback;
-    @Getter @Setter
+    @Setter
     private int timesReplaced;
 
     public AbstractReplaceable(String string, int groups, @Nullable C callback) {

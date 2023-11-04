@@ -2,19 +2,19 @@ package net.streamline.api.scheduler;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.modules.ModuleUtils;
 
 import java.util.Date;
 
+@Getter
 public abstract class BaseRunnable implements Runnable {
-    @Getter @Setter
+    @Setter
     private Date startedAt;
-    @Getter @Setter
+    @Setter
     private long currentTickCount;
-    @Getter @Setter
+    @Setter
     private long period;
-    @Getter @Setter
+    @Setter
     private int index;
 
     /**

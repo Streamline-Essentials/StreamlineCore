@@ -1,6 +1,6 @@
 package net.streamline.api.placeholders.replaceables;
 
-import net.streamline.api.objects.AtomicString;
+import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.CallbackString;
 import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -21,6 +21,8 @@ public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback
         addTimesReplaced(getHandledString().count(string));
         AtomicString atomicString = new AtomicString(string);
         getHandledString().regexMatches(string).forEach((s) -> {
+            if (getCallback() == null) return;
+
             atomicString.set(atomicString.get().replace(s, getCallback().apply(new CallbackString(s, getHandledString()), user)));
         });
         return atomicString.get();

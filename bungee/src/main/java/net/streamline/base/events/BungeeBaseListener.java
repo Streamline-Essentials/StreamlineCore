@@ -1,7 +1,6 @@
 package net.streamline.base.events;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.SLAPI;
 import net.streamline.api.base.listeners.BaseListener;
 import net.streamline.api.events.player.updates.properties.PlayerIPUpdateEvent;
 import net.streamline.api.utils.MessageUtils;

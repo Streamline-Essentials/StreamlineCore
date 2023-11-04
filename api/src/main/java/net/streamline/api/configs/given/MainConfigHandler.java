@@ -1,14 +1,11 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.text.HexPolicy;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
-import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class MainConfigHandler extends SimpleConfiguration {
     public MainConfigHandler() {

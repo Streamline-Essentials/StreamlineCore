@@ -1,4 +1,5 @@
 package net.streamline.api.configs.given;
+
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
 public class SavedProfileConfig extends SimpleJsonDocument {
     @Override
@@ -26,8 +26,9 @@ public class SavedProfileConfig extends SimpleJsonDocument {
 
     }
 
+    @Getter
     public static class Ticker extends BaseRunnable {
-        @Getter @Setter
+        @Setter
         private SavedProfileConfig parent;
 
         public Ticker(SavedProfileConfig parent) {

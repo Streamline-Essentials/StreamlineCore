@@ -3,6 +3,7 @@ package net.streamline.api.base.ratapi;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.IdentifiedReplaceable;
@@ -10,11 +11,9 @@ import net.streamline.api.placeholders.replaceables.IdentifiedUserReplaceable;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
-import net.streamline.api.modules.ModuleManager;
 import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 public class StreamlineExpansion extends RATExpansion {
     public StreamlineExpansion() {

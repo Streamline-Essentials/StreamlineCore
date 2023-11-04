@@ -1,6 +1,5 @@
 package net.streamline.api.interfaces;
 
-import lombok.Getter;
 import net.streamline.api.events.StreamlineEvent;
 
 public interface IProperEvent<E> {

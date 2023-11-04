@@ -6,7 +6,6 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 

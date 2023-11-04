@@ -1,7 +1,5 @@
 package net.streamline.api.registries;
 
-import lombok.Getter;
-
 public interface Identifiable extends Comparable<Identifiable> {
     public String getIdentifier();
 

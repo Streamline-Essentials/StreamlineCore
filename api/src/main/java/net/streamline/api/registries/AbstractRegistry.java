@@ -6,15 +6,14 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public abstract class AbstractRegistry<I, T> implements Identifiable {
-    @Getter @Setter
+    @Setter
     private String identifier;
-    @Getter
     private final Class<I> type;
-    @Getter
     private final boolean isMaster;
 
-    @Getter @Setter
+    @Setter
     private List<I> registry = new ArrayList<>();
 
     public AbstractRegistry(String identifier, Class<I> type, boolean isMaster) {
