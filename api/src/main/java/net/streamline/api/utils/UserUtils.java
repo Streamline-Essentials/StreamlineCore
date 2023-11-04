@@ -14,30 +14,22 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.MongoMainResource;
-import net.streamline.api.savables.MySQLMainResource;
 import net.streamline.api.savables.events.LoadStreamlineUserEvent;
-import net.streamline.api.savables.users.*;
+import net.streamline.api.savables.users.OperatorUser;
+import net.streamline.api.savables.users.StreamlineConsole;
+import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamlineUser;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
 import tv.quaint.storage.resources.cache.CachedResource;
 import tv.quaint.storage.resources.cache.CachedResourceUtils;
-import tv.quaint.storage.resources.databases.DatabaseResource;
-import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
-import tv.quaint.storage.resources.databases.processing.DatabaseValue;
-import tv.quaint.storage.resources.databases.singled.DatabaseSingle;
-import tv.quaint.storage.resources.databases.singled.MongoSingle;
-import tv.quaint.storage.resources.databases.singled.MySQLSingle;
-import tv.quaint.storage.resources.databases.singled.SQLiteSingle;
-import tv.quaint.storage.resources.databases.specific.MongoResource;
-import tv.quaint.storage.resources.databases.specific.MySQLResource;
-import tv.quaint.storage.resources.databases.specific.SQLiteResource;
 import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.thebase.lib.leonhard.storage.Config;
 import tv.quaint.thebase.lib.leonhard.storage.Json;
 import tv.quaint.thebase.lib.leonhard.storage.Toml;
 import tv.quaint.thebase.lib.mongodb.MongoClient;
+import tv.quaint.utils.MathUtils;
 
 import java.io.File;
 import java.sql.Connection;
@@ -48,13 +40,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UserUtils {
-//    @Getter
-//    private static UserUtils instance;
-//
-//    public static UserUtils() {
-//        instance = this;
-//    }
-
     @Getter @Setter
     private static ConcurrentSkipListMap<String, StreamlineUser> loadedUsers = new ConcurrentSkipListMap<>();
 
@@ -160,13 +145,13 @@ public class UserUtils {
             case SQLITE:
             case MONGO:
                 CachedResource<?> cachedResource = (CachedResource<?>) user.getStorageResource();
+                String tableName;
                 if (user instanceof StreamlinePlayer) {
-                    String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
-                    CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
+                    tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "players";
                 } else {
-                    String tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
-                    CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
+                    tableName = SLAPI.getMainDatabase().getConfig().getTablePrefix() + "generic";
                 }
+                CachedResourceUtils.pushToDatabase(tableName, cachedResource, SLAPI.getMainDatabase());
                 break;
         }
     }
@@ -255,12 +240,10 @@ public class UserUtils {
         if (isConsole(uuid)) {
             user = new StreamlineConsole();
         } else {
-            if (CachedUUIDsHandler.isCached(uuid) || userExists(uuid)) {
-                user = new StreamlinePlayer(uuid);
-            } else {
+            if (! CachedUUIDsHandler.isCached(uuid) && ! userExists(uuid)) {
                 MessageUtils.logDebug("User " + uuid + " is not cached and does not exist in the database, but we are still going to create a new user for them.");
-                user = new StreamlinePlayer(uuid);
             }
+            user = new StreamlinePlayer(uuid);
         }
 
         loadUser(user);
@@ -405,7 +388,7 @@ public class UserUtils {
             return "";
         }
 
-        String prefix = "";
+        String prefix;
 
         Group group = SLAPI.getLuckPerms().getGroupManager().getGroup(user.getPrimaryGroup());
         if (group == null) {
@@ -450,7 +433,7 @@ public class UserUtils {
         else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
         if (user == null) return "";
 
-        String suffix = "";
+        String suffix;
 
         Group group = SLAPI.getLuckPerms().getGroupManager().getGroup(user.getPrimaryGroup());
         if (group == null){
@@ -569,7 +552,6 @@ public class UserUtils {
 
         s.getOnlineUsers().forEach((string) -> {
             StreamlineUser player = getOrGetUser(string);
-            if (player == null) return;
             r.add(player);
         });
 

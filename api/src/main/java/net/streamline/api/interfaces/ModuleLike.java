@@ -1,7 +1,6 @@
 package net.streamline.api.interfaces;
 
 import net.streamline.api.command.ModuleCommand;
-import tv.quaint.objects.handling.IEventable;
 import tv.quaint.objects.handling.derived.IModifierEventable;
 
 import java.io.File;

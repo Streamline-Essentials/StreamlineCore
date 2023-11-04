@@ -3,8 +3,9 @@ package net.streamline.api.savables.users;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
 public class OperatorUser {
-    @Getter @Setter
+    @Setter
     private StreamlineUser parent;
 
     public OperatorUser(StreamlineUser parent) {

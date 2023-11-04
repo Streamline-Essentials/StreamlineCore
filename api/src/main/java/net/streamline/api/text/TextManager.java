@@ -2,11 +2,10 @@ package net.streamline.api.text;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.objects.AtomicString;
-import net.streamline.api.utils.MatcherUtils;
 import net.streamline.api.utils.MessageUtils;
 import tv.quaint.thebase.lib.re2j.Matcher;
 import tv.quaint.thebase.lib.re2j.Pattern;
+import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.List;

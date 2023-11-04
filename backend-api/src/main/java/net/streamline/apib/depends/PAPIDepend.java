@@ -14,8 +14,9 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Getter
 public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
-    @Getter @Setter
+    @Setter
     private StreamlinePAPIExpansion papiExpansion;
 
     public PAPIDepend() {

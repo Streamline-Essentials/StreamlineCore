@@ -7,10 +7,9 @@ import tv.quaint.utils.MatcherUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class RATHandledString {
-    @Getter
     private final String regex;
-    @Getter
     private final int groups;
 
     public RATHandledString(String regex, int groups) {

@@ -47,11 +47,10 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
         ConcurrentSkipListMap<Integer, String> a = new ConcurrentSkipListMap<>();
         int actual = 1;
-        for (int i = 0; i < allNames.length; i ++) {
-            String s = allNames[i];
+        for (String s : allNames) {
             if (names.containsValue(s)) continue;
             a.put(names.size() + actual, s);
-            actual ++;
+            actual++;
         }
 
         names.putAll(a);
@@ -85,7 +84,7 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
 
     public static ConcurrentSkipListMap<Integer, String> getCachedNames(String uuid) {
         if (getCachedTotalNames().containsKey(uuid)) {
-            if (getCachedTotalNames().get(uuid).size() > 0) {
+            if (! getCachedTotalNames().get(uuid).isEmpty()) {
                 return getCachedTotalNames().get(uuid);
             }
         }

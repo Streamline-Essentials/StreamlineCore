@@ -36,7 +36,6 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     @Override
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
         String[] args = invocation.arguments();
-        if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserManager.getInstance().getOrGetUser(invocation.source()), invocation.arguments());
 

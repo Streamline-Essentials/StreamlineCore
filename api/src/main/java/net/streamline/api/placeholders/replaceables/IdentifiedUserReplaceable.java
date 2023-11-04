@@ -6,8 +6,8 @@ import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import tv.quaint.utils.MatcherUtils;
 
+@Getter
 public class IdentifiedUserReplaceable extends UserReplaceable {
-    @Getter
     private final String identifier;
 
     public IdentifiedUserReplaceable(String identifier, String separator, String from, UserPlaceholderCallback callback) {

@@ -5,8 +5,8 @@ import net.streamline.api.events.StreamlineEvent;
 
 import java.util.logging.LogRecord;
 
+@Getter
 public class ServerLogTextEvent extends StreamlineEvent {
-    @Getter
     final LogRecord record;
 
     public ServerLogTextEvent(LogRecord record) {

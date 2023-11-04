@@ -6,10 +6,11 @@ import net.md_5.bungee.api.plugin.Event;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 
+@Getter
 public class ProperEvent extends Event implements IProperEvent<Event> {
-        @Getter @Setter
+        @Setter
         private Event event;
-        @Getter @Setter
+        @Setter
         StreamlineEvent streamlineEvent;
 
         public ProperEvent(StreamlineEvent streamlineEvent) {

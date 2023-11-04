@@ -1,12 +1,5 @@
 package net.streamline.platform.listeners;
 
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
-import net.streamline.base.Streamline;
-import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
-import tv.quaint.thebase.lib.google.common.io.ByteStreams;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
@@ -19,6 +12,7 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.streamline.api.SLAPI;
@@ -29,9 +23,9 @@ import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.events.server.*;
 import net.streamline.api.events.server.ping.PingReceivedEvent;
+import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
-import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
@@ -41,6 +35,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
+import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -49,7 +44,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public class PlatformListener {
     public PlatformListener() {

@@ -2,7 +2,6 @@ package net.streamline.api.savables.events;
 
 import lombok.Getter;
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.savables.SavableResource;
 import net.streamline.api.savables.StreamlineResource;
 
 public abstract class SavableEvent<T extends StreamlineResource> extends StreamlineEvent {

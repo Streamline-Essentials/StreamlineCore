@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
-import net.streamline.api.objects.AtomicString;
+import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.RATCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.*;
@@ -12,6 +12,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.utils.MatcherUtils;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class RATRegistry {
@@ -96,7 +97,7 @@ public class RATRegistry {
     public static String fetchDirty(String from, StreamlineUser user) {
         String temp = from;
         temp = fetch(temp, user);
-        while (temp != from) {
+        while (! Objects.equals(temp, from)) {
             from = temp;
             temp = fetch(temp, user);
         }

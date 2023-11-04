@@ -12,7 +12,7 @@ public class StreamlineConsole extends StreamlineUser {
         super("%", null);
 
         if (this.getUuid() == null) return;
-        if (this.getUuid().equals("")) return;
+        if (this.getUuid().isEmpty()) return;
     }
 
     @Override

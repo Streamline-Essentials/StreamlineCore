@@ -1,9 +1,8 @@
 package net.streamline.api.configs.given.punishments;
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.objects.AtomicString;
+import tv.quaint.objects.AtomicString;
 import tv.quaint.storage.datastores.SimpleJsonDatastore;
-import tv.quaint.storage.documents.SimpleJsonDocument;
 
 import java.util.Date;
 
@@ -37,9 +36,7 @@ public class PunishmentsDocument extends SimpleJsonDatastore<StreamlinePunishmen
         String reason = get(keyPrefix + "reason", String.class);
         long timeToUnpunish = get(keyPrefix + "timeToUnpunish", Long.class);
 
-        StreamlinePunishment punishment = new StreamlinePunishment(hash, punisherUUID, reason, PunishmentType.valueOf(hash.split("\\.")[1]), new Date(timeToUnpunish));
-
-        return punishment;
+        return new StreamlinePunishment(hash, punisherUUID, reason, PunishmentType.valueOf(hash.split("\\.")[1]), new Date(timeToUnpunish));
     }
 
     public String getKeyPrefix(String hash) {

@@ -1,14 +1,13 @@
 package net.streamline.api.board.data;
 
+import lombok.Getter;
+
+@Getter
 public class BoardSender<T> {
     private final T of;
 
     public BoardSender(T of) {
         this.of = of;
-    }
-
-    public T getOf() {
-        return of;
     }
 
     public String getIdentifier() {

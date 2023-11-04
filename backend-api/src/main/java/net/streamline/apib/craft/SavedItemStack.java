@@ -16,16 +16,17 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@Getter
 public class SavedItemStack {
-    @Getter @Setter
+    @Setter
     private String material;
-    @Getter @Setter
+    @Setter
     private int count;
-    @Getter @Setter
+    @Setter
     private String name;
-    @Getter @Setter
+    @Setter
     private List<String> lore = new ArrayList<>();
-    @Getter @Setter
+    @Setter
     private ConcurrentHashMap<String, Integer> enchants = new ConcurrentHashMap<>();
 
     public void loreFrom(String[] lore) {
@@ -93,7 +94,7 @@ public class SavedItemStack {
             MessageUtils.logWarning("Could not get ItemMeta for an item!");
             return null;
         }
-        if (! this.getName().equals("")) meta.setDisplayName(this.getName());
+        if (!this.getName().isEmpty()) meta.setDisplayName(this.getName());
 
         if (this.getLore() != null) if (! this.getLore().isEmpty()) meta.setLore(this.getLore());
 

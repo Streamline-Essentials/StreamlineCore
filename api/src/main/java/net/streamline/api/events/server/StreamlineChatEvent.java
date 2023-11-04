@@ -5,14 +5,13 @@ import lombok.Setter;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.savables.users.StreamlinePlayer;
 
+@Getter
 public class StreamlineChatEvent extends StreamlineEvent {
-    @Getter
     private final StreamlinePlayer sender;
-    @Getter
     private final String originalMessage;
-    @Getter @Setter
+    @Setter
     private String message;
-    @Getter @Setter
+    @Setter
     private boolean canceled;
 
     public StreamlineChatEvent(StreamlinePlayer sender, String message) {

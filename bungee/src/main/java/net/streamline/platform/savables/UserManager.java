@@ -3,7 +3,6 @@ package net.streamline.platform.savables;
 import lombok.Getter;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
@@ -12,9 +11,7 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
@@ -25,8 +22,7 @@ import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.SocketAddress;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -88,7 +84,7 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
     public String parsePlayerIP(ProxiedPlayer player) {
         if (player == null) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
 
-        InetSocketAddress address = player.getAddress();
+        SocketAddress address = player.getSocketAddress();
         if (address == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
         String ipSt = address.toString().replace("/", "");
         String[] ipSplit = ipSt.split(":");

@@ -1,15 +1,13 @@
 package net.streamline.api.objects;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
+@Getter
 public class DatedNumber<T extends Number> extends Number implements Comparable<T> {
-    @Getter
     private final T number;
-    @Getter
     private final Date date;
 
     public DatedNumber(T number, Date date) {

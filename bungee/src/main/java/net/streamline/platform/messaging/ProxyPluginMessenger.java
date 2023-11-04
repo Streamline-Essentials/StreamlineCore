@@ -1,14 +1,13 @@
 package net.streamline.platform.messaging;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.messages.*;
+import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
@@ -19,11 +18,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
-        if (Streamline.getInstance().getOnlinePlayers().size() == 0) return;
+        if (Streamline.getInstance().getOnlinePlayers().isEmpty()) return;
 
         if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
             Streamline.getInstance().getServerNames().forEach(a -> {
-                if (UserManager.getInstance().getUsersOn(a).size() <= 0) return;
+                if (UserManager.getInstance().getUsersOn(a).isEmpty()) return;
                 ProxiedPlayer player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
                 if (player == null) {
                     return;

@@ -14,6 +14,7 @@ import net.streamline.api.events.server.ServerStartEvent;
 import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
+import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
@@ -98,6 +99,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void onEnable() {
+        getLogger().addHandler(new StreamlineLogHandler());
+
         userManager = new UserManager();
         messenger = new Messenger();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());

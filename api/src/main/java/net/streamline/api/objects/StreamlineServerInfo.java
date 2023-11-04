@@ -6,20 +6,19 @@ import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
+@Getter
 public class StreamlineServerInfo {
-    @Getter
     private final String identifier;
-    @Getter @Setter
+    @Setter
     private String name;
-    @Getter @Setter
+    @Setter
     private String motd;
-    @Getter @Setter
+    @Setter
     private String address;
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListSet<String> onlineUsers;
 
     public StreamlineServerInfo(String identifier, String name, String motd, String address, ConcurrentSkipListSet<String> onlineUsers) {

@@ -4,21 +4,17 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.SavableResource;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
-import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
-import tv.quaint.storage.resources.cache.CachedResource;
 import tv.quaint.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
 public abstract class StreamlineUser extends SavableResource {
     @Override
@@ -196,6 +192,10 @@ public abstract class StreamlineUser extends SavableResource {
     }
 
     public String getLatestName() {
+        return getLatest(latestName);
+    }
+
+    private String getLatest(String latestName) {
         if (online) {
             setLatestName(SLAPI.getInstance().getUserManager().getUsername(getUuid()));
             if (displayName == null) {
@@ -220,23 +220,7 @@ public abstract class StreamlineUser extends SavableResource {
     }
 
     public String getDisplayName() {
-        if (online) {
-            setLatestName(SLAPI.getInstance().getUserManager().getUsername(getUuid()));
-            if (displayName == null) {
-                if (this instanceof StreamlinePlayer) {
-                    StreamlinePlayer player = (StreamlinePlayer) this;
-                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
-                }
-                return displayName;
-            }
-            if (displayName.equals("null")) {
-                if (this instanceof StreamlinePlayer) {
-                    StreamlinePlayer player = (StreamlinePlayer) this;
-                    player.setDisplayName(GivenConfigs.getMainConfig().userCombinedNicknameDefault());
-                }
-            }
-        }
-        return displayName;
+        return getLatest(displayName);
     }
 
     public void setDisplayName(String name) {

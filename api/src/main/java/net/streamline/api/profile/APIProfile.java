@@ -2,17 +2,17 @@ package net.streamline.api.profile;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.objects.StreamlineServerInfo;
 
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Getter
 public class APIProfile {
-    @Getter @Setter
+    @Setter
     private String token;
-    @Getter @Setter
+    @Setter
     private ConcurrentSkipListMap<String, StreamlineServerInfo> servers = new ConcurrentSkipListMap<>();
 
     public APIProfile(ConcurrentSkipListMap<String, StreamlineServerInfo> servers) {

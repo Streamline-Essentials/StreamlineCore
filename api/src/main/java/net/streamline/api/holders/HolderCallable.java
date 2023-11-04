@@ -4,8 +4,8 @@ import lombok.Getter;
 
 import java.util.concurrent.Callable;
 
+@Getter
 public class HolderCallable implements Callable<Boolean> {
-    @Getter
     private final Callable<Boolean> callable;
 
     public HolderCallable(Callable<Boolean> callable) {

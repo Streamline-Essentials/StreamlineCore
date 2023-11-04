@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.modules.ModuleUtils;
 
+@Getter @Setter
 public class StreamlineLocation {
     @Getter
     private static final String nullWorld = "{{NULL}}";
@@ -12,18 +13,12 @@ public class StreamlineLocation {
     @Getter
     private static final float nullRotation = Float.MIN_VALUE;
 
-    @Getter
-    private final String world;
-    @Getter
-    private final double x;
-    @Getter
-    private final double y;
-    @Getter
-    private final double z;
-    @Getter
-    private final float yaw;
-    @Getter
-    private final float pitch;
+    private String world;
+    private double x;
+    private double y;
+    private double z;
+    private float yaw;
+    private float pitch;
 
     public StreamlineLocation(String world, double x, double y, double z, float yaw, float pitch) {
         this.world = world;

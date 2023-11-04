@@ -5,8 +5,9 @@ import lombok.Setter;
 import org.bukkit.util.EulerAngle;
 import tv.quaint.thebase.lib.leonhard.storage.sections.FlatFileSection;
 
+@Getter
 public class SavedEulerAngle {
-    @Getter @Setter
+    @Setter
     public double x, y, z;
 
     public SavedEulerAngle(EulerAngle from) {

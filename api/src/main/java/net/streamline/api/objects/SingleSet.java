@@ -3,10 +3,11 @@ package net.streamline.api.objects;
 import lombok.Getter;
 import lombok.Setter;
 
+@Getter
 public class SingleSet<K, V> {
-    @Getter @Setter
+    @Setter
     private K key;
-    @Getter @Setter
+    @Setter
     private V value;
 
     public SingleSet(K key, V value){

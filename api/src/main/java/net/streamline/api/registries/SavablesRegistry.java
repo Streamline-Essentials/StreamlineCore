@@ -5,10 +5,11 @@ import lombok.Setter;
 import net.streamline.api.savables.SavableResource;
 
 public class SavablesRegistry extends AbstractRegistry<SavableResource, SavablesRegistry.SavableIdentifier> {
+    @Getter
     public static class SavableIdentifier {
-        @Getter @Setter
+        @Setter
         private String identifier;
-        @Getter @Setter
+        @Setter
         private Class<? extends SavableResource> type;
 
         public SavableIdentifier(String identifier, Class<? extends SavableResource> type) {

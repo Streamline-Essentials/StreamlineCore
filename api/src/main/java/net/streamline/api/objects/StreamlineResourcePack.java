@@ -5,14 +5,15 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.savables.users.StreamlinePlayer;
 
+@Getter
 public class StreamlineResourcePack {
-    @Getter @Setter
+    @Setter
     private String url;
-    @Getter @Setter
+    @Setter
     private byte[] hash;
-    @Getter @Setter
+    @Setter
     private String prompt;
-    @Getter @Setter
+    @Setter
     private boolean force;
 
     public StreamlineResourcePack(String url, byte[] hash, String prompt, boolean force) {

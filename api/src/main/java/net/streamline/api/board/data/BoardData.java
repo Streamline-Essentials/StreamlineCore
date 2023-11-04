@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.board.data.constructor.BoardConstructable;
 import net.streamline.api.board.data.constructor.StringConstructable;
-import net.streamline.api.utils.MatcherUtils;
+import tv.quaint.utils.MatcherUtils;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.thebase.lib.re2j.Matcher;
 

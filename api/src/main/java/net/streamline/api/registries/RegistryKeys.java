@@ -3,14 +3,13 @@ package net.streamline.api.registries;
 import lombok.Getter;
 import net.streamline.api.savables.SavableResource;
 
+@Getter
 public enum RegistryKeys {
     MASTER(AbstractRegistry.class, true),
     SAVABLES(SavableResource.class),
     ;
 
-    @Getter
     private final Class<? extends Identifiable> type;
-    @Getter
     private final boolean isMaster;
 
     RegistryKeys(Class<? extends Identifiable> type, boolean isMaster) {

@@ -1,11 +1,8 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
-import tv.quaint.storage.resources.flat.FlatFileResource;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
-import tv.quaint.thebase.lib.leonhard.storage.Config;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class MainMessagesHandler extends SimpleConfiguration {

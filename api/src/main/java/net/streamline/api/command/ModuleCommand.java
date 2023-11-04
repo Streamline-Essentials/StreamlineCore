@@ -3,11 +3,8 @@ package net.streamline.api.command;
 import lombok.Getter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.interfaces.ModuleLike;
-import net.streamline.api.modules.StreamlineModule;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 public abstract class ModuleCommand extends StreamlineCommand {

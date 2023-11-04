@@ -1,7 +1,6 @@
 package net.streamline.base.runnables;
 
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.messages.builders.ServerInfoMessageBuilder;

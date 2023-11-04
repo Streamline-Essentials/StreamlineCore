@@ -6,9 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 @Getter
 public class HexPolicy implements Comparable<HexPolicy> {
-    @Getter @Setter
+    @Setter
     private String starter;
-    @Getter @Setter
+    @Setter
     private String ender;
 
     public HexPolicy(String starter, String ender) {

@@ -1,30 +1,30 @@
 package net.streamline.platform;
 
-import net.md_5.bungee.chat.ComponentSerializer;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.AtomicString;
-import net.streamline.api.text.HexPolicy;
-import net.streamline.api.text.TextManager;
-import org.bukkit.Bukkit;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.*;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.SLAPI;
 import net.streamline.api.interfaces.IMessenger;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.text.HexPolicy;
+import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
-import tv.quaint.thebase.lib.re2j.Matcher;
-import tv.quaint.thebase.lib.re2j.Pattern;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class Messenger implements IMessenger {
     @Getter

@@ -9,7 +9,7 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.CreatePlayerEvent;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
 import net.streamline.api.savables.events.XPChangePlayerEvent;
-import net.streamline.api.utils.MathUtils;
+import tv.quaint.utils.MathUtils;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.thebase.lib.exp4j.tokenizer.UnknownFunctionOrVariableException;
@@ -97,7 +97,7 @@ public class StreamlinePlayer extends StreamlineUser {
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", 0);
         // Location.
         String locationString = getOrSetDefault("player.location", "");
-        if (locationString.equals("")) {
+        if (locationString.isEmpty()) {
             location = null;
         } else {
             location = new StreamlineLocation(locationString);
@@ -118,7 +118,7 @@ public class StreamlinePlayer extends StreamlineUser {
         playSeconds = getOrSetDefault("player.stats.playtime.seconds", playSeconds);
         // Location.
         String locationString = getOrSetDefault("player.location", location == null ? "" : location.toString());
-        if (locationString.equals("")) {
+        if (locationString.isEmpty()) {
             location = null;
         } else {
             location = new StreamlineLocation(locationString);
