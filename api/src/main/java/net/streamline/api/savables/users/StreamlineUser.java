@@ -286,4 +286,8 @@ public abstract class StreamlineUser extends SavableResource {
     public boolean isPlayer() {
         return ! isConsole();
     }
+
+    public void kick(String message) {
+        ModuleUtils.kick(this, message);
+    }
 }

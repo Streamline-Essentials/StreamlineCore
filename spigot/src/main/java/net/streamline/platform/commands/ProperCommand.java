@@ -7,6 +7,7 @@ import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
+import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -60,7 +61,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        CommandResult<?> result = parent.baseRun(UserUtils.getOrGetUserByName(sender.getName()), args);
+        CommandResult<?> result = parent.baseRun(UserManager.getInstance().getOrGetUser(sender), args);
 
         if (result == null) return false;
         if (result == StreamlineCommand.notSet()) return true;
