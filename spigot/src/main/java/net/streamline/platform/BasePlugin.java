@@ -397,12 +397,12 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
      * Register command(s) into the server command map.
      * @param commands The command(s) to register
      */
-    public static void registerCommands(Command... commands) {
+    public static void registerCommands(ProperCommand... commands) {
         // Get the commandMap
         try {
             // Register all the commands into the map
-            for (final Command command : commands) {
-                commandMap.register(command.getLabel(), command);
+            for (final ProperCommand command : commands) {
+                commandMap.register(command.getLabel(), command.getParent().getBase(), command);
             }
 
             CompletableFuture.runAsync(BasePlugin::syncCommands);
@@ -418,15 +418,11 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public static void unregisterCommands(String... commands) {
         // Get the commandMap
         try {
-            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
-
             // Register all the commands into the map
             for (final String command : commands) {
                 Command com = commandMap.getCommand(command);
                 if (com == null) {
-                    MessageUtils.logWarning("Tried to unregister a command that does not exist: " + command);
+                    MessageUtils.logDebug("Tried to unregister a command that does not exist: " + command);
                     continue;
                 }
 
@@ -441,21 +437,23 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     public static void syncCommands() {
         try {
+            // Get the CraftServer class
             Class<?> craftServerClass = Bukkit.getServer().getClass();
 
+            // Attempt to find the syncCommands method
             try {
                 Method syncCommandsMethod = craftServerClass.getDeclaredMethod("syncCommands");
-                try {
-                    syncCommandsMethod.setAccessible(true);
-                    syncCommandsMethod.invoke(Bukkit.getServer());
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    MessageUtils.logWarningWithInfo("Failed to invoke syncCommands method: ", e);
-                }
+                syncCommandsMethod.setAccessible(true);
+
+                // Invoke the syncCommands method
+                syncCommandsMethod.invoke(Bukkit.getServer());
             } catch (NoSuchMethodException e) {
-                MessageUtils.logWarningWithInfo("syncCommands method not found: ", e);
+                MessageUtils.logDebugWithInfo("syncCommands method not found: ", e);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                MessageUtils.logDebugWithInfo("Failed to invoke syncCommands method: ", e);
             }
         } catch (Exception e) {
-            MessageUtils.logWarningWithInfo("An unknown error occurred: ", e);
+            MessageUtils.logDebugWithInfo("An unknown error occurred while syncing commands: ", e);
         }
     }
 }
