@@ -103,6 +103,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
             }
         }
 
+        setupCommandMap();
+
         this.load();
     }
 
@@ -378,6 +380,19 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Getter @Setter
     private static boolean commandsNeedToBeSynced = false;
 
+    @Getter @Setter
+    private static CommandMap commandMap;
+
+    private static void setupCommandMap() {
+        try {
+            final Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            bukkitCommandMap.setAccessible(true);
+            commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Register command(s) into the server command map.
      * @param commands The command(s) to register
@@ -385,10 +400,6 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public static void registerCommands(Command... commands) {
         // Get the commandMap
         try {
-            Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
-
             // Register all the commands into the map
             for (final Command command : commands) {
                 commandMap.register(command.getLabel(), command);
