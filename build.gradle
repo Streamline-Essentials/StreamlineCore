@@ -18,11 +18,6 @@ blossom {
     replaceToken('${{project.version}}', project.version)
 }
 
-wrapper {
-    gradleVersion = "7.5.1"
-    distributionType = Wrapper.DistributionType.ALL
-}
-
 subprojects {
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
@@ -31,7 +26,7 @@ subprojects {
     apply from: "$rootDir/dependencies.gradle"
 
     group = 'com.github.streamline-essentials'
-    version = '2.1.2.0-SNAPSHOT'
+    version = '2.2.0.0-SNAPSHOT'
 
     repositories {
         mavenCentral()
@@ -60,11 +55,17 @@ subprojects {
 
         relocate("tv.quaint.thebase.lib", "net.streamline.thebase.lib")
 
-//    archiveFileName = "$archiveBaseName-$archiveVersion.$archiveExtension"
-        archiveName = "$baseName-$version.$extension"
+        archiveFileName = "${project.name}-${project.version}.jar"
+
+        minimize()
     }
 
     artifacts {
         archives shadowJar
     }
+}
+
+wrapper {
+    gradleVersion = "8.3"
+    distributionType = Wrapper.DistributionType.ALL
 }
