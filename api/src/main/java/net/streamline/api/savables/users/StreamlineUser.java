@@ -28,7 +28,9 @@ public abstract class StreamlineUser extends SavableResource {
 
     @Getter
     private final StreamlineUser savableUser;
+    @Setter
     private String latestName;
+    @Setter
     private String displayName;
     @Getter @Setter
     private ConcurrentSkipListSet<String> tagList;
@@ -215,16 +217,8 @@ public abstract class StreamlineUser extends SavableResource {
         return latestName;
     }
 
-    public void setLatestName(String name) {
-        latestName = name;
-    }
-
     public String getDisplayName() {
         return getLatest(displayName);
-    }
-
-    public void setDisplayName(String name) {
-        displayName = name;
     }
 
     public String getName() {

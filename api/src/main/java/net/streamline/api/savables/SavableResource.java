@@ -12,15 +12,12 @@ import net.streamline.api.savables.events.DeleteSavableResourceEvent;
 import net.streamline.api.utils.MessageUtils;
 import tv.quaint.storage.resources.StorageResource;
 
+@Setter
 @Getter
 public abstract class SavableResource implements StreamlineResource, Identifiable {
-    @Setter
     private StorageResource<?> storageResource;
-    @Setter
     private String uuid;
-    @Setter
     private boolean enabled;
-    @Setter
     private boolean isFirstLoad = false;
 
     @Override
