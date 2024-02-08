@@ -3,7 +3,6 @@ package net.streamline.platform.commands;
 import lombok.Getter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
-import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;

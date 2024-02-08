@@ -8,7 +8,6 @@ import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.configs.CommandResource;
 import net.streamline.api.events.command.CommandResultedEvent;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;

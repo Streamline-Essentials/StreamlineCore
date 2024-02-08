@@ -1,7 +1,6 @@
 package net.streamline.api.configs;
 
 import net.streamline.api.interfaces.ModuleLike;
-import net.streamline.api.savables.SavableResource;
 import tv.quaint.storage.StorageUtils;
 import tv.quaint.storage.resources.StorageResource;
 import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;

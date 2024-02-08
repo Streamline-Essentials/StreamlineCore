@@ -10,7 +10,6 @@ import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 

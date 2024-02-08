@@ -3,7 +3,6 @@ package net.streamline.platform.commands;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;

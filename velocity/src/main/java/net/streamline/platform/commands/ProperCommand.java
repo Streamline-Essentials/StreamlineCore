@@ -4,7 +4,6 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import lombok.Getter;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;

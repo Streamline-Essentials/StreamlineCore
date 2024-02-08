@@ -1,8 +1,5 @@
 package net.streamline.platform.handlers;
 
-import net.streamline.api.interfaces.IBackendHandler;
-import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

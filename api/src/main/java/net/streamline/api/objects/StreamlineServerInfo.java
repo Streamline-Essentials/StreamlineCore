@@ -2,7 +2,6 @@ package net.streamline.api.objects;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.Arrays;
 import java.util.List;

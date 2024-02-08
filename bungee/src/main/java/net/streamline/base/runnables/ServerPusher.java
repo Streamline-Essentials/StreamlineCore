@@ -7,7 +7,6 @@ import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.base.Streamline;
 

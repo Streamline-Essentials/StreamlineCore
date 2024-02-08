@@ -3,7 +3,6 @@ package net.streamline.api.placeholders.replaceables;
 import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.CallbackString;
 import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
-import net.streamline.api.savables.users.StreamlineUser;
 
 public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback> {
     public UserReplaceable(String from, UserPlaceholderCallback callback) {

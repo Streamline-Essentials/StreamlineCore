@@ -4,7 +4,6 @@ package net.streamline.api.base.timers;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.savables.events.UserNameUpdateEvent;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.UserUtils;
 

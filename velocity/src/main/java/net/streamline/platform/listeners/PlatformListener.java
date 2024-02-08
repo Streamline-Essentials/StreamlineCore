@@ -30,8 +30,6 @@ import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;

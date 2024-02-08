@@ -4,7 +4,6 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 

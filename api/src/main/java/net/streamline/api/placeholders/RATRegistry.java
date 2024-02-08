@@ -8,7 +8,6 @@ import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.RATCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.*;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.utils.MatcherUtils;
 

@@ -6,7 +6,6 @@ import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
 import java.util.Arrays;

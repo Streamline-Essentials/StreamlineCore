@@ -2,8 +2,6 @@ package net.streamline.base;
 
 import lombok.Getter;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
-import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

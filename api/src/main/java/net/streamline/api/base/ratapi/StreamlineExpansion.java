@@ -8,8 +8,6 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.IdentifiedReplaceable;
 import net.streamline.api.placeholders.replaceables.IdentifiedUserReplaceable;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.utils.MatcherUtils;
 

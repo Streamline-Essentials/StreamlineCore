@@ -5,7 +5,6 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;

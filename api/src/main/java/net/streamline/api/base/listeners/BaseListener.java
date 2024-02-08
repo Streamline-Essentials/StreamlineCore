@@ -10,7 +10,6 @@ import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.events.LevelChangePlayerEvent;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;

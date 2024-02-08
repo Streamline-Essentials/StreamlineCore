@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
-import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;

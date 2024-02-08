@@ -3,7 +3,6 @@ package net.streamline.api.command;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 
 import java.util.concurrent.ConcurrentSkipListMap;

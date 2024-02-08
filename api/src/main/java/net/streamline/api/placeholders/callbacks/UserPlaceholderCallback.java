@@ -1,7 +1,5 @@
 package net.streamline.api.placeholders.callbacks;
 
-import net.streamline.api.savables.users.StreamlineUser;
-
 import java.util.function.BiFunction;
 
 @FunctionalInterface

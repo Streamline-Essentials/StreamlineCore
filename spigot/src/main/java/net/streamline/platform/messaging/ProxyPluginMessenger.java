@@ -7,9 +7,7 @@ import net.streamline.api.messages.builders.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 

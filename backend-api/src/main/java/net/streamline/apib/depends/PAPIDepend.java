@@ -7,7 +7,6 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.holders.StreamlineDependencyHolder;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.apib.SLAPIB;
 import org.bukkit.OfflinePlayer;

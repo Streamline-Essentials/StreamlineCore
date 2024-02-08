@@ -5,7 +5,6 @@ import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
