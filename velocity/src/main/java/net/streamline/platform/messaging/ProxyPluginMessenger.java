@@ -11,7 +11,7 @@ import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.savables.users.StreamlineUser;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
 
 import java.util.Optional;
@@ -20,11 +20,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
-        if (Streamline.getInstance().getOnlinePlayers().isEmpty()) return;
+        if (StreamlineVelocity.getInstance().getOnlinePlayers().isEmpty()) return;
 
-        if (! Streamline.getInstance().getServerNames().contains(message.getServer())) {
-            Streamline.getInstance().getServerNames().forEach(a -> {
-                Optional<RegisteredServer> server = Streamline.getInstance().getProxy().getServer(a);
+        if (! StreamlineVelocity.getInstance().getServerNames().contains(message.getServer())) {
+            StreamlineVelocity.getInstance().getServerNames().forEach(a -> {
+                Optional<RegisteredServer> server = StreamlineVelocity.getInstance().getProxy().getServer(a);
                 if (server.isEmpty()) {
                     return;
                 }
@@ -33,7 +33,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
                 if (UserManager.getInstance().getUsersOn(a).size() <= 0) {
                     return;
                 }
-                Player player = Streamline.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
+                Player player = StreamlineVelocity.getPlayer(UserManager.getInstance().getUsersOn(a).first().getUuid());
                 if (player == null) {
                     return;
                 }
@@ -51,7 +51,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             ProxiedMessageManager.pendMessage(message);
             return;
         }
-        Player player = Streamline.getPlayer(users.first().getUuid());
+        Player player = StreamlineVelocity.getPlayer(users.first().getUuid());
         if (player == null) {
             return;
         }

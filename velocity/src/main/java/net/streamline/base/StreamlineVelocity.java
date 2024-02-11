@@ -17,19 +17,20 @@ import java.nio.file.Path;
 
 @Plugin(
         id = "streamlinecore",
-        name = "StreamlineCore",
-        version = "${project.version}",
+        name = "${name}",
+        version = "${version}",
         dependencies = {
-                @Dependency(id = "luckperms")
+                @Dependency(id = "luckperms"),
+                @Dependency(id = "geyser-velocity", optional = true)
         }
 )
-public class Streamline extends BasePlugin {
+public class StreamlineVelocity extends BasePlugin {
     @Getter
     @Setter
     private static ServerPusher serverPusher;
 
     @Inject
-    public Streamline(ProxyServer s, Logger l, @DataDirectory Path dd, Metrics.Factory mf) {
+    public StreamlineVelocity(ProxyServer s, Logger l, @DataDirectory Path dd, Metrics.Factory mf) {
         super(s, l, dd, mf);
     }
 

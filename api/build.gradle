@@ -1,39 +1,11 @@
-ext {
-    IMPL = [
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
-    ]
-    SHADOW = [
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
-    ]
-    ANNO = [
-            "org.projectlombok:lombok:1.18.24",
-            "com.github.server-utilities:thebase:1.5.0"
-    ]
-    COMP_ONLY = [
-            "net.luckperms:api:5.4",
-            "org.projectlombok:lombok:1.18.24",
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
-    ]
-    OTHER_PLUGINS = [
-            "me.clip:placeholderapi:2.11.3",
-            "org.geysermc:base-api:2.0.4-SNAPSHOT",
-            "org.geysermc:geyser-api:2.0.4-SNAPSHOT"
-    ]
-    FILES = [
-//            "${project.rootProject.rootDir}/libs/TheBase.jar"
-    ]
-//    API_VER = "1.0.4-SNAPSHOT"
-//    APIB_VER = "1.0.0-SNAPSHOT"
-}
-
 repositories {
     mavenCentral()
     // OpenCollab
-    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
-    maven { url 'https://repo.opencollab.dev/maven-releases/'}
+    maven { url "https://repo.opencollab.dev/maven-snapshots/" }
+    maven { url "https://repo.opencollab.dev/maven-releases/"}
     // JitPack
-    maven { url 'https://jitpack.io' }
-    maven { url 'https://mvnrepository.com/artifact' }
+    maven { url "https://jitpack.io" }
+    maven { url "https://mvnrepository.com/artifact" }
 }
 
 dependencies {

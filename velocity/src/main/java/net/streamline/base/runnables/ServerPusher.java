@@ -9,7 +9,7 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineVelocity;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -23,7 +23,7 @@ public class ServerPusher extends BaseRunnable {
     @Override
     public void run() {
         ConcurrentSkipListMap<String, RegisteredServer> r = new ConcurrentSkipListMap<>();
-        Streamline.getInstance().getProxy().getAllServers().forEach(registeredServer -> {
+        StreamlineVelocity.getInstance().getProxy().getAllServers().forEach(registeredServer -> {
             r.put(registeredServer.getServerInfo().getName(), registeredServer);
         });
 

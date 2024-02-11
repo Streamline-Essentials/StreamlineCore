@@ -6,7 +6,7 @@ import lombok.Getter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
 
 import java.util.ArrayList;
@@ -48,16 +48,16 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     }
 
     public void register() {
-        Streamline.getInstance().getProxy().getCommandManager().register(getMeta(), this);
+        StreamlineVelocity.getInstance().getProxy().getCommandManager().register(getMeta(), this);
     }
 
     public void unregister() {
-        Streamline.getInstance().getProxy().getCommandManager().unregister(getMeta());
+        StreamlineVelocity.getInstance().getProxy().getCommandManager().unregister(getMeta());
     }
 
     public CommandMeta getMeta() {
-        return Streamline.getInstance().getProxy().getCommandManager().metaBuilder(this.getParent().getBase())
-                .plugin(Streamline.getInstance())
+        return StreamlineVelocity.getInstance().getProxy().getCommandManager().metaBuilder(this.getParent().getBase())
+                .plugin(StreamlineVelocity.getInstance())
                 .aliases(this.getParent().getAliases())
                 .build();
     }

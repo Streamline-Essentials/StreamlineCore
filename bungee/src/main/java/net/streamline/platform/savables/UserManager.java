@@ -5,6 +5,7 @@ import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
@@ -220,7 +221,13 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
         ProxiedPlayer player = getPlayer(uuid);
         if (player == null) return null;
 
-        return player.getServer().getInfo().getName();
+        Server server = player.getServer();
+        if (server == null) return null;
+
+        ServerInfo info = server.getInfo();
+        if (info == null) return null;
+
+        return info.getName();
     }
 
     @Override

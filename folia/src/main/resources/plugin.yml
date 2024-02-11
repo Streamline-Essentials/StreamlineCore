@@ -1,0 +1,23 @@
+name: '${name}'
+version: '${version}'
+main: 'net.streamline.base.Streamline'
+authors:
+  - MrDrakify
+website: https://github.com/Streamline-Essentials
+description: True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.
+depend:
+  - LuckPerms
+soft-depend:
+  - Geyser-Spigot
+  - Geyser-Folia
+  - PlaceholderAPI
+folia-supported: true
+
+commands:
+  streamlinespigot:
+    description: Main command for Streamline
+    permission: streamline.command.base.default
+    aliases:
+      - sls
+      - streamline
+      - sl
