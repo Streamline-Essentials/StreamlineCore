@@ -1,14 +1,7 @@
-plugins {
-    id("net.mcparkour.migle.migle-bungee") version "1.1.2"
-}
-
-repositories {
-}
-
 dependencies {
     // Platform.
-    compileOnly "net.md-5:bungeecord-api:1.20-R0.1-SNAPSHOT"
-    compileOnly("net.md-5:bungeecord-parent:1.20-R0.1-SNAPSHOT")
+    compileOnly "net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT"
+    compileOnly "net.md-5:bungeecord-parent:1.20-R0.3-SNAPSHOT"
 
     // Defaults.
     compileOnly(files(FILES))
@@ -19,15 +12,5 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
-}
-
-migleBungee {
-    name = 'StreamlineCore'
-    main = 'net.streamline.base.Streamline'
-    author = 'Quaint'
-    version = "${project.version}"
-    description = 'True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.'
-    depends = ['LuckPerms']
-    softDepends = ['Geyser-Bungee']
+    implementation project(path: ":StreamlineCore-API", configuration: "shadow")
 }

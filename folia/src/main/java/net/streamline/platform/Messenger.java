@@ -1,14 +1,10 @@
 package net.streamline.platform;
 
-import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.kyori.adventure.title.Title;
 import net.streamline.api.SLAPI;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.modules.ModuleUtils;
@@ -19,13 +15,16 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.text.HexPolicy;
 import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.base.StreamlineVelocity;
+import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Messenger implements IMessenger {
@@ -36,142 +35,149 @@ public class Messenger implements IMessenger {
         instance = this;
     }
 
-    public void sendMessage(@Nullable CommandSource to, String message) {
+    public void sendMessage(@Nullable CommandSender to, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            to.sendMessage(codedText(message));
+            try {
+                to.sendMessage(codedText(message));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(message));
+            }
         } else {
-            to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
+            try {
+                to.sendMessage(codedText(replaceAllPlayerBungee(to, message)));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(replaceAllPlayerBungee(to, message)));
+            }
         }
     }
 
-    public void sendMessage(@Nullable CommandSource to, String otherUUID, String message) {
+    public void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            to.sendMessage(codedText(message));
+            try {
+                to.sendMessage(codedText(message));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(message));
+            }
         } else {
-            to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
+            try {
+                to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
+            }
         }
     }
-    public void sendMessage(@Nullable CommandSource to, StreamlineUser other, String message) {
+    public void sendMessage(@Nullable CommandSender to, StreamlineUser other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            to.sendMessage(codedText(message));
+            try {
+                to.sendMessage(codedText(message));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(message));
+            }
         } else {
-            to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(other, message)));
+            try {
+                to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(other, message)));
+            } catch (NoSuchMethodError e) {
+                to.sendMessage(codedString(MessageUtils.replaceAllPlayerBungee(other, message)));
+            }
         }
     }
 
     public void sendMessage(@Nullable StreamlineUser to, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), message);
+        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), message);
         if (to == null) return;
-        sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), message);
     }
 
     public void sendMessage(@Nullable StreamlineUser to, String otherUUID, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
+        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), otherUUID, message);
         if (to == null) return;
-        sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
     }
 
     public void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), other, message);
+        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), other, message);
         if (to == null) return;
-        sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
+        sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
     }
 
-    public void sendMessageRaw(CommandSource to, String message) {
+    public void sendMessageRaw(CommandSender to, String message) {
         if (to == null) return;
 
-        Component component;
-        if (! SLAPI.isReady()) {
-            component = Component.text(message);
-        } else {
-            component = Component.text(replaceAllPlayerBungee(to, message));
+        String r = message;
+        if (SLAPI.isReady()) {
+            r = replaceAllPlayerBungee(to, message);
         }
 
-        to.sendMessage(component);
+        to.sendMessage(r);
     }
 
-    public void sendMessageRaw(CommandSource to, String otherUUID, String message) {
+    public void sendMessageRaw(CommandSender to, String otherUUID, String message) {
         if (to == null) return;
 
-        Component component;
-        if (! SLAPI.isReady()) {
-            component = Component.text(message);
-        } else {
-            component = Component.text(MessageUtils.replaceAllPlayerBungee(otherUUID, message));
+        String r = message;
+        if (SLAPI.isReady()) {
+            r = MessageUtils.replaceAllPlayerBungee(otherUUID, message);
         }
 
-        to.sendMessage(component);
+        to.sendMessage(r);
     }
 
-    public void sendMessageRaw(CommandSource to, StreamlineUser other, String message) {
+    public void sendMessageRaw(CommandSender to, StreamlineUser other, String message) {
         if (to == null) return;
 
-        Component component;
-        if (! SLAPI.isReady()) {
-            component = Component.text(message);
-        } else {
-            component = Component.text(MessageUtils.replaceAllPlayerBungee(other, message));
+        String r = message;
+        if (SLAPI.isReady()) {
+            r = MessageUtils.replaceAllPlayerBungee(other, message);
         }
 
-        to.sendMessage(component);
+        to.sendMessage(r);
     }
 
     public void sendMessageRaw(@Nullable StreamlineUser to, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), message);
+        if (to instanceof StreamlineConsole) sendMessage(Bukkit.getConsoleSender(), message);
         if (to == null) return;
-        sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), message);
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
     }
 
     public void sendMessageRaw(@Nullable StreamlineUser to, String otherUUID, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
+        if (to instanceof StreamlineConsole) sendMessageRaw(Bukkit.getConsoleSender(), otherUUID, message);
         if (to == null) return;
-        sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
     }
 
     public void sendMessageRaw(@Nullable StreamlineUser to, StreamlineUser other, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), other, message);
+        if (to instanceof StreamlineConsole) sendMessageRaw(Bukkit.getConsoleSender(), other, message);
         if (to == null) return;
-        sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
+        sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
     }
 
-    @Override
     public void sendTitle(StreamlinePlayer player, StreamlineTitle title) {
-        Player p = StreamlineVelocity.getPlayer(player.getUuid());
+        Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
             return;
         }
 
-        Title t = Title.title(
-                codedText(
-                        MessageUtils.replaceAllPlayerBungee(player, title.getMain())
-                ),
-                codedText(
-                        MessageUtils.replaceAllPlayerBungee(player, title.getSub())
-                ), Title.Times.times(
-                        Duration.of(title.getFadeIn() * 50L, ChronoUnit.MILLIS),
-                        Duration.of(title.getStay() * 50L, ChronoUnit.MILLIS),
-                        Duration.of(title.getFadeOut() * 50L, ChronoUnit.MILLIS)
-                )
-        );
 
-        p.showTitle(t);
+        p.sendTitle(title.getMain(),
+                title.getSub(),
+                (int) title.getFadeIn(),
+                (int) title.getStay(),
+                (int) title.getFadeOut()
+        );
     }
 
     @Override
     public String codedString(String from) {
-        return ModuleUtils.newLined(from.replace("&", "§"));
+        return ChatColor.translateAlternateColorCodes('&', ModuleUtils.newLined(from));
     }
 
     public String stripColor(String string){
-        return PlainTextComponentSerializer.plainText().serialize(LegacyComponentSerializer.legacySection().deserialize(string))
-                .replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "")
-                .replaceAll("[&][1-9a-f]", "");
+        return ChatColor.stripColor(string).replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "");
     }
-
     public String asString(Component textComponent){
         return LegacyComponentSerializer.legacySection().serialize(textComponent);
     }
@@ -227,7 +233,7 @@ public class Messenger implements IMessenger {
         return Component.empty().children(componentsList);
     }
 
-    public String replaceAllPlayerBungee(CommandSource sender, String of) {
+    public String replaceAllPlayerBungee(CommandSender sender, String of) {
         return MessageUtils.replaceAllPlayerBungee(UserManager.getInstance().getOrGetUser(sender), of);
     }
 }

@@ -1,15 +1,17 @@
-rootProject.name = 'StreamlineCore'
+rootProject.name = properties["name"]
 
-include ':api'
-include ':backend-api'
-include ':bungee'
-include ':spigot'
-include ':velocity'
+include ":api"
+include ":backend-api"
+include ":bungee"
+include ":spigot"
+include ":velocity"
+include ":folia"
 
 findProject(":backend-api").name = "bapi"
 
-findProject(":api").name = "StreamlineCore-API"
-findProject(":bapi").name = "StreamlineCore-BAPI"
-findProject(":bungee").name = "StreamlineCore-Bungee"
-findProject(":spigot").name = "StreamlineCore-Spigot"
-findProject(":velocity").name = "StreamlineCore-Velocity"
+findProject(":api").name = rootProject.name + "-API"
+findProject(":bapi").name = rootProject.name + "-BAPI"
+findProject(":bungee").name = rootProject.name + "-Bungee"
+findProject(":spigot").name = rootProject.name + "-Spigot"
+findProject(":velocity").name = rootProject.name + "-Velocity"
+findProject(":folia").name = rootProject.name + "-Folia"

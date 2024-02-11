@@ -15,41 +15,81 @@ plugins {
 }
 
 blossom {
-    replaceToken('${{project.version}}', project.version)
+    replaceToken("${{project.version}}", project.version)
+}
+
+allprojects {
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
+    }
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'net.kyori.blossom'
+    apply plugin: "java"
+    apply plugin: "com.github.johnrengelman.shadow"
+    apply plugin: "net.kyori.blossom"
 
     apply from: "$rootDir/dependencies.gradle"
 
-    group = 'com.github.streamline-essentials'
-    version = '2.2.0.0-SNAPSHOT'
+    group = properties["group"]
+    version = properties["version"]
+
+    ext {
+        pluginMain = properties["plugin.main"] == "default" ?
+                "${project.group}.${project.name.toLowerCase()}.${project.name}" :
+                properties["plugin.main"]
+    }
 
     repositories {
         mavenCentral()
         // JitPack
-        maven { url 'https://jitpack.io' }
-        maven { url 'https://mvnrepository.com/artifact' }
+        maven { url "https://jitpack.io" }
+        maven { url "https://mvnrepository.com/artifact" }
         // OpenCollab
-        maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
-        maven { url 'https://repo.opencollab.dev/maven-releases/'}
+        maven { url "https://repo.opencollab.dev/maven-snapshots/" }
+        maven { url "https://repo.opencollab.dev/maven-releases/"}
         // Velocity
-        maven { url 'https://repo.papermc.io/repository/maven-public/' }
+        maven { url "https://repo.papermc.io/repository/maven-public/" }
         // Fabric
-        maven { url 'https://maven.fabricmc.net/' }
-        maven { url 'https://libraries.minecraft.net/' }
+        maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://libraries.minecraft.net/" }
         // PlaceholderAPI
-        maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+        maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi/" }
+    }
+
+    processResources {
+        // Debugging: Print values
+        doFirst {
+            println "Version: ${project.version}, Name: ${project.name}, Main: ${project.ext.pluginMain}"
+        }
+
+        inputs.property("name", "${project.name}")
+        inputs.property("version", "${project.version}")
+        inputs.property("main", "${project.ext.pluginMain}")
+
+        filesMatching("**/plugin.yml") {
+            expand (
+                    "name": "${project.name}",
+                    "version": "${project.version}",
+                    "main": "${project.ext.pluginMain}",
+            )
+        }
+
+        filesMatching("**/StreamlineVelocity.**") {
+            expand (
+                    "name": "${project.name}",
+                    "version": "${project.version}",
+            )
+        }
     }
 
     shadowJar {
         manifest {
             attributes(
-                    'Implementation-Title': "$project.name",
-                    'Implementation-Version': "$project.version"
+                    "Implementation-Title": "$project.name",
+                    "Implementation-Version": "$project.version"
             )
         }
 

@@ -35,7 +35,7 @@ import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -267,7 +267,7 @@ public class PlatformListener {
 
         if (kickedFromServerEvent.getToServer() != null) {
             if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
-                Optional<RegisteredServer> serverInfo = Streamline.getInstance().getProxy().getServer(kickedFromServerEvent.getToServer());
+                Optional<RegisteredServer> serverInfo = StreamlineVelocity.getInstance().getProxy().getServer(kickedFromServerEvent.getToServer());
                 serverInfo.ifPresent(registeredServer -> event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(registeredServer)));
             }
         }

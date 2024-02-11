@@ -1,0 +1,44 @@
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
+}
+
+dependencies {
+    // Platform.
+//    compileOnly "dev.folia:folia-api:1.20-SNAPSHOT" // currently does not work...
+    compileOnly(files("impl/folia-api.jar"))
+    compileOnly("io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT")
+
+//    implementation "net.kyori:adventure-api:4.15.0"
+//    implementation "net.kyori:adventure-text-serializer-legacy:4.15.0"
+//    implementation "net.kyori:adventure-text-serializer-plain:4.15.0"
+//    implementation "net.kyori:adventure-text-serializer-gson:4.15.0"
+
+    // Defaults.
+    compileOnly(files(FILES))
+    annotationProcessor(ANNO)
+    compileOnly(COMP_ONLY)
+
+    // Other Plugins
+    compileOnly(OTHER_PLUGINS)
+    implementation "com.github.hamza-cskn.obliviate-invs:core:4.1.11"
+
+    // Streamline API.
+//    shadow(implementation project(":api"))
+    implementation project(path: ":StreamlineCore-API")
+    implementation project(path: ":StreamlineCore-BAPI", configuration: "shadow")
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
