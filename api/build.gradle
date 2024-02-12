@@ -1,11 +1,11 @@
 repositories {
     mavenCentral()
     // OpenCollab
-    maven { url "https://repo.opencollab.dev/maven-snapshots/" }
-    maven { url "https://repo.opencollab.dev/maven-releases/"}
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+    maven { url 'https://repo.opencollab.dev/maven-releases/'}
     // JitPack
-    maven { url "https://jitpack.io" }
-    maven { url "https://mvnrepository.com/artifact" }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://mvnrepository.com/artifact' }
 }
 
 dependencies {

@@ -1,16 +1,8 @@
-repositories {
-    //Velocity
-    maven {
-        name = "papermc"
-        url = "https://repo.papermc.io/repository/maven-public/"
-    }
-}
-
 dependencies {
-    compileOnly "com.velocitypowered:velocity-api:3.2.0-SNAPSHOT"
-    annotationProcessor "com.velocitypowered:velocity-api:3.2.0-SNAPSHOT"
+    compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
 
-    implementation "net.kyori:adventure-text-serializer-gson:4.15.0"
+    implementation 'net.kyori:adventure-text-serializer-gson:4.15.0'
 
     // Defaults.
     compileOnly(files(FILES))
@@ -21,5 +13,5 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(path: ":StreamlineCore-API", configuration: "shadow")
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 }

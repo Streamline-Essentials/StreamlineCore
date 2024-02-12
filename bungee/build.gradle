@@ -1,7 +1,7 @@
 dependencies {
     // Platform.
-    compileOnly "net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT"
-    compileOnly "net.md-5:bungeecord-parent:1.20-R0.3-SNAPSHOT"
+    compileOnly 'net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT'
+    compileOnly 'net.md-5:bungeecord-parent:1.20-R0.3-SNAPSHOT'
 
     // Defaults.
     compileOnly(files(FILES))
@@ -12,5 +12,5 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // Streamline API.
-    implementation project(path: ":StreamlineCore-API", configuration: "shadow")
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 }
