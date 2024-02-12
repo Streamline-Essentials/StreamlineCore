@@ -38,8 +38,19 @@ public class LuckpermsExpansion extends RATExpansion {
 
         new IdentifiedUserReplaceable(this, "primary_group", (s, user) -> {
             try {
+                UUID uuid = null;
+
+                try {
+                    uuid = UUID.fromString(user.getUuid());
+
+                    if (uuid == null) return s.string();
+                } catch (Exception e) {
+                    // is console.
+                    return "";
+                }
+
                 LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(UUID.fromString(user.getUuid()));
+                User u = api.getUserManager().getUser(uuid);
                 if (u == null) return s.string();
 
                 return u.getPrimaryGroup();
@@ -51,8 +62,19 @@ public class LuckpermsExpansion extends RATExpansion {
 
         new IdentifiedUserReplaceable(this, "highest_group", (s, user) -> {
             try {
+                UUID uuid = null;
+
+                try {
+                    uuid = UUID.fromString(user.getUuid());
+
+                    if (uuid == null) return s.string();
+                } catch (Exception e) {
+                    // is console.
+                    return "";
+                }
+
                 LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(UUID.fromString(user.getUuid()));
+                User u = api.getUserManager().getUser(uuid);
                 if (u == null) return s.string();
 
                 Optional<Group> group = u.getInheritedGroups(QueryOptions.builder(QueryMode.CONTEXTUAL).build()).stream().findFirst();
@@ -68,8 +90,19 @@ public class LuckpermsExpansion extends RATExpansion {
             try {
                 String params = s.get();
 
+                UUID uuid = null;
+
+                try {
+                    uuid = UUID.fromString(user.getUuid());
+
+                    if (uuid == null) return s.string();
+                } catch (Exception e) {
+                    // is console.
+                    return "";
+                }
+
                 LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(UUID.fromString(user.getUuid()));
+                User u = api.getUserManager().getUser(uuid);
                 if (u == null) return s.string();
 
                 AtomicString s1 = new AtomicString("");

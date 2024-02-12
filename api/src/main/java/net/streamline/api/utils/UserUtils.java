@@ -380,7 +380,7 @@ public class UserUtils {
         }
     }
 
-    public static String getLuckPermsPrefix(String username){
+    public static String getLuckPermsPrefix(String username) {
         User user;
         if (isUUID(username)) user = SLAPI.getLuckPerms().getUserManager().getUser(UUID.fromString(username));
         else user = SLAPI.getLuckPerms().getUserManager().getUser(username);
