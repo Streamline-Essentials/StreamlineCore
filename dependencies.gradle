@@ -1,23 +1,23 @@
 ext {
     IMPL = [
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
+            'com.github.server-utilities:TheBase:master-SNAPSHOT'
     ]
     SHADOW = [
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
+            'com.github.server-utilities:TheBase:master-SNAPSHOT'
     ]
     ANNO = [
-            "org.projectlombok:lombok:1.18.24",
-            "com.github.server-utilities:thebase:1.5.0"
+            'org.projectlombok:lombok:1.18.24',
+            'com.github.server-utilities:thebase:1.5.0'
     ]
     COMP_ONLY = [
-            "net.luckperms:api:5.4",
-            "org.projectlombok:lombok:1.18.24",
-            "com.github.server-utilities:TheBase:master-SNAPSHOT"
+            'net.luckperms:api:5.4',
+            'org.projectlombok:lombok:1.18.24',
+            'com.github.server-utilities:TheBase:master-SNAPSHOT'
     ]
     OTHER_PLUGINS = [
-            "me.clip:placeholderapi:2.11.3",
-            "org.geysermc:base-api:2.0.4-SNAPSHOT",
-            "org.geysermc:geyser-api:2.0.4-SNAPSHOT"
+            'me.clip:placeholderapi:2.11.3',
+            'org.geysermc:base-api:2.0.4-SNAPSHOT',
+            'org.geysermc:geyser-api:2.0.4-SNAPSHOT'
     ]
     FILES = [
     ]

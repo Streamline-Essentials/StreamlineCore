@@ -1,17 +1,17 @@
-rootProject.name = properties["name"]
+rootProject.name = properties['name']
 
-include ":api"
-include ":backend-api"
-include ":bungee"
-include ":spigot"
-include ":velocity"
-//include ":folia"
+include ':api'
+include ':backend-api'
+include ':bungee'
+include ':spigot'
+include ':velocity'
+//include ':folia'
 
-findProject(":backend-api").name = "bapi"
+findProject(':backend-api').name = 'bapi'
 
-findProject(":api").name = rootProject.name + "-API"
-findProject(":bapi").name = rootProject.name + "-BAPI"
-findProject(":bungee").name = rootProject.name + "-Bungee"
-findProject(":spigot").name = rootProject.name + "-Spigot"
-findProject(":velocity").name = rootProject.name + "-Velocity"
-//findProject(":folia").name = rootProject.name + "-Folia"
+findProject(':api').name = rootProject.name + '-API'
+findProject(':bapi').name = rootProject.name + '-BAPI'
+findProject(':bungee').name = rootProject.name + '-Bungee'
+findProject(':spigot').name = rootProject.name + '-Spigot'
+findProject(':velocity').name = rootProject.name + '-Velocity'
+//findProject(':folia').name = rootProject.name + '-Folia'
