@@ -100,7 +100,7 @@ subprojects {
 
         relocate('tv.quaint.thebase.lib', 'net.streamline.thebase.lib')
 
-        archiveFileName = '${project.name}-${project.version}.jar'
+        archiveFileName = project.name + '-' + project.version + '.jar'
 
         minimize()
     }
