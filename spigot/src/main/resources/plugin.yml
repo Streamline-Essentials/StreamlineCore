@@ -11,6 +11,10 @@ soft-depend:
   - Geyser-Spigot
   - Geyser-Folia
   - PlaceholderAPI
+  - floodgate
+  - CMI
+  - EssentialsX
+  - Essentials
 folia-supported: true
 
 commands:
