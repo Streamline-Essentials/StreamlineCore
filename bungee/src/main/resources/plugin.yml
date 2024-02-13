@@ -9,6 +9,7 @@ depend:
   - LuckPerms
 soft-depend:
   - Geyser-Bungee
+  - floodgate
 
 commands:
   streamlinespigot:

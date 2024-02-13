@@ -26,7 +26,7 @@ subprojects {
 
     ext {
         pluginMain = properties['plugin.main'] == 'default' ?
-                '${project.group}.${project.name.toLowerCase()}.${project.name}' :
+                project.group.toString() + '.' + project.name.toString().toLowerCase() + '.' + project.name.toString() :
                 properties['plugin.main']
     }
 
@@ -67,25 +67,25 @@ subprojects {
     processResources {
         // Debugging: Print values
         doFirst {
-            println 'Version: ${project.version}, Name: ${project.name}, Main: ${project.ext.pluginMain}'
+            println 'Version: ' + project.version.toString() + ', Name: ' + project.name.toString() + ', Main: ' + project.ext.pluginMain.toString()
         }
 
-        inputs.property('name', '${project.name}')
-        inputs.property('version', '${project.version}')
-        inputs.property('main', '${project.ext.pluginMain}')
+        inputs.property('name', project.name.toString())
+        inputs.property('version', project.version.toString())
+        inputs.property('main', project.ext.pluginMain.toString())
 
         filesMatching('**/plugin.yml') {
             expand (
-                    'name': '${project.name}',
-                    'version': '${project.version}',
-                    'main': '${project.ext.pluginMain}',
+                    'name': project.name.toString(),
+                    'version': project.version.toString(),
+                    'main': project.ext.pluginMain.toString(),
             )
         }
 
         filesMatching('**/StreamlineVelocity.**') {
             expand (
-                    'name': '${project.name}',
-                    'version': '${project.version}',
+                    'name': project.name.toString(),
+                    'version': project.version.toString(),
             )
         }
     }
@@ -93,8 +93,8 @@ subprojects {
     shadowJar {
         manifest {
             attributes(
-                    'Implementation-Title': '$project.name',
-                    'Implementation-Version': '$project.version'
+                    'Implementation-Title': project.name.toString(),
+                    'Implementation-Version': project.version.toString()
             )
         }
 
