@@ -76,38 +76,46 @@ public class MessageUtils {
     }
 
     public static void logInfo(Exception e) {
+        logInfo(e.getMessage());
         logInfo(e.getStackTrace());
     }
 
     public static void logWarning(Exception e) {
+        logWarning(e.getMessage());
         logWarning(e.getStackTrace());
     }
 
     public static void logSevere(Exception e) {
+        logSevere(e.getMessage());
         logSevere(e.getStackTrace());
     }
 
     public static void logDebug(Exception e) {
+        logDebug(e.getMessage());
         logDebug(e.getStackTrace());
     }
 
     public static void logInfo(String message, Throwable throwable) {
         logInfo(message);
+        logInfo(throwable.getMessage());
         logInfo(throwable.getStackTrace());
     }
 
     public static void logWarning(String message, Throwable throwable) {
         logWarning(message);
+        logWarning(throwable.getMessage());
         logWarning(throwable.getStackTrace());
     }
 
     public static void logSevere(String message, Throwable throwable) {
         logSevere(message);
+        logSevere(throwable.getMessage());
         logSevere(throwable.getStackTrace());
     }
 
     public static void logDebug(String message, Throwable throwable) {
         logDebug(message);
+        logDebug(throwable.getMessage());
         logDebug(throwable.getStackTrace());
     }
 
