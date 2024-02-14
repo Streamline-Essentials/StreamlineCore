@@ -21,10 +21,12 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ModuleManager {
@@ -117,7 +119,35 @@ public class ModuleManager {
             MessageUtils.logInfo(getNoModulesMessage());
             return;
         }
-        safePluginManager().loadPlugins();
+
+        MessageUtils.logInfo("&rLoading external modules...");
+        Date before = new Date();
+        int loaded = loadModulesSafe();
+        Date after = new Date();
+        long millis = after.getTime() - before.getTime();
+        MessageUtils.logInfo("&rLoaded &a" + loaded + " &rexternal modules in &a" + millis + "&6ms&f.");
+    }
+
+    public static int loadModulesSafe() {
+        AtomicInteger i = new AtomicInteger(0);
+
+        File pathFile = safePluginManager().getPluginsRoot().toFile();
+        File[] files = pathFile.listFiles();
+        if (files == null) return i.get();
+
+        Arrays.stream(files).forEach(file -> {
+            if (file.getName().endsWith(".jar")) {
+                try {
+                    safePluginManager().loadPlugin(file.toPath());
+
+                    i.getAndIncrement();
+                } catch (Exception e) {
+                    MessageUtils.logSevere("Could not load module '" + file.getName() + "':", e);
+                }
+            }
+        });
+
+        return i.get();
     }
 
     public static void registerExternalModule(@NotNull String jarName) {
