@@ -1,7 +1,8 @@
 package net.streamline.api.registries;
 
 import lombok.Getter;
-import net.streamline.api.savables.SavableResource;
+import tv.quaint.savables.SavableResource;
+import tv.quaint.objects.Identifiable;
 
 @Getter
 public enum RegistryKeys {

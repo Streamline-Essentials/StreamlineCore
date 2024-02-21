@@ -2,6 +2,7 @@ package net.streamline.api.registries;
 
 import lombok.Getter;
 import lombok.Setter;
+import tv.quaint.objects.Identifiable;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,14 +3,13 @@ package net.streamline.platform.messaging;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
-import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
 
@@ -46,7 +45,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-        ConcurrentSkipListSet<StreamlineUser> users = UserManager.getInstance().getUsersOn(message.getServer());
+        ConcurrentSkipListSet<StreamPlayer> users = UserManager.getInstance().getUsersOn(message.getServer());
         if (users.isEmpty()) {
             ProxiedMessageManager.pendMessage(message);
             return;
@@ -73,9 +72,6 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             ProxyParseMessageBuilder.handle(event.getMessage());
             return;
-        }
-        if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
-            UserNameMessageBuilder.handle(event.getMessage());
         }
     }
 }

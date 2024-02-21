@@ -5,6 +5,7 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
@@ -12,6 +13,7 @@ import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
@@ -25,14 +27,23 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        parent.baseRun(UserManager.getInstance().getOrGetUser(sender), args);
+        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
+        if (player.isEmpty()) return;
+        StreamPlayer p = player.get();
+
+        parent.baseRun(p, args);
     }
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
-        ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserManager.getInstance().getOrGetUser(sender), args);
+
+        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
+        if (player.isEmpty()) return new ArrayList<>();
+        StreamPlayer p = player.get();
+
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(p, args);
 
         return r == null ? new ArrayList<>() : MessageUtils.getCompletion(r, args[args.length - 1]);
     }

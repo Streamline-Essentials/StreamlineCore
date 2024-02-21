@@ -15,8 +15,8 @@ import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.savables.users.StreamPlayer;
+import net.streamline.api.savables.users.StreamPlayer;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
@@ -64,9 +64,9 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
-        StreamlineUser user = UserUtils.getOrGetUserByName(event.getName());
-        if (! (user instanceof StreamlinePlayer)) return;
-        StreamlinePlayer player = (StreamlinePlayer) user;
+        StreamPlayer user = UserUtils.getOrGetUserByName(event.getName());
+        if (! (user instanceof StreamPlayer)) return;
+        StreamPlayer player = (StreamPlayer) user;
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -93,11 +93,11 @@ public class PlatformListener implements Listener {
 
         CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
-        streamlinePlayer.setLatestName(player.getName());
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player));
+        StreamPlayer.setLatestName(player.getName());
 
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamPlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
 
         setJoined(true);
@@ -108,22 +108,22 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onLeave(PlayerQuitEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
-        StreamlinePlayer StreamlinePlayer = UserUtils.getOrGetPlayer(uuid);
-        if (StreamlinePlayer == null) return;
+        StreamPlayer StreamPlayer = UserUtils.getOrGetPlayer(uuid);
+        if (StreamPlayer == null) return;
 
-        LogoutEvent logoutEvent = new LogoutEvent(StreamlinePlayer);
+        LogoutEvent logoutEvent = new LogoutEvent(StreamPlayer);
         ModuleUtils.fireEvent(logoutEvent);
 
-        StreamlinePlayer.getStorageResource().sync();
-        UserUtils.unloadUser(StreamlinePlayer);
+        StreamPlayer.getStorageResource().sync();
+        UserUtils.unloadUser(StreamPlayer);
     }
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamPlayer, event.getMessage());
         Streamline.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
@@ -144,10 +144,10 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+            StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
 
             try {
-                ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, true, message, channel);
+                ProxiedMessage messageIn = new ProxiedMessage(StreamPlayer, true, message, channel);
                 ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
                 ModuleUtils.fireEvent(e);
                 if (e.isCancelled()) return;

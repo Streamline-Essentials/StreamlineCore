@@ -4,8 +4,13 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.interfaces.audiences.real.RealSender;
+import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.messages.builders.TeleportMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
@@ -13,21 +18,14 @@ import net.streamline.api.placeholders.RATRegistry;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.objects.StreamlineTitle;
-import net.streamline.api.savables.users.*;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventListener;
-import tv.quaint.storage.StorageUtils;
-import tv.quaint.storage.resources.databases.DatabaseResource;
-import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -65,15 +63,15 @@ public class ModuleUtils {
         MessageUtils.logDebug(module, elements);
     }
 
-    public static void sendMessage(@Nullable StreamlineUser to, String message) {
+    public static void sendMessage(@Nullable StreamSender to, String message) {
         SLAPI.getInstance().getMessenger().sendMessage(to, message);
     }
 
-    public static void sendMessage(@Nullable StreamlineUser to, String otherUUID, String message) {
+    public static void sendMessage(@Nullable StreamSender to, String otherUUID, String message) {
         SLAPI.getInstance().getMessenger().sendMessage(to, otherUUID, message);
     }
 
-    public static void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message) {
+    public static void sendMessage(@Nullable StreamSender to, StreamSender other, String message) {
         SLAPI.getInstance().getMessenger().sendMessage(to, other, message);
     }
 
@@ -85,7 +83,7 @@ public class ModuleUtils {
         MessageUtils.sendMessage(to, otherUUID, message);
     }
 
-    public static void sendTitle(StreamlinePlayer user, StreamlineTitle title) {
+    public static void sendTitle(StreamSender user, StreamlineTitle title) {
         SLAPI.getInstance().getMessenger().sendTitle(user, title);
     }
 
@@ -173,7 +171,7 @@ public class ModuleUtils {
         return MessageUtils.equalsAny(object, toEqual);
     }
 
-    public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
+    public static String replaceAllPlayerBungee(StreamSender user, String of) {
         return MessageUtils.replaceAllPlayerBungee(user, of);
     }
 
@@ -189,43 +187,47 @@ public class ModuleUtils {
         return MessageUtils.isNullOrLessThanEqualTo(thingArray, lessThanOrEqualTo);
     }
 
-    public static ConcurrentSkipListMap<String, StreamlineUser> getLoadedUsers() {
-        return UserUtils.getLoadedUsers();
+    public static ConcurrentSkipListMap<String, StreamSender> getLoadedSenders() {
+        return UserUtils.getLoadedSenders();
     }
 
-    public static ConcurrentSkipListMap<String, StreamlinePlayer> getLoadedPlayers() {
+    public static ConcurrentSkipListMap<String, StreamPlayer> getLoadedPlayers() {
         return UserUtils.getLoadedPlayers();
     }
 
-    public static ConcurrentSkipListMap<String, StreamlineUser> getOnlineUsers() {
+    public static ConcurrentSkipListMap<String, StreamSender> getOnlineUsers() {
         return UserUtils.getOnlineUsers();
     }
 
-    public static ConcurrentSkipListMap<String, StreamlinePlayer> getOnlinePlayers() {
+    public static ConcurrentSkipListMap<String, StreamPlayer> getOnlinePlayers() {
         return UserUtils.getOnlinePlayers();
     }
 
-    public static ConcurrentSkipListSet<StreamlineUser> getLoadedUsersSet() {
-        return UserUtils.getLoadedUsersSet();
+    public static ConcurrentSkipListSet<StreamSender> getLoadedSendersSet() {
+        return UserUtils.getLoadedSendersSet();
     }
 
-    public static StreamlineUser loadUser(StreamlineUser user) {
-        return UserUtils.loadUser(user);
+    public static ConcurrentSkipListSet<StreamPlayer> getLoadedPlayersSet() {
+        return UserUtils.getLoadedPlayersSet();
     }
 
-    public static void unloadUser(StreamlineUser user) {
-        UserUtils.unloadUser(user);
+    public static StreamSender loadSender(StreamSender user) {
+        return UserUtils.loadSender(user);
+    }
+
+    public static StreamPlayer loadPlayer(StreamPlayer user) {
+        return UserUtils.loadPlayer(user);
+    }
+
+    public static void unloadUser(StreamSender user) {
+        UserUtils.unloadSender(user);
     }
 
     public static boolean userExists(String uuid) {
         return UserUtils.userExists(uuid);
     }
 
-    public static StreamlineUser getOrGetUser(String uuid) {
-        return UserUtils.getOrGetUser(uuid);
-    }
-
-    public static StreamlinePlayer getOrGetPlayer(String uuid) {
+    public static Optional<StreamPlayer> getOrGetPlayer(String uuid) {
         return UserUtils.getOrGetPlayer(uuid);
     }
 
@@ -237,19 +239,19 @@ public class ModuleUtils {
         return SLAPI.getInstance().getUserManager().isOnline(uuid);
     }
 
-    public static String getOffOnFormatted(StreamlineUser stat){
+    public static String getOffOnFormatted(StreamSender stat){
         return UserUtils.getOffOnFormatted(stat);
     }
 
-    public static String getOffOnAbsolute(StreamlineUser stat){
+    public static String getOffOnAbsolute(StreamSender stat){
         return UserUtils.getOffOnAbsolute(stat);
     }
 
-    public static String getFormatted(StreamlineUser stat){
+    public static String getFormatted(StreamSender stat){
         return UserUtils.getFormatted(stat);
     }
 
-    public static String getAbsolute(StreamlineUser stat){
+    public static String getAbsolute(StreamSender stat){
         return UserUtils.getAbsolute(stat);
     }
 
@@ -261,8 +263,8 @@ public class ModuleUtils {
         return UserUtils.getLuckPermsSuffix(username);
     }
 
-    public static String getDisplayName(StreamlineUser user) {
-        return UserUtils.getFormattedDefaultNickname(user);
+    public static String getDisplayName(StreamSender user) {
+        return user.getDisplayName();
     }
 
     public static void fireEvent(StreamlineEvent event) {
@@ -277,17 +279,21 @@ public class ModuleUtils {
         return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
     }
 
-    public static boolean hasPermission(StreamlineUser user, String permission) {
-        if (user.isBypassPermissions()) return true;
-        return SLAPI.getInstance().getPlatform().hasPermission(user, permission);
+    @Deprecated
+    public static boolean hasPermission(StreamSender user, String permission) {
+        return user.hasPermission(permission);
     }
 
     public static LuckPerms getLuckPerms() {
         return SLAPI.getLuckPerms();
     }
 
-    public static StreamlineConsole getConsole() {
-        return UserUtils.getConsole();
+    public static RealSender<?> getConsole() {
+        return SLAPI.getConsole();
+    }
+
+    public static RealPlayer<?> getPlayer(String uuid) {
+        return SLAPI.getPlayer(uuid);
     }
 
     public static void addPermission(User user, String permission) {
@@ -298,19 +304,19 @@ public class ModuleUtils {
         UserUtils.removePermission(user, permission);
     }
 
-    public static boolean runAs(OperatorUser user, String command) {
+//    public static boolean runAs(OperatorUser user, String command) {
+//        return UserUtils.runAs(user, command);
+//    }
+
+    public static boolean runAs(StreamSender user, String command) {
         return UserUtils.runAs(user, command);
     }
 
-    public static boolean runAs(StreamlineUser user, String command) {
-        return UserUtils.runAs(user, command);
-    }
-
-    public static void queueRunAs(StreamlineUser user, String command) {
+    public static void queueRunAs(StreamSender user, String command) {
         SLAPI.addCachedCommand(command, user);
     }
 
-    public static boolean runAs(StreamlineUser user, boolean bypass, String command) {
+    public static boolean runAs(StreamPlayer user, boolean bypass, String command) {
         return SLAPI.getInstance().getUserManager().runAs(user, bypass, command);
     }
 
@@ -318,19 +324,21 @@ public class ModuleUtils {
         return UserUtils.getUUIDFromName(name);
     }
 
-    public static StreamlineUser getOrGetUserByName(String name) {
+    public static Optional<StreamSender> getOrGetUserByName(String name) {
         return UserUtils.getOrGetUserByName(name);
     }
 
-    public static void chatAs(StreamlineUser as, String message) {
-        SLAPI.getInstance().getPlatform().chatAs(as, message);
+    @Deprecated
+    public static void chatAs(StreamSender as, String message) {
+        as.chatAs(message);
     }
 
-    public static void runAsStrictly(StreamlineUser as, String message) {
-        SLAPI.getInstance().getPlatform().runAsStrictly(as, message);
+    @Deprecated
+    public static void runAsStrictly(StreamSender as, String message) {
+        as.runCommand(message);
     }
 
-    public static ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
+    public static ConcurrentSkipListSet<StreamPlayer> getUsersOn(String server) {
         return SLAPI.getInstance().getUserManager().getUsersOn(server);
     }
 
@@ -338,11 +346,17 @@ public class ModuleUtils {
         return SLAPI.getInstance().getPlatform().getServerNames();
     }
 
-    public static void connect(StreamlineUser user, String server) {
-        SLAPI.getInstance().getUserManager().connect(user, server);
+    public static void connect(StreamSender user, String server) {
+        if (! (user instanceof StreamPlayer)) {
+//            user.setServerName(server);
+            return;
+        }
+        StreamPlayer player = (StreamPlayer) user;
+
+        SLAPI.getInstance().getUserManager().connect(player, server);
     }
 
-    public static boolean isGeyserPlayer(StreamlineUser user) {
+    public static boolean isGeyserPlayer(StreamPlayer user) {
         return UserUtils.isGeyserPlayer(user);
     }
 
@@ -378,7 +392,7 @@ public class ModuleUtils {
         return SLAPI.getInstance().getPlatform().getServerType();
     }
 
-    public static void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+    public static void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
         SLAPI.getInstance().getPlatform().sendResourcePack(resourcePack, player);
     }
 
@@ -398,27 +412,27 @@ public class ModuleUtils {
         return GivenConfigs.getProfileConfig().getServerInfo(server);
     }
 
-    public static String parseOnProxy(StreamlineUser user, String toParse) {
+    public static String parseOnProxy(StreamSender user, String toParse) {
         return MessageUtils.parseOnProxy(user, toParse);
     }
 
     public static String parseOnProxy(String toParse) {
-        return MessageUtils.parseOnProxy(toParse);
+        return MessageUtils.parseOnProxy(UserUtils.getConsole(), toParse);
     }
 
-    public static void kick(StreamlineUser user, String message) {
+    public static void kick(StreamPlayer user, String message) {
         SLAPI.getInstance().getUserManager().kick(user, message);
     }
 
-    public static void kick(StreamlineUser user) {
+    public static void kick(StreamPlayer user) {
         SLAPI.getInstance().getUserManager().kick(user, "&cConnection Closed by Server");
     }
 
-    public static void teleport(StreamlinePlayer player, StreamlineLocation location) {
+    public static void teleport(StreamPlayer player, PlayerLocation location) {
         TeleportMessageBuilder.build(player, location, player).send();
     }
 
-    public static void teleport(StreamlinePlayer player, StreamlinePlayer target) {
+    public static void teleport(StreamPlayer player, StreamPlayer target) {
         teleport(player, target.getLocation());
     }
 
@@ -426,16 +440,7 @@ public class ModuleUtils {
         return RATRegistry.fetchDirty(string);
     }
 
-    public static String replacePlaceholders(StreamlineUser user, String string) {
+    public static String replacePlaceholders(StreamSender user, String string) {
         return RATRegistry.fetchDirty(string, user);
-    }
-
-    public static boolean hasDatabaseConfigured() {
-        DatabaseResource<?> databaseResource = SLAPI.getMainDatabase();
-        if (databaseResource == null) return false;
-        DatabaseConfig config = databaseResource.getConfig();
-        if (config == null) return false;
-        StorageUtils.SupportedDatabaseType type = config.getType();
-        return type != null;
     }
 }

@@ -3,7 +3,7 @@ package net.streamline.api.events.modules;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.ModuleLike;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.thebase.lib.pf4j.ExtensionPoint;
+import org.pf4j.ExtensionPoint;
 
 /**
  * Used for module enable and disable events

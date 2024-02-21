@@ -4,12 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
-import net.streamline.api.savables.MongoMainResource;
-import net.streamline.api.savables.MySQLMainResource;
-import net.streamline.api.savables.SQLiteMainResource;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.database.ConnectorSet;
+import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.utils.UserUtils;
-import tv.quaint.storage.resources.databases.DatabaseResource;
 
 import java.io.File;
 
@@ -30,7 +29,7 @@ public class GivenConfigs {
     private static File punishmentFolder;
 
     @Getter @Setter
-    private static DatabaseResource<?> mainDatabase;
+    private static CoreDBOperator mainDatabase;
 
     public static void init() {
         setMainConfig(new MainConfigHandler());
@@ -39,16 +38,12 @@ public class GivenConfigs {
         setCachedUUIDsHandler(new CachedUUIDsHandler());
         setProfileConfig(new SavedProfileConfig());
 
-        switch (getMainConfig().savingUseType()) {
-            case MONGO:
-                setMainDatabase(new MongoMainResource(getMainConfig().getConfiguredDatabase()));
-                break;
-            case MYSQL:
-                setMainDatabase(new MySQLMainResource(getMainConfig().getConfiguredDatabase()));
-                break;
-            case SQLITE:
-                setMainDatabase(new SQLiteMainResource(getMainConfig().getConfiguredDatabase()));
-                break;
+        try {
+            ConnectorSet connectorSet = getMainConfig().getConnectorSet();
+            CoreDBOperator operator = new CoreDBOperator(connectorSet);
+            setMainDatabase(operator);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -67,8 +62,8 @@ public class GivenConfigs {
     public static void reloadData() {
         getMainConfig().reloadResource();
         getMainMessages().reloadResource();
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            user.saveAll();
+        for (StreamSender user : UserUtils.getLoadedSendersSet()) {
+            user.save();
             user.reload();
         }
     }

@@ -7,10 +7,9 @@ import net.streamline.api.command.context.CommandArgument;
 import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.configs.CommandResource;
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.events.command.CommandResultedEvent;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +55,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         CommandHandler.unregisterStreamlineCommand(this);
     }
 
-    public CommandResult<?> baseRun(StreamlineUser sender, @Nullable String[] args) {
+    public CommandResult<?> baseRun(StreamSender sender, @Nullable String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
@@ -74,7 +73,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     @Deprecated
-    public void run(StreamlineUser sender, String[] args) {
+    public void run(StreamSender sender, String[] args) {
         // Nothing.
     }
 
@@ -88,14 +87,14 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         return null;
     }
 
-    public ConcurrentSkipListSet<String> baseTabComplete(StreamlineUser sender, @Nullable String[] args) {
+    public ConcurrentSkipListSet<String> baseTabComplete(StreamSender sender, @Nullable String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
         return doTabComplete(new CommandContext<>(sender, this, notSet(), args));
     }
 
     @Deprecated
-    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
         return new ConcurrentSkipListSet<>();
     }
 
@@ -103,17 +102,16 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
         return doTabComplete(context.getSender(), context.getArgs().stream().map(CommandArgument::getContent).toArray(String[]::new));
     }
 
-    public String getWithOther(StreamlineUser sender, String base, StreamlineUser other) {
-        base = base.replace("%this_other%", other.getName());
+    public String getWithOther(StreamSender sender, String base, StreamSender other) {
+        base = base.replace("%this_other%", other.getCurrentName());
         base = base.replace("%this_other_uuid%", other.getUuid());
-        return MessageUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.getLatestName()));
+        return MessageUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.getCurrentName()));
     }
 
-    public String getWithOther(StreamlineUser sender, String base, String other) {
-        base = base.replace("%this_sender%", sender.getName());
-        base = base.replace("%this_sender_uuid%", sender.getName());
-        StreamlineUser user = UserUtils.getOrGetUser(sender.getUuid());
-        return MessageUtils.replaceAllPlayerBungee(user, getWithOther(base, other));
+    public String getWithOther(StreamSender sender, String base, String other) {
+        base = base.replace("%this_sender%", sender.getCurrentName());
+        base = base.replace("%this_sender_uuid%", sender.getUuid());
+        return MessageUtils.replaceAllPlayerBungee(sender, getWithOther(base, other));
     }
 
     public String getWithOther(String base, String other) {

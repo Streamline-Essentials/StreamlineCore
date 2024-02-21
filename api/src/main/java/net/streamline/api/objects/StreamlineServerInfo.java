@@ -2,7 +2,7 @@ package net.streamline.api.objects;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.data.players.StreamPlayer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,12 +29,12 @@ public class StreamlineServerInfo {
         this.onlineUsers = onlineUsers;
     }
 
-    public void updateUsersTo(List<StreamlineUser> users) {
+    public void updateUsersTo(List<StreamPlayer> users) {
         onlineUsers = new ConcurrentSkipListSet<>();
         users.forEach(a -> onlineUsers.add(a.getUuid()));
     }
 
-    public void updateUsersTo(StreamlineUser... users) {
+    public void updateUsersTo(StreamPlayer... users) {
         updateUsersTo(Arrays.stream(users).collect(Collectors.toList()));
     }
 }

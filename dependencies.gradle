@@ -1,16 +1,28 @@
 ext {
     IMPL = [
-            'com.github.server-utilities:TheBase:master-SNAPSHOT'
+            'com.github.server-utilities:TheBase:master-SNAPSHOT',
+            'org.pf4j:pf4j:3.10.0',
+            'org.projectlombok:lombok:1.18.30',
+            'commons-codec:commons-codec:1.5'
     ]
     SHADOW = [
-            'com.github.server-utilities:TheBase:master-SNAPSHOT'
+            'com.github.server-utilities:TheBase:master-SNAPSHOT',
+            'org.pf4j:pf4j:3.10.0',
+            'org.projectlombok:lombok:1.18.30',
+            'commons-codec:commons-codec:1.5'
     ]
     ANNO = [
-            'com.github.server-utilities:TheBase:master-SNAPSHOT'
+            'com.github.server-utilities:TheBase:master-SNAPSHOT',
+            'org.pf4j:pf4j:3.10.0',
+            'org.projectlombok:lombok:1.18.30',
+            'commons-codec:commons-codec:1.5'
     ]
     COMP_ONLY = [
             'net.luckperms:api:5.4',
-            'com.github.server-utilities:TheBase:master-SNAPSHOT'
+            'com.github.server-utilities:TheBase:master-SNAPSHOT',
+            'org.pf4j:pf4j:3.10.0',
+            'org.projectlombok:lombok:1.18.30',
+            'commons-codec:commons-codec:1.5'
     ]
     OTHER_PLUGINS = [
             'me.clip:placeholderapi:2.11.5',

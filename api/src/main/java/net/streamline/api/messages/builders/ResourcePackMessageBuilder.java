@@ -1,19 +1,18 @@
 package net.streamline.api.messages.builders;
 
 import lombok.Getter;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
-import tv.quaint.thebase.lib.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.Hex;
 
 public class ResourcePackMessageBuilder {
     @Getter
     private static final String subChannel = "resource-pack";
 
-    public static ProxiedMessage build(StreamlinePlayer carrier, boolean isProxyOriginated, StreamlineUser user, StreamlineResourcePack resourcePack) {
+    public static ProxiedMessage build(StreamPlayer carrier, boolean isProxyOriginated, StreamPlayer user, StreamlineResourcePack resourcePack) {
         ProxiedMessage r = new ProxiedMessage(carrier, isProxyOriginated);
 
         r.setSubChannel(getSubChannel());
@@ -40,7 +39,7 @@ public class ResourcePackMessageBuilder {
             if (unparsed.equals("")) {
                 hash = new byte[0];
             } else {
-                hash = Hex.decodeHex(unparsed);
+                hash = Hex.decodeHex(unparsed.toCharArray());
             }
         } catch (Exception e) {
             e.printStackTrace();

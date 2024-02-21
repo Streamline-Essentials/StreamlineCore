@@ -1,9 +1,9 @@
 package net.streamline.api.events.server;
 
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
 
 public class LoginCompletedEvent extends LoginEvent {
-    public LoginCompletedEvent(StreamlinePlayer resource) {
-        super(resource);
+    public LoginCompletedEvent(StreamPlayer player) {
+        super(player);
     }
 }

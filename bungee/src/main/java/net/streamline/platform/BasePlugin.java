@@ -9,6 +9,7 @@ import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStartEvent;
 import net.streamline.api.events.server.ServerStopEvent;
@@ -18,16 +19,15 @@ import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.BungeeProfiler;
+import net.streamline.platform.savables.ConsoleHolder;
+import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
@@ -61,12 +61,16 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     @Getter
     private static BasePlugin instance;
     @Getter
-    private SLAPI<BasePlugin, UserManager, Messenger> slapi;
+    private SLAPI<CommandSender, ProxiedPlayer, BasePlugin, UserManager, Messenger> slapi;
 
     @Getter
     private UserManager userManager;
     @Getter
     private Messenger messenger;
+    @Getter
+    private ConsoleHolder consoleHolder;
+    @Getter
+    private PlayerInterface playerInterface;
 
     @Getter @Setter
     private StreamlineResourcePack resourcePack;
@@ -103,7 +107,9 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
         userManager = new UserManager();
         messenger = new Messenger();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());
+        consoleHolder = new ConsoleHolder();
+        playerInterface = new PlayerInterface();
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new BungeeProfiler());
 
@@ -120,13 +126,13 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         ServerStartEvent e = new ServerStartEvent().fire();
         if (e.isCancelled()) return;
         if (! e.isSendable()) return;
-        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+        SLAPI.sendConsoleMessage(e.getMessage());
     }
 
     @Override
     public void onDisable() {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            user.saveAll();
+        for (StreamPlayer user : UserUtils.getLoadedPlayersSet()) {
+            user.save();
         }
 
         this.disable();
@@ -137,7 +143,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         ServerStopEvent e = new ServerStopEvent().fire();
         if (e.isCancelled()) return;
         if (! e.isSendable()) return;
-        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+        SLAPI.sendConsoleMessage(e.getMessage());
     }
 
     abstract public void enable();
@@ -151,8 +157,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
-        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
+    public @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -175,7 +181,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getOnlinePlayers().forEach(a -> {
-            r.add(a.getName());
+            r.add(a.getCurrentName());
         });
 
 //        r.add(UserUtils.getConsole().latestName);
@@ -241,39 +247,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public boolean hasPermission(StreamlineUser user, String permission) {
-        ProxiedPlayer player = getPlayer(user.getUuid());
-        if (player == null) return false;
-        return player.hasPermission(permission);
-    }
-
-    @Override
-    public void chatAs(StreamlineUser as, String message) {
-        if (as instanceof StreamlineConsole) {
-            runAsStrictly(as, message);
-        }
-        if (as instanceof StreamlinePlayer) {
-            if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
-            ProxiedPlayer player = getPlayer(as.getUuid());
-            if (player == null) return;
-            player.chat(message);
-        }
-    }
-
-    @Override
-    public void runAsStrictly(StreamlineUser as, String command) {
-        if (as instanceof StreamlineConsole) {
-            getInstance().getProxy().getPluginManager().dispatchCommand(getInstance().getProxy().getConsole(), command);
-        }
-        if (as instanceof StreamlinePlayer) {
-            if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
-            ProxiedPlayer player = getPlayer(as.getUuid());
-            if (player == null) return;
-            getInstance().getProxy().getPluginManager().dispatchCommand(player, command);
-        }
-    }
-
-    @Override
     public boolean serverHasPlugin(String plugin) {
         return getInstance().getProxy().getPluginManager().getPlugin(plugin) != null;
     }
@@ -315,7 +288,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
         ProxiedPlayer p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }
@@ -328,7 +301,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
         // nothing right now
-        StreamlinePlayer p = getUserManager().getOrGetPlayer(player);
+        StreamPlayer p = getUserManager().getOrGetPlayer(player);
 
         ResourcePackMessageBuilder.build(p, true, p, resourcePack).send();
     }

@@ -17,6 +17,10 @@ public class CommandHandler {
     private static ConcurrentSkipListMap<String, IProperCommand> properlyRegisteredCommands = new ConcurrentSkipListMap<>();
 
     private static void registerCommandRaw(StreamlineCommand command) {
+        if (isProperCommandRegistered(command.getIdentifier())) {
+            unregisterCommandRaw(command.getIdentifier());
+        }
+
         IProperCommand properCommand = SLAPI.getInstance().getPlatform().createCommand(command);
         properCommand.register();
         getProperlyRegisteredCommands().put(command.getIdentifier(), properCommand);
@@ -33,8 +37,7 @@ public class CommandHandler {
 
     public static void registerStreamlineCommand(StreamlineCommand command) {
         if (isProperCommandRegistered(command.getIdentifier())) {
-            MessageUtils.logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered!");
-            return;
+            MessageUtils.logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered... reapplying it!");
         }
 
         registerCommandRaw(command);

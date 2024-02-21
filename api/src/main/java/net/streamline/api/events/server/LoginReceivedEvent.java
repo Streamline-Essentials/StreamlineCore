@@ -3,7 +3,7 @@ package net.streamline.api.events.server;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.utils.MessageUtils;
 
 @Getter
@@ -11,16 +11,15 @@ public class LoginReceivedEvent extends LoginEvent {
     @Setter
     private ConnectionResult result;
 
-    public LoginReceivedEvent(StreamlinePlayer resource) {
-        super(resource);
+    public LoginReceivedEvent(StreamPlayer player) {
+        super(player);
         this.result = new ConnectionResult();
     }
 
-    @Getter
+    @Getter @Setter
     public static class ConnectionResult {
-        @Setter
         private boolean cancelled;
-        @Setter @NonNull
+        @NonNull
         private String disconnectMessage;
 
         public ConnectionResult() {

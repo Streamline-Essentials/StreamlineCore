@@ -2,23 +2,34 @@ package net.streamline.api.messages.builders;
 
 import lombok.Getter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
+import net.streamline.api.data.players.location.PlayerRotation;
+import net.streamline.api.data.players.location.PlayerWorld;
+import net.streamline.api.data.players.location.WorldPosition;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
+
+import java.util.Optional;
 
 public class PlayerLocationMessageBuilder {
     @Getter
     private static final String subChannel = "player-location";
 
-    public static ProxiedMessage build(StreamlinePlayer carrier, StreamlineLocation location, StreamlineUser user) {
+    public static ProxiedMessage build(StreamPlayer carrier, PlayerLocation location, StreamPlayer user) {
         ProxiedMessage r = new ProxiedMessage(carrier, false);
 
         r.setSubChannel(getSubChannel());
         r.write("user_uuid", user.getUuid());
-        r.write("location", location.toString());
+        r.write("server", location.getServerName());
+        r.write("world", location.getWorldName());
+        r.write("x", String.valueOf(location.getX()));
+        r.write("y", String.valueOf(location.getY()));
+        r.write("z", String.valueOf(location.getZ()));
+        r.write("yaw", String.valueOf(location.getYaw()));
+        r.write("pitch", String.valueOf(location.getPitch()));
 
         return r;
     }
@@ -34,16 +45,34 @@ public class PlayerLocationMessageBuilder {
         }
 
         String uuid = in.getString("user_uuid");
-        String location = in.getString("location");
+        String server = in.getString("server");
+        String world = in.getString("world");
+        double x = Double.parseDouble(in.getString("x"));
+        double y = Double.parseDouble(in.getString("y"));
+        double z = Double.parseDouble(in.getString("z"));
+        float yaw = Float.parseFloat(in.getString("yaw"));
+        float pitch = Float.parseFloat(in.getString("pitch"));
 
-        StreamlinePlayer player = ModuleUtils.getOrGetPlayer(uuid);
-        if (player == null) {
+        Optional<StreamPlayer> playerOptional = ModuleUtils.getOrGetPlayer(uuid);
+        if (playerOptional.isEmpty()) {
             MessageUtils.logWarning("PlayerLocationMessageBuilder received for unknown player '" + uuid + "'.");
             return;
         }
-        StreamlineLocation streamlineLocation = new StreamlineLocation(location);
-        if (streamlineLocation.isNull()) MessageUtils.logWarning("PlayerLocationMessageBuilder received for null location '" + location + "' for player '" + uuid + "'. Continuing anyway...");
+        StreamPlayer player = playerOptional.get();
 
-        player.setLocation(streamlineLocation);
+        StreamServer streamServer = new StreamServer(server);
+        PlayerLocation location;
+        try {
+            PlayerWorld playerWorld = new PlayerWorld(world);
+            WorldPosition position = new WorldPosition(x, y, z);
+            PlayerRotation rotation = new PlayerRotation(yaw, pitch);
+            location = new PlayerLocation(player, playerWorld, position, rotation);
+        } catch (Exception e) {
+            MessageUtils.logWarning("PlayerLocationMessageBuilder received for invalid location '" + server + ", " + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + "' for player '" + uuid + "'.");
+            return;
+        }
+
+        player.setServer(streamServer);
+        player.setLocation(location);
     }
 }

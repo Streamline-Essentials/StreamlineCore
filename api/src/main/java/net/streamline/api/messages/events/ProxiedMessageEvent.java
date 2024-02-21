@@ -1,9 +1,9 @@
 package net.streamline.api.messages.events;
 
 import lombok.Getter;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
-import net.streamline.api.savables.users.StreamlinePlayer;
 
 @Getter
 public class ProxiedMessageEvent extends StreamlineEvent {
@@ -13,7 +13,7 @@ public class ProxiedMessageEvent extends StreamlineEvent {
         this.message = message;
     }
 
-    public StreamlinePlayer getCarrier() {
+    public StreamPlayer getCarrier() {
         if (message == null) return null;
         return message.getCarrier();
     }

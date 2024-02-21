@@ -10,8 +10,8 @@ import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.savables.users.StreamPlayer;
+import net.streamline.api.savables.users.StreamPlayer;
 import net.streamline.api.text.HexPolicy;
 import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
@@ -68,7 +68,7 @@ public class Messenger implements IMessenger {
             }
         }
     }
-    public void sendMessage(@Nullable CommandSender to, StreamlineUser other, String message) {
+    public void sendMessage(@Nullable CommandSender to, StreamPlayer other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
             try {
@@ -85,19 +85,19 @@ public class Messenger implements IMessenger {
         }
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, String message) {
+    public void sendMessage(@Nullable StreamPlayer to, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.getUuid()), message);
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, String otherUUID, String message) {
+    public void sendMessage(@Nullable StreamPlayer to, String otherUUID, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), otherUUID, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message) {
+    public void sendMessage(@Nullable StreamPlayer to, StreamPlayer other, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsoleSender(), other, message);
         if (to == null) return;
         sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
@@ -125,7 +125,7 @@ public class Messenger implements IMessenger {
         to.sendMessage(r);
     }
 
-    public void sendMessageRaw(CommandSender to, StreamlineUser other, String message) {
+    public void sendMessageRaw(CommandSender to, StreamPlayer other, String message) {
         if (to == null) return;
 
         String r = message;
@@ -136,25 +136,25 @@ public class Messenger implements IMessenger {
         to.sendMessage(r);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, String message) {
+    public void sendMessageRaw(@Nullable StreamPlayer to, String message) {
         if (to instanceof StreamlineConsole) sendMessage(Bukkit.getConsoleSender(), message);
         if (to == null) return;
         sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, String otherUUID, String message) {
+    public void sendMessageRaw(@Nullable StreamPlayer to, String otherUUID, String message) {
         if (to instanceof StreamlineConsole) sendMessageRaw(Bukkit.getConsoleSender(), otherUUID, message);
         if (to == null) return;
         sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, StreamlineUser other, String message) {
+    public void sendMessageRaw(@Nullable StreamPlayer to, StreamPlayer other, String message) {
         if (to instanceof StreamlineConsole) sendMessageRaw(Bukkit.getConsoleSender(), other, message);
         if (to == null) return;
         sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
     }
 
-    public void sendTitle(StreamlinePlayer player, StreamlineTitle title) {
+    public void sendTitle(StreamPlayer player, StreamlineTitle title) {
         Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");

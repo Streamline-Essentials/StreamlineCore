@@ -1,9 +1,9 @@
 package net.streamline.api.placeholders.replaceables;
 
+import net.streamline.api.data.console.StreamSender;
 import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.CallbackString;
 import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
-import net.streamline.api.savables.users.StreamlineUser;
 
 public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback> {
     public UserReplaceable(String from, UserPlaceholderCallback callback) {
@@ -14,7 +14,7 @@ public class UserReplaceable extends AbstractReplaceable<UserPlaceholderCallback
         super(from, groups, callback);
     }
 
-    public String fetchAs(String string, StreamlineUser user) {
+    public String fetchAs(String string, StreamSender user) {
         if (user == null) return string;
         if (! isReplaceWorthy()) return string;
 

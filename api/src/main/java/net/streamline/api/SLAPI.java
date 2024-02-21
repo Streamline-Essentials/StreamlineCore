@@ -7,28 +7,27 @@ import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.base.timers.*;
 import net.streamline.api.command.GivenCommands;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.interfaces.IBackendHandler;
-import net.streamline.api.interfaces.IMessenger;
-import net.streamline.api.interfaces.IStreamline;
-import net.streamline.api.interfaces.IUserManager;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.database.CoreDBOperator;
+import net.streamline.api.interfaces.*;
+import net.streamline.api.interfaces.audiences.IPlayerInterface;
+import net.streamline.api.interfaces.audiences.IConsoleHolder;
+import net.streamline.api.interfaces.audiences.real.RealSender;
+import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.registries.MasterRegistry;
 import net.streamline.api.registries.SavablesRegistry;
-import net.streamline.api.savables.users.OperatorUser;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
-import net.streamline.api.utils.UserUtils;
+import net.streamline.api.utils.MessageUtils;
 import tv.quaint.objects.SingleSet;
 import tv.quaint.objects.handling.derived.PluginEventable;
-import tv.quaint.storage.resources.databases.DatabaseResource;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,10 +37,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
-public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends IMessenger> extends PluginEventable {
+public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
         public CommandRunner() {
             super(0, 1);
@@ -54,9 +54,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
             for (int i : getCachedCommands().keySet()) {
                 toRemove.add(i);
 
-                SingleSet<String, StreamlineUser> set = getCachedCommands().get(i);
+                SingleSet<String, StreamSender> set = getCachedCommands().get(i);
                 String command = set.getKey();
-                StreamlineUser user = set.getValue();
+                StreamSender user = set.getValue();
                 command = ModuleUtils.replacePlaceholders(user, command);
 
                 RunType runType = RunType.CONSOLE_COMMAND;
@@ -76,17 +76,20 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
 
                 switch (runType) {
                     case CONSOLE_COMMAND:
-                        ModuleUtils.runAs(ModuleUtils.getConsole(), command);
+                        getConsole().runCommand(command);
                         break;
                     case NORMAL_COMMAND:
-                        ModuleUtils.runAs(user, command);
+                        if (user.isConsole()) getConsole().runCommand(command);
+                        else getPlayerFromUuid(user.getUuid()).runCommand(command);
                         break;
                     case OPERATOR_COMMAND:
-                        OperatorUser operatorUser = new OperatorUser(user);
-                        ModuleUtils.runAs(operatorUser, command);
+                        MessageUtils.logWarning("Operator command running is not yet supported.");
+//                        OperatorUser operatorUser = new OperatorUser(user);
+//                        ModuleUtils.runAs(operatorUser, command);
                         break;
                     case NORMAL_CHAT:
-                        ModuleUtils.chatAs(user, command);
+                        if (user.isConsole()) return;
+                        getPlayerFromUuid(user.getUuid()).chatAs(command);
                         break;
                 }
             }
@@ -114,9 +117,9 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
     private static CommandRunner commandRunner;
 
     @Getter @Setter
-    private static LinkedHashMap<Integer, SingleSet<String, StreamlineUser>> cachedCommands = new LinkedHashMap<>();
+    private static LinkedHashMap<Integer, SingleSet<String, StreamSender>> cachedCommands = new LinkedHashMap<>();
 
-    public static void addCachedCommand(String command, StreamlineUser user) {
+    public static void addCachedCommand(String command, StreamSender user) {
         int lastId = getCachedCommands().keySet().stream().max(Integer::compareTo).orElse(0);
         getCachedCommands().put(lastId + 1, new SingleSet<>(command, user));
     }
@@ -140,13 +143,17 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
     private static final String commandsFolderChild = "commands" + File.separator;
 
     @Getter
-    private static SLAPI<?, ?, ?> instance;
+    private static SLAPI<?, ?, ?, ?, ?> instance;
     @Getter
-    private final P platform;
+    private final S platform;
     @Getter
     private final U userManager;
     @Getter
     private final M messenger;
+    @Getter
+    private final IConsoleHolder<C> consoleHolder;
+    @Getter
+    private final IPlayerInterface<P> playerInterface;
 
     @Getter @Setter
     private ProxyMessenger proxyMessenger;
@@ -184,25 +191,27 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
     private static boolean ready = false;
 
     @Getter @Setter
-    private static DatabaseResource<?> mainDatabase;
+    private static CoreDBOperator mainDatabase;
 
     @Getter @Setter
     private static MasterRegistry masterRegistry;
     @Getter @Setter
     private static SavablesRegistry savablesRegistry;
 
-    public SLAPI(String identifier, P platform, U userManager, M messenger) {
+    public SLAPI(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface) {
         super(identifier);
         instance = this;
 
         this.platform = platform;
         this.userManager = userManager;
         this.messenger = messenger;
+        this.consoleHolder = consoleHolder;
+        this.playerInterface = playerInterface;
 
         masterRegistry = new MasterRegistry();
         savablesRegistry = new SavablesRegistry();
 
-        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.PROXY));
+//        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.BACKEND));
         setProxy(platform.getServerType().equals(IStreamline.ServerType.PROXY));
 
         userFolder = new File(getDataFolder(), "users" + File.separator);
@@ -232,18 +241,6 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
         GivenConfigs.init();
         setMainDatabase(GivenConfigs.getMainDatabase());
         GivenCommands.init();
-
-        try {
-            CachedUUIDsHandler.cachePlayer(GivenConfigs.getMainConfig().userConsoleDiscriminator(), GivenConfigs.getMainConfig().userConsoleNameRegular());
-            UserUtils.loadUser(new StreamlineConsole());
-            if (getMainDatabase() != null) {
-                if (getMainDatabase().getConfig().getType() != null) {
-                    UserUtils.getUserFromDatabase(UserUtils.getConsole());
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
         luckPerms = LuckPermsProvider.get();
 
@@ -283,5 +280,29 @@ public class SLAPI<P extends IStreamline, U extends IUserManager<?>, M extends I
 
     public InputStream getResourceAsStreamMain(String filename) {
         return getPlatform().getMainClassLoader().getResourceAsStream(filename);
+    }
+
+    public static File getMainFolder() {
+        return getInstance().getDataFolder();
+    }
+
+    public static <C> RealSender<C> getConsole() {
+        return (RealSender<C>) getInstance().getConsoleHolder().getRealConsole();
+    }
+
+    public static <P> RealPlayer<P> getPlayer(UUID uuid) {
+        return (RealPlayer<P>) getInstance().getPlayerInterface().getPlayer(uuid);
+    }
+
+    public static <P> RealPlayer<P> getPlayer(String name) {
+        return (RealPlayer<P>) getInstance().getPlayerInterface().getPlayer(name);
+    }
+
+    public static <P> RealPlayer<P> getPlayerFromUuid(String uuid) {
+        return (RealPlayer<P>) getInstance().getPlayerInterface().getPlayer(UUID.fromString(uuid));
+    }
+
+    public static void sendConsoleMessage(String message) {
+        getInstance().getConsoleHolder().sendConsoleMessage(message);
     }
 }

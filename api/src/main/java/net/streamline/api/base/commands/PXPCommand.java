@@ -3,8 +3,8 @@ package net.streamline.api.base.commands;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.List;
@@ -56,14 +56,14 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamlineUser sender, String[] args) {
+    public void run(StreamSender sender, String[] args) {
         if (args.length < 2) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        StreamlinePlayer player = UserUtils.getOrGetPlayerByName(playerName);
+        StreamPlayer player = UserUtils.getOrGetPlayerByName(playerName).orElse(null);
 
         if (player == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
@@ -137,15 +137,15 @@ public class PXPCommand extends StreamlineCommand {
 
                 switch (action2) {
                     case "set":
-                        player.setTotalXP(amount2);
+                        player.setExperience(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, player));
                         break;
                     case "add":
-                        player.addTotalXP(amount2);
+                        player.addExperience(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, player));
                         break;
                     case "remove":
-                        player.removeTotalXP(amount2);
+                        player.removeExperience(amount2);
                         SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, player));
                         break;
                     default:
@@ -159,7 +159,7 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }

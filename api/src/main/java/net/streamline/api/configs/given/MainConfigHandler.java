@@ -1,10 +1,11 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
-import tv.quaint.storage.StorageUtils;
-import tv.quaint.storage.resources.databases.configurations.DatabaseConfig;
+import net.streamline.api.database.ConnectorSet;
+import net.streamline.api.database.DatabaseType;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainConfigHandler extends SimpleConfiguration {
@@ -14,18 +15,19 @@ public class MainConfigHandler extends SimpleConfiguration {
     }
 
     public void init() {
-        savingUseType();
-        savingDatabaseConnectionUri();
-        savingDatabasePrefix();
+        getDatabaseHost();
+        getDatabasePort();
+        getDatabaseUsername();
+        getDatabasePassword();
+        getDatabaseTablePrefix();
+        getDatabaseName();
+        getDatabaseType();
+        getSqliteFileName();
 
-        userCombinedPointsDefault();
-        userCombinedNicknameDefault();
-
-        userConsoleNameRegular();
-        userConsoleDefaultTags();
-        userConsoleDiscriminator();
-        userConsoleServer();
-        userConsoleNameFormatted();
+        getConsoleName();
+        getConsoleDiscriminator();
+        getConsoleServer();
+        getConsoleDisplayName();
 
         updatePlayerFormattedNames();
 
@@ -49,153 +51,185 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugDisabled();
         debugConsoleDebugPrefix();
 
-        placeholderCacheReleaseTicks();
-        placeholderCacheReleaseInput();
-        placeholderCacheReleaseOutput();
-
 //        getHexPolicies();
     }
 
-    public StorageUtils.SupportedStorageType savingUseType() {
+    // DATABASE
+
+    public String getDatabaseHost() {
         reloadResource();
 
-        String use = getResource().getOrSetDefault("saving.use", StorageUtils.SupportedStorageType.YAML.toString());
-
-        return StorageUtils.SupportedStorageType.valueOf(use);
+        return getResource().getOrSetDefault("database.host", "localhost");
     }
 
-    public String savingDatabaseConnectionUri() {
+    public int getDatabasePort() {
         reloadResource();
 
-        return getResource().getOrSetDefault("saving.databases.connection-uri", "jdbc:mysql://<host>:<port>/<database>?user=<user>&password=<pass>");
+        return getResource().getOrSetDefault("database.port", 3306);
     }
 
-    public String savingDatabasePrefix() {
+    public String getDatabaseUsername() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.saving.databases.prefix", "sl_");
+        return getResource().getOrSetDefault("database.username", "root");
     }
 
-    public double userCombinedPointsDefault() {
+    public String getDatabasePassword() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.combined.points.default", 0.0);
+        return getResource().getOrSetDefault("database.password", "password");
     }
 
-    public String userCombinedNicknameDefault() {
+    public String getDatabaseTablePrefix() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.combined.nickname.default", "%streamline_user_prefix%%streamline_user_absolute%%streamline_user_suffix%");
+        return getResource().getOrSetDefault("database.table-prefix", "sl_");
     }
 
-    public String userConsoleServer() {
+    public String getDatabaseName() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.console.server", "space");
+        return getResource().getOrSetDefault("database.database", "streamline");
     }
 
-    public String userConsoleNameRegular() {
+    public DatabaseType getDatabaseType() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.console.name.regular", "Console");
+        return DatabaseType.valueOf(getResource().getOrSetDefault("database.type", DatabaseType.SQLITE.name()));
     }
 
-    public String userConsoleNameFormatted() {
+    public String getSqliteFileName() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.console.name.display", "&c&lConsole&r");
+        return getResource().getOrSetDefault("database.sqlite-file-name", "streamline.db");
     }
 
-    public String userConsoleDiscriminator() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("users.console.discriminator", "%");
+    public ConnectorSet getConnectorSet() {
+        return new ConnectorSet(
+                getDatabaseType(),
+                getDatabaseHost(),
+                getDatabasePort(),
+                getDatabaseName(),
+                getDatabaseUsername(),
+                getDatabasePassword(),
+                getDatabaseTablePrefix(),
+                getSqliteFileName()
+        );
     }
 
-    public List<String> userConsoleDefaultTags() {
+    // CONSOLE
+
+    public String getConsoleName() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.console.tags.default", List.of("list", "of", "tags"));
+        return getResource().getOrSetDefault("console.name", "Console");
+    }
+
+    public String getConsoleDisplayName() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("console.display-name", "&c&lConsole&r");
+    }
+
+    public String getConsoleDiscriminator() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("console.discriminator", "%");
+    }
+
+    public String getConsoleServer() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("console.server", "space");
+    }
+
+    // USER
+
+    public String getDefaultMetaNickname() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("players.meta.nickname", "");
+    }
+
+    public String getDefaultMetaPrefix() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("players.meta.prefix", "");
+    }
+
+    public String getDefaultMetaSuffix() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("players.meta.suffix", "");
     }
 
     public boolean updatePlayerFormattedNames() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.name.formatted", true);
+        return getResource().getOrSetDefault("players.name.formatted", true);
     }
 
     public String playerOnlineName() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.name.online", "&d%streamline_user_formatted% &a&l•&r");
+        return getResource().getOrSetDefault("players.name.online", "&d%streamline_user_formatted% &a&l•&r");
     }
 
     public String playerOfflineName() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.name.offline", "&d%streamline_user_formatted% &c&l•&r");
+        return getResource().getOrSetDefault("players.name.offline", "&d%streamline_user_formatted% &c&l•&r");
     }
 
     public boolean announceLevelChangeTitle() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.announce.level-change.title", true);
+        return getResource().getOrSetDefault("players.experience.announce.level-change.title", true);
     }
 
     public boolean announceLevelChangeChat() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.announce.level-change.chat", false);
+        return getResource().getOrSetDefault("players.experience.announce.level-change.chat", false);
     }
 
     public double playerPayoutExperienceAmount() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.payout.amount", 1.0);
+        return getResource().getOrSetDefault("players.experience.payout.amount", 1.0);
     }
 
     public int playerPayoutExperienceEvery() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.payout.every", 400);
+        return getResource().getOrSetDefault("players.experience.payout.every", 400);
     }
 
     public int playerStartingLevel() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.starting.level", 1);
+        return getResource().getOrSetDefault("players.experience.starting.level", 1);
     }
 
     public double playerStartingExperienceAmount() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.starting.xp", 0);
+        return getResource().getOrSetDefault("players.experience.starting.xp", 0);
     }
 
     public String playerLevelingEquation() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.experience.equation", "2500 + (2500 * (%streamline_user_level% - 1))");
+        return getResource().getOrSetDefault("players.experience.equation", "2500 + (2500 * (%streamline_user_level% - 1))");
     }
 
     public List<String> playerTagsDefault() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.tags.default", List.of("list", "of", "tags"));
+        return getResource().getOrSetDefault("users.players.tags.default", new ArrayList<>());
     }
 
-    public DatabaseConfig getConfiguredDatabase() {
-        DatabaseConfig.Builder builder = new DatabaseConfig.Builder();
-
-        String typeString = savingUseType().toString();
-        StorageUtils.SupportedDatabaseType type = StorageUtils.SupportedDatabaseType.valueOf(typeString);
-
-        builder.setType(type);
-        builder.setLink(savingDatabaseConnectionUri());
-        builder.setTablePrefix(savingDatabasePrefix());
-
-        return builder.build();
-    }
+    // DEBUG
 
     public boolean debugNotifyNoModules() {
         reloadResource();
@@ -250,36 +284,4 @@ public class MainConfigHandler extends SimpleConfiguration {
 
         return getResource().getOrSetDefault("debug.console.debug.prefix", "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r");
     }
-
-    public int placeholderCacheReleaseTicks() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("placeholders.cache.release-after.ticks", 100);
-    }
-
-    public String placeholderCacheReleaseInput() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("placeholders.cache.release-after.placeholder.input", "{{release}}");
-    }
-
-    public String placeholderCacheReleaseOutput() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("placeholders.cache.release-after.placeholder.output", "");
-    }
-
-//    public ConcurrentSkipListSet<HexPolicy> getHexPolicies() {
-//        ConcurrentSkipListSet<HexPolicy> hexPolicies = new ConcurrentSkipListSet<>();
-//
-//        getResource().singleLayerKeySet("hex.policies").forEach(key -> {
-//            String starter = getResource().getOrSetDefault("hex.policies." + key + ".starter", "{#");
-//            String ender = getResource().getOrSetDefault("hex.policies." + key + ".ender", "}");
-//            String setTo = getResource().getOrSetDefault("hex.policies." + key + ".set-to", "<#%hex%>");
-//
-//            hexPolicies.add(new HexPolicy(starter, ender, setTo));
-//        });
-//
-//        return hexPolicies;
-//    }
 }

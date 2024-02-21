@@ -9,8 +9,8 @@ import net.streamline.api.events.modules.ModuleEnableEvent;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.thebase.lib.pf4j.Plugin;
-import tv.quaint.thebase.lib.pf4j.PluginWrapper;
+import org.pf4j.Plugin;
+import org.pf4j.PluginWrapper;
 
 import java.io.File;
 import java.io.InputStream;
