@@ -2,18 +2,18 @@ package net.streamline.api.messages.builders;
 
 import lombok.Getter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
 public class ProxyParseMessageBuilder {
     @Getter
     private static final String subChannel = "api-parse";
 
-    public static ReturnableMessage build(StreamlinePlayer carrier, String toParse, StreamlineUser user) {
+    public static ReturnableMessage build(StreamPlayer carrier, String toParse, StreamSender user) {
         ProxiedMessage r = new ProxiedMessage(carrier, false);
 
         r.setSubChannel(getSubChannel());

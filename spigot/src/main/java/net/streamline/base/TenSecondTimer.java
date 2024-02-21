@@ -1,14 +1,20 @@
 package net.streamline.base;
 
 import lombok.Getter;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerRotation;
+import net.streamline.api.data.players.location.PlayerWorld;
+import net.streamline.api.data.players.location.WorldPosition;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
-import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+
+import java.util.Optional;
 
 @Getter
 public class TenSecondTimer implements Runnable {
@@ -24,14 +30,20 @@ public class TenSecondTimer implements Runnable {
     public void run() {
         if (! checkPlayer()) return;
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer streamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        if (streamPlayer == null) return;
 
         Location location = player.getLocation();
         World world = location.getWorld();
         if (world == null) world = Bukkit.getWorlds().get(0);
-        StreamlineLocation streamlineLocation = new StreamlineLocation(world.getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        StreamServer streamlineServer = new StreamServer("--null");
+        PlayerWorld streamlineWorld = new PlayerWorld(world.getName());
+        WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
+        PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
 
-        PlayerLocationMessageBuilder.build(streamlinePlayer, streamlineLocation, streamlinePlayer).send();
+        PlayerLocation streamlineLocation = new PlayerLocation(streamPlayer, streamlineWorld, streamlinePosition, streamlineRotation);
+
+        PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
     }
 
     public boolean checkPlayer() {

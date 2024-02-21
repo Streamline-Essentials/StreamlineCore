@@ -2,13 +2,11 @@ package net.streamline.api.events.server;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.events.StreamSenderEvent;
 
 @Getter
-public class KickedFromServerEvent extends StreamlineEvent {
-    @Setter
-    private StreamlinePlayer player;
+public class KickedFromServerEvent extends StreamSenderEvent {
     @Setter
     private String fromServer;
     @Setter
@@ -16,10 +14,10 @@ public class KickedFromServerEvent extends StreamlineEvent {
     @Setter
     private String toServer;
 
-    public KickedFromServerEvent(StreamlinePlayer player, String fromServer, String reason, String toServer) {
+    public KickedFromServerEvent(StreamPlayer player, String fromServer, String reason, String toServer) {
+        super(player);
         this.fromServer = fromServer;
         this.reason = reason;
-        this.player = player;
         this.toServer = toServer;
     }
 

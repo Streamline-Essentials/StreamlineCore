@@ -4,20 +4,21 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter @Setter
 public class CommandContext<C extends StreamlineCommand> {
-    private StreamlineUser sender;
+    private StreamSender sender;
     private C command;
     private String label;
     private ConcurrentSkipListSet<CommandArgument> args;
     private CommandResult<?> result;
 
-    public CommandContext(StreamlineUser sender, C command, CommandResult<?> result, String... args) {
+    public CommandContext(StreamSender sender, C command, CommandResult<?> result, String... args) {
         this.sender = sender;
         this.command = command;
         this.label = command.getLabel();

@@ -1,5 +1,6 @@
 package net.streamline.api.modules;
 
+import org.pf4j.*;
 import tv.quaint.thebase.lib.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,7 +14,6 @@ import net.streamline.api.events.modules.ModuleLoadEvent;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.thebase.lib.pf4j.*;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 
@@ -101,8 +101,14 @@ public class ModuleManager {
 
     public static void loadModule(@NonNull ModuleLike module) {
         if (getLoadedModules().containsKey(module.getIdentifier())) {
-            MessageUtils.logWarning("Module '" + module.getIdentifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers");
-            return;
+            if (! getModule(module.getIdentifier()).isMalleable()) {
+                MessageUtils.logWarning(
+                        "Module '" + module.getIdentifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers"
+                );
+                return;
+            } else {
+                unregisterModule(module);
+            }
         }
 
         getLoadedModules().put(module.getIdentifier(), module);
@@ -223,6 +229,7 @@ public class ModuleManager {
     public static void unregisterModule(ModuleLike module) {
         try {
             BaseEventHandler.unbake(module);
+            unloadCommandsForModule(module);
             safePluginManager().stopPlugin(module.getIdentifier());
             safePluginManager().unloadPlugin(module.getIdentifier());
             unregisterHandlersOf(module);

@@ -2,13 +2,13 @@ package net.streamline.api.placeholders;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.RATCallback;
 import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.*;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.utils.MatcherUtils;
 
@@ -81,7 +81,7 @@ public class RATRegistry {
         return temp;
     }
 
-    public static String fetch(String from, StreamlineUser user) {
+    public static String fetch(String from, StreamSender user) {
         AtomicString result = new AtomicString(from);
         getReplacements().forEach((s, replacement) -> {
             if (replacement instanceof UserReplaceable) {
@@ -94,7 +94,7 @@ public class RATRegistry {
         return result.get();
     }
 
-    public static String fetchDirty(String from, StreamlineUser user) {
+    public static String fetchDirty(String from, StreamSender user) {
         String temp = from;
         temp = fetch(temp, user);
         while (! Objects.equals(temp, from)) {

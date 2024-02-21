@@ -9,9 +9,9 @@ import net.streamline.api.base.ratapi.StreamlineExpansion;
 import net.streamline.api.base.text.HexInit;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.SimpleModule;
-import tv.quaint.thebase.lib.pf4j.PluginDependency;
-import tv.quaint.thebase.lib.pf4j.PluginDescriptor;
-import tv.quaint.thebase.lib.pf4j.PluginWrapper;
+import org.pf4j.PluginDependency;
+import org.pf4j.PluginDescriptor;
+import org.pf4j.PluginWrapper;
 
 import java.util.Collections;
 import java.util.List;

@@ -2,9 +2,9 @@ package net.streamline.api.messages.builders;
 
 import lombok.Getter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MessageUtils;
 
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -13,7 +13,7 @@ public class ServerInfoMessageBuilder {
     @Getter
     private static final String subChannel = "server-info";
 
-    public static ProxiedMessage build(StreamlinePlayer carrier, StreamlineServerInfo serverInfo) {
+    public static ProxiedMessage build(StreamPlayer carrier, StreamlineServerInfo serverInfo) {
         ProxiedMessage r = new ProxiedMessage(carrier, true);
 
         r.setSubChannel(getSubChannel());

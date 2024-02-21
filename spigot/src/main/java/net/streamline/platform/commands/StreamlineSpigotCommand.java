@@ -2,8 +2,9 @@ package net.streamline.platform.commands;
 
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.base.Streamline;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -40,7 +41,7 @@ public class StreamlineSpigotCommand implements TabExecutor {
 
         String[] newArgs = StringUtils.argsMinus(args, 0);
 
-        StreamlineUser senderUser = ModuleUtils.getOrGetUserByName(sender.getName());
+        StreamSender senderUser = ModuleUtils.getOrGetUserByName(sender.getName()).orElse(null);
         if (senderUser == null) {
             sender.sendMessage(ChatColor.RED + "Could not find your user...");
             return true;
@@ -69,7 +70,7 @@ public class StreamlineSpigotCommand implements TabExecutor {
 
         String[] newArgs = StringUtils.argsMinus(args, 0);
 
-        StreamlineUser senderUser = ModuleUtils.getOrGetUserByName(sender.getName());
+        StreamSender senderUser = ModuleUtils.getOrGetUserByName(sender.getName()).orElse(null);
         if (senderUser == null) return null;
 
         return new ArrayList<>(streamlineCommand.baseTabComplete(senderUser, newArgs));

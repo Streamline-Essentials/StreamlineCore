@@ -1,14 +1,13 @@
 package net.streamline.platform.messaging;
 
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
-import net.streamline.api.messages.builders.UserNameMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
@@ -43,7 +42,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
 //        Streamline.getInstance().getProxy().getServerInfo(message.getServer()).sendData(message.getChannel(), message.getMessages());
 
-        ConcurrentSkipListSet<StreamlineUser> users = UserManager.getInstance().getUsersOn(message.getServer());
+        ConcurrentSkipListSet<StreamPlayer> users = UserManager.getInstance().getUsersOn(message.getServer());
         if (users.isEmpty()) {
             ProxiedMessageManager.pendMessage(message);
             return;
@@ -66,10 +65,6 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         if (event.getMessage().getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
             ProxyParseMessageBuilder.handle(event.getMessage());
             return;
-        }
-        if (event.getMessage().getSubChannel().equals(UserNameMessageBuilder.getSubChannel())) {
-            MessageUtils.logDebug("Received UserNameMessageBuilder ProxiedMessageIn.");
-            UserNameMessageBuilder.handle(event.getMessage());
         }
     }
 }

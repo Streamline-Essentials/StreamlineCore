@@ -3,11 +3,11 @@ package net.streamline.base.runnables;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.base.StreamlineVelocity;
 
@@ -27,15 +27,15 @@ public class ServerPusher extends BaseRunnable {
             r.put(registeredServer.getServerInfo().getName(), registeredServer);
         });
 
-        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
+        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
-        ModuleUtils.getOnlinePlayers().forEach((s, streamlinePlayer) -> {
+        ModuleUtils.getOnlinePlayers().forEach((s, streamPlayer) -> {
             AtomicBoolean atomicBoolean = new AtomicBoolean(false);
             players.forEach(p -> {
-                if (p.getLatestServer().equals(streamlinePlayer.getLatestServer())) atomicBoolean.set(true);
+                if (p.getServer().getIdentifier().equals(streamPlayer.getServer().getIdentifier())) atomicBoolean.set(true);
             });
             if (atomicBoolean.get()) return;
-            players.add(streamlinePlayer);
+            players.add(streamPlayer);
         });
 
         r.forEach((s, registeredServer) -> {

@@ -3,9 +3,9 @@ package net.streamline.api.messages.proxied;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.objects.SingleSet;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataInput;
 import tv.quaint.thebase.lib.google.common.io.ByteArrayDataOutput;
@@ -42,28 +42,28 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
         return getString(getSubChannelKey());
     }
 
-    private final StreamlinePlayer carrier;
+    private final StreamPlayer carrier;
     private final boolean proxyOriginated;
     private final String mainChannel;
     private final Date gottenAt;
 
-    public ProxiedMessage(StreamlinePlayer carrier, boolean proxyOriginated, String mainChannel) {
+    public ProxiedMessage(StreamPlayer carrier, boolean proxyOriginated, String mainChannel) {
         this.carrier = carrier;
         this.proxyOriginated = proxyOriginated;
         this.mainChannel = mainChannel;
         this.gottenAt = new Date();
     }
 
-    public ProxiedMessage(StreamlinePlayer carrier, boolean proxyOriginated) {
+    public ProxiedMessage(StreamPlayer carrier, boolean proxyOriginated) {
         this(carrier, proxyOriginated, SLAPI.getApiChannel());
     }
 
-    public ProxiedMessage(StreamlinePlayer carrier, boolean proxyOriginated, byte[] message) {
+    public ProxiedMessage(StreamPlayer carrier, boolean proxyOriginated, byte[] message) {
         this(carrier, proxyOriginated);
         writeAll(message);
     }
 
-    public ProxiedMessage(StreamlinePlayer carrier, boolean proxyOriginated, byte[] message, String mainChannel) {
+    public ProxiedMessage(StreamPlayer carrier, boolean proxyOriginated, byte[] message, String mainChannel) {
         this(carrier, proxyOriginated, mainChannel);
         writeAll(message);
     }

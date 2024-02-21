@@ -3,7 +3,7 @@ package net.streamline.base;
 import lombok.Getter;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.savables.users.StreamPlayer;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,14 +24,14 @@ public class TenSecondTimer implements Runnable {
     public void run() {
         if (! checkPlayer()) return;
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
 
         Location location = player.getLocation();
         World world = location.getWorld();
         if (world == null) world = Bukkit.getWorlds().get(0);
         StreamlineLocation streamlineLocation = new StreamlineLocation(world.getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
 
-        PlayerLocationMessageBuilder.build(streamlinePlayer, streamlineLocation, streamlinePlayer).send();
+        PlayerLocationMessageBuilder.build(StreamPlayer, streamlineLocation, StreamPlayer).send();
     }
 
     public boolean checkPlayer() {

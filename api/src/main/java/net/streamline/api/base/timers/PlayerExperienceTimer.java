@@ -2,8 +2,8 @@ package net.streamline.api.base.timers;
 
 
 import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.UserUtils;
 
@@ -26,11 +26,6 @@ public class PlayerExperienceTimer extends BaseRunnable {
     }
 
     public void done() {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            if (user instanceof StreamlinePlayer) {
-                StreamlinePlayer player = ((StreamlinePlayer) user);
-                player.addTotalXP(GivenConfigs.getMainConfig().playerPayoutExperienceAmount());
-            }
-        }
+        UserUtils.getLoadedSendersSet().forEach(sender -> sender.addExperience(GivenConfigs.getMainConfig().playerPayoutExperienceAmount()));
     }
 }

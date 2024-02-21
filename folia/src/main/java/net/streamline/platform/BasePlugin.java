@@ -12,8 +12,8 @@ import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.savables.users.StreamPlayer;
+import net.streamline.api.savables.users.StreamPlayer;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
@@ -132,7 +132,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void onDisable() {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
+        for (StreamPlayer user : UserUtils.getLoadedUsersSet()) {
             user.saveAll();
         }
 
@@ -160,8 +160,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
-        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
+    public @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -261,18 +261,18 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public boolean hasPermission(StreamlineUser user, String permission) {
+    public boolean hasPermission(StreamPlayer user, String permission) {
         Player player = getPlayer(user.getUuid());
         if (player == null) return false;
         return player.hasPermission(permission);
     }
 
     @Override
-    public void chatAs(StreamlineUser as, String message) {
+    public void chatAs(StreamPlayer as, String message) {
         if (as instanceof StreamlineConsole) {
             runAsStrictly(as, message);
         }
-        if (as instanceof StreamlinePlayer) {
+        if (as instanceof StreamPlayer) {
             if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
@@ -281,11 +281,11 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public void runAsStrictly(StreamlineUser as, String command) {
+    public void runAsStrictly(StreamPlayer as, String command) {
         if (as instanceof StreamlineConsole) {
             getInstance().getProxy().dispatchCommand(getInstance().getProxy().getConsoleSender(), command);
         }
-        if (as instanceof StreamlinePlayer) {
+        if (as instanceof StreamPlayer) {
             if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
             Player player = getPlayer(as.getUuid());
             if (player == null) return;
@@ -335,7 +335,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
         Player p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }

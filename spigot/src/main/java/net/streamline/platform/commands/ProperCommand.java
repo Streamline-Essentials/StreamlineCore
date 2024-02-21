@@ -3,6 +3,7 @@ package net.streamline.platform.commands;
 import lombok.Getter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
@@ -38,7 +40,12 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
-        ConcurrentSkipListSet<String> r = parent.baseTabComplete(UserUtils.getOrGetUserByName(sender.getName()), args);
+
+        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
+        if (player.isEmpty()) return new ArrayList<>();
+        StreamPlayer p = player.get();
+
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(p, args);
 
         return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
     }
@@ -61,7 +68,11 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        CommandResult<?> result = parent.baseRun(UserManager.getInstance().getOrGetUser(sender), args);
+        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
+        if (player.isEmpty()) return false;
+        StreamPlayer p = player.get();
+
+        CommandResult<?> result = parent.baseRun(p, args);
 
         if (result == null) return false;
         if (result == StreamlineCommand.notSet()) return true;

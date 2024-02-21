@@ -3,28 +3,29 @@ package net.streamline.platform;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IMessenger;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineTitle;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.text.HexPolicy;
 import net.streamline.api.text.TextManager;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
+import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -51,7 +52,8 @@ public class Messenger implements IMessenger {
             to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
         }
     }
-    public void sendMessage(@Nullable CommandSender to, StreamlineUser other, String message) {
+
+    public void sendMessage(@Nullable CommandSender to, StreamSender other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
             to.sendMessage(codedText(message));
@@ -60,22 +62,22 @@ public class Messenger implements IMessenger {
         }
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), message);
+    public void sendMessage(@Nullable StreamSender to, String message) {
         if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), message);
+        else sendMessage(ProxyServer.getInstance().getConsole(), message);
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, String otherUUID, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), otherUUID, message);
+    public void sendMessage(@Nullable StreamSender to, String otherUUID, String message) {
         if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        else sendMessage(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
-    public void sendMessage(@Nullable StreamlineUser to, StreamlineUser other, String message) {
-        if (to instanceof StreamlineConsole) sendMessage(Streamline.getInstance().getProxy().getConsole(), other, message);
-        if (to == null) return;
-        sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
+    public void sendMessage(@Nullable StreamSender to, StreamSender other, String message) {
+        if (to == null || other == null) return;
+        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
+        else sendMessage(ProxyServer.getInstance().getConsole(), other, message);
     }
 
     public void sendMessageRaw(CommandSender to, String message) {
@@ -104,7 +106,7 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(CommandSender to, StreamlineUser other, String message) {
+    public void sendMessageRaw(CommandSender to, StreamSender other, String message) {
         if (to == null) return;
 
         BaseComponent[] component;
@@ -117,25 +119,25 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsole(), message);
+    public void sendMessageRaw(@Nullable StreamSender to, String message) {
         if (to == null) return;
-        sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
+        else sendMessageRaw(ProxyServer.getInstance().getConsole(), message);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, String otherUUID, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsole(), otherUUID, message);
+    public void sendMessageRaw(@Nullable StreamSender to, String otherUUID, String message) {
         if (to == null) return;
-        sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        else sendMessageRaw(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
-    public void sendMessageRaw(@Nullable StreamlineUser to, StreamlineUser other, String message) {
-        if (to instanceof StreamlineConsole) sendMessageRaw(Streamline.getInstance().getProxy().getConsole(), other, message);
-        if (to == null) return;
-        sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
+    public void sendMessageRaw(@Nullable StreamSender to, StreamSender other, String message) {
+        if (to == null || other == null) return;
+        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
+        else sendMessageRaw(ProxyServer.getInstance().getConsole(), other, message);
     }
 
-    public void sendTitle(StreamlinePlayer player, StreamlineTitle title) {
+    public void sendTitle(StreamSender player, StreamlineTitle title) {
         ProxiedPlayer p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
@@ -209,6 +211,9 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
-        return MessageUtils.replaceAllPlayerBungee(UserUtils.getOrGetUserByName(sender.getName()), of);
+        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
+        if (player.isEmpty()) return of;
+
+        return MessageUtils.replaceAllPlayerBungee(player.get(), of);
     }
 }

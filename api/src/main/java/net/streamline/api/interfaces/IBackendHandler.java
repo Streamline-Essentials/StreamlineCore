@@ -1,8 +1,8 @@
 package net.streamline.api.interfaces;
 
-import net.streamline.api.savables.users.StreamlineLocation;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
 
 public interface IBackendHandler {
-    public void teleport(StreamlinePlayer player, StreamlineLocation location);
+    public void teleport(StreamPlayer player, PlayerLocation location);
 }

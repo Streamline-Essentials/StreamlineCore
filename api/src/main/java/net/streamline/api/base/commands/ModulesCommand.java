@@ -3,10 +3,11 @@ package net.streamline.api.base.commands;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 
 import java.util.Arrays;
@@ -67,7 +68,7 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamlineUser sender, String[] args) {
+    public void run(StreamSender sender, String[] args) {
         if (args.length < 1) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
@@ -166,7 +167,7 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
         if (args.length <= 1) {
             return new ConcurrentSkipListSet<>(List.of(
                     "reapply",

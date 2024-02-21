@@ -10,20 +10,13 @@ repositories {
 
 dependencies {
     // Defaults.
-    implementation('com.github.server-utilities:TheBase:master-SNAPSHOT')
-    shadow('com.github.server-utilities:TheBase:master-SNAPSHOT')
-    annotationProcessor('com.github.server-utilities:TheBase:master-SNAPSHOT')
-    compileOnly(
-            'net.luckperms:api:5.4',
-            'com.github.server-utilities:TheBase:master-SNAPSHOT'
-    )
+    compileOnly(files(FILES))
+    annotationProcessor(ANNO)
+    implementation(IMPL)
+    compileOnly(COMP_ONLY)
 
     // Other Plugins
-    compileOnly(
-            'me.clip:placeholderapi:2.11.5',
-            'org.geysermc.geyser:api:2.2.0-SNAPSHOT',
-            'org.geysermc.floodgate:api:2.2.2-SNAPSHOT'
-    )
+    compileOnly(OTHER_PLUGINS)
 
     // Files.
 //    implementation(shadow(files(FILES)));

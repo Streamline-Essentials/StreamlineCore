@@ -2,14 +2,13 @@ package net.streamline.api.registries;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.savables.SavableResource;
+import tv.quaint.savables.SavableResource;
 
 public class SavablesRegistry extends AbstractRegistry<SavableResource, SavablesRegistry.SavableIdentifier> {
+    @Setter
     @Getter
     public static class SavableIdentifier {
-        @Setter
         private String identifier;
-        @Setter
         private Class<? extends SavableResource> type;
 
         public SavableIdentifier(String identifier, Class<? extends SavableResource> type) {

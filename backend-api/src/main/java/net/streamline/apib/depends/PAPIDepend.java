@@ -5,9 +5,9 @@ import lombok.Setter;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.holders.StreamlineDependencyHolder;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.apib.SLAPIB;
 import org.bukkit.OfflinePlayer;
@@ -59,12 +59,12 @@ public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
 
         @Override
         public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
-            StreamlinePlayer streamlinePlayer = ModuleUtils.getOrGetPlayer(player.getUniqueId().toString());
-            if (streamlinePlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
+            StreamPlayer streamPlayer = ModuleUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
+            if (streamPlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
             String toParse;
             if (params.startsWith("!")) toParse = "%" + params.substring("!".length()) + "%";
             else toParse = "%streamline_" + params + "%";
-            return ModuleUtils.replaceAllPlayerBungee(streamlinePlayer, toParse);
+            return ModuleUtils.replaceAllPlayerBungee(streamPlayer, toParse);
         }
     }
 }

@@ -12,13 +12,13 @@ public class SLAPIB {
     @Getter @Setter
     private static SLAPIB instance;
     @Getter @Setter
-    private static SLAPI<?, ?, ?> slapi;
+    private static SLAPI<?, ?, ?, ?, ?> slapi;
     @Getter @Setter
     private static Plugin plugin;
     @Getter @Setter
     private static PAPIDepend papiDepend;
 
-    public SLAPIB(SLAPI<?, ?, ?> slapi, JavaPlugin plugin) {
+    public SLAPIB(SLAPI<?, ?, ?, ?, ?> slapi, JavaPlugin plugin) {
         instance = this;
         setPlugin(plugin);
         setSlapi(slapi);

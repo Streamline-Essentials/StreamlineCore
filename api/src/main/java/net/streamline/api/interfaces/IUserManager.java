@@ -1,8 +1,7 @@
 package net.streamline.api.interfaces;
 
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlineUser;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -12,15 +11,15 @@ public interface IUserManager<T> {
 
     boolean isOnline(String uuid);
 
-    boolean runAs(StreamlineUser user, boolean bypass, String command);
+    boolean runAs(StreamPlayer user, boolean bypass, String command);
 
-    ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server);
+    ConcurrentSkipListSet<StreamPlayer> getUsersOn(String server);
 
-    void connect(StreamlineUser user, String server);
+    void connect(StreamPlayer user, String server);
 
-    void kick(StreamlineUser user, String message);
+    void kick(StreamPlayer user, String message);
 
-    void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack);
+    void sendUserResourcePack(StreamPlayer user, StreamlineResourcePack pack);
 
     String parsePlayerIP(String uuid);
 
@@ -32,9 +31,5 @@ public interface IUserManager<T> {
 
     T getPlayer(String uuid);
 
-    default StreamlineConsole getConsole() {
-        return new StreamlineConsole();
-    }
-
-    ConcurrentSkipListMap<String, StreamlineUser> ensurePlayers();
+    ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers();
 }

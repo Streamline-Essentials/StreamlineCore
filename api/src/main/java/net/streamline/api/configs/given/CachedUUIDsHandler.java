@@ -92,8 +92,8 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     public static String getCachedUUID(String username) {
-        if (username.equals(GivenConfigs.getMainConfig().userConsoleNameRegular())) return GivenConfigs.getMainConfig().userConsoleDiscriminator();
-        if (UserUtils.isUUID(username)) return username;
+        if (username.equals(GivenConfigs.getMainConfig().getConsoleName())) return GivenConfigs.getMainConfig().getConsoleDiscriminator();
+        if (UserUtils.isValidUuid(username)) return username;
         ConcurrentSkipListMap<String, String> u = new ConcurrentSkipListMap<>();
 
         getCachedUUIDs().forEach((k, v) -> u.put(v.toUpperCase(), k));
@@ -111,8 +111,8 @@ public class CachedUUIDsHandler extends FlatFileResource<Json> {
     }
 
     public static String getCachedName(String uuid) {
-        if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return GivenConfigs.getMainConfig().userConsoleNameRegular();
-        if (! UserUtils.isUUID(uuid)) return uuid;
+        if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
+        if (! UserUtils.isValidUuid(uuid)) return uuid;
 
         if (getCachedCurrentNames().containsKey(uuid)) {
             return getCachedCurrentNames().get(uuid);

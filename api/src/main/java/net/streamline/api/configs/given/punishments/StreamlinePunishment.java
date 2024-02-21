@@ -7,18 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Date;
 import java.util.UUID;
 
+@Setter
+@Getter
 public class StreamlinePunishment implements Comparable<StreamlinePunishment> {
-    @Getter @Setter
     private String idHash;
-    @Getter @Setter
     private String punishedUUID;
-    @Getter @Setter
     private String punisherUUID;
-    @Getter @Setter
     private String reason;
-    @Getter @Setter
     private PunishmentType type;
-    @Getter @Setter
     private Date timeToUnpunish;
 
     public StreamlinePunishment(String punishedUUID, String punisherUUID, String reason, PunishmentType type, Date timeToUnpunish) {

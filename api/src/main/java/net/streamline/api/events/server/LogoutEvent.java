@@ -1,10 +1,10 @@
 package net.streamline.api.events.server;
 
-import net.streamline.api.savables.events.SavableEvent;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.events.StreamSenderEvent;
 
-public class LogoutEvent extends SavableEvent<StreamlinePlayer> {
-    public LogoutEvent(StreamlinePlayer resource) {
-        super(resource);
+public class LogoutEvent extends StreamSenderEvent {
+    public LogoutEvent(StreamPlayer player) {
+        super(player);
     }
 }

@@ -10,8 +10,8 @@ import net.streamline.api.messages.builders.ServerConnectMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
+import net.streamline.api.savables.users.StreamPlayer;
+import net.streamline.api.savables.users.StreamPlayer;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
@@ -31,17 +31,17 @@ public class UserManager implements IUserManager<Player> {
         instance = this;
     }
 
-    public StreamlinePlayer getOrGetPlayer(Player player) {
-        StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+    public StreamPlayer getOrGetPlayer(Player player) {
+        StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
         if (p == null) {
-            p = new StreamlinePlayer(player.getUniqueId().toString());
+            p = new StreamPlayer(player.getUniqueId().toString());
             UserUtils.loadUser(p);
         }
 
         return p;
     }
 
-    public StreamlineUser getOrGetUser(CommandSender sender) {
+    public StreamPlayer getOrGetUser(CommandSender sender) {
         if (isConsole(sender)) {
             return UserUtils.getOrGetUser(GivenConfigs.getMainConfig().userConsoleDiscriminator());
         } else {
@@ -88,10 +88,10 @@ public class UserManager implements IUserManager<Player> {
         return ipSt;
     }
 
-    public boolean runAs(StreamlineUser user, boolean bypass, String command) {
+    public boolean runAs(StreamPlayer user, boolean bypass, String command) {
         CommandSender source;
-        if (user instanceof StreamlinePlayer) {
-            StreamlinePlayer player = (StreamlinePlayer) user;
+        if (user instanceof StreamPlayer) {
+            StreamPlayer player = (StreamPlayer) user;
             source = Streamline.getPlayer(player.getUuid());
         }
         else {
@@ -99,7 +99,7 @@ public class UserManager implements IUserManager<Player> {
             Streamline.getInstance().getProxy().dispatchCommand(source, command);
             return true;
         }
-        StreamlinePlayer player = (StreamlinePlayer) user;
+        StreamPlayer player = (StreamPlayer) user;
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
@@ -116,8 +116,8 @@ public class UserManager implements IUserManager<Player> {
         return true;
     }
 
-    public ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
-        ConcurrentSkipListSet<StreamlineUser> r = new ConcurrentSkipListSet<>();
+    public ConcurrentSkipListSet<StreamPlayer> getUsersOn(String server) {
+        ConcurrentSkipListSet<StreamPlayer> r = new ConcurrentSkipListSet<>();
 
         UserUtils.getLoadedUsersSet().forEach(a -> {
             if (! a.isOnline()) return;
@@ -127,20 +127,20 @@ public class UserManager implements IUserManager<Player> {
         return r;
     }
 
-    public void connect(StreamlineUser user, String server) {
+    public void connect(StreamPlayer user, String server) {
         if (! user.isOnline()) return;
         if (user instanceof StreamlineConsole) return;
 
         Player player = Streamline.getPlayer(user.getUuid());
         if (player == null) return;
-        StreamlinePlayer pl = getOrGetPlayer(player);
+        StreamPlayer pl = getOrGetPlayer(player);
         StreamlineServerInfo s = GivenConfigs.getProfileConfig().getServerInfo(server);
         SLAPI.getInstance().getProxyMessenger().sendMessage(ServerConnectMessageBuilder.build(pl, s, pl.getUuid()));
     }
 
-    public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
-        if (! (user instanceof StreamlinePlayer)) return;
-        StreamlinePlayer player = (StreamlinePlayer) user;
+    public void sendUserResourcePack(StreamPlayer user, StreamlineResourcePack pack) {
+        if (! (user instanceof StreamPlayer)) return;
+        StreamPlayer player = (StreamPlayer) user;
         if (! player.updateOnline()) return;
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
@@ -170,7 +170,7 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public void kick(StreamlineUser user, String message) {
+    public void kick(StreamPlayer user, String message) {
         Player player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.kickPlayer(Messenger.getInstance().codedString(message));
@@ -182,17 +182,17 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public ConcurrentSkipListMap<String, StreamlineUser> ensurePlayers() {
-        ConcurrentSkipListMap<String, StreamlineUser> r = new ConcurrentSkipListMap<>();
+    public ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers() {
+        ConcurrentSkipListMap<String, StreamPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                StreamlinePlayer p = getOrGetPlayer(player);
+                StreamPlayer p = getOrGetPlayer(player);
                 r.put(player.getUniqueId().toString(), p);
                 continue;
             }
 
-            StreamlinePlayer p = new StreamlinePlayer(player.getUniqueId().toString());
+            StreamPlayer p = new StreamPlayer(player.getUniqueId().toString());
             r.put(player.getUniqueId().toString(), p);
         }
 

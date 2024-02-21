@@ -13,13 +13,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.metrics.Metrics;
@@ -27,6 +26,8 @@ import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.VelocityProfiler;
+import net.streamline.platform.savables.ConsoleHolder;
+import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,12 +65,16 @@ public abstract class BasePlugin implements IStreamline {
     @Getter
     private static BasePlugin instance;
     @Getter
-    private SLAPI<BasePlugin, UserManager, Messenger> slapi;
+    private SLAPI<CommandSource, Player, BasePlugin, UserManager, Messenger> slapi;
 
     @Getter
     private UserManager userManager;
     @Getter
     private Messenger messenger;
+    @Getter
+    private ConsoleHolder consoleHolder;
+    @Getter
+    private PlayerInterface playerInterface;
 
     @Setter
     private VelocityProfiler profiler;
@@ -123,14 +128,16 @@ public abstract class BasePlugin implements IStreamline {
     public void onEnable(ProxyInitializeEvent event) {
         userManager = new UserManager();
         messenger = new Messenger();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger());
+        consoleHolder = new ConsoleHolder();
+        playerInterface = new PlayerInterface();
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new VelocityProfiler());
 
         registerListener(new PlatformListener());
         getProxy().getScheduler().buildTask(this, new Runner()).repeat(50, TimeUnit.MILLISECONDS).schedule();
 
-        UserUtils.loadUser(new StreamlineConsole());
+//        UserUtils.loadSender(new StreamSender());
 
         getProxy().getChannelRegistrar().register(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
 
@@ -139,8 +146,8 @@ public abstract class BasePlugin implements IStreamline {
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
-        for (StreamlineUser user : UserUtils.getLoadedUsersSet()) {
-            user.saveAll();
+        for (StreamSender user : UserUtils.getLoadedSendersSet()) {
+            user.save();
         }
 
         getProxy().getChannelRegistrar().unregister(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
@@ -159,8 +166,8 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers() {
-        ConcurrentSkipListSet<StreamlinePlayer> players = new ConcurrentSkipListSet<>();
+    public @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
             players.add(getUserManager().getOrGetPlayer(player));
@@ -184,7 +191,7 @@ public abstract class BasePlugin implements IStreamline {
         ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getOnlinePlayers().forEach(a -> {
-            r.add(a.getName());
+            r.add(a.getCurrentName());
         });
 
 //        r.add(getUserManager().getConsole().latestName);
@@ -262,39 +269,6 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public boolean hasPermission(StreamlineUser user, String permission) {
-        Player player = getPlayer(user.getUuid());
-        if (player == null) return false;
-        return player.hasPermission(permission);
-    }
-
-    @Override
-    public void chatAs(StreamlineUser as, String message) {
-        if (as instanceof StreamlineConsole) {
-            runAsStrictly(as, message);
-        }
-        if (as instanceof StreamlinePlayer) {
-            if (MessageUtils.isCommand(message)) runAsStrictly(as, message.substring("/".length()));
-            Player player = getPlayer(as.getUuid());
-            if (player == null) return;
-            player.spoofChatInput(message);
-        }
-    }
-
-    @Override
-    public void runAsStrictly(StreamlineUser as, String command) {
-        if (as instanceof StreamlineConsole) {
-            getInstance().getProxy().getCommandManager().executeAsync(getInstance().getProxy().getConsoleCommandSource(), command);
-        }
-        if (as instanceof StreamlinePlayer) {
-            if (MessageUtils.isCommand(command)) runAsStrictly(as, command.substring("/".length()));
-            Player player = getPlayer(as.getUuid());
-            if (player == null) return;
-            getInstance().getProxy().getCommandManager().executeAsync(player, command);
-        }
-    }
-
-    @Override
     public boolean serverHasPlugin(String plugin) {
         return getInstance().getProxy().getPluginManager().getPlugin(plugin).isPresent();
     }
@@ -341,7 +315,7 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player) {
+    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
         Player p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }

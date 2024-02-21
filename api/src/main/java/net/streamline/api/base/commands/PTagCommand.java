@@ -3,8 +3,9 @@ package net.streamline.api.base.commands;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
@@ -37,14 +38,14 @@ public class PTagCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamlineUser sender, String[] args) {
+    public void run(StreamSender sender, String[] args) {
         if (args.length < 2) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = args[0];
-        StreamlineUser other = UserUtils.getOrGetUserByName(playerName);
+        StreamPlayer other = UserUtils.getOrGetPlayerByName(playerName).orElse(null);
 
         if (other == null) {
             ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
@@ -81,7 +82,7 @@ public class PTagCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamlineUser sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
         if (args.length <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }

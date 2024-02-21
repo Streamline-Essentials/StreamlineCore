@@ -10,11 +10,10 @@ import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlineConsole;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.StreamlineVelocity;
@@ -34,34 +33,34 @@ public class UserManager implements IUserManager<Player> {
         instance = this;
     }
 
-    public StreamlinePlayer getOrGetPlayer(Player player) {
-        StreamlinePlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString());
+    public StreamPlayer getOrGetPlayer(Player player) {
+        StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
         if (p == null) {
-            p = new StreamlinePlayer(player.getUniqueId().toString());
-            UserUtils.loadUser(p);
+            p = new StreamPlayer(player.getUniqueId().toString());
+            UserUtils.loadPlayer(p);
         }
 
         return p;
     }
 
-    public StreamlineUser getOrGetUser(CommandSource sender) {
+    public StreamSender getOrGetUser(CommandSource sender) {
         if (isConsole(sender)) {
-            return UserUtils.getOrGetUser(GivenConfigs.getMainConfig().userConsoleDiscriminator());
+            return UserUtils.getConsole();
         } else {
             Player player = StreamlineVelocity.getPlayer(sender);
             if (player == null) return null;
-            return UserUtils.getOrGetUser(player.getUniqueId().toString());
+            return UserUtils.getOrGetSender(player.getUniqueId().toString()).orElse(null);
         }
     }
 
     public String getUsername(CommandSource sender) {
-        if (isConsole(sender)) return GivenConfigs.getMainConfig().userConsoleNameRegular();
+        if (isConsole(sender)) return GivenConfigs.getMainConfig().getConsoleName();
         else return ((Player) sender).getUsername();
     }
 
     @Override
     public String getUsername(String uuid) {
-        if (uuid.equals(GivenConfigs.getMainConfig().userConsoleDiscriminator())) return GivenConfigs.getMainConfig().userConsoleNameRegular();
+        if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
         else {
             Player player = StreamlineVelocity.getPlayer(uuid);
             if (player == null) return null;
@@ -84,10 +83,10 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public boolean runAs(StreamlineUser user, boolean bypass, String command) {
+    public boolean runAs(StreamPlayer user, boolean bypass, String command) {
         CommandSource source;
-        if (user instanceof StreamlinePlayer) {
-            StreamlinePlayer player = (StreamlinePlayer) user;
+        if (user instanceof StreamPlayer) {
+            StreamPlayer player = (StreamPlayer) user;
             source = StreamlineVelocity.getPlayer(player.getUuid());
         }
         else {
@@ -95,7 +94,7 @@ public class UserManager implements IUserManager<Player> {
             StreamlineVelocity.getInstance().getProxy().getCommandManager().executeImmediatelyAsync(source, command);
             return true;
         }
-        StreamlinePlayer player = (StreamlinePlayer) user;
+        StreamPlayer player = (StreamPlayer) user;
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
@@ -113,12 +112,12 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public ConcurrentSkipListSet<StreamlineUser> getUsersOn(String server) {
-        ConcurrentSkipListSet<StreamlineUser> r = new ConcurrentSkipListSet<>();
+    public ConcurrentSkipListSet<StreamPlayer> getUsersOn(String server) {
+        ConcurrentSkipListSet<StreamPlayer> r = new ConcurrentSkipListSet<>();
 
         StreamlineVelocity.getInstance().getProxy().getAllServers().forEach(a -> {
             a.getPlayersConnected().forEach(b -> {
-                r.add(getOrGetUser(b));
+                r.add(getOrGetPlayer(b));
             });
         });
 
@@ -126,9 +125,8 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public void connect(StreamlineUser user, String server) {
+    public void connect(StreamPlayer user, String server) {
         if (! user.isOnline()) return;
-        if (user instanceof StreamlineConsole) return;
 
         Player player = StreamlineVelocity.getPlayer(user.getUuid());
         if (player == null) return;
@@ -143,14 +141,12 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public void sendUserResourcePack(StreamlineUser user, StreamlineResourcePack pack) {
-        if (! (user instanceof StreamlinePlayer)) return;
-        StreamlinePlayer player = (StreamlinePlayer) user;
-        if (! player.updateOnline()) return;
-        Player p = StreamlineVelocity.getPlayer(user.getUuid());
+    public void sendUserResourcePack(StreamPlayer player, StreamlineResourcePack pack) {
+        if (! player.isOnline()) return;
+        Player p = StreamlineVelocity.getPlayer(player.getUuid());
         if (p == null) return;
 
-        StreamlineVelocity.getInstance().sendResourcePack(pack, user);
+        StreamlineVelocity.getInstance().sendResourcePack(pack, player);
     }
 
     @Override
@@ -175,7 +171,7 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public void kick(StreamlineUser user, String message) {
+    public void kick(StreamPlayer user, String message) {
         Optional<Player> playerOptional = StreamlineVelocity.getInstance().getProxy().getPlayer(user.getUuid());
         if (playerOptional.isEmpty()) return;
         playerOptional.get().disconnect(Messenger.getInstance().codedText(message));
@@ -187,17 +183,17 @@ public class UserManager implements IUserManager<Player> {
     }
 
     @Override
-    public ConcurrentSkipListMap<String, StreamlineUser> ensurePlayers() {
-        ConcurrentSkipListMap<String, StreamlineUser> r = new ConcurrentSkipListMap<>();
+    public ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers() {
+        ConcurrentSkipListMap<String, StreamPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                StreamlinePlayer p = getOrGetPlayer(player);
+                StreamPlayer p = getOrGetPlayer(player);
                 r.put(player.getUniqueId().toString(), p);
                 continue;
             }
 
-            StreamlinePlayer p = new StreamlinePlayer(player.getUniqueId().toString());
+            StreamPlayer p = new StreamPlayer(player.getUniqueId().toString());
             r.put(player.getUniqueId().toString(), p);
         }
 

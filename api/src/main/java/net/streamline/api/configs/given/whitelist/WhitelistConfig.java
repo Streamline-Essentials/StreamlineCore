@@ -34,7 +34,7 @@ public class WhitelistConfig extends SimpleJsonDocument {
 
     public void addEntry(WhitelistEntry entry) {
         getResource().set("list." + entry.whitelistedAt().getTime() + ".uuid", entry.whitelistedUuid());
-        getResource().set("list." + entry.whitelistedAt().getTime() + ".by", entry.whitelistedBy() != null ? entry.whitelistedBy() : GivenConfigs.getMainConfig().userConsoleDiscriminator());
+        getResource().set("list." + entry.whitelistedAt().getTime() + ".by", entry.whitelistedBy() != null ? entry.whitelistedBy() : GivenConfigs.getMainConfig().getConsoleDiscriminator());
     }
 
     public void removeEntry(WhitelistEntry entry) {

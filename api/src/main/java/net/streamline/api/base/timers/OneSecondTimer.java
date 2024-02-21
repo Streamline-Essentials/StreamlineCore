@@ -2,9 +2,9 @@ package net.streamline.api.base.timers;
 
 
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.events.UserNameUpdateEvent;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.events.UserNameUpdateEvent;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.UserUtils;
 
@@ -16,20 +16,12 @@ public class OneSecondTimer extends BaseRunnable {
 
     @Override
     public void run() {
-        UserUtils.getLoadedUsersSet().forEach(user -> {
-            if (! user.updateOnline()) return;
+        UserUtils.getLoadedSendersSet().forEach(user -> {
+            if (! user.isOnline()) return;
 
-            if (user instanceof StreamlinePlayer) {
-                StreamlinePlayer player = ((StreamlinePlayer) user);
+            if (user instanceof StreamPlayer) {
+                StreamPlayer player = ((StreamPlayer) user);
                 player.addPlaySecond(1);
-            }
-
-            if (GivenConfigs.getMainConfig().updatePlayerFormattedNames()) {
-                UserNameUpdateEvent updateEvent = new UserNameUpdateEvent(user, UserUtils.getFormattedDefaultNickname(user), user.getDisplayName());
-                ModuleUtils.fireEvent(updateEvent);
-                if (! updateEvent.isCancelled()) {
-                    user.setDisplayName(updateEvent.getChangeTo());
-                }
             }
         });
     }

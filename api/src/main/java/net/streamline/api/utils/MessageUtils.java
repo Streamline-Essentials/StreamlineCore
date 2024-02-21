@@ -5,12 +5,12 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
@@ -23,7 +23,7 @@ public class MessageUtils {
         if (GivenConfigs.getMainConfig().debugConsoleInfoDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleInfoPrefix() + line);
+            SLAPI.sendConsoleMessage(GivenConfigs.getMainConfig().debugConsoleInfoPrefix() + line);
         }
     }
 
@@ -31,7 +31,7 @@ public class MessageUtils {
         if (GivenConfigs.getMainConfig().debugConsoleWarningsDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleWarningsPrefix() + line);
+            SLAPI.sendConsoleMessage(GivenConfigs.getMainConfig().debugConsoleWarningsPrefix() + line);
         }
     }
 
@@ -39,7 +39,7 @@ public class MessageUtils {
         if (GivenConfigs.getMainConfig().debugConsoleErrorsDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleErrorsPrefix() + line);
+            SLAPI.sendConsoleMessage(GivenConfigs.getMainConfig().debugConsoleErrorsPrefix() + line);
         }
     }
 
@@ -47,7 +47,7 @@ public class MessageUtils {
         if (GivenConfigs.getMainConfig().debugConsoleDebugDisabled()) return;
         message = message.replace("%newline%", "\n");
         for (String line : message.split("\n")) {
-            SLAPI.getInstance().getMessenger().sendMessage(UserUtils.getConsole(), GivenConfigs.getMainConfig().debugConsoleDebugPrefix() + line);
+            SLAPI.sendConsoleMessage(GivenConfigs.getMainConfig().debugConsoleDebugPrefix() + line);
         }
     }
 
@@ -192,13 +192,13 @@ public class MessageUtils {
     }
 
     public static void sendMessage(String to, String message) {
-        StreamlineUser user = UserUtils.getOrGetUser(to);
+        StreamPlayer user = UserUtils.getOrGetOrCreatePlayer(to);
 
         SLAPI.getInstance().getMessenger().sendMessage(user, message);
     }
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
-        StreamlineUser user = UserUtils.getOrGetUser(to);
+        StreamPlayer user = UserUtils.getOrGetOrCreatePlayer(to);
 
         SLAPI.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
@@ -209,7 +209,7 @@ public class MessageUtils {
     @Getter @Setter
     private static ConcurrentSkipListMap<String, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
 
-    public static String replaceAllPlayerBungee(StreamlineUser user, String of) {
+    public static String replaceAllPlayerBungee(StreamSender user, String of) {
         if (user == null) return of;
 
 //        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).completeOnTimeout(of, 77, TimeUnit.MILLISECONDS).join();
@@ -217,61 +217,62 @@ public class MessageUtils {
     }
 
     public static String replaceAllPlayerBungee(String uuid, String of) {
-        return replaceAllPlayerBungee(UserUtils.getOrGetUser(uuid), of);
+        Optional<StreamPlayer> player = UserUtils.getOrGetPlayer(uuid);
+        if (player.isEmpty()) return of;
+
+        return replaceAllPlayerBungee(player.get(), of);
     }
 
-    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse) {
-        return parseOnProxyForNow(streamlineUser, toParse, 2);
+    public static String parseOnProxyForNow(StreamPlayer StreamPlayer, String toParse) {
+        return parseOnProxyForNow(StreamPlayer, toParse, 2);
     }
 
-    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
-        return parseOnProxyForNow(streamlineUser, toParse, 1, maxIterations);
+    public static String parseOnProxyForNow(StreamSender streamSender, String toParse, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
+        return parseOnProxyForNow(streamSender, toParse, 1, maxIterations);
     }
 
-    public static String parseOnProxyForNow(StreamlineUser streamlineUser, String toParse,
+    public static String parseOnProxyForNow(StreamSender streamSender, String toParse,
                                       @Range(from = 1, to = Integer.MAX_VALUE) int iterations, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
-        parseOnProxyForNowThenSet(streamlineUser, toParse);
+        parseOnProxyForNowThenSet(streamSender, toParse);
 
         if (iterations < maxIterations) {
-            return parseOnProxyForNow(streamlineUser, toParse, iterations + 1, maxIterations);
+            return parseOnProxyForNow(streamSender, toParse, iterations + 1, maxIterations);
         }
-        String parsed = getCachedValue(streamlineUser, toParse);
+        String parsed = getCachedValue(streamSender, toParse);
         return parsed == null ? toParse : parsed;
     }
 
-    public static void parseOnProxyForNowThenSet(StreamlineUser streamlineUser, String toParse) {
-        StreamlinePlayer player = UserUtils.getOrGetPlayer(streamlineUser.getUuid());
-        if (player == null) {
-            Map.Entry<String, StreamlinePlayer> entry = UserUtils.getOnlinePlayers().firstEntry();
-            if (entry == null) return;
-            player = entry.getValue();
+    public static void parseOnProxyForNowThenSet(StreamSender player, String toParse) {
+        StreamPlayer c;
+        if (player instanceof StreamPlayer) {
+            c = (StreamPlayer) player;
+        } else {
+            c = UserUtils.getLoadedPlayersSet().first();
         }
-
-        ReturnableMessage message = ProxyParseMessageBuilder.build(player, toParse, streamlineUser);
-        StreamlinePlayer finalPlayer = player;
+        ReturnableMessage message = ProxyParseMessageBuilder.build(c, toParse, player);
         message.registerEventCall((pm) -> {
-            if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) cacheValue(finalPlayer, toParse, pm.getString("parsed"));
+            if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) cacheValue(player, toParse, pm.getString("parsed"));
         });
     }
 
-    public static String parseOnProxyForNowLimited(StreamlineUser user, String toParse) {
+    public static String parseOnProxyForNowLimited(StreamSender user, String toParse) {
         return parseOnProxyForNow(user, toParse, 1);
     }
 
-    public static String parseOnProxy(String toParse) {
-        return parseOnProxy(UserUtils.getConsole(), toParse);
-    }
+//    public static String parseOnProxy(String toParse) {
+//        return parseOnProxy(UserUtils.getConsole(), toParse);
+//    }
 
-    public static String parseOnProxy(StreamlineUser streamlineUser, String toParse) {
+    public static String parseOnProxy(StreamSender streamSender, String toParse) {
 //        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-//        final Future<String> future = executorService.submit(new ExpensiveProxyGet(streamlineUser, toParse));
+//        final Future<String> future = executorService.submit(new ExpensiveProxyGet(StreamPlayer, toParse));
 //        try {
 //            return future.get();
 //        } catch (InterruptedException | ExecutionException e) {
 //            e.printStackTrace();
 //            return toParse;
 //        }
-        return parseOnProxyForNowLimited(streamlineUser, toParse);
+        return parseOnProxyForNowLimited(streamSender, toParse);
     }
 
     public static void cacheValue(String userUuid, String toParse, String parsedAs) {
@@ -292,11 +293,11 @@ public class MessageUtils {
         return map.get(toParse);
     }
 
-    public static void cacheValue(StreamlineUser user, String toParse, String parsedAs) {
+    public static void cacheValue(StreamSender user, String toParse, String parsedAs) {
         cacheValue(user.getUuid(), toParse, parsedAs);
     }
 
-    public static String getCachedValue(StreamlineUser user, String toParse) {
+    public static String getCachedValue(StreamSender user, String toParse) {
         return getCachedValue(user.getUuid(), toParse);
     }
 

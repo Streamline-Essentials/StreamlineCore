@@ -1,0 +1,59 @@
+package net.streamline.platform.savables;
+
+import lombok.Getter;
+import lombok.Setter;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.streamline.api.interfaces.audiences.IConsoleHolder;
+import net.streamline.api.interfaces.audiences.real.RealSender;
+import net.streamline.platform.Messenger;
+
+@Getter @Setter
+public class ConsoleHolder implements IConsoleHolder<CommandSender> {
+    private RealSender<CommandSender> realConsole;
+
+    public ConsoleHolder() {
+        this.realConsole = new RealSender<>(() -> ProxyServer.getInstance().getConsole()) {
+            @Override
+            public boolean hasPermission(String permission) {
+                return getConsole().hasPermission(permission);
+            }
+
+            @Override
+            public void addPermission(String permission) {
+                // getConsole().addPermission(permission);
+            }
+
+            @Override
+            public void removePermission(String permission) {
+                // getConsole().removePermission(permission);
+            }
+
+            @Override
+            public void sendMessage(String message) {
+                getConsole().sendMessage(Messenger.getInstance().codedText(message));
+            }
+
+            @Override
+            public void sendMessageRaw(String message) {
+                getConsole().sendMessage(new TextComponent(message));
+            }
+
+            @Override
+            public void sendConsoleMessageNonNull(String message) {
+                sendMessage(message);
+            }
+
+            @Override
+            public void sendLogMessage(String message) {
+                ProxyServer.getInstance().getLogger().info(message);
+            }
+
+            @Override
+            public void runCommand(String command) {
+                ProxyServer.getInstance().getPluginManager().dispatchCommand(getConsole(), command);
+            }
+        };
+    }
+}

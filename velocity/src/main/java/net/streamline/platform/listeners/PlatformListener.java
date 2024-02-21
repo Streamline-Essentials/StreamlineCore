@@ -21,17 +21,15 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.server.*;
 import net.streamline.api.events.server.ping.PingReceivedEvent;
-import net.streamline.api.messages.builders.SavablePlayerMessageBuilder;
-import net.streamline.api.messages.builders.UserNameMessageBuilder;
+import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -56,10 +54,9 @@ public class PlatformListener {
         if (! (connection instanceof Player)) return;
         Player p = (Player) connection;
 
-        StreamlineUser user = UserUtils.getOrGetUserByName(p.getUsername());
-        if (! (user instanceof StreamlinePlayer)) return;
-        StreamlinePlayer player = ((StreamlinePlayer) user);
-        p.getCurrentServer().ifPresent(serverConnection -> player.setLatestServer(serverConnection.getServerInfo().getName()));
+        StreamPlayer player = UserUtils.getOrGetPlayerByName(p.getUsername()).orElse(null);
+        if (player == null) return;
+        p.getCurrentServer().ifPresent(serverConnection -> player.setServerName(serverConnection.getServerInfo().getName()));
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -86,42 +83,39 @@ public class PlatformListener {
 
         CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getUsername());
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        streamlinePlayer.setLatestIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
-        streamlinePlayer.setLatestName(event.getPlayer().getUsername());
-        player.getCurrentServer().ifPresent(serverConnection -> streamlinePlayer.setLatestServer(serverConnection.getServerInfo().getName()));
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer.setCurrentIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
+        StreamPlayer.setCurrentName(event.getPlayer().getUsername());
+        player.getCurrentServer().ifPresent(serverConnection -> StreamPlayer.setServerName(serverConnection.getServerInfo().getName()));
 
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamlinePlayer);
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(StreamPlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
-
-        UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
     }
 
     @Subscribe
     public void onLeave(DisconnectEvent event) {
         String uuid = event.getPlayer().getUniqueId().toString();
-        StreamlinePlayer StreamlinePlayer = UserUtils.getOrGetPlayer(uuid);
-        if (StreamlinePlayer == null) return;
+        StreamPlayer player = UserUtils.getOrGetPlayer(uuid).orElse(null);
+        if (player == null) return;
 
-        LogoutEvent logoutEvent = new LogoutEvent(StreamlinePlayer);
+        LogoutEvent logoutEvent = new LogoutEvent(player);
         ModuleUtils.fireEvent(logoutEvent);
 
-        StreamlinePlayer.getStorageResource().sync();
-        UserUtils.unloadUser(StreamlinePlayer);
+        player.save();
+        UserUtils.unloadSender(player);
     }
 
     @Subscribe
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        streamlinePlayer.setLatestServer(event.getServer().getServerInfo().getName());
+        StreamPlayer streamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        streamPlayer.setServerName(event.getServer().getServerInfo().getName());
 
         new BaseRunnable(20, 1) {
             @Override
             public void run() {
-                SavablePlayerMessageBuilder.build(streamlinePlayer, true).send();
-                UserNameMessageBuilder.build(streamlinePlayer, streamlinePlayer.getDisplayName(), streamlinePlayer).send();
+                StreamPlayerMessageBuilder.build(streamPlayer, true).send();
                 this.cancel();
             }
         };
@@ -133,8 +127,8 @@ public class PlatformListener {
 
         event.setResult(PlayerChatEvent.ChatResult.message("t"));
 
-        StreamlinePlayer StreamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamlinePlayer, event.getMessage());
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(StreamPlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
 
         if (chatEvent.isCanceled()) {
@@ -160,10 +154,10 @@ public class PlatformListener {
         String tag = event.getIdentifier().getId();
         if (! (event.getTarget() instanceof Player)) return;
         Player player = (Player) event.getTarget();
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
 
         try {
-            ProxiedMessage messageIn = new ProxiedMessage(streamlinePlayer, false, event.getData(), tag);
+            ProxiedMessage messageIn = new ProxiedMessage(StreamPlayer, false, event.getData(), tag);
             ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
             ModuleUtils.fireEvent(e);
             if (e.isCancelled()) return;
@@ -178,7 +172,7 @@ public class PlatformListener {
         ServerStartEvent e = new ServerStartEvent().fire();
         if (e.isCancelled()) return;
         if (! e.isSendable()) return;
-        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+        SLAPI.sendConsoleMessage(e.getMessage());
     }
 
     @Subscribe
@@ -186,7 +180,7 @@ public class PlatformListener {
         ServerStopEvent e = new ServerStopEvent().fire();
         if (e.isCancelled()) return;
         if (! e.isSendable()) return;
-        ModuleUtils.sendMessage(ModuleUtils.getConsole(), e.getMessage());
+        SLAPI.sendConsoleMessage(e.getMessage());
     }
 
     @Subscribe
@@ -257,9 +251,9 @@ public class PlatformListener {
         String fromName = from == null ? "none" : from.getServerInfo().getName();
         String toName = "none";
 
-        StreamlinePlayer streamlinePlayer = UserManager.getInstance().getOrGetPlayer(player);
+        StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
 
-        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamlinePlayer, fromName, kickedReason, toName).fire();
+        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(StreamPlayer, fromName, kickedReason, toName).fire();
 
         if (kickedFromServerEvent.isCancelled()) {
             return;

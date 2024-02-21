@@ -1,10 +1,9 @@
 package net.streamline.api.interfaces;
 
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.savables.users.StreamlinePlayer;
-import net.streamline.api.savables.users.StreamlineUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -34,17 +33,11 @@ public interface IStreamline {
 
     void handleMisSync(StreamlineEvent event, boolean async);
 
-    @NotNull ConcurrentSkipListSet<StreamlinePlayer> getOnlinePlayers();
+    @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers();
 
     ConcurrentSkipListSet<String> getOnlinePlayerNames();
 
-    boolean hasPermission(StreamlineUser user, String permission);
-
     ConcurrentSkipListSet<String> getServerNames();
-
-    void chatAs(StreamlineUser as, String message);
-
-    void runAsStrictly(StreamlineUser as, String message);
 
     boolean serverHasPlugin(String plugin);
 
@@ -64,7 +57,7 @@ public interface IStreamline {
 
     String getVersion();
 
-    void sendResourcePack(StreamlineResourcePack resourcePack, StreamlineUser player);
+    void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player);
 
     void sendResourcePack(StreamlineResourcePack resourcePack, String uuid);
 

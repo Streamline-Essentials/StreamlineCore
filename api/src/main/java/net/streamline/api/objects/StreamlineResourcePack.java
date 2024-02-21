@@ -3,7 +3,7 @@ package net.streamline.api.objects;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.savables.users.StreamlinePlayer;
+import net.streamline.api.data.players.StreamPlayer;
 
 @Getter
 public class StreamlineResourcePack {
@@ -23,7 +23,7 @@ public class StreamlineResourcePack {
         this.force = force;
     }
 
-    public void sendPlayer(StreamlinePlayer player) {
+    public void sendPlayer(StreamPlayer player) {
         SLAPI.getInstance().getPlatform().sendResourcePack(this, player);
     }
 }
