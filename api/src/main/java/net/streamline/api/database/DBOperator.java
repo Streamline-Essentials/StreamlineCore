@@ -11,6 +11,7 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Getter @Setter
 public class DBOperator {
@@ -84,23 +85,30 @@ public class DBOperator {
         }
     }
 
-    public boolean execute(String statement) {
+    public ExecutionResult execute(String statement) {
+        AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
         try (Connection connection = getConnection()) {
-            Statement stmt = connection.createStatement();
-            return stmt.execute(statement);
+            try (Statement stmt = connection.createStatement()) {
+                if (stmt.execute(statement)) result.set(ExecutionResult.YES);
+                else result.set(ExecutionResult.NO);
+            }
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute statement: " + statement, e);
-            return false;
+            result.set(ExecutionResult.ERROR);
         }
+
+        return result.get();
     }
 
-    public ResultSet executeQuery(String statement) {
+    public void executeQuery(String statement, DBAction action) {
         try (Connection connection = getConnection()) {
-            Statement stmt = connection.createStatement();
-            return stmt.executeQuery(statement);
+            try (Statement stmt = connection.createStatement()) {
+                try (ResultSet set = stmt.executeQuery(statement)) {
+                    action.accept(set);
+                }
+            }
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute query: " + statement, e);
-            return null;
         }
     }
 
