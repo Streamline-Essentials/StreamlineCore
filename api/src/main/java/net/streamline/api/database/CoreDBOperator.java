@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.streamline.api.data.players.StreamPlayer;
 
@@ -135,18 +136,20 @@ public class CoreDBOperator extends DBOperator {
 
             s1 = s1.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s1)) {
-                if (rs.next()) {
-                    player.setFirstJoin(rs.getLong("FirstJoin"));
-                    player.setLastJoin(rs.getLong("LastJoin"));
-                    player.setCurrentName(rs.getString("CurrentName"));
-                    player.setCurrentIP(rs.getString("CurrentIP"));
-                    player.setPlaySeconds(rs.getLong("PlaySeconds"));
-                    player.setPoints(rs.getInt("Points"));
+            this.executeQuery(s1, rs -> {
+                try {
+                    if (rs.next()) {
+                        player.setFirstJoin(rs.getLong("FirstJoin"));
+                        player.setLastJoin(rs.getLong("LastJoin"));
+                        player.setCurrentName(rs.getString("CurrentName"));
+                        player.setCurrentIP(rs.getString("CurrentIP"));
+                        player.setPlaySeconds(rs.getLong("PlaySeconds"));
+                        player.setPoints(rs.getInt("Points"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            });
 
             String s2 = Statements.getStatement(Statements.StatementType.PULL_PLAYER_META, this.getConnectorSet());
             if (s2 == null) return Optional.empty();
@@ -154,15 +157,17 @@ public class CoreDBOperator extends DBOperator {
 
             s2 = s2.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s2)) {
-                if (rs.next()) {
-                    player.getMeta().setNickname(rs.getString("Nickname"));
-                    player.getMeta().setPrefix(rs.getString("Prefix"));
-                    player.getMeta().setSuffix(rs.getString("Suffix"));
+            this.executeQuery(s2, rs -> {
+                try {
+                    if (rs.next()) {
+                        player.getMeta().setNickname(rs.getString("Nickname"));
+                        player.getMeta().setPrefix(rs.getString("Prefix"));
+                        player.getMeta().setSuffix(rs.getString("Suffix"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            });
 
             String s3 = Statements.getStatement(Statements.StatementType.PULL_PLAYER_LEVELING, this.getConnectorSet());
             if (s3 == null) return Optional.empty();
@@ -170,18 +175,20 @@ public class CoreDBOperator extends DBOperator {
 
             s3 = s3.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s3)) {
-                if (rs.next()) {
-                    player.getLeveling().setLevel(rs.getInt("Level"));
-                    player.getLeveling().setTotalExperience(rs.getDouble("TotalExperience"));
-                    player.getLeveling().setCurrentExperience(rs.getDouble("CurrentExperience"));
-                    player.getLeveling().setEquationString(rs.getString("EquationString"));
-                    player.getLeveling().setStartedLevel(rs.getInt("StartedLevel"));
-                    player.getLeveling().setStartedExperience(rs.getDouble("StartedExperience"));
+            this.executeQuery(s3, rs -> {
+                try {
+                    if (rs.next()) {
+                        player.getLeveling().setLevel(rs.getInt("Level"));
+                        player.getLeveling().setTotalExperience(rs.getDouble("TotalExperience"));
+                        player.getLeveling().setCurrentExperience(rs.getDouble("CurrentExperience"));
+                        player.getLeveling().setEquationString(rs.getString("EquationString"));
+                        player.getLeveling().setStartedLevel(rs.getInt("StartedLevel"));
+                        player.getLeveling().setStartedExperience(rs.getDouble("StartedExperience"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            });
 
             String s4 = Statements.getStatement(Statements.StatementType.PULL_PLAYER_LOCATION, this.getConnectorSet());
             if (s4 == null) return Optional.empty();
@@ -189,19 +196,21 @@ public class CoreDBOperator extends DBOperator {
 
             s4 = s4.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s4)) {
-                if (rs.next()) {
-                    player.getLocation().setServerName(rs.getString("Server"));
-                    player.getLocation().setWorldName(rs.getString("World"));
-                    player.getLocation().setX(rs.getDouble("X"));
-                    player.getLocation().setY(rs.getDouble("Y"));
-                    player.getLocation().setZ(rs.getDouble("Z"));
-                    player.getLocation().setYaw(rs.getFloat("Yaw"));
-                    player.getLocation().setPitch(rs.getFloat("Pitch"));
+            this.executeQuery(s4, rs -> {
+                try {
+                    if (rs.next()) {
+                        player.getLocation().setServerName(rs.getString("Server"));
+                        player.getLocation().setWorldName(rs.getString("World"));
+                        player.getLocation().setX(rs.getDouble("X"));
+                        player.getLocation().setY(rs.getDouble("Y"));
+                        player.getLocation().setZ(rs.getDouble("Z"));
+                        player.getLocation().setYaw(rs.getFloat("Yaw"));
+                        player.getLocation().setPitch(rs.getFloat("Pitch"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            });
 
             String s5 = Statements.getStatement(Statements.StatementType.PULL_PLAYER_PERMISSIONS, this.getConnectorSet());
             if (s5 == null) return Optional.empty();
@@ -209,13 +218,15 @@ public class CoreDBOperator extends DBOperator {
 
             s5 = s5.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s5)) {
-                if (rs.next()) {
-                    player.getPermissions().setBypassingPermissions(rs.getBoolean("BypassingPermissions"));
+            this.executeQuery(s5, rs -> {
+                try {
+                    if (rs.next()) {
+                        player.getPermissions().setBypassingPermissions(rs.getBoolean("BypassingPermissions"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            });
 
             return Optional.of(player);
         });
@@ -231,12 +242,17 @@ public class CoreDBOperator extends DBOperator {
 
             s1 = s1.replace("%uuid%", uuid);
 
-            try (ResultSet rs = this.executeQuery(s1)) {
-                return rs.next();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return false;
-            }
+            AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+            this.executeQuery(s1, rs -> {
+                try {
+                    atomicBoolean.set(rs.next());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    atomicBoolean.set(false);
+                }
+            });
+
+            return atomicBoolean.get();
         });
     }
 }
