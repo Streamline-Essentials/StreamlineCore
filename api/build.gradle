@@ -14,6 +14,7 @@ dependencies {
     annotationProcessor(ANNO)
     implementation(IMPL)
     compileOnly(COMP_ONLY)
+    shadow(SHADOW)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
