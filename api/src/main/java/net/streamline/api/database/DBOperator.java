@@ -22,6 +22,35 @@ public class DBOperator {
     public DBOperator(ConnectorSet connectorSet, String pluginUser) {
         this.connectorSet = connectorSet;
         this.pluginUser = pluginUser;
+
+        this.dataSource = buildDataSource();
+    }
+
+    public HikariDataSource buildDataSource() {
+        HikariConfig config = new HikariConfig();
+
+        switch (connectorSet.getType()) {
+            case MYSQL:
+                config.setJdbcUrl(connectorSet.getUri());
+                config.setUsername(connectorSet.getUsername());
+                config.setPassword(connectorSet.getPassword());
+
+                break;
+            case SQLITE:
+                config.setJdbcUrl(connectorSet.getUri());
+
+                break;
+        }
+        config.setPoolName(pluginUser + " - Pool");
+        config.setMaximumPoolSize(10);
+        config.setConnectionTimeout(30000);
+        config.setIdleTimeout(600000);
+        config.setMaxLifetime(1800000);
+        config.setDriverClassName(connectorSet.getType().getDriver());
+        config.addDataSourceProperty("allowMultiQueries", true);
+
+        dataSource = new HikariDataSource(config);
+        return dataSource;
     }
 
     public Connection buildConnection() {
@@ -30,29 +59,9 @@ public class DBOperator {
                 return rawConnection;
             }
 
-            HikariConfig config = new HikariConfig();
-
-            switch (connectorSet.getType()) {
-                case MYSQL:
-                    config.setJdbcUrl(connectorSet.getUri());
-                    config.setUsername(connectorSet.getUsername());
-                    config.setPassword(connectorSet.getPassword());
-
-                    break;
-                case SQLITE:
-                    config.setJdbcUrl(connectorSet.getUri());
-
-                    break;
+            if (dataSource == null) {
+                dataSource = buildDataSource();
             }
-            config.setPoolName(pluginUser + " - Pool");
-            config.setMaximumPoolSize(10);
-            config.setConnectionTimeout(30000);
-            config.setIdleTimeout(600000);
-            config.setMaxLifetime(1800000);
-            config.setDriverClassName(connectorSet.getType().getDriver());
-            config.addDataSourceProperty("allowMultiQueries", true);
-
-            dataSource = new HikariDataSource(config);
 
             rawConnection = dataSource.getConnection();
             return rawConnection;
