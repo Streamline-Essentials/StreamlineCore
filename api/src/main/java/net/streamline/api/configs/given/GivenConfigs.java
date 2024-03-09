@@ -21,11 +21,6 @@ public class GivenConfigs {
     private static WhitelistConfig whitelistConfig;
 
     @Getter @Setter
-    private static CachedUUIDsHandler cachedUUIDsHandler;
-    @Getter @Setter
-    private static SavedProfileConfig profileConfig;
-
-    @Getter @Setter
     private static File punishmentFolder;
 
     @Getter @Setter
@@ -35,8 +30,6 @@ public class GivenConfigs {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
-        setCachedUUIDsHandler(new CachedUUIDsHandler());
-        setProfileConfig(new SavedProfileConfig());
 
         try {
             ConnectorSet connectorSet = getMainConfig().getConnectorSet();

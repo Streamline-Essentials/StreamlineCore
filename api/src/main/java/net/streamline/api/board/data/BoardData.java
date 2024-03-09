@@ -12,12 +12,11 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Setter
+@Getter
 public class BoardData implements Comparable<BoardData> {
-    @Getter @Setter
     private BoardSender<?> sender;
-    @Getter @Setter
     private BoardHeader header;
-    @Getter @Setter
     private ConcurrentHashMap<String, BoardConstructable<?>> data;
 
     public String getIdentifier() {

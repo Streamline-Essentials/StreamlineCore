@@ -10,13 +10,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Setter
 @Getter
 public abstract class ModuleDependencyHolder<T> {
-    @Setter
     private ConcurrentSkipListMap<Integer, String> keysToTry;
-    @Setter
     private T api;
-    @Setter
     private String identifier;
 
     public ModuleDependencyHolder(String identifier, String... keysToTry) {

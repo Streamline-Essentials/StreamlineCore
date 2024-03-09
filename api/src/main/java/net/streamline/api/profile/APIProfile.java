@@ -8,11 +8,10 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Setter
 @Getter
 public class APIProfile {
-    @Setter
     private String token;
-    @Setter
     private ConcurrentSkipListMap<String, StreamlineServerInfo> servers = new ConcurrentSkipListMap<>();
 
     public APIProfile(ConcurrentSkipListMap<String, StreamlineServerInfo> servers) {

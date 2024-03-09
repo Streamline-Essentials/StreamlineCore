@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
+import net.streamline.api.data.uuid.UuidManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +44,7 @@ public class PingedResponse {
         private String name;
         private UUID uniqueId;
 
-        private static final UUID md5UUID = UUID.fromString(CachedUUIDsHandler.makeDashedUUID("af74a02d19cb445bb07f6866a861f783"));
+        private static final UUID md5UUID = UUID.fromString(UuidManager.makeDashedUUID("af74a02d19cb445bb07f6866a861f783"));
 
         public PlayerInfo(String name, String id)
         {
@@ -56,7 +56,7 @@ public class PingedResponse {
         {
             try
             {
-                uniqueId = UUID.fromString(CachedUUIDsHandler.makeDashedUUID(id));
+                uniqueId = UUID.fromString(UuidManager.makeDashedUUID(id));
             } catch ( Exception e )
             {
                 // Fallback on a valid uuid otherwise Minecraft complains

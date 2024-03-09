@@ -32,7 +32,7 @@ public class ConnectorSet {
             case MYSQL:
                 return type.getUrlPrefix() + host + ":" + port + "/" + database;
             case SQLITE:
-                return type.getUrlPrefix() + sqliteFileName;
+                return type.getUrlPrefix();
             default:
                 return "";
         }

@@ -304,7 +304,13 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public ConcurrentSkipListSet<String> getServerNames() {
-        return new ConcurrentSkipListSet<>(GivenConfigs.getProfileConfig().getCachedProfile().getServers().keySet());
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+//        for (String server : getInstance().getProxy().getServerNames()) {
+//            r.add(server);
+//        }
+
+        return r;
     }
 
     @Override

@@ -9,11 +9,11 @@ import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.data.players.events.LoadStreamSenderEvent;
@@ -377,37 +377,29 @@ public class UserUtils {
         }
     }
 
-    public static String getUUIDFromName(String name) {
-        return CachedUUIDsHandler.getCachedUUID(name);
+    public static Optional<String> getUUIDFromName(String name) {
+        return UuidManager.getUuidFromName(name);
     }
 
     public static Optional<StreamSender> getOrGetUserByName(String name) {
-        String uuid = getUUIDFromName(name);
-        if (uuid == null) {
-//            MessageUtils.logWarning("Could not get UUID from name '" + name + "'.");
-            return Optional.empty();
-        }
+        Optional<String> uuid = getUUIDFromName(name);
+        if (uuid.isEmpty()) return Optional.empty();
 
-        return getOrGetSender(uuid);
+        return getOrGetSender(uuid.get());
     }
 
     public static Optional<StreamPlayer> getOrGetPlayerByName(String name) {
-        String uuid = getUUIDFromName(name);
-        if (uuid == null) return Optional.empty();
+        Optional<String> uuid = getUUIDFromName(name);
+        if (uuid.isEmpty()) return Optional.empty();
 
-        return getOrGetPlayer(uuid);
+        return getOrGetPlayer(uuid.get());
     }
 
     public static ConcurrentSkipListSet<StreamPlayer> getPlayersOn(String server) {
-        StreamlineServerInfo s = GivenConfigs.getProfileConfig().getServerInfo(server);
-        if (s == null) return new ConcurrentSkipListSet<>();
-
         ConcurrentSkipListSet<StreamPlayer> r = new ConcurrentSkipListSet<>();
 
-        s.getOnlineUsers().forEach((string) -> {
-            Optional<StreamPlayer> player = getOrGetPlayer(string);
-            if (player.isEmpty()) return;
-            r.add(player.get());
+        getOnlinePlayers().forEach((s, user) -> {
+            if (user.getServer().getIdentifier().equals(server)) r.add(user);
         });
 
         return r;

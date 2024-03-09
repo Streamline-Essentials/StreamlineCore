@@ -6,9 +6,9 @@ import lombok.Setter;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.utils.MessageUtils;
 
+@Setter
 @Getter
 public class LoginReceivedEvent extends LoginEvent {
-    @Setter
     private ConnectionResult result;
 
     public LoginReceivedEvent(StreamPlayer player) {

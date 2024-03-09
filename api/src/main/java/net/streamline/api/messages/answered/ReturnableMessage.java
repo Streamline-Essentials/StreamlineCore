@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
+@Setter
 public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
     private static final String key = "{{key}}";
@@ -21,19 +22,19 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
     private static final int testingTicks = 40;
 
-    @Getter @Setter
+    @Getter
     private String answerKey;
-    @Getter @Setter
+    @Getter
     private ProxiedMessage payload;
-    @Getter @Setter
+    @Getter
     private boolean answered = false;
-    @Getter @Setter
+    @Getter
     private boolean fired = false;
-    @Getter @Setter
+    @Getter
     private boolean called = false;
-    @Getter @Setter
+    @Getter
     private TimeoutTimer timeoutTimer;
-    @Getter @Setter
+    @Getter
     private ConcurrentSkipListMap<Integer, Consumer<ProxiedMessage>> registeredEvents = new ConcurrentSkipListMap<>();
 
     public ReturnableMessage(ProxiedMessage payload, boolean send) {

@@ -38,7 +38,7 @@ public class DBOperator {
 
                 break;
             case SQLITE:
-                config.setJdbcUrl(connectorSet.getUri());
+                config.setJdbcUrl(connectorSet.getUri() + getDatabaseFolder().getPath() + File.separator + connectorSet.getSqliteFileName());
 
                 break;
         }
@@ -87,26 +87,27 @@ public class DBOperator {
 
     public ExecutionResult execute(String statement) {
         AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
-        try (Connection connection = getConnection()) {
-            try (Statement stmt = connection.createStatement()) {
-                if (stmt.execute(statement)) result.set(ExecutionResult.YES);
-                else result.set(ExecutionResult.NO);
-            }
+
+        try {
+            Connection connection = getConnection();
+            Statement stmt = connection.createStatement();
+
+            if (stmt.execute(statement)) result.set(ExecutionResult.YES);
+            else result.set(ExecutionResult.NO);
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute statement: " + statement, e);
-            result.set(ExecutionResult.ERROR);
         }
 
         return result.get();
     }
 
     public void executeQuery(String statement, DBAction action) {
-        try (Connection connection = getConnection()) {
-            try (Statement stmt = connection.createStatement()) {
-                try (ResultSet set = stmt.executeQuery(statement)) {
-                    action.accept(set);
-                }
-            }
+        try {
+            Connection connection = getConnection();
+            Statement stmt = connection.createStatement();
+            ResultSet set = stmt.executeQuery(statement);
+
+            action.accept(set);
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute query: " + statement, e);
         }
@@ -136,7 +137,7 @@ public class DBOperator {
     }
 
     public static File getDatabaseFolder() {
-        File folder = new File(SLAPI.getMainFolder(), "storage");
+        File folder = new File(SLAPI.getInstance().getDataFolder(), "storage");
 
         if (! folder.exists()) {
             folder.mkdirs();

@@ -3,12 +3,12 @@ package net.streamline.platform.listeners;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.server.*;
 import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
@@ -91,7 +91,7 @@ public class PlatformListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
+        UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
         StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamPlayer.setCurrentIP(UserManager.getInstance().parsePlayerIP(player));

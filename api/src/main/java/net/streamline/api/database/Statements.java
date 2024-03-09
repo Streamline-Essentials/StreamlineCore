@@ -39,6 +39,15 @@ public class Statements {
                 "Z DOUBLE," +
                 "Yaw FLOAT," +
                 "Pitch FLOAT" +
+                ");\n" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%player_permissions` (" +
+                "Uuid VARCHAR(36) PRIMARY KEY," +
+                "BypassingPermissions BOOLEAN" +
+                ");\n" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%uuid_info` (" +
+                "Uuid VARCHAR(36) PRIMARY KEY," +
+                "Usernames VARCHAR(255)," +
+                "Ips VARCHAR(15)" +
                 ");"
         ),
         PUSH_PLAYER_MAIN("INSERT INTO `%table_prefix%players` (" +
@@ -72,11 +81,19 @@ public class Statements {
                 "'%uuid%', %bypassing_permissions%" +
                 ") ON DUPLICATE KEY UPDATE " +
                 "BypassingPermissions = %bypassing_permissions%;"),
+        PUSH_UUID_INFO("INSERT INTO `%table_prefix%uuid_info` (" +
+                "Uuid, Usernames, Ips" +
+                ") VALUES (" +
+                "'%uuid%', '%usernames%', '%ips'" +
+                ") ON DUPLICATE KEY UPDATE " +
+                "Usernames = '%usernames%', Ips = '%ips';"),
         PULL_PLAYER_MAIN("SELECT * FROM `%table_prefix%players` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_META("SELECT * FROM `%table_prefix%player_meta` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_LEVELING("SELECT * FROM `%table_prefix%player_leveling` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_LOCATION("SELECT * FROM `%table_prefix%player_location` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_PERMISSIONS("SELECT * FROM `%table_prefix%player_permissions` WHERE Uuid = '%uuid%';"),
+        PULL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info` WHERE Uuid = '%uuid%';"),
+        PULL_ALL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info`;"),
         PLAYER_EXISTS("SELECT EXISTS(SELECT 1 FROM `%table_prefix%players` WHERE Uuid = '%uuid');"),
         ;
 
@@ -91,38 +108,53 @@ public class Statements {
     public enum SQLite {
         CREATE_DATABASE(""),
         CREATE_TABLES("CREATE TABLE IF NOT EXISTS `%table_prefix%players` (" +
-                "Uuid TEXT PRIMARY KEY," +
+                "Uuid TEXT," +
                 "FirstJoin TEXT," +
                 "LastJoin TEXT," +
                 "CurrentName TEXT," +
-                "CurrentIP TEXT" +
+                "CurrentIP TEXT," +
                 "PlaySeconds INTEGER," +
                 "Points INTEGER" +
+                "PRIMARY KEY (Uuid)" +
                 ");\n" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_meta` (" +
-                "Uuid TEXT PRIMARY KEY," +
+                "Uuid TEXT," +
                 "Nickname TEXT," +
                 "Prefix TEXT," +
-                "Suffix TEXT" +
+                "Suffix TEXT," +
+                "PRIMARY KEY (Uuid)" +
                 ");\n" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_leveling` (" +
-                "Uuid TEXT PRIMARY KEY," +
+                "Uuid TEXT," +
                 "Level INTEGER," +
                 "TotalExperience REAL," +
                 "CurrentExperience REAL," +
                 "EquationString TEXT," +
                 "StartedLevel INTEGER," +
-                "StartedExperience REAL" +
+                "StartedExperience REAL," +
+                "PRIMARY KEY (Uuid)" +
                 ");\n" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_location` (" +
-                "Uuid TEXT PRIMARY KEY," +
+                "Uuid TEXT," +
                 "Server TEXT," +
                 "World TEXT," +
                 "X REAL," +
                 "Y REAL," +
                 "Z REAL," +
                 "Yaw REAL," +
-                "Pitch REAL" +
+                "Pitch REAL," +
+                "PRIMARY KEY (Uuid)" +
+                ");\n" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%player_permissions` (" +
+                "Uuid TEXT," +
+                "BypassingPermissions INTEGER," +
+                "PRIMARY KEY (Uuid)" +
+                ");" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%uuid_info` (" +
+                "Uuid TEXT," +
+                "Usernames TEXT," +
+                "Ips TEXT," +
+                "PRIMARY KEY (Uuid)" +
                 ");"
         ),
         PUSH_PLAYER_MAIN("INSERT OR REPLACE INTO `%table_prefix%players` (" +
@@ -150,11 +182,18 @@ public class Statements {
                 ") VALUES (" +
                 "'%uuid%', %bypassing_permissions%" +
                 ");"),
+        PUSH_UUID_INFO("INSERT OR REPLACE INTO `%table_prefix%uuid_info` (" +
+                "Uuid, Usernames, Ips" +
+                ") VALUES (" +
+                "'%uuid%', '%usernames%', '%ips'" +
+                ");"),
         PULL_PLAYER_MAIN("SELECT * FROM `%table_prefix%players` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_META("SELECT * FROM `%table_prefix%player_meta` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_LEVELING("SELECT * FROM `%table_prefix%player_leveling` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_LOCATION("SELECT * FROM `%table_prefix%player_location` WHERE Uuid = '%uuid%';"),
         PULL_PLAYER_PERMISSIONS("SELECT * FROM `%table_prefix%player_permissions` WHERE Uuid = '%uuid%';"),
+        PULL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info` WHERE Uuid = '%uuid%';"),
+        PULL_ALL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info`;"),
         PLAYER_EXISTS("SELECT EXISTS(SELECT 1 FROM `%table_prefix%players` WHERE Uuid = '%uuid');"),
         ;
 
@@ -173,11 +212,14 @@ public class Statements {
         PUSH_PLAYER_LEVELING,
         PUSH_PLAYER_LOCATION,
         PUSH_PLAYER_PERMISSIONS,
+        PUSH_UUID_INFO,
         PULL_PLAYER_MAIN,
         PULL_PLAYER_META,
         PULL_PLAYER_LEVELING,
         PULL_PLAYER_LOCATION,
         PULL_PLAYER_PERMISSIONS,
+        PULL_UUID_INFO,
+        PULL_ALL_UUID_INFO,
         PLAYER_EXISTS,
         ;
     }

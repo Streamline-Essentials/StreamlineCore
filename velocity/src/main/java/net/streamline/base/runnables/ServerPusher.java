@@ -49,8 +49,6 @@ public class ServerPusher extends BaseRunnable {
                     registeredServer.getServerInfo().getName(), registeredServer.getServerInfo().getName(),
                     registeredServer.getServerInfo().getName(), registeredServer.getServerInfo().getAddress().toString(), uuids);
 
-            GivenConfigs.getProfileConfig().updateServerInfo(ssi);
-
             players.forEach(p -> {
                 ProxiedMessage toSend = ServerInfoMessageBuilder.build(p, ssi);
 

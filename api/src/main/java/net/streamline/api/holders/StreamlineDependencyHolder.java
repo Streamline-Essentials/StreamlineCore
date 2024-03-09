@@ -9,13 +9,11 @@ import net.streamline.api.utils.MessageUtils;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+@Setter
 @Getter
 public abstract class StreamlineDependencyHolder<T> {
-    @Setter
     private ConcurrentSkipListMap<Integer, String> keysToTry;
-    @Setter
     private T api;
-    @Setter
     private String identifier;
 
     public StreamlineDependencyHolder(String identifier, String... keysToTry) {
