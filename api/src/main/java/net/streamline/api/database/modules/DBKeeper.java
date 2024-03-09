@@ -5,25 +5,20 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.database.DatabaseType;
-import org.jetbrains.annotations.NotNull;
-import tv.quaint.savables.SavableResource;
+import tv.quaint.objects.Identifiable;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Getter
 @Setter
-public abstract class DBKeeper<T extends Comparable<T>> implements Comparable<DBKeeper<T>> {
-    private T resource;
+public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
+    private String identifier;
     private ResourceGetter<T> getter;
 
-    public DBKeeper(T resource, ResourceGetter<T> getter) {
-        this.resource = resource;
+    public DBKeeper(String identifier, ResourceGetter<T> getter) {
+        this.identifier = identifier;
         this.getter = getter;
-    }
-
-    @Override
-    public int compareTo(@NotNull DBKeeper<T> o) {
-        return resource.compareTo(o.getResource());
     }
 
     public static CoreDBOperator getDatabase() {
@@ -34,65 +29,81 @@ public abstract class DBKeeper<T extends Comparable<T>> implements Comparable<DB
         return getDatabase().getConnectorSet().getType();
     }
 
-    public void save(boolean async) {
+    public static String getTablePrefix() {
+        return getDatabase().getConnectorSet().getTablePrefix();
+    }
+
+    public void ensureTables() {
+        if (getDatabaseType() == DatabaseType.MYSQL) {
+            ensureMysqlTables();
+        } else if (getDatabaseType() == DatabaseType.SQLITE) {
+            ensureSqliteTables();
+        }
+    }
+
+    public abstract void ensureMysqlTables();
+
+    public abstract void ensureSqliteTables();
+
+    public void save(T obj, boolean async) {
         if (async) {
-            CompletableFuture.runAsync(this::saveRaw);
+            CompletableFuture.runAsync(() -> saveRaw(obj));
         } else {
-            saveRaw();
+            saveRaw(obj);
         }
     }
 
-    public void save() {
-        save(true);
+    public void save(T obj) {
+        save(obj, true);
     }
 
-    public void saveRaw() {
+    public void saveRaw(T obj) {
         if (getDatabaseType() == DatabaseType.MYSQL) {
-            saveMysql();
+            saveMysql(obj);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
-            saveSqlite();
+            saveSqlite(obj);
         }
     }
 
-    public abstract void saveMysql();
+    public abstract void saveMysql(T obj);
 
-    public abstract void saveSqlite();
+    public abstract void saveSqlite(T obj);
 
-    public CompletableFuture<T> load() {
-        return CompletableFuture.supplyAsync(this::loadRaw);
+    public CompletableFuture<Optional<T>> load(String identifier) {
+        return CompletableFuture.supplyAsync(() -> loadRaw(identifier));
     }
 
-    public T loadRaw() {
+    public Optional<T> loadRaw(String identifier) {
         if (getDatabaseType() == DatabaseType.MYSQL) {
-            return loadMysql();
+            return loadMysql(identifier);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
-            return loadSqlite();
+            return loadSqlite(identifier);
         }
-        return getGetter().get();
+        return Optional.of(getGetter().apply(identifier));
     }
 
-    public abstract T loadMysql();
+    public abstract Optional<T> loadMysql(String identifier);
 
-    public abstract T loadSqlite();
+    public abstract Optional<T> loadSqlite(String identifier);
 
-    public boolean forceExists() {
-        return exists().join();
+    public boolean forceExists(String identifier) {
+        return exists(identifier).join();
     }
 
-    public CompletableFuture<Boolean> exists() {
-        return CompletableFuture.supplyAsync(this::existsRaw);
+    public CompletableFuture<Boolean> exists(String identifier) {
+        return CompletableFuture.supplyAsync(() -> existsRaw(identifier));
     }
 
-    public boolean existsRaw() {
+    public boolean existsRaw(String identifier) {
         if (getDatabaseType() == DatabaseType.MYSQL) {
-            return existsMysql();
+            return existsMysql(identifier);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
-            return existsSqlite();
+            return existsSqlite(identifier);
         }
         return false;
     }
 
-    public abstract boolean existsMysql();
+    public abstract boolean existsMysql(String identifier);
 
-    public abstract boolean existsSqlite();
+    public abstract boolean existsSqlite(String identifier);
 }
