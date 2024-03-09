@@ -1,12 +1,13 @@
 package net.streamline.api.database;
 
-import java.sql.ResultSet;
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidInfo;
 
 public class CoreDBOperator extends DBOperator {
     public CoreDBOperator(ConnectorSet set) {
@@ -253,6 +254,83 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return atomicBoolean.get();
+        });
+    }
+
+    public CompletableFuture<Boolean> saveUuidInfo(UuidInfo uuidInfo) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PUSH_UUID_INFO, this.getConnectorSet());
+            if (s1 == null) return false;
+            if (s1.isBlank() || s1.isEmpty()) return false;
+
+            s1 = s1.replace("%uuid%", uuidInfo.getUuid().toString());
+            s1 = s1.replace("%names%", uuidInfo.computableNames());
+            s1 = s1.replace("%ips%", uuidInfo.computableIps());
+
+            this.execute(s1);
+
+            return true;
+        });
+    }
+
+    public CompletableFuture<Optional<UuidInfo>> loadUuidInfo(String uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_UUID_INFO, this.getConnectorSet());
+            if (s1 == null) return Optional.empty();
+            if (s1.isBlank() || s1.isEmpty()) return Optional.empty();
+
+            s1 = s1.replace("%uuid%", uuid);
+
+            AtomicReference<Optional<UuidInfo>> uuidInfo = new AtomicReference<>(Optional.empty());
+            this.executeQuery(s1, rs -> {
+                try {
+                    if (rs.next()) {
+                        String names = rs.getString("Names");
+                        String ips = rs.getString("Ips");
+
+                        UuidInfo info = new UuidInfo(uuid, names, ips);
+
+                        uuidInfo.set(Optional.of(info));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return uuidInfo.get();
+        });
+    }
+
+    public CompletableFuture<ConcurrentSkipListSet<UuidInfo>> pullAllUuidInfo() {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_ALL_UUID_INFO, this.getConnectorSet());
+            if (s1 == null) return new ConcurrentSkipListSet<>();
+            if (s1.isBlank() || s1.isEmpty()) return new ConcurrentSkipListSet<>();
+
+            AtomicReference<ConcurrentSkipListSet<UuidInfo>> uuids = new AtomicReference<>(new ConcurrentSkipListSet<>());
+            this.executeQuery(s1, rs -> {
+                try {
+                    while (rs.next()) {
+                        String uuid = rs.getString("Uuid");
+                        String names = rs.getString("Names");
+                        String ips = rs.getString("Ips");
+
+                        UuidInfo info = new UuidInfo(uuid, names, ips);
+
+                        uuids.get().add(info);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return uuids.get();
         });
     }
 }

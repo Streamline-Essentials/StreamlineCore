@@ -6,17 +6,19 @@ import lombok.Setter;
 import net.streamline.api.placeholders.RATRegistry;
 import org.jetbrains.annotations.NotNull;
 
+@Setter
 @Getter
 public abstract class RATExpansion {
+    @Setter
     @Getter
     public static class RATExpansionBuilder {
-        @Setter @NonNull
+        @NonNull
         private String identifier;
-        @Setter @NonNull
+        @NonNull
         private String separator;
-        @Setter @NonNull
+        @NonNull
         private String boundingPrefix;
-        @Setter @NonNull
+        @NonNull
         private String boundingSuffix;
 
         public RATExpansionBuilder(@NonNull String identifier, @NonNull String separator, @NotNull String boundingPrefix, @NotNull String boundingSuffix) {
@@ -35,7 +37,7 @@ public abstract class RATExpansion {
         }
     }
 
-    @Setter @NonNull
+    @NonNull
     RATExpansionBuilder builder;
 
     public RATExpansion(@NonNull RATExpansionBuilder builder) {

@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Getter
 @Setter
-public abstract class DBKeeper<T extends SavableResource> implements Comparable<DBKeeper<T>> {
+public abstract class DBKeeper<T extends Comparable<T>> implements Comparable<DBKeeper<T>> {
     private T resource;
     private ResourceGetter<T> getter;
 

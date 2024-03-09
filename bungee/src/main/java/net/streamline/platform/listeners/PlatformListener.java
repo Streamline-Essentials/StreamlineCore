@@ -12,13 +12,13 @@ import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidInfo;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.server.*;
 import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
@@ -89,7 +89,7 @@ public class PlatformListener implements Listener {
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getName());
+        UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
         StreamPlayer streamPlayer = UserManager.getInstance().getOrGetPlayer(player);
         streamPlayer.setCurrentIP(UserManager.getInstance().parsePlayerIP(player));

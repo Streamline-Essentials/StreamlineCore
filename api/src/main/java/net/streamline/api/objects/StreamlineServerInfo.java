@@ -10,15 +10,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter
 public class StreamlineServerInfo {
     private final String identifier;
-    @Setter
     private String name;
-    @Setter
     private String motd;
-    @Setter
     private String address;
-    @Setter
     private ConcurrentSkipListSet<String> onlineUsers;
 
     public StreamlineServerInfo(String identifier, String name, String motd, String address, ConcurrentSkipListSet<String> onlineUsers) {

@@ -16,12 +16,12 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.CachedUUIDsHandler;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.configs.given.whitelist.WhitelistEntry;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.server.*;
 import net.streamline.api.events.server.ping.PingReceivedEvent;
 import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
@@ -81,7 +81,7 @@ public class PlatformListener {
     public void onJoin(PostLoginEvent event) {
         Player player = event.getPlayer();
 
-        CachedUUIDsHandler.cachePlayer(player.getUniqueId().toString(), player.getUsername());
+        UuidManager.cachePlayer(player.getUniqueId().toString(), player.getUsername(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
         StreamPlayer StreamPlayer = UserManager.getInstance().getOrGetPlayer(player);
         StreamPlayer.setCurrentIP(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));

@@ -320,7 +320,7 @@ public class ModuleUtils {
         return SLAPI.getInstance().getUserManager().runAs(user, bypass, command);
     }
 
-    public static String getUUIDFromName(String name) {
+    public static Optional<String> getUUIDFromName(String name) {
         return UserUtils.getUUIDFromName(name);
     }
 
@@ -402,14 +402,6 @@ public class ModuleUtils {
 
     public static ClassLoader getMainClassLoader() {
         return SLAPI.getInstance().getPlatform().getMainClassLoader();
-    }
-
-    public static void setStreamlineServer(StreamlineServerInfo serverInfo) {
-        GivenConfigs.getProfileConfig().updateServerInfo(serverInfo);
-    }
-
-    public static StreamlineServerInfo getServerInfo(String server) {
-        return GivenConfigs.getProfileConfig().getServerInfo(server);
     }
 
     public static String parseOnProxy(StreamSender user, String toParse) {

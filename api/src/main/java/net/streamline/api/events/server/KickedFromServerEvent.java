@@ -5,13 +5,11 @@ import lombok.Setter;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.players.events.StreamSenderEvent;
 
+@Setter
 @Getter
 public class KickedFromServerEvent extends StreamSenderEvent {
-    @Setter
     private String fromServer;
-    @Setter
     private String reason;
-    @Setter
     private String toServer;
 
     public KickedFromServerEvent(StreamPlayer player, String fromServer, String reason, String toServer) {

@@ -10,6 +10,7 @@ import net.streamline.api.command.GivenCommands;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.*;
 import net.streamline.api.interfaces.audiences.IPlayerInterface;
@@ -20,8 +21,6 @@ import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.profile.StreamlineProfiler;
-import net.streamline.api.registries.MasterRegistry;
-import net.streamline.api.registries.SavablesRegistry;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
@@ -193,11 +192,6 @@ public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M ext
     @Getter @Setter
     private static CoreDBOperator mainDatabase;
 
-    @Getter @Setter
-    private static MasterRegistry masterRegistry;
-    @Getter @Setter
-    private static SavablesRegistry savablesRegistry;
-
     public SLAPI(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface) {
         super(identifier);
         instance = this;
@@ -207,9 +201,6 @@ public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M ext
         this.messenger = messenger;
         this.consoleHolder = consoleHolder;
         this.playerInterface = playerInterface;
-
-        masterRegistry = new MasterRegistry();
-        savablesRegistry = new SavablesRegistry();
 
 //        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.BACKEND));
         setProxy(platform.getServerType().equals(IStreamline.ServerType.PROXY));
@@ -241,6 +232,11 @@ public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M ext
         GivenConfigs.init();
         setMainDatabase(GivenConfigs.getMainDatabase());
         GivenCommands.init();
+        getMainDatabase().pullAllUuidInfo().whenComplete((set, throwable) -> {
+            if (throwable != null) throwable.printStackTrace();
+
+            UuidManager.registerAll(set);
+        });
 
         luckPerms = LuckPermsProvider.get();
 

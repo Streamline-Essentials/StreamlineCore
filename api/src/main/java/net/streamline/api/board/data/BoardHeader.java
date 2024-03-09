@@ -3,11 +3,11 @@ package net.streamline.api.board.data;
 import lombok.Getter;
 import lombok.Setter;
 
+@Setter
 @Getter
 public class BoardHeader {
     public static final String EMPTY = ">>EMPTY<<";
 
-    @Setter
     private String header;
 
     public BoardHeader(String header) {
