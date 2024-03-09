@@ -1,5 +1,6 @@
 package net.streamline.api.database.modules;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
-public interface ResourceGetter<T> extends Supplier<T> {}
+public interface ResourceGetter<T> extends Function<String, T> {
+}
