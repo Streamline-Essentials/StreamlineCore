@@ -74,6 +74,10 @@ subprojects {
         inputs.property('version', rootProject.version.toString())
         inputs.property('main', project.ext.pluginMain.toString())
 
+        java.sourceCompatibility = JavaVersion.VERSION_11
+        java.targetCompatibility = JavaVersion.VERSION_11
+        java.toolchain.languageVersion.set(JavaLanguageVersion.of(11))
+
         filesMatching('**/plugin.yml') {
             expand (
                     'name': rootProject.name.toString(),
