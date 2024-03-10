@@ -11,7 +11,6 @@ import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.*;
 import net.streamline.api.events.modules.ModuleLoadEvent;
-import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.events.BaseEventHandler;
@@ -228,11 +227,10 @@ public class ModuleManager {
 
     public static void unregisterModule(ModuleLike module) {
         try {
-            BaseEventHandler.unbake(module);
-            unloadCommandsForModule(module);
-            safePluginManager().stopPlugin(module.getIdentifier());
+//            unloadCommandsForModule(module);
+            module.stop();
             safePluginManager().unloadPlugin(module.getIdentifier());
-            unregisterHandlersOf(module);
+            BaseEventHandler.unbake(module);
             getLoadedModules().remove(module.getIdentifier());
         } catch (Exception e) {
             e.printStackTrace();
@@ -260,10 +258,10 @@ public class ModuleManager {
     }
 
     public static void reapplyModule(String id) {
-        ModuleLike moduleLike = getModule(id);
+        ModuleLike ModuleLike = getModule(id);
 
         if (SLAPI.getBaseModule() != null) {
-            if (moduleLike.equals(SLAPI.getBaseModule())) {
+            if (ModuleLike.equals(SLAPI.getBaseModule())) {
                 SLAPI.getBaseModule().stop();
                 BaseModule module = new BaseModule();
                 SLAPI.setBaseModule(module);
@@ -277,7 +275,7 @@ public class ModuleManager {
             }
         }
 
-        BaseEventHandler.unbake(moduleLike);
+        BaseEventHandler.unbake(ModuleLike);
 
         Path path = safePluginManager().getPlugin(id).getPluginPath();
         safePluginManager().stopPlugin(id);
@@ -328,8 +326,8 @@ public class ModuleManager {
         return hasModuleLoaded(identifier) && hasModuleEnabled(identifier);
     }
 
-    public static void unregisterModule(String s, ModuleLike moduleLike) {
-        unregisterModule(moduleLike);
+    public static void unregisterModule(String s, ModuleLike ModuleLike) {
+        unregisterModule(ModuleLike);
     }
 
     public static ConcurrentSkipListSet<ModuleLike> getOnlyMalleableModules() {

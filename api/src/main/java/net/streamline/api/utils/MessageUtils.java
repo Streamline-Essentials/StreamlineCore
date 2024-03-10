@@ -7,7 +7,7 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;

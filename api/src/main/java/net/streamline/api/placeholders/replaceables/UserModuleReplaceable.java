@@ -2,7 +2,7 @@ package net.streamline.api.placeholders.replaceables;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.placeholders.callbacks.UserPlaceholderCallback;
 
 @Getter

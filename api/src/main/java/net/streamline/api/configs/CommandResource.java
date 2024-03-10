@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 

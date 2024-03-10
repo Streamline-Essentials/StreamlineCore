@@ -1,7 +1,7 @@
 package net.streamline.api.configs;
 
 import lombok.Getter;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.io.File;

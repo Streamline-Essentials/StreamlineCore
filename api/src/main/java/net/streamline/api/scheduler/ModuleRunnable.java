@@ -1,7 +1,7 @@
 package net.streamline.api.scheduler;
 
 import lombok.Getter;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.modules.ModuleUtils;
 
 @Getter

@@ -6,10 +6,7 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.ModuleCommand;
 import net.streamline.api.events.modules.ModuleDisableEvent;
 import net.streamline.api.events.modules.ModuleEnableEvent;
-import net.streamline.api.interfaces.ModuleLike;
 import net.streamline.api.utils.MessageUtils;
-import org.jetbrains.annotations.NotNull;
-import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
 
 import java.io.File;
@@ -22,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Getter
-public abstract class StreamlineModule extends Plugin implements ModuleLike {
+public abstract class StreamlineModule extends ModuleLike {
     private final File dataFolder;
     @Setter
     private boolean initialized;
@@ -228,10 +225,5 @@ public abstract class StreamlineModule extends Plugin implements ModuleLike {
 
     public void removeCommand(ModuleCommand command) {
         removeCommand(command.getIdentifier());
-    }
-
-    @Override
-    public int compareTo(@NotNull ModuleLike o) {
-        return CharSequence.compare(getIdentifier(), o.getIdentifier());
     }
 }

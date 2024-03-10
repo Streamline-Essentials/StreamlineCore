@@ -12,7 +12,6 @@ import net.streamline.api.placeholders.expansions.RATExpansion;
 import net.streamline.api.placeholders.replaceables.IdentifiedUserReplaceable;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.AtomicString;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.Optional;
 import java.util.UUID;

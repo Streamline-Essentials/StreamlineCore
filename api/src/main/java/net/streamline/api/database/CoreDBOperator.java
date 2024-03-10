@@ -289,7 +289,7 @@ public class CoreDBOperator extends DBOperator {
             this.executeQuery(s1, rs -> {
                 try {
                     if (rs.next()) {
-                        String names = rs.getString("Names");
+                        String names = rs.getString("Usernames");
                         String ips = rs.getString("Ips");
 
                         UuidInfo info = new UuidInfo(uuid, names, ips);
