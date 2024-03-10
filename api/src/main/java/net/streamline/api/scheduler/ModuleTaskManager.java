@@ -1,7 +1,7 @@
 package net.streamline.api.scheduler;
 
 
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;

@@ -3,7 +3,7 @@ package net.streamline.api.placeholders;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.modules.StreamlineModule;
 import tv.quaint.objects.AtomicString;
 import net.streamline.api.placeholders.callbacks.RATCallback;
@@ -35,9 +35,9 @@ public class RATRegistry {
         replacements = new ConcurrentSkipListMap<>();
     }
 
-    public static void unregisterAll(ModuleLike moduleLike) {
-        replacements.values().removeIf(replacement -> replacement instanceof ModuleReplaceable && ((ModuleReplaceable) replacement).getModule().equals(moduleLike) ||
-                replacement instanceof UserModuleReplaceable && ((UserModuleReplaceable) replacement).getModule().equals(moduleLike));
+    public static void unregisterAll(ModuleLike ModuleLike) {
+        replacements.values().removeIf(replacement -> replacement instanceof ModuleReplaceable && ((ModuleReplaceable) replacement).getModule().equals(ModuleLike) ||
+                replacement instanceof UserModuleReplaceable && ((UserModuleReplaceable) replacement).getModule().equals(ModuleLike));
     }
 
     public static void unregisterAll(String identifier) {

@@ -2,7 +2,7 @@ package net.streamline.api.command;
 
 import lombok.Getter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 
 import java.io.File;
 

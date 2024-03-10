@@ -24,10 +24,10 @@ public class Statements {
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_leveling` (" +
                 "Uuid VARCHAR(36) PRIMARY KEY, " +
                 "Level INT, " +
-                "TotalExperience DOUBLE " +
-                "CurrentExperience DOUBLE " +
-                "EquationString NVARCHAR(255)" +
-                "StartedLevel INT " +
+                "TotalExperience DOUBLE, " +
+                "CurrentExperience DOUBLE, " +
+                "EquationString NVARCHAR(255), " +
+                "StartedLevel INT, " +
                 "StartedExperience DOUBLE " +
                 ");\n" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_location` (" +

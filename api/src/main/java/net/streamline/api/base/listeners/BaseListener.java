@@ -44,15 +44,17 @@ public class BaseListener implements BaseEventListener {
                     return;
                 }
                 if (uuidInfo.isEmpty()) {
-                    MessageUtils.logWarning("Could not load UUID info for " + user.getUuid() + "!");
-                    return;
+                    UuidInfo u = new UuidInfo(player.getUuid(), player.getCurrentName(), player.getCurrentIP());
+                    u.register();
+                    u.save();
+                } else {
+
+                    UuidInfo u = uuidInfo.get();
+                    u.register();
+
+                    u.addName(player.getCurrentName());
+                    u.addIp(player.getCurrentIP());
                 }
-
-                UuidInfo u = uuidInfo.get();
-                u.register();
-
-                u.addName(player.getCurrentName());
-                u.addIp(player.getCurrentIP());
             });
         } else {
             UuidInfo u = info.get();

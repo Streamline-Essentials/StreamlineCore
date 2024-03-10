@@ -1,7 +1,7 @@
 package net.streamline.api.events.modules;
 
 import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 import org.jetbrains.annotations.NotNull;
 import org.pf4j.ExtensionPoint;
 

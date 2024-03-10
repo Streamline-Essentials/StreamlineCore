@@ -6,7 +6,7 @@ import tv.quaint.objects.handling.derived.IModifierEventable;
 import java.io.File;
 import java.io.InputStream;
 
-public interface ModuleLike extends IModifierEventable, Comparable<ModuleLike> {
+public interface IModuleLike extends IModifierEventable, Comparable<IModuleLike> {
     String getIdentifier();
 
     String getAuthorsStringed();

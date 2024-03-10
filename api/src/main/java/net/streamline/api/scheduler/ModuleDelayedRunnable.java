@@ -1,6 +1,6 @@
 package net.streamline.api.scheduler;
 
-import net.streamline.api.interfaces.ModuleLike;
+import net.streamline.api.modules.ModuleLike;
 
 public abstract class ModuleDelayedRunnable extends ModuleRunnable {
     public ModuleDelayedRunnable(ModuleLike module, long delay) {

@@ -30,8 +30,14 @@ import java.util.concurrent.TimeUnit;
 public class UserUtils {
     @Getter @Setter
     private static ConcurrentSkipListMap<String, StreamSender> loadedSenders = new ConcurrentSkipListMap<>();
-    @Getter @Setter
+    @Setter
     private static StreamSender console;
+
+    public static StreamSender getConsole() {
+        if (console == null) loadConsole();
+
+        return console;
+    }
 
     public static void ensureLoadedUsers() {
         if (getLoadedSenders() == null) loadedSenders = new ConcurrentSkipListMap<>();
