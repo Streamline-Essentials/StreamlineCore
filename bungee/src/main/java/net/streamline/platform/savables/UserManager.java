@@ -38,6 +38,13 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
         StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
         if (p == null) {
             p = new StreamPlayer(player.getUniqueId().toString());
+            String serverName = "";
+            Server server = player.getServer();
+            if (server != null) {
+                ServerInfo info = server.getInfo();
+                if (info != null) serverName = info.getName();
+            }
+            if (! serverName.isBlank() && ! serverName.isEmpty()) p.setServerName(serverName);
             UserUtils.loadPlayer(p);
         }
 
@@ -48,7 +55,8 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
         if (isConsole(sender)) {
             return UserUtils.getOrGetPlayer(GivenConfigs.getMainConfig().getConsoleDiscriminator());
         } else {
-            return UserUtils.getOrGetPlayer(Streamline.getPlayer(sender).getUniqueId().toString());
+            ProxiedPlayer player = (ProxiedPlayer) sender;
+            return Optional.of(getOrGetPlayer(player));
         }
     }
 

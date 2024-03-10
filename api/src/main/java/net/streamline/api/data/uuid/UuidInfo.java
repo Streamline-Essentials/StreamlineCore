@@ -60,15 +60,13 @@ public class UuidInfo implements IUuidable {
     }
 
     public void addName(String name) {
-        if (names.get(names.size() - 1).equals(name))
-            return;
+        if (! names.isEmpty()) if (names.get(names.size() - 1).equals(name)) return;
 
         names.add(name);
     }
 
     public void addIp(String ip) {
-        if (ips.get(ips.size() - 1).equals(ip))
-            return;
+        if (! ips.isEmpty()) if (ips.get(ips.size() - 1).equals(ip)) return;
 
         ips.add(ip);
     }

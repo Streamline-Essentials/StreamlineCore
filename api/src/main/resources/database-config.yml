@@ -1,0 +1,19 @@
+# Database Configuration.
+# Host - Hostname of the database server.
+host: localhost
+# Port - Port number of the database server.
+port: 3306
+# Username - Database username.
+username: root
+# Password - Database password.
+password: password
+# Table Prefix - Prefix for the database tables.
+table-prefix: sl_
+# Database - Database name.
+database: streamline
+# Type - Database type.
+# Supported types are:
+# MYSQL
+# SQLITE
+type: SQLITE
+sqlite-file-name: streamline.db

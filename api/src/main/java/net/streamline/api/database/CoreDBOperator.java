@@ -23,7 +23,7 @@ public class CoreDBOperator extends DBOperator {
     }
 
     public void ensureTable() {
-        String s1 = Statements.getStatement(Statements.StatementType.CREATE_TABLE, this.getConnectorSet());
+        String s1 = Statements.getStatement(Statements.StatementType.CREATE_TABLES, this.getConnectorSet());
         if (s1 == null) return;
         if (s1.isBlank() || s1.isEmpty()) return;
 

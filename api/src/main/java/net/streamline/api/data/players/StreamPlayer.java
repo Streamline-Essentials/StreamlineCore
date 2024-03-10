@@ -14,14 +14,13 @@ import java.util.concurrent.CompletableFuture;
 
 @Getter @Setter
 public class StreamPlayer extends StreamSender {
-    private String uuid;
-
     private String currentIP;
     private PlayerLocation location;
 
     public StreamPlayer(String uuid) {
         super(uuid);
-        this.uuid = uuid;
+
+        setServerName("");
 
         this.currentIP = "";
 
@@ -108,7 +107,7 @@ public class StreamPlayer extends StreamSender {
 
     @Override
     public void reload() {
-        SLAPI.getMainDatabase().loadPlayer(this.uuid).whenComplete((playerOptional, throwable) -> {
+        SLAPI.getMainDatabase().loadPlayer(getUuid()).whenComplete((playerOptional, throwable) -> {
             if (throwable != null) {
                 throwable.printStackTrace();
                 return;

@@ -37,6 +37,13 @@ public class UserManager implements IUserManager<Player> {
         StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
         if (p == null) {
             p = new StreamPlayer(player.getUniqueId().toString());
+            String serverName = "";
+            Optional<ServerConnection> server = player.getCurrentServer();
+            if (server.isPresent()) {
+                ServerInfo info = server.get().getServerInfo();
+                if (info != null) serverName = info.getName();
+            }
+            if (! serverName.isBlank() && ! serverName.isEmpty()) p.setServerName(serverName);
             UserUtils.loadPlayer(p);
         }
 
@@ -47,9 +54,8 @@ public class UserManager implements IUserManager<Player> {
         if (isConsole(sender)) {
             return UserUtils.getConsole();
         } else {
-            Player player = StreamlineVelocity.getPlayer(sender);
-            if (player == null) return null;
-            return UserUtils.getOrGetSender(player.getUniqueId().toString()).orElse(null);
+            Player player = (Player) sender;
+            return getOrGetPlayer(player);
         }
     }
 
