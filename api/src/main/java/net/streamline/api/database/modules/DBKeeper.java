@@ -29,10 +29,6 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
         return getDatabase().getConnectorSet().getType();
     }
 
-    public static String getTablePrefix() {
-        return getDatabase().getConnectorSet().getTablePrefix();
-    }
-
     public void ensureTables() {
         if (getDatabaseType() == DatabaseType.MYSQL) {
             ensureMysqlTables();
@@ -58,6 +54,8 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
     }
 
     public void saveRaw(T obj) {
+        ensureTables();
+
         if (getDatabaseType() == DatabaseType.MYSQL) {
             saveMysql(obj);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
@@ -74,6 +72,8 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
     }
 
     public Optional<T> loadRaw(String identifier) {
+        ensureTables();
+
         if (getDatabaseType() == DatabaseType.MYSQL) {
             return loadMysql(identifier);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
@@ -95,6 +95,8 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
     }
 
     public boolean existsRaw(String identifier) {
+        ensureTables();
+
         if (getDatabaseType() == DatabaseType.MYSQL) {
             return existsMysql(identifier);
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
