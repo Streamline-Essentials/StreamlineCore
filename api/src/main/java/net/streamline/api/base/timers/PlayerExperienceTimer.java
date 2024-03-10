@@ -17,12 +17,12 @@ public class PlayerExperienceTimer extends BaseRunnable {
 
     @Override
     public void run() {
-        if (this.coolDown <= 0) {
-            this.coolDown = GivenConfigs.getMainConfig().playerPayoutExperienceEvery();
+        if (this.coolDown >= GivenConfigs.getMainConfig().playerPayoutExperienceEvery()) {
+            this.coolDown = 0;
             done();
         }
 
-        this.coolDown--;
+        this.coolDown ++;
     }
 
     public void done() {
