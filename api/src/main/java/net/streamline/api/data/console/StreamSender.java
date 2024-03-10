@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.players.leveling.SenderLeveling;
 import net.streamline.api.data.players.meta.SenderMeta;
 import net.streamline.api.data.players.permissions.SenderPermissions;
@@ -48,6 +47,11 @@ public class StreamSender implements Identifiable {
         this.lastJoin = new Date();
 
         this.currentName = "";
+
+        this.playSeconds = 0;
+        this.points = 0;
+
+        this.server = new StreamServer(getConsoleServer());
 
         this.meta = new SenderMeta(this);
         this.leveling = new SenderLeveling(this);
@@ -122,27 +126,54 @@ public class StreamSender implements Identifiable {
     }
 
     public void setFirstJoin(long millis) {
+        if (millis == -1) {
+            this.firstJoin = null;
+            return;
+        }
         this.firstJoin = new Date(millis);
     }
 
     public void setLastJoin(long millis) {
+        if (millis == -1) {
+            this.lastJoin = null;
+            return;
+        }
         this.lastJoin = new Date(millis);
     }
 
     public void setLastQuit(long millis) {
+        if (millis == -1) {
+            this.lastQuit = null;
+            return;
+        }
         this.lastQuit = new Date(millis);
     }
 
     public long getFirstJoinMillis() {
+        if (this.firstJoin == null) return -1;
         return this.firstJoin.getTime();
     }
 
+    public void setFirstJoinNull() {
+        this.firstJoin = null;
+    }
+
     public long getLastJoinMillis() {
+        if (this.lastJoin == null) return -1;
         return this.lastJoin.getTime();
     }
 
+    public void setLastJoinNull() {
+        this.lastJoin = null;
+    }
+
     public long getLastQuitMillis() {
+        if (this.lastQuit == null) return -1;
         return this.lastQuit.getTime();
+    }
+
+    public void setLastQuitNull() {
+        this.lastQuit = null;
     }
 
     public String getDisplayName() {

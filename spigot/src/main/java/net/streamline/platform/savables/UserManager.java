@@ -45,7 +45,8 @@ public class UserManager implements IUserManager<Player> {
         if (isConsole(sender)) {
             return UserUtils.getOrGetPlayer(GivenConfigs.getMainConfig().getConsoleDiscriminator());
         } else {
-            return UserUtils.getOrGetPlayer(Streamline.getPlayer(sender).getUniqueId().toString());
+            Player player = (Player) sender;
+            return Optional.of(getOrGetPlayer(player));
         }
     }
 

@@ -11,6 +11,8 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Getter @Setter
@@ -85,7 +87,7 @@ public class DBOperator {
         }
     }
 
-    public ExecutionResult execute(String statement) {
+    public ExecutionResult executeSingle(String statement) {
         AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
 
         try {
@@ -99,6 +101,19 @@ public class DBOperator {
         }
 
         return result.get();
+    }
+
+    public List<ExecutionResult> execute(String statement) {
+        List<ExecutionResult> results = new ArrayList<>();
+        String[] statements = statement.split(";");
+
+        for (String s : statements) {
+            if (s == null || s.isEmpty() || s.isBlank()) continue;
+            String fs = s + ";";
+            results.add(executeSingle(fs));
+        }
+
+        return results;
     }
 
     public void executeQuery(String statement, DBAction action) {

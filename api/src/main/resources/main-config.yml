@@ -1,18 +1,13 @@
-# Settings for saving users.
-database:
-  type: YAML
-  host: "localhost"
-  port: 3306
-  username: "root"
-  password: "password"
-  database: "streamline"
-  table-prefix: "sl_"
-  sqlite-file-name: "streamline.db"
-
+# Settings for the console sender.
 console:
+  # Name of the console sender.
   name: "Console"
+  # Display name of the console sender.
   display-name: "&c&lConsole&r"
+  # The 'UUID' of the console sender.
   discriminator: "%"
+  # The server to be shown as the
+  # console sender's server.
   server: "space"
 
 # Settings for actual player users.

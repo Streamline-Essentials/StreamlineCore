@@ -19,6 +19,8 @@ public class GivenConfigs {
     private static MainMessagesHandler mainMessages;
     @Getter @Setter
     private static WhitelistConfig whitelistConfig;
+    @Getter @Setter
+    private static DatabaseConfigHandler databaseConfig;
 
     @Getter @Setter
     private static File punishmentFolder;
@@ -30,9 +32,10 @@ public class GivenConfigs {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
+        setDatabaseConfig(new DatabaseConfigHandler());
 
         try {
-            ConnectorSet connectorSet = getMainConfig().getConnectorSet();
+            ConnectorSet connectorSet = getDatabaseConfig().getConnectorSet();
             CoreDBOperator operator = new CoreDBOperator(connectorSet);
             setMainDatabase(operator);
         } catch (Exception e) {

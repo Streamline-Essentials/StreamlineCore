@@ -39,14 +39,14 @@ subprojects {
 
         // Spigot / Bukkit
         maven {
-            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+            url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
             content {
                 includeGroup 'org.bukkit'
                 includeGroup 'org.spigotmc'
             }
         }
-        maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
-        maven { url = 'https://oss.sonatype.org/content/repositories/central' }
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        maven { url 'https://oss.sonatype.org/content/repositories/central' }
         // Paper / Velocity
         maven { url 'https://repo.papermc.io/repository/maven-public/' }
         // Fabric
@@ -67,17 +67,17 @@ subprojects {
     processResources {
         // Debugging: Print values
         doFirst {
-            println 'Version: ' + project.version.toString() + ', Name: ' + project.name.toString() + ', Main: ' + project.ext.pluginMain.toString()
+            println 'Version: ' + rootProject.version.toString() + ', Name: ' + rootProject.name.toString() + ', Main: ' + project.ext.pluginMain.toString()
         }
 
-        inputs.property('name', project.name.toString())
-        inputs.property('version', project.version.toString())
+        inputs.property('name', rootProject.name.toString())
+        inputs.property('version', rootProject.version.toString())
         inputs.property('main', project.ext.pluginMain.toString())
 
         filesMatching('**/plugin.yml') {
             expand (
-                    'name': project.name.toString(),
-                    'version': project.version.toString(),
+                    'name': rootProject.name.toString(),
+                    'version': rootProject.version.toString(),
                     'main': project.ext.pluginMain.toString(),
             )
         }
@@ -102,7 +102,7 @@ subprojects {
 
         archiveFileName = project.name + '-' + project.version + '.jar'
 
-        minimize()
+//        minimize()
     }
 
     artifacts {

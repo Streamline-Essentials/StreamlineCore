@@ -15,15 +15,6 @@ public class MainConfigHandler extends SimpleConfiguration {
     }
 
     public void init() {
-        getDatabaseHost();
-        getDatabasePort();
-        getDatabaseUsername();
-        getDatabasePassword();
-        getDatabaseTablePrefix();
-        getDatabaseName();
-        getDatabaseType();
-        getSqliteFileName();
-
         getConsoleName();
         getConsoleDiscriminator();
         getConsoleServer();
@@ -52,69 +43,6 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugPrefix();
 
 //        getHexPolicies();
-    }
-
-    // DATABASE
-
-    public String getDatabaseHost() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.host", "localhost");
-    }
-
-    public int getDatabasePort() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.port", 3306);
-    }
-
-    public String getDatabaseUsername() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.username", "root");
-    }
-
-    public String getDatabasePassword() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.password", "password");
-    }
-
-    public String getDatabaseTablePrefix() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.table-prefix", "sl_");
-    }
-
-    public String getDatabaseName() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.database", "streamline");
-    }
-
-    public DatabaseType getDatabaseType() {
-        reloadResource();
-
-        return DatabaseType.valueOf(getResource().getOrSetDefault("database.type", DatabaseType.SQLITE.name()));
-    }
-
-    public String getSqliteFileName() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("database.sqlite-file-name", "streamline.db");
-    }
-
-    public ConnectorSet getConnectorSet() {
-        return new ConnectorSet(
-                getDatabaseType(),
-                getDatabaseHost(),
-                getDatabasePort(),
-                getDatabaseName(),
-                getDatabaseUsername(),
-                getDatabasePassword(),
-                getDatabaseTablePrefix(),
-                getSqliteFileName()
-        );
     }
 
     // CONSOLE

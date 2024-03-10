@@ -3,26 +3,30 @@ ext {
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5'
+            'commons-codec:commons-codec:1.5',
+            'org.xerial:sqlite-jdbc:3.45.1.0',
+            'mysql:mysql-connector-java:5.1.6',
     ]
     SHADOW = [
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5'
+            'commons-codec:commons-codec:1.5',
+            'org.xerial:sqlite-jdbc:3.45.1.0',
+            'mysql:mysql-connector-java:5.1.6',
     ]
     ANNO = [
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5'
+            'commons-codec:commons-codec:1.5',
     ]
     COMP_ONLY = [
             'net.luckperms:api:5.4',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5'
+            'commons-codec:commons-codec:1.5',
     ]
     OTHER_PLUGINS = [
             'me.clip:placeholderapi:2.11.5',
@@ -30,5 +34,6 @@ ext {
             'org.geysermc.floodgate:api:2.2.2-SNAPSHOT',
     ]
     FILES = [
+//            rootProject.rootDir.getPath().toString() + 'impl/sqlite-jdbc.jar'
     ]
 }
