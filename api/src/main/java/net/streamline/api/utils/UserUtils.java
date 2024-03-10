@@ -15,7 +15,6 @@ import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.data.players.events.LoadStreamSenderEvent;
 import org.jetbrains.annotations.NotNull;
 import tv.quaint.utils.MathUtils;
@@ -135,50 +134,39 @@ public class UserUtils {
         return Optional.of(sender);
     }
 
-    public static Optional<StreamSender> getOrGetSender(String uuid) {
-        Optional<StreamSender> sender = getSender(uuid);
-        if (sender.isPresent()) return sender;
-
-        if (uuid.equals(StreamSender.getConsoleDiscriminator())) {
-            StreamSender s = getConsole();
-            if (s == null) {
-                s = new StreamSender();
-                s.save();
-                loadSender(s);
+    public static CompletableFuture<Optional<StreamPlayer>> loadPlayerAsync(String uuid) {
+        return SLAPI.getMainDatabase().loadPlayer(uuid).whenComplete((user, throwable) -> {
+            if (throwable != null) {
+                MessageUtils.logWarning("Error:", throwable);
+                return;
             }
-            return Optional.of(s);
-        }
+            if (user.isEmpty()) return;
 
-        sender = (Optional<StreamSender>) CompletableFuture.supplyAsync(() -> {
-            if (SLAPI.getMainDatabase().exists(uuid).join()) {
-                return SLAPI.getMainDatabase().loadPlayer(uuid).join();
-            } else {
-                return Optional.empty();
-            }
-        }).completeOnTimeout(Optional.empty(), 100, TimeUnit.MILLISECONDS).join();
-
-        sender.ifPresent(UserUtils::loadSender);
-
-        return sender;
+            StreamSender sender1 = user.get();
+            loadSender(sender1);
+        }).orTimeout(5, TimeUnit.SECONDS).exceptionally(throwable -> {
+            MessageUtils.logWarning("Timed out:", throwable);
+            return Optional.empty();
+        });
     }
 
+    @Deprecated
+    public static Optional<StreamSender> getOrGetSender(String uuid) {
+        return getOrGetOrCreateSender(uuid);
+    }
+
+    @Deprecated
     public static Optional<StreamPlayer> getOrGetPlayer(String uuid) {
-        Optional<StreamSender> sender = getOrGetSender(uuid);
-        if (sender.isEmpty()) return Optional.empty();
-
-        if (sender.get() instanceof StreamPlayer) return sender.map(user -> (StreamPlayer) user);
-
-        return Optional.empty();
+        return getOrGetOrCreatePlayer(uuid);
     }
 
     public static StreamPlayer loadPlayer(StreamPlayer player) {
         return (StreamPlayer) loadSender(player);
     }
 
-    @NotNull
-    public static StreamSender getOrGetOrCreateSender(String uuid) {
-        Optional<StreamSender> user = getOrGetSender(uuid);
-        if (user.isPresent()) return user.get();
+    public static CompletableFuture<StreamSender> getOrGetOrCreateSenderAsync(String uuid) {
+        Optional<StreamSender> user = getSender(uuid);
+        if (user.isPresent()) return CompletableFuture.completedFuture(user.get());
 
         if (uuid.equals(StreamSender.getConsoleDiscriminator())) {
             StreamSender sender = getConsole();
@@ -187,19 +175,43 @@ public class UserUtils {
                 sender.save();
                 loadSender(sender);
             }
-            return sender;
+            return CompletableFuture.completedFuture(sender);
         }
 
-        StreamPlayer sender = new StreamPlayer(uuid);
-        sender.save();
-        loadPlayer(sender);
+        return loadPlayerAsync(uuid).thenApply(user1 -> user1.orElseGet(() -> {
+            StreamPlayer sender = new StreamPlayer(uuid);
+            sender.save();
+            loadPlayer(sender);
 
-        return sender;
+            return sender;
+        }));
     }
 
-    @NotNull
-    public static StreamPlayer getOrGetOrCreatePlayer(String uuid) {
-        return (StreamPlayer) getOrGetOrCreateSender(uuid);
+    public static CompletableFuture<StreamPlayer> getOrGetOrCreatePlayerAsync(String uuid) {
+        return getOrGetOrCreateSenderAsync(uuid).thenApply(user -> (StreamPlayer) user);
+    }
+
+    public static Optional<StreamPlayer> getOrGetPlayer(StreamSender sender) {
+        if (sender instanceof StreamPlayer) return Optional.of((StreamPlayer) sender);
+        return Optional.empty();
+    }
+
+    public static Optional<StreamSender> getOrGetOrCreateSender(String uuid) {
+        Optional<StreamSender> user = getSender(uuid);
+        if (user.isPresent()) return user;
+
+        getOrGetOrCreateSenderAsync(uuid);
+
+        return user;
+    }
+
+    public static Optional<StreamPlayer> getOrGetOrCreatePlayer(String uuid) {
+        Optional<StreamSender> user = getOrGetOrCreateSender(uuid);
+        if (user.isEmpty()) return Optional.empty();
+
+        if (user.get() instanceof StreamPlayer) return user.map(u -> (StreamPlayer) u);
+
+        return Optional.empty();
     }
 
     public static boolean isConsole(String uuid) {
@@ -383,9 +395,8 @@ public class UserUtils {
 
     public static Optional<StreamSender> getOrGetUserByName(String name) {
         Optional<String> uuid = getUUIDFromName(name);
-        if (uuid.isEmpty()) return Optional.empty();
+        return uuid.flatMap(UserUtils::getOrGetOrCreateSender);
 
-        return getOrGetSender(uuid.get());
     }
 
     public static Optional<StreamPlayer> getOrGetPlayerByName(String name) {

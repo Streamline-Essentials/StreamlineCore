@@ -192,15 +192,17 @@ public class MessageUtils {
     }
 
     public static void sendMessage(String to, String message) {
-        StreamPlayer user = UserUtils.getOrGetOrCreatePlayer(to);
+        Optional<StreamPlayer> user = UserUtils.getOrGetOrCreatePlayer(to);
+        if (user.isEmpty()) return;
 
-        SLAPI.getInstance().getMessenger().sendMessage(user, message);
+        SLAPI.getInstance().getMessenger().sendMessage(user.get(), message);
     }
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
-        StreamPlayer user = UserUtils.getOrGetOrCreatePlayer(to);
+        Optional<StreamPlayer> user = UserUtils.getOrGetOrCreatePlayer(to);
+        if (user.isEmpty()) return;
 
-        SLAPI.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
+        SLAPI.getInstance().getMessenger().sendMessage(user.get(), replaceAllPlayerBungee(otherUUID, message));
     }
 
     /**

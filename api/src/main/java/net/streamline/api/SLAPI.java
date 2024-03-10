@@ -167,8 +167,6 @@ public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M ext
     @Getter
     private static PlayerExperienceTimer playerExperienceTimer;
     @Getter
-    private static UserSaveTimer userSaveTimer;
-    @Getter
     private static UserSyncTimer userSyncTimer;
     @Getter
     private static UserEnsureTimer userEnsureTimer;
@@ -245,7 +243,6 @@ public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M ext
 
         oneSecondTimer = new OneSecondTimer();
         playerExperienceTimer = new PlayerExperienceTimer();
-        userSaveTimer = new UserSaveTimer();
         userSyncTimer = new UserSyncTimer();
         userEnsureTimer = new UserEnsureTimer();
         ProxiedMessageManager.init();
