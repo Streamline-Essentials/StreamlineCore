@@ -32,7 +32,7 @@ public class ParseCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamSender player = UserUtils.getOrGetUserByName(playerName).orElse(null);
+        StreamSender player = UserUtils.getOrCreateSenderByName(playerName).orElse(null);
 
         if (player == null) {
             ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());

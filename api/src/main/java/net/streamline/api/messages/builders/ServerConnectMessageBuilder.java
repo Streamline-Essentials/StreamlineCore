@@ -9,7 +9,6 @@ import net.streamline.api.objects.StreamlineServerInfo;
 import net.streamline.api.utils.MessageUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 public class ServerConnectMessageBuilder {
     @Getter
@@ -44,12 +43,7 @@ public class ServerConnectMessageBuilder {
 
         String uuid = messageIn.getString("user_uuid");
 
-        Optional<StreamPlayer> playerOptional = ModuleUtils.getOrGetPlayer(uuid);
-        if (playerOptional.isEmpty()) {
-            MessageUtils.logWarning("PlayerLocationMessageBuilder received for unknown player '" + uuid + "'.");
-            return;
-        }
-        StreamPlayer player = playerOptional.get();
+        StreamPlayer player = ModuleUtils.getOrCreatePlayer(uuid);
 
         SLAPI.getInstance().getUserManager().connect(player, messageIn.getString("identifier"));
     }

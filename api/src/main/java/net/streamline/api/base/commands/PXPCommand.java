@@ -63,7 +63,7 @@ public class PXPCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamPlayer player = UserUtils.getOrGetPlayerByName(playerName).orElse(null);
+        StreamPlayer player = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (player == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());

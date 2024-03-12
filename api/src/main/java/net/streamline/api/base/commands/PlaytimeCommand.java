@@ -43,7 +43,7 @@ public class PlaytimeCommand extends StreamlineCommand {
         }
 
         String playerName = args[0];
-        StreamPlayer other = UserUtils.getOrGetPlayerByName(playerName).orElse(null);
+        StreamPlayer other = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (other == null) {
             SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());

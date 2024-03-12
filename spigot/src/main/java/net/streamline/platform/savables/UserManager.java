@@ -5,9 +5,9 @@ import net.luckperms.api.model.user.User;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IUserManager;
-import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
@@ -19,11 +19,10 @@ import org.bukkit.entity.Player;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class UserManager implements IUserManager<Player> {
+public class UserManager implements IUserManager<CommandSender, Player> {
     @Getter
     private static UserManager instance;
 
@@ -31,22 +30,18 @@ public class UserManager implements IUserManager<Player> {
         instance = this;
     }
 
-    public StreamPlayer getOrGetPlayer(Player player) {
-        StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
-        if (p == null) {
-            p = new StreamPlayer(player.getUniqueId().toString());
-            UserUtils.loadPlayer(p);
-        }
-
-        return p;
+    @Override
+    public StreamPlayer getOrCreatePlayer(Player player) {
+        return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
-    public Optional<StreamPlayer> getOrGetPlayer(CommandSender sender) {
+    @Override
+    public StreamSender getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
-            return UserUtils.getOrGetPlayer(GivenConfigs.getMainConfig().getConsoleDiscriminator());
+            return UserUtils.getConsole();
         } else {
             Player player = (Player) sender;
-            return Optional.of(getOrGetPlayer(player));
+            return getOrCreatePlayer(player);
         }
     }
 
@@ -123,8 +118,8 @@ public class UserManager implements IUserManager<Player> {
         ConcurrentSkipListSet<StreamPlayer> r = new ConcurrentSkipListSet<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            StreamPlayer p = getOrGetPlayer(player);
-            if (p.getServerName().equals(server)) r.add(p);
+            StreamPlayer p = getOrCreatePlayer(player);
+            if (p.isOnline() && p.getServerName().equals(server)) r.add(p);
         }
 
         return r;
@@ -140,9 +135,8 @@ public class UserManager implements IUserManager<Player> {
         if (! user.isOnline()) return;
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
-        StreamPlayer pl = getOrGetPlayer(p);
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(pl, true, pl, pack));
+        p.setResourcePack(pack.getUrl(), pack.getHash(), pack.getPrompt(), pack.isForce());
     }
 
     @Override
@@ -183,14 +177,7 @@ public class UserManager implements IUserManager<Player> {
         ConcurrentSkipListMap<String, StreamPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                StreamPlayer p = getOrGetPlayer(player);
-                r.put(player.getUniqueId().toString(), p);
-                continue;
-            }
-
-            StreamPlayer p = new StreamPlayer(player.getUniqueId().toString());
-            r.put(player.getUniqueId().toString(), p);
+            r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
         }
 
         return r;

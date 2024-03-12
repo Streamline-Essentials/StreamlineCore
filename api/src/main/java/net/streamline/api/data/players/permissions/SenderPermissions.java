@@ -3,7 +3,6 @@ package net.streamline.api.data.players.permissions;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
 import org.jetbrains.annotations.NotNull;
 
 @Getter @Setter

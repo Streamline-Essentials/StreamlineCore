@@ -9,7 +9,6 @@ import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter @Setter
 public class UuidInfo implements IUuidable {
@@ -31,7 +30,7 @@ public class UuidInfo implements IUuidable {
         StringBuilder builder = new StringBuilder();
 
         for (String name : names) {
-            builder.append("!!!").append(name).append(";;;");
+            builder.append("!!!").append(name).append(":::");
         }
 
         return builder.toString();
@@ -41,7 +40,7 @@ public class UuidInfo implements IUuidable {
         StringBuilder builder = new StringBuilder();
 
         for (String ip : ips) {
-            builder.append("!!!").append(ip).append(";;;");
+            builder.append("!!!").append(ip).append(":::");
         }
 
         return builder.toString();
@@ -88,7 +87,7 @@ public class UuidInfo implements IUuidable {
     }
 
     public static List<String> computeList(String listString) {
-        Matcher matcher = MatcherUtils.matcherBuilder("[!][!][!](.*?)[;][;][;]", listString);
+        Matcher matcher = MatcherUtils.matcherBuilder("[!][!][!](.*?)[:][:][:]", listString);
         List<String[]> groups = MatcherUtils.getGroups(matcher, 1);
 
         List<String> r = new ArrayList<>();

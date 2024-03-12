@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class UserManager implements IUserManager<Player> {
+public class UserManager implements IUserManager<CommandSource, Player> {
     @Getter
     private static UserManager instance;
 
@@ -33,29 +33,18 @@ public class UserManager implements IUserManager<Player> {
         instance = this;
     }
 
-    public StreamPlayer getOrGetPlayer(Player player) {
-        StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
-        if (p == null) {
-            p = new StreamPlayer(player.getUniqueId().toString());
-            String serverName = "";
-            Optional<ServerConnection> server = player.getCurrentServer();
-            if (server.isPresent()) {
-                ServerInfo info = server.get().getServerInfo();
-                if (info != null) serverName = info.getName();
-            }
-            if (! serverName.isBlank() && ! serverName.isEmpty()) p.setServerName(serverName);
-            UserUtils.loadPlayer(p);
-        }
-
-        return p;
+    @Override
+    public StreamPlayer getOrCreatePlayer(Player player) {
+        return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
-    public StreamSender getOrGetUser(CommandSource sender) {
+    @Override
+    public StreamSender getOrCreateSender(CommandSource sender) {
         if (isConsole(sender)) {
             return UserUtils.getConsole();
         } else {
             Player player = (Player) sender;
-            return getOrGetPlayer(player);
+            return getOrCreatePlayer(player);
         }
     }
 
@@ -123,7 +112,9 @@ public class UserManager implements IUserManager<Player> {
 
         StreamlineVelocity.getInstance().getProxy().getAllServers().forEach(a -> {
             a.getPlayersConnected().forEach(b -> {
-                r.add(getOrGetPlayer(b));
+                StreamPlayer player = getOrCreatePlayer(b);
+                if (player == null) return;
+                if (player.isOnline() && player.getServerName().equals(server)) r.add(player);
             });
         });
 
@@ -152,7 +143,13 @@ public class UserManager implements IUserManager<Player> {
         Player p = StreamlineVelocity.getPlayer(player.getUuid());
         if (p == null) return;
 
-        StreamlineVelocity.getInstance().sendResourcePack(pack, player);
+        try {
+//            ResourcePackInfo packInfo = ResourcePackInfo.resourcePackInfo(p.getUniqueId(), new URI(pack.getUrl()), pack.getHash());
+//            p.sendResourcePackOffer(pack.getUrl(), pack.getHash(), pack.getPrompt(), pack.isForce());
+            StreamlineVelocity.getInstance().sendResourcePack(pack, p);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -193,14 +190,7 @@ public class UserManager implements IUserManager<Player> {
         ConcurrentSkipListMap<String, StreamPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                StreamPlayer p = getOrGetPlayer(player);
-                r.put(player.getUniqueId().toString(), p);
-                continue;
-            }
-
-            StreamPlayer p = new StreamPlayer(player.getUniqueId().toString());
-            r.put(player.getUniqueId().toString(), p);
+            r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
         }
 
         return r;

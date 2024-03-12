@@ -2,19 +2,19 @@ package net.streamline.base;
 
 import lombok.Getter;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.data.players.location.PlayerRotation;
 import net.streamline.api.data.players.location.PlayerWorld;
 import net.streamline.api.data.players.location.WorldPosition;
-import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
-import net.streamline.api.data.players.location.PlayerLocation;
-import net.streamline.platform.savables.UserManager;
+import net.streamline.api.utils.UserUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Getter
 public class TenSecondTimer implements Runnable {
@@ -30,20 +30,23 @@ public class TenSecondTimer implements Runnable {
     public void run() {
         if (! checkPlayer()) return;
 
-        StreamPlayer streamPlayer = UserManager.getInstance().getOrGetPlayer(player);
-        if (streamPlayer == null) return;
+        CompletableFuture.runAsync(() -> {
+            Optional<StreamPlayer> optional = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+            if (optional.isEmpty()) return;
+            StreamPlayer streamPlayer = optional.get();
 
-        Location location = player.getLocation();
-        World world = location.getWorld();
-        if (world == null) world = Bukkit.getWorlds().get(0);
-        StreamServer streamlineServer = new StreamServer("--null");
-        PlayerWorld streamlineWorld = new PlayerWorld(world.getName());
-        WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
-        PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
+            Location location = player.getLocation();
+            World world = location.getWorld();
+            if (world == null) world = Bukkit.getWorlds().get(0);
+//            StreamServer streamlineServer = new StreamServer("--null");
+            PlayerWorld streamlineWorld = new PlayerWorld(world.getName());
+            WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
+            PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
 
-        PlayerLocation streamlineLocation = new PlayerLocation(streamPlayer, streamlineWorld, streamlinePosition, streamlineRotation);
+            PlayerLocation streamlineLocation = new PlayerLocation(streamPlayer, streamlineWorld, streamlinePosition, streamlineRotation);
 
-        PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
+            PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
+        });
     }
 
     public boolean checkPlayer() {

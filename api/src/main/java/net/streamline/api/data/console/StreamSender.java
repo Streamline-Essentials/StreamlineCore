@@ -13,6 +13,8 @@ import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.Identifiable;
 
 import java.util.Date;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Getter @Setter
 public class StreamSender implements Identifiable {
@@ -40,6 +42,10 @@ public class StreamSender implements Identifiable {
     private SenderLeveling leveling;
     private SenderPermissions permissions;
 
+    private boolean proxyTouched;
+
+    private boolean loadComplete = false;
+
     public StreamSender(String uuid) {
         this.uuid = uuid;
 
@@ -56,6 +62,8 @@ public class StreamSender implements Identifiable {
         this.meta = new SenderMeta(this);
         this.leveling = new SenderLeveling(this);
         this.permissions = new SenderPermissions(this);
+
+        this.proxyTouched = SLAPI.isProxy();
     }
 
     public StreamSender() {
@@ -66,6 +74,41 @@ public class StreamSender implements Identifiable {
 
     public void save() {
         // Do nothing
+    }
+
+    public <S extends StreamSender> S thenPopulate(CompletableFuture<Optional<S>> future) {
+        loadComplete = false;
+
+        future.whenComplete((optional, throwable) -> {
+            if (throwable != null) {
+                throwable.printStackTrace();
+                return;
+            }
+            if (optional.isEmpty()) return;
+            StreamSender sender = optional.get();
+
+            setUuid(sender.getUuid());
+            setFirstJoin(sender.getFirstJoinMillis());
+            setLastJoin(sender.getLastJoinMillis());
+            setLastQuit(sender.getLastQuitMillis());
+            setCurrentName(sender.getCurrentName());
+            setPlaySeconds(sender.getPlaySeconds());
+            setPoints(sender.getPoints());
+            setServerName(sender.getServerName());
+            setMeta(sender.getMeta());
+            setLeveling(sender.getLeveling());
+            setPermissions(sender.getPermissions());
+
+            thenPopulateMore(sender);
+
+            loadComplete = true;
+        });
+
+        return (S) this;
+    }
+
+    public <S extends StreamSender> void thenPopulateMore(S sender) {
+        // nothing
     }
 
     public boolean isConsole() {

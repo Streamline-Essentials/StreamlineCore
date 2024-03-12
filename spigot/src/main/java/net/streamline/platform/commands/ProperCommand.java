@@ -3,10 +3,9 @@ package net.streamline.platform.commands;
 import lombok.Getter;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
-import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.interfaces.IProperCommand;
 import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.Command;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
@@ -41,11 +39,9 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
-        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
-        if (player.isEmpty()) return new ArrayList<>();
-        StreamPlayer p = player.get();
+        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
 
-        ConcurrentSkipListSet<String> r = parent.baseTabComplete(p, args);
+        ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 
         return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
     }
@@ -68,11 +64,9 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
-        if (player.isEmpty()) return false;
-        StreamPlayer p = player.get();
+        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
 
-        CommandResult<?> result = parent.baseRun(p, args);
+        CommandResult<?> result = parent.baseRun(s, args);
 
         if (result == null) return false;
         if (result == StreamlineCommand.notSet()) return true;

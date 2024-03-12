@@ -9,17 +9,15 @@ import tv.quaint.utils.MatcherUtils;
 
 import java.util.List;
 
+@Setter
 @Getter
 public class HexReplacer implements Comparable<HexReplacer> {
     public static final String HEX_REGEX = "([0-9a-fA-F]{6})";
     public static final String FULL_REGEX = "((%starter%)" + HEX_REGEX + "(%ender%))";
 
-    @Setter
     private String starter;
-    @Setter
     private String ender;
 
-    @Setter
     private String setTo;
 
     public HexReplacer(String starter, String ender, String setTo) {

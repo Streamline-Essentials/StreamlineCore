@@ -39,7 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
-public class SLAPI<C, P, S extends IStreamline, U extends IUserManager<?>, M extends IMessenger> extends PluginEventable {
+public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager<C, P>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
         public CommandRunner() {
             super(0, 1);

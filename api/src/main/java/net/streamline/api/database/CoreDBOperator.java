@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import net.streamline.api.SLAPI;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.uuid.UuidInfo;
 
@@ -38,7 +39,7 @@ public class CoreDBOperator extends DBOperator {
 
     public void savePlayer(StreamPlayer player, boolean async) {
         if (async) {
-            CompletableFuture.runAsync(() -> savePlayer(player));
+            CompletableFuture.runAsync(() -> savePlayerMethod(player));
         } else {
             savePlayerMethod(player);
         }
@@ -49,6 +50,8 @@ public class CoreDBOperator extends DBOperator {
     }
 
     private void savePlayerMethod(StreamPlayer player) {
+        boolean isProxy = SLAPI.isProxy();
+
         ensureUsable();
 
         String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
@@ -62,6 +65,8 @@ public class CoreDBOperator extends DBOperator {
         s1 = s1.replace("%current_ip%", player.getCurrentIP());
         s1 = s1.replace("%play_seconds%", String.valueOf(player.getPlaySeconds()));
         s1 = s1.replace("%points%", String.valueOf(player.getPoints()));
+        s1 = s1.replace("%proxy_touched%", String.valueOf(player.isProxyTouched() || SLAPI.isProxy()));
+        s1 = s1.replace("is_proxy", isProxy ? "1" : "0");
 
         this.execute(s1);
 
@@ -74,6 +79,7 @@ public class CoreDBOperator extends DBOperator {
             s1 = s1.replace("%nickname%", player.getMeta().getNickname());
             s1 = s1.replace("%prefix%", player.getMeta().getPrefix());
             s1 = s1.replace("%suffix%", player.getMeta().getSuffix());
+            s1 = s1.replace("is_proxy", isProxy ? "1" : "0");
 
             this.execute(s1);
         }
@@ -90,6 +96,7 @@ public class CoreDBOperator extends DBOperator {
             s1 = s1.replace("%equation_string%", player.getLeveling().getEquationString());
             s1 = s1.replace("%started_level%", String.valueOf(player.getLeveling().getStartedLevel()));
             s1 = s1.replace("%started_experience%", String.valueOf(player.getLeveling().getStartedExperience()));
+            s1 = s1.replace("is_proxy", isProxy ? "1" : "0");
 
             this.execute(s1);
         }
@@ -107,6 +114,7 @@ public class CoreDBOperator extends DBOperator {
             s1 = s1.replace("%z%", String.valueOf(player.getLocation().getZ()));
             s1 = s1.replace("%yaw%", String.valueOf(player.getLocation().getYaw()));
             s1 = s1.replace("%pitch%", String.valueOf(player.getLocation().getPitch()));
+            s1 = s1.replace("is_proxy", isProxy ? "1" : "0");
 
             this.execute(s1);
         }
@@ -118,6 +126,7 @@ public class CoreDBOperator extends DBOperator {
 
             s1 = s1.replace("%uuid%", player.getUuid());
             s1 = s1.replace("%bypassing_permissions%", String.valueOf(player.getPermissions().isBypassingPermissions()));
+            s1 = s1.replace("is_proxy", isProxy ? "1" : "0");
 
             this.execute(s1);
         }
@@ -146,6 +155,7 @@ public class CoreDBOperator extends DBOperator {
                         player.setCurrentIP(rs.getString("CurrentIP"));
                         player.setPlaySeconds(rs.getLong("PlaySeconds"));
                         player.setPoints(rs.getInt("Points"));
+                        player.setProxyTouched(rs.getBoolean("ProxyTouched"));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -266,7 +276,7 @@ public class CoreDBOperator extends DBOperator {
             if (s1.isBlank() || s1.isEmpty()) return false;
 
             s1 = s1.replace("%uuid%", uuidInfo.getUuid().toString());
-            s1 = s1.replace("%names%", uuidInfo.computableNames());
+            s1 = s1.replace("%usernames%", uuidInfo.computableNames());
             s1 = s1.replace("%ips%", uuidInfo.computableIps());
 
             this.execute(s1);
@@ -318,7 +328,7 @@ public class CoreDBOperator extends DBOperator {
                 try {
                     while (rs.next()) {
                         String uuid = rs.getString("Uuid");
-                        String names = rs.getString("Names");
+                        String names = rs.getString("Usernames");
                         String ips = rs.getString("Ips");
 
                         UuidInfo info = new UuidInfo(uuid, names, ips);

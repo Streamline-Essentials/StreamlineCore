@@ -2,7 +2,6 @@ package net.streamline.base.runnables;
 
 import net.md_5.bungee.api.config.ServerInfo;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;

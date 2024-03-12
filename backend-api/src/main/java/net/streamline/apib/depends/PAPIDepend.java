@@ -59,7 +59,7 @@ public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
 
         @Override
         public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
-            StreamPlayer streamPlayer = ModuleUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
+            StreamPlayer streamPlayer = ModuleUtils.getOrCreatePlayer(player.getUniqueId().toString());
             if (streamPlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
             String toParse;
             if (params.startsWith("!")) toParse = "%" + params.substring("!".length()) + "%";

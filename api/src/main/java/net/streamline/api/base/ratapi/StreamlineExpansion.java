@@ -55,7 +55,7 @@ public class StreamlineExpansion extends RATExpansion {
             try {
                 if (s.get().contains(":::")) {
                     String[] things = s.get().split(":::", 2);
-                    Optional<StreamSender> userOptional = UserUtils.getOrGetUserByName(things[0]);
+                    Optional<StreamSender> userOptional = UserUtils.getOrCreateSenderByName(things[0]);
                     if (userOptional.isEmpty()) return s.string();
                     String parse = things[1].replace("*/*", "%");
                     return ModuleUtils.replacePlaceholders(userOptional.get(), parse);

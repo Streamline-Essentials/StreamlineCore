@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.whitelist.WhitelistConfig;
 import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.database.ConnectorSet;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.utils.UserUtils;

@@ -16,7 +16,6 @@ import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.data.players.events.LoadStreamSenderEvent;
-import org.jetbrains.annotations.NotNull;
 import tv.quaint.utils.MathUtils;
 
 import java.util.Optional;
@@ -25,7 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 
 public class UserUtils {
     @Getter @Setter
@@ -140,39 +138,37 @@ public class UserUtils {
         return Optional.of(sender);
     }
 
-    public static CompletableFuture<Optional<StreamPlayer>> loadPlayerAsync(String uuid) {
-        return SLAPI.getMainDatabase().loadPlayer(uuid).whenComplete((user, throwable) -> {
-            if (throwable != null) {
-                MessageUtils.logWarning("Error:", throwable);
-                return;
-            }
-            if (user.isEmpty()) return;
-
-            StreamSender sender1 = user.get();
-            loadSender(sender1);
-        }).orTimeout(5, TimeUnit.SECONDS).exceptionally(throwable -> {
-            MessageUtils.logWarning("Timed out:", throwable);
-            return Optional.empty();
-        });
-    }
-
-    @Deprecated
-    public static Optional<StreamSender> getOrGetSender(String uuid) {
-        return getOrGetOrCreateSender(uuid);
-    }
-
-    @Deprecated
-    public static Optional<StreamPlayer> getOrGetPlayer(String uuid) {
-        return getOrGetOrCreatePlayer(uuid);
-    }
-
     public static StreamPlayer loadPlayer(StreamPlayer player) {
         return (StreamPlayer) loadSender(player);
     }
 
-    public static CompletableFuture<StreamSender> getOrGetOrCreateSenderAsync(String uuid) {
-        Optional<StreamSender> user = getSender(uuid);
-        if (user.isPresent()) return CompletableFuture.completedFuture(user.get());
+    public static CompletableFuture<Optional<StreamPlayer>> getOrCreatePlayerAsync(String uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            Optional<StreamPlayer> optional = SLAPI.getMainDatabase().loadPlayer(uuid).join();
+            return optional.map(UserUtils::loadPlayer);
+        });
+    }
+
+    public static Optional<StreamSender> getOrLoadSender(String uuid) {
+        CompletableFuture.runAsync(() -> {
+            if (isLoaded(uuid)) return;
+
+            Optional<StreamSender> sender = getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer);
+            if (sender.isEmpty()) return;
+
+            loadSender(sender.get());
+        });
+
+        return getSender(uuid);
+    }
+
+    public static StreamPlayer getOrCreatePlayer(StreamSender sender) {
+        return getOrCreatePlayer(sender.getUuid());
+    }
+
+    public static StreamSender getOrCreateSender(String uuid) {
+        Optional<StreamSender> user = getOrLoadSender(uuid);
+        if (user.isPresent()) return user.get();
 
         if (uuid.equals(StreamSender.getConsoleDiscriminator())) {
             StreamSender sender = getConsole();
@@ -181,43 +177,23 @@ public class UserUtils {
                 sender.save();
                 loadSender(sender);
             }
-            return CompletableFuture.completedFuture(sender);
+            return sender;
         }
 
-        return loadPlayerAsync(uuid).thenApply(user1 -> user1.orElseGet(() -> {
-            StreamPlayer sender = new StreamPlayer(uuid);
-            sender.save();
-            loadPlayer(sender);
+        CompletableFuture<Optional<StreamSender>> loader = CompletableFuture.supplyAsync(() ->
+                getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer));
 
-            return sender;
-        }));
+        return new StreamSender(uuid).thenPopulate(loader);
     }
 
-    public static CompletableFuture<StreamPlayer> getOrGetOrCreatePlayerAsync(String uuid) {
-        return getOrGetOrCreateSenderAsync(uuid).thenApply(user -> (StreamPlayer) user);
-    }
+    public static StreamPlayer getOrCreatePlayer(String uuid) {
+        StreamSender sender = getOrCreateSender(uuid);
+        if (sender instanceof StreamPlayer) return (StreamPlayer) sender;
 
-    public static Optional<StreamPlayer> getOrGetPlayer(StreamSender sender) {
-        if (sender instanceof StreamPlayer) return Optional.of((StreamPlayer) sender);
-        return Optional.empty();
-    }
+        CompletableFuture<Optional<StreamSender>> loader = CompletableFuture.supplyAsync(() ->
+                getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer));
 
-    public static Optional<StreamSender> getOrGetOrCreateSender(String uuid) {
-        Optional<StreamSender> user = getSender(uuid);
-        if (user.isPresent()) return user;
-
-        getOrGetOrCreateSenderAsync(uuid);
-
-        return user;
-    }
-
-    public static Optional<StreamPlayer> getOrGetOrCreatePlayer(String uuid) {
-        Optional<StreamSender> user = getOrGetOrCreateSender(uuid);
-        if (user.isEmpty()) return Optional.empty();
-
-        if (user.get() instanceof StreamPlayer) return user.map(u -> (StreamPlayer) u);
-
-        return Optional.empty();
+        return (StreamPlayer) new StreamPlayer(uuid).thenPopulate(loader);
     }
 
     public static boolean isConsole(String uuid) {
@@ -399,17 +375,15 @@ public class UserUtils {
         return UuidManager.getUuidFromName(name);
     }
 
-    public static Optional<StreamSender> getOrGetUserByName(String name) {
+    public static Optional<StreamSender> getOrCreateSenderByName(String name) {
         Optional<String> uuid = getUUIDFromName(name);
-        return uuid.flatMap(UserUtils::getOrGetOrCreateSender);
+        return uuid.map(UserUtils::getOrCreateSender);
 
     }
 
-    public static Optional<StreamPlayer> getOrGetPlayerByName(String name) {
+    public static Optional<StreamPlayer> getOrCreatePlayerByName(String name) {
         Optional<String> uuid = getUUIDFromName(name);
-        if (uuid.isEmpty()) return Optional.empty();
-
-        return getOrGetPlayer(uuid.get());
+        return uuid.map(UserUtils::getOrCreatePlayer);
     }
 
     public static ConcurrentSkipListSet<StreamPlayer> getPlayersOn(String server) {
