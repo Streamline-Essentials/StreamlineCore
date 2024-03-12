@@ -167,21 +167,19 @@ public class PlatformListener {
         if (! (event.getTarget() instanceof Player)) return;
         Player player = (Player) event.getTarget();
 
-        CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (sender.isEmpty()) return;
-            StreamPlayer streamPlayer = sender.get();
+        Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        if (sender.isEmpty()) return;
+        StreamPlayer streamPlayer = sender.get();
 
-            try {
-                ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
-                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-                ModuleUtils.fireEvent(e);
-                if (e.isCancelled()) return;
-                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
-            } catch (Exception e) {
-                // do nothing.
-            }
-        });
+        try {
+            ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
+            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+            ModuleUtils.fireEvent(e);
+            if (e.isCancelled()) return;
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+        } catch (Exception e) {
+            // do nothing.
+        }
     }
 
     @Subscribe
