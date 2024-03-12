@@ -10,6 +10,7 @@ import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
@@ -23,10 +24,12 @@ import net.streamline.platform.Messenger;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 
-public class UserManager implements IUserManager<ProxiedPlayer> {
+public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     @Getter
     private static UserManager instance;
 
@@ -34,29 +37,18 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
         instance = this;
     }
 
-    public StreamPlayer getOrGetPlayer(ProxiedPlayer player) {
-        StreamPlayer p = UserUtils.getOrGetPlayer(player.getUniqueId().toString()).orElse(null);
-        if (p == null) {
-            p = new StreamPlayer(player.getUniqueId().toString());
-            String serverName = "";
-            Server server = player.getServer();
-            if (server != null) {
-                ServerInfo info = server.getInfo();
-                if (info != null) serverName = info.getName();
-            }
-            if (! serverName.isBlank() && ! serverName.isEmpty()) p.setServerName(serverName);
-            UserUtils.loadPlayer(p);
-        }
-
-        return p;
+    @Override
+    public StreamPlayer getOrCreatePlayer(ProxiedPlayer player) {
+        return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
-    public Optional<StreamPlayer> getOrGetPlayer(CommandSender sender) {
+    @Override
+    public StreamSender getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
-            return UserUtils.getOrGetPlayer(GivenConfigs.getMainConfig().getConsoleDiscriminator());
+            return UserUtils.getConsole();
         } else {
             ProxiedPlayer player = (ProxiedPlayer) sender;
-            return Optional.of(getOrGetPlayer(player));
+            return getOrCreatePlayer(player);
         }
     }
 
@@ -136,7 +128,9 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
 
         Streamline.getInstance().getProxy().getServers().values().forEach(a -> {
             a.getPlayers().forEach(b -> {
-                r.add(this.getOrGetPlayer(b));
+                StreamPlayer player = getOrCreatePlayer(b);
+                if (player == null) return;
+                if (player.isOnline() && player.getServerName().equals(server)) r.add(player);
             });
         });
 
@@ -164,9 +158,8 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
         if (! user.isOnline()) return;
         ProxiedPlayer p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
-        StreamPlayer pl = getOrGetPlayer(p);
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(pl, true, pl, pack));
+        SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, true, user, pack));
     }
 
     @Override
@@ -208,13 +201,8 @@ public class UserManager implements IUserManager<ProxiedPlayer> {
 
         for (ProxiedPlayer player : BasePlugin.onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                StreamPlayer p = getOrGetPlayer(player);
-                r.put(player.getUniqueId().toString(), p);
-                continue;
+                r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
             }
-
-            StreamPlayer p = new StreamPlayer(player.getUniqueId().toString());
-            r.put(player.getUniqueId().toString(), p);
         }
 
         return r;

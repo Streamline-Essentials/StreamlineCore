@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -227,9 +226,8 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
-        Optional<StreamPlayer> player = UserManager.getInstance().getOrGetPlayer(sender);
-        if (player.isEmpty()) return of;
+        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
 
-        return MessageUtils.replaceAllPlayerBungee(player.get(), of);
+        return MessageUtils.replaceAllPlayerBungee(s, of);
     }
 }

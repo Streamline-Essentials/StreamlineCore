@@ -170,7 +170,7 @@ public abstract class BasePlugin implements IStreamline {
         ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
-            players.add(getUserManager().getOrGetPlayer(player));
+            players.add(getUserManager().getOrCreatePlayer(player));
         }
 
         return players;

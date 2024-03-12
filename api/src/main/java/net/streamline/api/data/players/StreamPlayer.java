@@ -10,6 +10,7 @@ import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.utils.UserUtils;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Getter @Setter
@@ -25,6 +26,15 @@ public class StreamPlayer extends StreamSender {
         this.currentIP = "";
 
         this.location = new PlayerLocation(this);
+    }
+
+    @Override
+    public <S extends StreamSender> void thenPopulateMore(S sender) {
+        if (! (sender instanceof StreamPlayer)) return;
+        StreamPlayer player = (StreamPlayer) sender;
+
+        setCurrentIP(player.getCurrentIP());
+        setLocation(player.getLocation());
     }
 
     public CoreDBOperator getDatabase() {
@@ -107,26 +117,22 @@ public class StreamPlayer extends StreamSender {
 
     @Override
     public void reload() {
-        SLAPI.getMainDatabase().loadPlayer(getUuid()).whenComplete((playerOptional, throwable) -> {
-            if (throwable != null) {
-                throwable.printStackTrace();
-                return;
-            }
+        CompletableFuture.runAsync(() -> {
+            Optional<StreamPlayer> optional = UserUtils.getOrCreatePlayerAsync(getUuid()).join();
+            if (optional.isEmpty()) return;
+            StreamPlayer streamPlayer = optional.get();
 
-            if (playerOptional.isEmpty()) return;
-            StreamPlayer player = playerOptional.get();
+            setFirstJoin(streamPlayer.getFirstJoin().getTime());
+            setLastJoin(streamPlayer.getLastJoin().getTime());
+            setLastQuit(streamPlayer.getLastQuit().getTime());
+            setPlaySeconds(streamPlayer.getPlaySeconds());
+            setPoints(streamPlayer.getPoints());
+            setMeta(streamPlayer.getMeta());
+            setPermissions(streamPlayer.getPermissions());
+            setLeveling(streamPlayer.getLeveling());
 
-            setFirstJoin(player.getFirstJoin().getTime());
-            setLastJoin(player.getLastJoin().getTime());
-            setLastQuit(player.getLastQuit().getTime());
-            setPlaySeconds(player.getPlaySeconds());
-            setPoints(player.getPoints());
-            setMeta(player.getMeta());
-            setPermissions(player.getPermissions());
-            setLeveling(player.getLeveling());
-
-            setCurrentIP(player.getCurrentIP());
-            setLocation(player.getLocation());
+            setCurrentIP(streamPlayer.getCurrentIP());
+            setLocation(streamPlayer.getLocation());
         });
     }
 

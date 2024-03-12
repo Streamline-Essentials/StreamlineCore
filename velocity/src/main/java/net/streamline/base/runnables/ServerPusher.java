@@ -2,7 +2,6 @@ package net.streamline.base.runnables;
 
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
 import net.streamline.api.messages.proxied.ProxiedMessage;

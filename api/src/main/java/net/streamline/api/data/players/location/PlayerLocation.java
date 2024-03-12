@@ -3,7 +3,6 @@ package net.streamline.api.data.players.location;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.server.StreamServer;
 import org.jetbrains.annotations.NotNull;
 
 @Getter @Setter

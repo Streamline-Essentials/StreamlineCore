@@ -17,7 +17,6 @@ import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -33,7 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
@@ -161,7 +163,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
-            players.add(getUserManager().getOrGetPlayer(player));
+            players.add(getUserManager().getOrCreatePlayer(player));
         }
 
         return players;
@@ -300,10 +302,11 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
-        // nothing right now
-        StreamPlayer p = getUserManager().getOrGetPlayer(player);
+        if (player == null) return;
+        StreamPlayer streamPlayer = getUserManager().getOrCreatePlayer(player);
+        if (streamPlayer == null) return;
 
-        ResourcePackMessageBuilder.build(p, true, p, resourcePack).send();
+        ResourcePackMessageBuilder.build(streamPlayer, true, streamPlayer, resourcePack).send();
     }
 
     @Override

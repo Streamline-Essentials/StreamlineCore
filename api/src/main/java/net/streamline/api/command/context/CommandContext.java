@@ -2,10 +2,12 @@ package net.streamline.api.command.context;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.base.commands.ParseCommand;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.utils.UserUtils;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -52,6 +54,44 @@ public class CommandContext<C extends StreamlineCommand> {
 
     public int getArgCount() {
         return args.size();
+    }
+
+    public boolean isEmpty() {
+        return args.isEmpty();
+    }
+
+    public boolean hasArgs() {
+        return ! isEmpty();
+    }
+
+    public boolean hasArg(int index) {
+        return getArg(index).isEmpty();
+    }
+
+    public boolean isSenderArgUsable(int index) {
+        return getSenderArg(index).isPresent();
+    }
+
+    public boolean isPlayerArgUsable(int index) {
+        return getPlayerArg(index).isPresent();
+    }
+
+    public Optional<StreamSender> getSenderArg(int index) {
+        String username = getStringArg(index);
+        return UserUtils.getOrCreateSenderByName(username);
+    }
+
+    public StreamSender getSenderArgRequired(int index) {
+        return getSenderArg(index).orElse(null);
+    }
+
+    public Optional<StreamPlayer> getPlayerArg(int index) {
+        String username = getStringArg(index);
+        return UserUtils.getOrCreatePlayerByName(username);
+    }
+
+    public StreamPlayer getPlayerArgRequired(int index) {
+        return getPlayerArg(index).orElse(null);
     }
 
     public String getStringArg(int index) {

@@ -224,8 +224,12 @@ public class ModuleUtils {
         return UserUtils.userExists(uuid);
     }
 
-    public static Optional<StreamPlayer> getOrGetPlayer(String uuid) {
-        return UserUtils.getOrGetPlayer(uuid);
+    public static StreamPlayer getOrCreatePlayer(String uuid) {
+        return UserUtils.getOrCreatePlayer(uuid);
+    }
+
+    public static StreamSender getOrCreateSender(String uuid) {
+        return UserUtils.getOrCreateSender(uuid);
     }
 
     public static boolean isConsole(String uuid) {
@@ -322,7 +326,7 @@ public class ModuleUtils {
     }
 
     public static Optional<StreamSender> getOrGetUserByName(String name) {
-        return UserUtils.getOrGetUserByName(name);
+        return UserUtils.getOrCreateSenderByName(name);
     }
 
     @Deprecated

@@ -3,27 +3,25 @@ package net.streamline.platform;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.logging.StreamlineLogHandler;
-import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
-import net.streamline.api.command.StreamlineCommand;
 import net.streamline.platform.handlers.BackendHandler;
+import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.profile.SpigotProfiler;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
-import net.streamline.platform.listeners.PlatformListener;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
@@ -170,7 +168,9 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
-            players.add(getUserManager().getOrGetPlayer(player));
+            if (UserUtils.isLoaded(player.getUniqueId().toString())) {
+                players.add(getUserManager().getOrCreatePlayer(player));
+            }
         }
 
         return players;

@@ -12,8 +12,6 @@ import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.utils.MessageUtils;
 
-import java.util.Optional;
-
 public class PlayerLocationMessageBuilder {
     @Getter
     private static final String subChannel = "player-location";
@@ -53,12 +51,7 @@ public class PlayerLocationMessageBuilder {
         float yaw = Float.parseFloat(in.getString("yaw"));
         float pitch = Float.parseFloat(in.getString("pitch"));
 
-        Optional<StreamPlayer> playerOptional = ModuleUtils.getOrGetPlayer(uuid);
-        if (playerOptional.isEmpty()) {
-            MessageUtils.logWarning("PlayerLocationMessageBuilder received for unknown player '" + uuid + "'.");
-            return;
-        }
-        StreamPlayer player = playerOptional.get();
+        StreamPlayer player = ModuleUtils.getOrCreatePlayer(uuid);
 
         StreamServer streamServer = new StreamServer(server);
         PlayerLocation location;

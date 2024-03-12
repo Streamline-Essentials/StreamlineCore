@@ -1,12 +1,17 @@
 package net.streamline.api.interfaces;
 
+import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.objects.StreamlineResourcePack;
 
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public interface IUserManager<T> {
+public interface IUserManager<C, P extends C> {
+    StreamPlayer getOrCreatePlayer(P player);
+
+    StreamSender getOrCreateSender(C sender);
+
     String getUsername(String uuid);
 
     boolean isOnline(String uuid);
@@ -29,7 +34,7 @@ public interface IUserManager<T> {
 
     String getDisplayName(String uuid);
 
-    T getPlayer(String uuid);
+    P getPlayer(String uuid);
 
     ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers();
 }

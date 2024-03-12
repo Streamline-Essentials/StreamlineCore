@@ -96,6 +96,9 @@ public class DBOperator {
 
             if (stmt.execute(statement)) result.set(ExecutionResult.YES);
             else result.set(ExecutionResult.NO);
+
+//            stmt.close();
+//            connection.close();
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute statement: " + statement, e);
         }
@@ -123,6 +126,10 @@ public class DBOperator {
             ResultSet set = stmt.executeQuery(statement);
 
             action.accept(set);
+
+//            set.close();
+//            stmt.close();
+//            connection.close();
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute query: " + statement, e);
         }

@@ -192,17 +192,15 @@ public class MessageUtils {
     }
 
     public static void sendMessage(String to, String message) {
-        Optional<StreamPlayer> user = UserUtils.getOrGetOrCreatePlayer(to);
-        if (user.isEmpty()) return;
+        StreamSender user = UserUtils.getOrCreateSender(to);
 
-        SLAPI.getInstance().getMessenger().sendMessage(user.get(), message);
+        SLAPI.getInstance().getMessenger().sendMessage(user, message);
     }
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
-        Optional<StreamPlayer> user = UserUtils.getOrGetOrCreatePlayer(to);
-        if (user.isEmpty()) return;
+        StreamSender user = UserUtils.getOrCreateSender(to);
 
-        SLAPI.getInstance().getMessenger().sendMessage(user.get(), replaceAllPlayerBungee(otherUUID, message));
+        SLAPI.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
 
     /**
@@ -218,11 +216,10 @@ public class MessageUtils {
         return ModuleUtils.replacePlaceholders(user, of);
     }
 
-    public static String replaceAllPlayerBungee(String uuid, String of) {
-        Optional<StreamPlayer> player = UserUtils.getOrGetPlayer(uuid);
-        if (player.isEmpty()) return of;
+    public static String replaceAllPlayerBungee(String to, String of) {
+        StreamSender user = UserUtils.getOrCreateSender(to);
 
-        return replaceAllPlayerBungee(player.get(), of);
+        return replaceAllPlayerBungee(user, of);
     }
 
     public static String parseOnProxyForNow(StreamPlayer StreamPlayer, String toParse) {

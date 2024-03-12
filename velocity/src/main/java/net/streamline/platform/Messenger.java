@@ -227,6 +227,8 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {
-        return MessageUtils.replaceAllPlayerBungee(UserManager.getInstance().getOrGetUser(sender), of);
+        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+
+        return MessageUtils.replaceAllPlayerBungee(s, of);
     }
 }

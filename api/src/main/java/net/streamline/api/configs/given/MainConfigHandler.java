@@ -1,8 +1,6 @@
 package net.streamline.api.configs.given;
 
 import net.streamline.api.SLAPI;
-import net.streamline.api.database.ConnectorSet;
-import net.streamline.api.database.DatabaseType;
 import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.ArrayList;

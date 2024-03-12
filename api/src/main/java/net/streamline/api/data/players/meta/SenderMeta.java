@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.IUuidable;
 import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
 import tv.quaint.thebase.lib.re2j.Matcher;
 import tv.quaint.utils.MatcherUtils;
 

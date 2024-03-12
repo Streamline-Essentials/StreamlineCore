@@ -1,7 +1,6 @@
 package net.streamline.api.interfaces;
 
 import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.objects.StreamlineTitle;
 import org.jetbrains.annotations.Nullable;
 
