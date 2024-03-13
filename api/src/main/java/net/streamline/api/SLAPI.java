@@ -25,6 +25,7 @@ import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
 import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.SingleSet;
 import tv.quaint.objects.handling.derived.PluginEventable;
 
@@ -261,6 +262,8 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         setBaseModule(new BaseModule());
 
         setCommandRunner(new CommandRunner());
+
+        UserUtils.loadConsole();
 
         setReady(true);
     }

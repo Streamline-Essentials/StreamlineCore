@@ -12,13 +12,10 @@ public class OneSecondTimer extends BaseRunnable {
 
     @Override
     public void run() {
-        UserUtils.getLoadedSendersSet().forEach(user -> {
+        UserUtils.getLoadedSenders().forEach((s, user) -> {
             if (! user.isOnline()) return;
 
-            if (user instanceof StreamPlayer) {
-                StreamPlayer player = ((StreamPlayer) user);
-                player.addPlaySecond(1);
-            }
+            user.addPlaySecond(1);
         });
     }
 }

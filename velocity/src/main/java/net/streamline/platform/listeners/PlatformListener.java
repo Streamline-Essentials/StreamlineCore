@@ -57,20 +57,21 @@ public class PlatformListener {
 
         String uuid = p.getUniqueId().toString();
 
-        StreamPlayer player = UserUtils.getOrCreatePlayerAsync(uuid).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(uuid).join();
 
-        p.getCurrentServer().ifPresent(serverConnection -> player.setServerName(serverConnection.getServerInfo().getName()));
+        streamPlayer.setCurrentName(p.getUsername());
+        p.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
+            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
             if (entry == null) {
                 event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get())));
                 return;
             }
         }
 
-        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
+        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
@@ -78,6 +79,8 @@ public class PlatformListener {
 
             event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(loginReceivedEvent.getResult().getDisconnectMessage())));
         }
+
+        streamPlayer.save();
     }
 
     @Subscribe
