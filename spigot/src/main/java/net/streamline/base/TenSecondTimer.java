@@ -31,9 +31,7 @@ public class TenSecondTimer implements Runnable {
         if (! checkPlayer()) return;
 
         CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> optional = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (optional.isEmpty()) return;
-            StreamPlayer streamPlayer = optional.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
             Location location = player.getLocation();
             World world = location.getWorld();

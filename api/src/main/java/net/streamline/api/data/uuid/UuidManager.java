@@ -88,8 +88,8 @@ public class UuidManager {
                     UuidInfo u = uuidInfo.get();
                     u.register();
 
-                    u.getNames().add(name);
-                    u.getIps().add(ip);
+                    u.addName(name);
+                    u.addIp(ip);
 
                     u.save();
                 }
@@ -98,8 +98,8 @@ public class UuidManager {
             UuidInfo u = infoOptional.get();
             u.register();
 
-            u.getNames().add(name);
-            u.getIps().add(ip);
+            u.addName(name);
+            u.addIp(ip);
 
             u.save();
         }

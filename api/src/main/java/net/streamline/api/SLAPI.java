@@ -9,6 +9,7 @@ import net.streamline.api.base.timers.*;
 import net.streamline.api.command.GivenCommands;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.uuid.UuidInfo;
 import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.*;
@@ -36,7 +37,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Predicate;
 
 public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager<C, P>, M extends IMessenger> extends PluginEventable {
@@ -229,10 +232,19 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         GivenConfigs.init();
         setMainDatabase(GivenConfigs.getMainDatabase());
         GivenCommands.init();
-        getMainDatabase().pullAllUuidInfo().whenComplete((set, throwable) -> {
-            if (throwable != null) throwable.printStackTrace();
+        CompletableFuture.runAsync(() -> {
+            try {
+                getMainDatabase().ensureUsable();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-            UuidManager.registerAll(set);
+            try {
+                ConcurrentSkipListSet<UuidInfo> uuidInfos = getMainDatabase().pullAllUuidInfo().join();
+                UuidManager.registerAll(uuidInfos);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
 
         luckPerms = LuckPermsProvider.get();

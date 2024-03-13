@@ -21,6 +21,7 @@ public class CoreDBOperator extends DBOperator {
         super(set, "StreamlineCore");
     }
 
+    @Override
     public void ensureDatabase() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_DATABASE, this.getConnectorSet());
         if (s1 == null) return;
@@ -29,7 +30,8 @@ public class CoreDBOperator extends DBOperator {
         this.execute(s1);
     }
 
-    public void ensureTable() {
+    @Override
+    public void ensureTables() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_TABLES, this.getConnectorSet());
         if (s1 == null) return;
         if (s1.isBlank() || s1.isEmpty()) return;
@@ -37,17 +39,11 @@ public class CoreDBOperator extends DBOperator {
         this.execute(s1);
     }
 
-    public void ensureUsable() {
-        this.ensureFile();
-        this.ensureDatabase();
-        this.ensureTable();
-    }
-
     public void savePlayer(StreamPlayer player, boolean async) {
         if (async) {
-            CompletableFuture.runAsync(() -> savePlayerMethod(player));
+            CompletableFuture.runAsync(() -> savePlayerAsync(player).join());
         } else {
-            savePlayerMethod(player);
+            savePlayerAsync(player).join();
         }
     }
 
@@ -55,87 +51,117 @@ public class CoreDBOperator extends DBOperator {
         savePlayer(player, true);
     }
 
-    private void savePlayerMethod(StreamPlayer player) {
-        boolean isProxy = SLAPI.isProxy();
-
+    public boolean isPlayerTouched(String uuid) {
         ensureUsable();
 
-        String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
-        if (s1 == null) return;
-        if (s1.isBlank() || s1.isEmpty()) return;
+        String s1 = Statements.getStatement(Statements.StatementType.PLAYER_IS_TOUCHED, this.getConnectorSet());
+        if (s1 == null) return true;
+        if (s1.isBlank() || s1.isEmpty()) return true;
 
-        s1 = s1.replace("%uuid%", player.getUuid());
-        s1 = s1.replace("%first_join%", String.valueOf(player.getFirstJoin().getTime()));
-        s1 = s1.replace("%last_join%", String.valueOf(player.getLastJoin().getTime()));
-        s1 = s1.replace("%current_name%", player.getCurrentName());
-        s1 = s1.replace("%current_ip%", player.getCurrentIP());
-        s1 = s1.replace("%play_seconds%", String.valueOf(player.getPlaySeconds()));
-        s1 = s1.replace("%points%", String.valueOf(player.getPoints()));
-        s1 = s1.replace("%proxy_touched%", String.valueOf(player.isProxyTouched() || SLAPI.isProxy()));
-        s1 = s1.replace("%is_proxy%", isProxy ? "1" : "0");
+        s1 = s1.replace("%uuid%", uuid);
 
-        this.execute(s1);
+        AtomicBoolean atomicBoolean = new AtomicBoolean(true);
+        
+        this.executeQuery(s1, rs -> {
+            try {
+                if (rs.next()) {
+                    boolean isTouched = rs.getBoolean("ProxyTouched");
+                    
+                    atomicBoolean.set(isTouched);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        
+        return atomicBoolean.get();
+    }
+    
+    private CompletableFuture<Boolean> savePlayerAsync(StreamPlayer player) {
+        return CompletableFuture.supplyAsync(() -> {
+            boolean isProxy = SLAPI.isProxy();
+            boolean isTouched = isPlayerTouched(player.getUuid());
+//        boolean exists = exists(player.getUuid()).join();
 
-        if (player.getMeta() != null) {
-            s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_META, this.getConnectorSet());
-            if (s1 == null) return;
-            if (s1.isBlank() || s1.isEmpty()) return;
+            if (!isProxy && isTouched) return false;
+//        if (! isProxy && exists) return;
 
-            s1 = s1.replace("%uuid%", player.getUuid());
-            s1 = s1.replace("%nickname%", player.getMeta().getNickname());
-            s1 = s1.replace("%prefix%", player.getMeta().getPrefix());
-            s1 = s1.replace("%suffix%", player.getMeta().getSuffix());
-            s1 = s1.replace("%is_proxy%", isProxy ? "1" : "0");
+//        ensureUsable();
 
-            this.execute(s1);
-        }
-
-        if (player.getLeveling() != null) {
-            s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LEVELING, this.getConnectorSet());
-            if (s1 == null) return;
-            if (s1.isBlank() || s1.isEmpty()) return;
-
-            s1 = s1.replace("%uuid%", player.getUuid());
-            s1 = s1.replace("%level%", String.valueOf(player.getLeveling().getLevel()));
-            s1 = s1.replace("%total_experience%", String.valueOf(player.getLeveling().getTotalExperience()));
-            s1 = s1.replace("%current_experience%", String.valueOf(player.getLeveling().getCurrentExperience()));
-            s1 = s1.replace("%equation_string%", player.getLeveling().getEquationString());
-            s1 = s1.replace("%started_level%", String.valueOf(player.getLeveling().getStartedLevel()));
-            s1 = s1.replace("%started_experience%", String.valueOf(player.getLeveling().getStartedExperience()));
-            s1 = s1.replace("%is_proxy%", isProxy ? "1" : "0");
-
-            this.execute(s1);
-        }
-
-        if (player.getLocation() != null) {
-            s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LOCATION, this.getConnectorSet());
-            if (s1 == null) return;
-            if (s1.isBlank() || s1.isEmpty()) return;
+            String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
+            if (s1 == null) return false;
+            if (s1.isBlank() || s1.isEmpty()) return false;
 
             s1 = s1.replace("%uuid%", player.getUuid());
-            s1 = s1.replace("%server%", player.getLocation().getServerName());
-            s1 = s1.replace("%world%", player.getLocation().getWorldName());
-            s1 = s1.replace("%x%", String.valueOf(player.getLocation().getX()));
-            s1 = s1.replace("%y%", String.valueOf(player.getLocation().getY()));
-            s1 = s1.replace("%z%", String.valueOf(player.getLocation().getZ()));
-            s1 = s1.replace("%yaw%", String.valueOf(player.getLocation().getYaw()));
-            s1 = s1.replace("%pitch%", String.valueOf(player.getLocation().getPitch()));
-            s1 = s1.replace("%is_proxy%", isProxy ? "1" : "0");
+            s1 = s1.replace("%first_join%", String.valueOf(player.getFirstJoinDate().getTime()));
+            s1 = s1.replace("%last_join%", String.valueOf(player.getLastJoinDate().getTime()));
+            s1 = s1.replace("%current_name%", player.getCurrentName());
+            s1 = s1.replace("%current_ip%", player.getCurrentIp());
+            s1 = s1.replace("%play_seconds%", String.valueOf(player.getPlaySeconds()));
+            s1 = s1.replace("%points%", String.valueOf(player.getPoints()));
+            s1 = s1.replace("%proxy_touched%", String.valueOf(player.isProxyTouched() || SLAPI.isProxy()));
 
             this.execute(s1);
-        }
 
-        if (player.getPermissions() != null) {
-            s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_PERMISSIONS, this.getConnectorSet());
-            if (s1 == null) return;
-            if (s1.isBlank() || s1.isEmpty()) return;
+            if (player.getMeta() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_META, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
 
-            s1 = s1.replace("%uuid%", player.getUuid());
-            s1 = s1.replace("%bypassing_permissions%", String.valueOf(player.getPermissions().isBypassingPermissions()));
-            s1 = s1.replace("%is_proxy%", isProxy ? "1" : "0");
+                s1 = s1.replace("%uuid%", player.getUuid());
+                s1 = s1.replace("%nickname%", player.getMeta().getNickname());
+                s1 = s1.replace("%prefix%", player.getMeta().getPrefix());
+                s1 = s1.replace("%suffix%", player.getMeta().getSuffix());
 
-            this.execute(s1);
-        }
+                this.execute(s1);
+            }
+
+            if (player.getLeveling() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LEVELING, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                s1 = s1.replace("%uuid%", player.getUuid());
+                s1 = s1.replace("%level%", String.valueOf(player.getLeveling().getLevel()));
+                s1 = s1.replace("%total_experience%", String.valueOf(player.getLeveling().getTotalExperience()));
+                s1 = s1.replace("%current_experience%", String.valueOf(player.getLeveling().getCurrentExperience()));
+                s1 = s1.replace("%equation_string%", player.getLeveling().getEquationString());
+                s1 = s1.replace("%started_level%", String.valueOf(player.getLeveling().getStartedLevel()));
+                s1 = s1.replace("%started_experience%", String.valueOf(player.getLeveling().getStartedExperience()));
+
+                this.execute(s1);
+            }
+
+            if (player.getLocation() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LOCATION, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                s1 = s1.replace("%uuid%", player.getUuid());
+                s1 = s1.replace("%server%", player.getLocation().getServerName());
+                s1 = s1.replace("%world%", player.getLocation().getWorldName());
+                s1 = s1.replace("%x%", String.valueOf(player.getLocation().getX()));
+                s1 = s1.replace("%y%", String.valueOf(player.getLocation().getY()));
+                s1 = s1.replace("%z%", String.valueOf(player.getLocation().getZ()));
+                s1 = s1.replace("%yaw%", String.valueOf(player.getLocation().getYaw()));
+                s1 = s1.replace("%pitch%", String.valueOf(player.getLocation().getPitch()));
+
+                this.execute(s1);
+            }
+
+            if (player.getPermissions() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_PERMISSIONS, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                s1 = s1.replace("%uuid%", player.getUuid());
+                s1 = s1.replace("%bypassing_permissions%", String.valueOf(player.getPermissions().isBypassingPermissions()));
+
+                this.execute(s1);
+            }
+
+            return true;
+        });
     }
 
     public CompletableFuture<Optional<StreamPlayer>> loadPlayer(String uuid) {
@@ -157,10 +183,10 @@ public class CoreDBOperator extends DBOperator {
                 this.executeQuery(s1, rs -> {
                     try {
                         if (rs.next()) {
-                            player.setFirstJoin(rs.getLong("FirstJoin"));
-                            player.setLastJoin(rs.getLong("LastJoin"));
+                            player.setFirstJoinMillis(rs.getLong("FirstJoin"));
+                            player.setLastJoinMillis(rs.getLong("LastJoin"));
                             player.setCurrentName(rs.getString("CurrentName"));
-                            player.setCurrentIP(rs.getString("CurrentIP"));
+                            player.setCurrentIp(rs.getString("CurrentIP"));
                             player.setPlaySeconds(rs.getLong("PlaySeconds"));
                             player.setPoints(rs.getInt("Points"));
                             player.setProxyTouched(rs.getBoolean("ProxyTouched"));

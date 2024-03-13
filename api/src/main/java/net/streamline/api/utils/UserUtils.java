@@ -13,6 +13,7 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.events.CreateSenderEvent;
 import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.data.players.events.LoadStreamSenderEvent;
@@ -104,7 +105,7 @@ public class UserUtils {
         return getSender(uuid).isPresent();
     }
 
-    public static ConcurrentSkipListMap<String, StreamSender> getOnlineUsers() {
+    public static ConcurrentSkipListMap<String, StreamSender> getOnlineSenders() {
         ConcurrentSkipListMap<String, StreamSender> r = new ConcurrentSkipListMap<>();
 
         getLoadedSenders().forEach((s, user) -> {
@@ -142,10 +143,26 @@ public class UserUtils {
         return (StreamPlayer) loadSender(player);
     }
 
-    public static CompletableFuture<Optional<StreamPlayer>> getOrCreatePlayerAsync(String uuid) {
+    public static StreamPlayer createNewPlayer(String uuid) {
+        StreamPlayer streamPlayer = new StreamPlayer(uuid);
+        streamPlayer.save();
+
+        CreateSenderEvent event = new CreateSenderEvent(streamPlayer);
+        ModuleUtils.fireEvent(event);
+
+        return loadPlayer(streamPlayer);
+    }
+
+    public static CompletableFuture<StreamPlayer> getOrCreatePlayerAsync(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             Optional<StreamPlayer> optional = SLAPI.getMainDatabase().loadPlayer(uuid).join();
-            return optional.map(UserUtils::loadPlayer);
+            StreamPlayer streamPlayer;
+            if (optional.isPresent()) {
+                streamPlayer = optional.get();
+                return loadPlayer(streamPlayer);
+            } else {
+                return createNewPlayer(uuid);
+            }
         });
     }
 
@@ -153,10 +170,8 @@ public class UserUtils {
         CompletableFuture.runAsync(() -> {
             if (isLoaded(uuid)) return;
 
-            Optional<StreamSender> sender = getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer);
-            if (sender.isEmpty()) return;
-
-            loadSender(sender.get());
+            StreamSender sender = getOrCreatePlayerAsync(uuid).join();
+            loadSender(sender);
         });
 
         return getSender(uuid);
@@ -174,14 +189,13 @@ public class UserUtils {
             StreamSender sender = getConsole();
             if (sender == null) {
                 sender = new StreamSender();
-                sender.save();
+//                sender.save(); // does nothing
                 loadSender(sender);
             }
             return sender;
         }
 
-        CompletableFuture<Optional<StreamSender>> loader = CompletableFuture.supplyAsync(() ->
-                getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer));
+        CompletableFuture<StreamPlayer> loader = getOrCreatePlayerAsync(uuid);
 
         return new StreamSender(uuid).thenPopulate(loader);
     }
@@ -190,10 +204,9 @@ public class UserUtils {
         StreamSender sender = getOrCreateSender(uuid);
         if (sender instanceof StreamPlayer) return (StreamPlayer) sender;
 
-        CompletableFuture<Optional<StreamSender>> loader = CompletableFuture.supplyAsync(() ->
-                getOrCreatePlayerAsync(uuid).join().map(streamPlayer -> streamPlayer));
+        CompletableFuture<StreamPlayer> loader = getOrCreatePlayerAsync(uuid);
 
-        return (StreamPlayer) new StreamPlayer(uuid).thenPopulate(loader);
+        return new StreamPlayer(uuid).thenPopulate(loader);
     }
 
     public static boolean isConsole(String uuid) {

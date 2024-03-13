@@ -20,7 +20,7 @@ public class StreamPlayerMessageBuilder {
         r.write("lastQuit", String.valueOf(player.getLastQuitMillis()));
 
         r.write("currentName", player.getCurrentName());
-        r.write("currentIP", player.getCurrentIP());
+        r.write("currentIP", player.getCurrentIp());
 
         r.write("nickname", player.getMeta().getNickname());
         r.write("prefix", player.getMeta().getPrefix());
@@ -83,12 +83,12 @@ public class StreamPlayerMessageBuilder {
         boolean bypassingPermissions = Boolean.parseBoolean(messageIn.getString("bypassingPermissions"));
 
         StreamPlayer player = new StreamPlayer(uuid);
-        player.setFirstJoin(firstJoin);
-        player.setLastJoin(lastJoin);
-        player.setLastQuit(lastQuit);
+        player.setFirstJoinMillis(firstJoin);
+        player.setLastJoinMillis(lastJoin);
+        player.setLastQuitMillis(lastQuit);
 
         player.setCurrentName(currentName);
-        player.setCurrentIP(currentIP);
+        player.setCurrentIp(currentIP);
 
         player.getMeta().setNickname(nickname);
         player.getMeta().setPrefix(prefix);

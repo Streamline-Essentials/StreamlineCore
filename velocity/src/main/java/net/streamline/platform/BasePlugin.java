@@ -15,11 +15,15 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidInfo;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.StreamlineEvent;
+import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.StorageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
@@ -35,9 +39,12 @@ import org.slf4j.Logger;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
@@ -99,16 +106,20 @@ public abstract class BasePlugin implements IStreamline {
 
         Path parentPath = dd.getParent();
         if (parentPath != null) {
-            File parentFile = new File(parentPath.toUri());
+            File parentFile = new File(parentPath.toString());
             File[] files = parentFile.listFiles((f) -> {
                 if (! f.isDirectory()) return false;
-                if (f.getName().equals("streamlineapi")) return true;
+                if (f.getName().equals("StreamlineAPI")) return true;
+                if (f.getName().equals("StreamlineCore-Spigot")) return true;
+                if (f.getName().equals("StreamlineCore-Bungee")) return true;
+                if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("streamlinecore")) return true;
                 return false;
             });
 
             if (files != null) {
                 Arrays.stream(files).forEach(file -> {
-                    file.renameTo(new File(parentPath.toFile(), "streamlinecore"));
+                    file.renameTo(new File(parentPath.toString(), this.name));
                 });
             }
         }
@@ -118,10 +129,47 @@ public abstract class BasePlugin implements IStreamline {
 
     public void onLoad() {
         instance = this;
-        name = "streamlinecore";
-        version = "${{project.version}}";
+
+        setupProperties();
+
+        String parentPath = getDataFolder().getParent();
+        if (parentPath != null) {
+            File parentFile = new File(parentPath);
+            File[] files = parentFile.listFiles((f) -> {
+                if (! f.isDirectory()) return false;
+                if (f.getName().equals("StreamlineAPI")) return true;
+                if (f.getName().equals("StreamlineCore-Spigot")) return true;
+                if (f.getName().equals("StreamlineCore-Bungee")) return true;
+                if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("streamlinecore")) return true;
+                return false;
+            });
+
+            if (files != null) {
+                Arrays.stream(files).forEach(file -> {
+                    file.renameTo(new File(parentPath, this.name));
+                });
+            }
+        }
 
         this.load();
+    }
+
+    public void setupProperties() {
+        ConcurrentSkipListMap<String, String> properties = StorageUtils.readProperties();
+        if (properties.isEmpty()) return;
+
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (key.equals("name")) {
+                this.name = value;
+            }
+            if (key.equals("version")) {
+                this.version = value;
+            }
+        }
     }
 
     @Subscribe
@@ -146,13 +194,20 @@ public abstract class BasePlugin implements IStreamline {
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
-        for (StreamSender user : UserUtils.getLoadedSendersSet()) {
-            user.save();
-        }
+        UserUtils.syncAllUsers();
+        UuidManager.getUuids().forEach(UuidInfo::save);
 
         getProxy().getChannelRegistrar().unregister(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
 
         this.disable();
+        fireStopEvent();
+    }
+
+    public void fireStopEvent() {
+        ServerStopEvent e = new ServerStopEvent().fire();
+        if (e.isCancelled()) return;
+        if (! e.isSendable()) return;
+        SLAPI.sendConsoleMessage(e.getMessage());
     }
 
     abstract public void enable();

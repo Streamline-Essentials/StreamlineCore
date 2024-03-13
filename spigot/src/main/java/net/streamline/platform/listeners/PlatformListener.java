@@ -65,9 +65,9 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
-        Optional<StreamPlayer> user = UserUtils.getOrCreatePlayerByName(event.getName());
-        if (user.isEmpty()) return;
-        StreamPlayer player = user.get();
+        String uuid = event.getUniqueId().toString();
+
+        StreamPlayer player = UserUtils.getOrCreatePlayerAsync(uuid).join();
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -96,11 +96,9 @@ public class PlatformListener implements Listener {
 
 
         CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (sender.isEmpty()) return;
-            StreamPlayer streamPlayer = sender.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
-            streamPlayer.setCurrentIP(UserManager.getInstance().parsePlayerIP(player));
+            streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
             streamPlayer.setCurrentName(player.getName());
 
             LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
@@ -109,6 +107,8 @@ public class PlatformListener implements Listener {
             setJoined(true);
 
             new TenSecondTimer(player);
+
+            streamPlayer.save();
         });
     }
 
@@ -119,9 +119,7 @@ public class PlatformListener implements Listener {
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
         CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (sender.isEmpty()) return;
-            StreamPlayer streamPlayer = sender.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
             LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
             ModuleUtils.fireEvent(logoutEvent);
@@ -136,9 +134,7 @@ public class PlatformListener implements Listener {
         Player player = event.getPlayer();
 
         CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (sender.isEmpty()) return;
-            StreamPlayer streamPlayer = sender.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
             StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
             Streamline.getInstance().fireEvent(chatEvent, true);
@@ -147,6 +143,8 @@ public class PlatformListener implements Listener {
                 return;
             }
             event.setMessage(chatEvent.getMessage());
+
+            streamPlayer.save();
         }).join();
     }
 
@@ -162,9 +160,7 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            Optional<StreamPlayer> sender = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
-            if (sender.isEmpty()) return;
-            StreamPlayer streamPlayer = sender.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
             try {
                 ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);

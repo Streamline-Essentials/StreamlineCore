@@ -27,9 +27,9 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedReplaceable(this, "version", (s) -> SLAPI.getInstance().getPlatform().getVersion()).register();
         new IdentifiedReplaceable(this, "players_max", (s) -> String.valueOf(SLAPI.getInstance().getPlatform().getMaxPlayers())).register();
         new IdentifiedReplaceable(this, "players_online", (s) -> String.valueOf(UserUtils.getOnlinePlayers().size())).register();
-        new IdentifiedReplaceable(this, "users_online", (s) -> String.valueOf(UserUtils.getOnlineUsers().size())).register();
+        new IdentifiedReplaceable(this, "users_online", (s) -> String.valueOf(UserUtils.getOnlineSenders().size())).register();
         new IdentifiedReplaceable(this, "players_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
-        new IdentifiedReplaceable(this, "users_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
+        new IdentifiedReplaceable(this, "users_loaded", (s) -> String.valueOf(UserUtils.getLoadedSenders().size())).register();
 
         new IdentifiedReplaceable(this, "modules_loaded", (s) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(ModuleManager.getLoadedModuleIdentifiers()))).register();
         new IdentifiedReplaceable(this, "modules_enabled", (s) -> ModuleUtils.getListAsFormattedString(new ArrayList<>(ModuleManager.getEnabledModuleIdentifiers()))).register();
@@ -86,8 +86,8 @@ public class StreamlineExpansion extends RATExpansion {
         }).register();
 
         new IdentifiedUserReplaceable(this, "user_ping", (s, user) -> {
-            if (user.isConsole()) return String.valueOf(SLAPI.getInstance().getUserManager().getPlayerPing(user.getUuid()));
-            else return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
+            if (user.isConsole()) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
+            else return String.valueOf(SLAPI.getInstance().getUserManager().getPlayerPing(user.getUuid()));
         }).register();
         new IdentifiedUserReplaceable(this, "user_online", (s, user) -> user.isOnline() ?
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get() :
@@ -117,7 +117,7 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedUserReplaceable(this, "user_play_days",
                 (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getPlayDaysAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_ip",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getCurrentIP()) : s.string()).register();
+                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getCurrentIp()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_points", (s, user) -> String.valueOf(user.getPoints())).register();
         new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getServerName())).register();
         new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> user.getMeta().getTagsAsString()).register();

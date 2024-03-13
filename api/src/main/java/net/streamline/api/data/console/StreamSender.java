@@ -13,10 +13,9 @@ import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.Identifiable;
 
 import java.util.Date;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-@Getter @Setter
+@Getter
 public class StreamSender implements Identifiable {
     public String getIdentifier() {
         return getUuid();
@@ -26,31 +25,43 @@ public class StreamSender implements Identifiable {
         setUuid(identifier);
     }
 
+    @Setter
     private String uuid;
 
-    private Date firstJoin;
-    private Date lastJoin;
-    private Date lastQuit;
+    @Setter
+    private Date firstJoinDate;
+    @Setter
+    private Date lastJoinDate;
+    @Setter
+    private Date lastQuitDate;
 
     private String currentName;
+    @Setter
     private long playSeconds;
+    @Setter
     private double points;
 
+    @Setter
     private StreamServer server;
 
+    @Setter
     private SenderMeta meta;
+    @Setter
     private SenderLeveling leveling;
+    @Setter
     private SenderPermissions permissions;
 
+    @Setter
     private boolean proxyTouched;
 
+    @Setter
     private boolean loadComplete = false;
 
     public StreamSender(String uuid) {
         this.uuid = uuid;
 
-        this.firstJoin = new Date();
-        this.lastJoin = new Date();
+        this.firstJoinDate = new Date();
+        this.lastJoinDate = new Date();
 
         this.currentName = "";
 
@@ -72,25 +83,35 @@ public class StreamSender implements Identifiable {
         );
     }
 
+    public StreamSender setCurrentName(String currentName) {
+        String processed = currentName;
+
+        if (processed == null || processed.isBlank() || processed.isEmpty()) {
+            processed = SLAPI.getInstance().getUserManager().getUsername(getUuid());
+        }
+
+        this.currentName = processed;
+        return this;
+    }
+
+    public void setCurrentNameAsProper() {
+        setCurrentName(SLAPI.getInstance().getUserManager().getUsername(getUuid()));
+    }
+
     public void save() {
         // Do nothing
     }
 
-    public <S extends StreamSender> S thenPopulate(CompletableFuture<Optional<S>> future) {
+    public <S extends StreamSender> S thenPopulate(CompletableFuture<S> future) {
         loadComplete = false;
 
-        future.whenComplete((optional, throwable) -> {
-            if (throwable != null) {
-                throwable.printStackTrace();
-                return;
-            }
-            if (optional.isEmpty()) return;
-            StreamSender sender = optional.get();
+        CompletableFuture.runAsync(() -> {
+            S sender = future.join();
 
             setUuid(sender.getUuid());
-            setFirstJoin(sender.getFirstJoinMillis());
-            setLastJoin(sender.getLastJoinMillis());
-            setLastQuit(sender.getLastQuitMillis());
+            setFirstJoinMillis(sender.getFirstJoinMillis());
+            setLastJoinMillis(sender.getLastJoinMillis());
+            setLastQuitMillis(sender.getLastQuitMillis());
             setCurrentName(sender.getCurrentName());
             setPlaySeconds(sender.getPlaySeconds());
             setPoints(sender.getPoints());
@@ -100,6 +121,8 @@ public class StreamSender implements Identifiable {
             setPermissions(sender.getPermissions());
 
             thenPopulateMore(sender);
+
+            setCurrentNameAsProper(); // might need to be forced... need to check this...
 
             loadComplete = true;
         });
@@ -168,55 +191,55 @@ public class StreamSender implements Identifiable {
         return GivenConfigs.getMainConfig().getConsoleServer();
     }
 
-    public void setFirstJoin(long millis) {
+    public void setFirstJoinMillis(long millis) {
         if (millis == -1) {
-            this.firstJoin = null;
+            this.firstJoinDate = null;
             return;
         }
-        this.firstJoin = new Date(millis);
+        this.firstJoinDate = new Date(millis);
     }
 
-    public void setLastJoin(long millis) {
+    public void setLastJoinMillis(long millis) {
         if (millis == -1) {
-            this.lastJoin = null;
+            this.lastJoinDate = null;
             return;
         }
-        this.lastJoin = new Date(millis);
+        this.lastJoinDate = new Date(millis);
     }
 
-    public void setLastQuit(long millis) {
+    public void setLastQuitMillis(long millis) {
         if (millis == -1) {
-            this.lastQuit = null;
+            this.lastQuitDate = null;
             return;
         }
-        this.lastQuit = new Date(millis);
+        this.lastQuitDate = new Date(millis);
     }
 
     public long getFirstJoinMillis() {
-        if (this.firstJoin == null) return -1;
-        return this.firstJoin.getTime();
+        if (this.firstJoinDate == null) return -1;
+        return this.firstJoinDate.getTime();
     }
 
     public void setFirstJoinNull() {
-        this.firstJoin = null;
+        this.firstJoinDate = null;
     }
 
     public long getLastJoinMillis() {
-        if (this.lastJoin == null) return -1;
-        return this.lastJoin.getTime();
+        if (this.lastJoinDate == null) return -1;
+        return this.lastJoinDate.getTime();
     }
 
     public void setLastJoinNull() {
-        this.lastJoin = null;
+        this.lastJoinDate = null;
     }
 
     public long getLastQuitMillis() {
-        if (this.lastQuit == null) return -1;
-        return this.lastQuit.getTime();
+        if (this.lastQuitDate == null) return -1;
+        return this.lastQuitDate.getTime();
     }
 
     public void setLastQuitNull() {
-        this.lastQuit = null;
+        this.lastQuitDate = null;
     }
 
     public String getDisplayName() {
@@ -228,7 +251,11 @@ public class StreamSender implements Identifiable {
                 getConsoleDisplayName() :
                 (
                         UserUtils.getLuckPermsPrefix(getCurrentName()) +
-                        getCurrentName() +
+                                (
+                                        (getMeta().getNickname().isEmpty() || getMeta().getNickname().isBlank()) ?
+                                                getCurrentName() :
+                                                getMeta().getNickname()
+                                ) +
                         UserUtils.getLuckPermsSuffix(getCurrentName())
                 );
     }
