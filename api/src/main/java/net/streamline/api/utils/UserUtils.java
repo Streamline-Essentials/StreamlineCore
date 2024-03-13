@@ -33,7 +33,7 @@ public class UserUtils {
     private static StreamSender console;
 
     public static StreamSender getConsole() {
-        if (console == null) loadConsole();
+        if (! hasConsole()) loadConsole();
 
         return console;
     }
@@ -50,7 +50,7 @@ public class UserUtils {
     }
 
     public static void loadConsole() {
-        if (console == null) console = new StreamSender();
+        if (! hasConsole()) console = new StreamSender();
     }
 
     public static boolean hasConsole() {
@@ -186,13 +186,7 @@ public class UserUtils {
         if (user.isPresent()) return user.get();
 
         if (uuid.equals(StreamSender.getConsoleDiscriminator())) {
-            StreamSender sender = getConsole();
-            if (sender == null) {
-                sender = new StreamSender();
-//                sender.save(); // does nothing
-                loadSender(sender);
-            }
-            return sender;
+            return getConsole();
         }
 
         CompletableFuture<StreamPlayer> loader = getOrCreatePlayerAsync(uuid);

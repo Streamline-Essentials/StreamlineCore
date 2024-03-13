@@ -141,6 +141,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void onEnable() {
+        setupCommandMap();
+
         getLogger().addHandler(new StreamlineLogHandler());
 
         userManager = new UserManager();

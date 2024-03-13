@@ -67,18 +67,18 @@ public class PlatformListener implements Listener {
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         String uuid = event.getUniqueId().toString();
 
-        StreamPlayer player = UserUtils.getOrCreatePlayerAsync(uuid).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(uuid).join();
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
+            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
             if (entry == null) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, MessageUtils.codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 return;
             }
         }
 
-        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
+        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         BaseEventHandler.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
@@ -86,6 +86,8 @@ public class PlatformListener implements Listener {
 
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageUtils.codedString(loginReceivedEvent.getResult().getDisconnectMessage()));
         }
+
+        streamPlayer.save();
     }
 
     @EventHandler

@@ -5,6 +5,7 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
@@ -37,6 +38,7 @@ import net.streamline.platform.savables.UserManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class PlatformListener implements Listener {
@@ -47,27 +49,28 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onPreJoin(PreLoginEvent event) {
         PendingConnection connection = event.getConnection();
-
         if (connection == null) return;
 
-        String uuid = connection.getUniqueId().toString();
+        String name = connection.getName();
+        Optional<String> optional = UuidManager.getUuidFromName(name);
+        String uuid;
+        if (optional.isEmpty()) {
+            ProxiedPlayer proxiedPlayer = ProxyServer.getInstance().getPlayer(name);
+            if (proxiedPlayer == null) return;
 
-        StreamPlayer player = UserUtils.getOrCreatePlayerAsync(uuid).join();
-
-        if (connection instanceof ProxiedPlayer) {
-            try {
-                ProxiedPlayer proxiedPlayer = (ProxiedPlayer) connection;
-
-                player.setCurrentName(proxiedPlayer.getName());
-                player.getLocation().setServerName(proxiedPlayer.getServer().getInfo().getName());
-            } catch (Exception e) {
-//                e.printStackTrace(); // no errors in console.
-            }
+            uuid = proxiedPlayer.getUniqueId().toString();
+        } else {
+            uuid = optional.get();
         }
+
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(uuid).join();
+
+        streamPlayer.setCurrentName(name);
+//        streamPlayer.getLocation().setServerName(proxiedPlayer.getServer().getInfo().getName());
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(player.getUuid());
+            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
             if (entry == null) {
                 event.setCancelReason(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 event.setCancelled(true);
@@ -75,7 +78,7 @@ public class PlatformListener implements Listener {
             }
         }
 
-        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(player);
+        LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
@@ -84,6 +87,8 @@ public class PlatformListener implements Listener {
             event.setCancelReason(Messenger.getInstance().codedText(loginReceivedEvent.getResult().getDisconnectMessage()));
             event.setCancelled(true);
         }
+
+        streamPlayer.save();
     }
 
     @EventHandler
