@@ -9,14 +9,14 @@ import net.streamline.api.data.players.meta.SenderMeta;
 import net.streamline.api.data.players.permissions.SenderPermissions;
 import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.interfaces.audiences.real.RealSender;
+import net.streamline.api.loading.Loadable;
 import net.streamline.api.utils.UserUtils;
-import tv.quaint.objects.Identifiable;
 
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 
 @Getter
-public class StreamSender implements Identifiable {
+public class StreamSender implements Loadable {
     public String getIdentifier() {
         return getUuid();
     }
