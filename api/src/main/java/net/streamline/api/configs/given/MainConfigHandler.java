@@ -152,7 +152,7 @@ public class MainConfigHandler extends SimpleConfiguration {
     public List<String> playerTagsDefault() {
         reloadResource();
 
-        return getResource().getOrSetDefault("users.players.tags.default", new ArrayList<>());
+        return getResource().getOrSetDefault("players.tags.default", new ArrayList<>());
     }
 
     // DEBUG

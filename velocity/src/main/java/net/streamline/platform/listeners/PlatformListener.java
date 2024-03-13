@@ -273,25 +273,21 @@ public class PlatformListener {
             toName = "none";
         }
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
-            KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName).fire();
+        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName).fire();
 
-            if (kickedFromServerEvent.isCancelled()) {
-                if (from != null) event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(from));
-                return;
+        if (kickedFromServerEvent.isCancelled()) {
+            if (from != null) event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(from));
+            return;
+        }
+
+        if (kickedFromServerEvent.getToServer() != null) {
+            if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
+                Optional<RegisteredServer> serverInfo = StreamlineVelocity.getInstance().getProxy().getServer(kickedFromServerEvent.getToServer());
+                serverInfo.ifPresent(registeredServer ->
+                        event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(registeredServer)));
             }
-
-            if (kickedFromServerEvent.getToServer() != null) {
-                if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
-                    Optional<RegisteredServer> serverInfo = StreamlineVelocity.getInstance().getProxy().getServer(kickedFromServerEvent.getToServer());
-                    serverInfo.ifPresent(registeredServer ->
-                            event.setResult(com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer.create(registeredServer)));
-                }
-            }
-
-            streamPlayer.save();
-        });
+        }
     }
 }

@@ -263,35 +263,31 @@ public class PlatformListener implements Listener {
             toName = "none";
         }
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
-            KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName);
-            ModuleUtils.fireEvent(kickedFromServerEvent);
+        KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName);
+        ModuleUtils.fireEvent(kickedFromServerEvent);
 
-            if (kickedFromServerEvent.isCancelled()) {
-                MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the event was cancelled.");
-                return;
-            }
+        if (kickedFromServerEvent.isCancelled()) {
+            MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the event was cancelled.");
+            return;
+        }
 
-            event.setKickReason(kickedFromServerEvent.getReason());
+        event.setKickReason(kickedFromServerEvent.getReason());
 
-            if (kickedFromServerEvent.getToServer() != null) {
-                if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
-                    ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(kickedFromServerEvent.getToServer());
-                    if (serverInfo != null) {
-                        event.setCancelled(true);
-                        event.setCancelServer(serverInfo);
-                        MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " and sent them to " + kickedFromServerEvent.getToServer());
-                    } else {
-                        MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the server " + kickedFromServerEvent.getToServer() + " was not found.");
-                    }
+        if (kickedFromServerEvent.getToServer() != null) {
+            if (! kickedFromServerEvent.getToServer().equalsIgnoreCase("none")) {
+                ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(kickedFromServerEvent.getToServer());
+                if (serverInfo != null) {
+                    event.setCancelled(true);
+                    event.setCancelServer(serverInfo);
+                    MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " and sent them to " + kickedFromServerEvent.getToServer());
                 } else {
-                    MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but no server was specified to send them to.");
+                    MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but the server " + kickedFromServerEvent.getToServer() + " was not found.");
                 }
+            } else {
+                MessageUtils.logDebug("Server " + fromName + " kicked " + player.getName() + " for " + kickedReason + " but no server was specified to send them to.");
             }
-
-            streamPlayer.save();
-        });
+        }
     }
 }
