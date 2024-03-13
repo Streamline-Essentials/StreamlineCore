@@ -36,10 +36,6 @@ public class CommandHandler {
     }
 
     public static void registerStreamlineCommand(StreamlineCommand command) {
-        if (isProperCommandRegistered(command.getIdentifier())) {
-            MessageUtils.logWarning("Command with identifier '" + command.getIdentifier() + "' is already registered... reapplying it!");
-        }
-
         registerCommandRaw(command);
     }
 
@@ -48,10 +44,6 @@ public class CommandHandler {
     }
 
     public static void registerModuleCommand(ModuleCommand command) {
-        if (isProperCommandRegistered(command.getIdentifier())) {
-            MessageUtils.logWarning(command.getOwningModule(), "Command with identifier '" + command.getIdentifier() + "' is already registered!");
-            return;
-        }
         registerCommandRaw(command);
         getLoadedModuleCommands().put(command.getBase(), command);
     }
