@@ -4,18 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.data.console.StreamSender;
+import net.streamline.api.data.players.events.SenderSaveEvent;
 import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.data.players.location.PlayerWorld;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.utils.UserUtils;
 
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-@Getter @Setter
+@Getter
 public class StreamPlayer extends StreamSender {
-    private String currentIP;
+    private String currentIp;
+    @Setter
     private PlayerLocation location;
 
     public StreamPlayer(String uuid) {
@@ -23,9 +24,20 @@ public class StreamPlayer extends StreamSender {
 
         setServerName("");
 
-        this.currentIP = "";
+        this.currentIp = "";
 
         this.location = new PlayerLocation(this);
+    }
+
+    public StreamSender setCurrentIp(String currentIP) {
+        String processed = currentIP;
+
+        if (processed == null || processed.isBlank() || processed.isEmpty()) {
+            processed = SLAPI.getInstance().getUserManager().parsePlayerIP(getUuid());
+        }
+
+        this.currentIp = processed;
+        return this;
     }
 
     @Override
@@ -33,8 +45,15 @@ public class StreamPlayer extends StreamSender {
         if (! (sender instanceof StreamPlayer)) return;
         StreamPlayer player = (StreamPlayer) sender;
 
-        setCurrentIP(player.getCurrentIP());
+        setCurrentIp(player.getCurrentIp());
         setLocation(player.getLocation());
+
+        setCurrentIpAsProper(); // might need to be forced... need to check this...
+        setCurrentServerAsProper(); // might need to be forced... need to check this...
+    }
+
+    public void setCurrentIpAsProper() {
+        setCurrentIp(SLAPI.getInstance().getUserManager().parsePlayerIP(getUuid()));
     }
 
     public CoreDBOperator getDatabase() {
@@ -45,9 +64,23 @@ public class StreamPlayer extends StreamSender {
         return UserUtils.userExists(this.getUuid());
     }
 
+    public void ensureCorrect() {
+        setCurrentNameAsProper();
+        setCurrentIpAsProper();
+        setCurrentServerAsProper();
+    }
+
+    public void setCurrentServerAsProper() {
+        setServerName(SLAPI.getInstance().getUserManager().getServerPlayerIsOn(getUuid()));
+    }
+
     @Override
     public void save() {
-        CompletableFuture.runAsync(() -> getDatabase().savePlayer(this));
+        ensureCorrect();
+
+        getDatabase().savePlayer(this);
+
+        new SenderSaveEvent(this).fire();
     }
 
     @Override
@@ -118,20 +151,18 @@ public class StreamPlayer extends StreamSender {
     @Override
     public void reload() {
         CompletableFuture.runAsync(() -> {
-            Optional<StreamPlayer> optional = UserUtils.getOrCreatePlayerAsync(getUuid()).join();
-            if (optional.isEmpty()) return;
-            StreamPlayer streamPlayer = optional.get();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(getUuid()).join();
 
-            setFirstJoin(streamPlayer.getFirstJoin().getTime());
-            setLastJoin(streamPlayer.getLastJoin().getTime());
-            setLastQuit(streamPlayer.getLastQuit().getTime());
+            setFirstJoinMillis(streamPlayer.getFirstJoinDate().getTime());
+            setLastJoinMillis(streamPlayer.getLastJoinDate().getTime());
+            setLastQuitMillis(streamPlayer.getLastQuitDate().getTime());
             setPlaySeconds(streamPlayer.getPlaySeconds());
             setPoints(streamPlayer.getPoints());
             setMeta(streamPlayer.getMeta());
             setPermissions(streamPlayer.getPermissions());
             setLeveling(streamPlayer.getLeveling());
 
-            setCurrentIP(streamPlayer.getCurrentIP());
+            setCurrentIp(streamPlayer.getCurrentIp());
             setLocation(streamPlayer.getLocation());
         });
     }

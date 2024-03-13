@@ -60,12 +60,14 @@ public class UuidInfo implements IUuidable {
 
     public void addName(String name) {
         if (! names.isEmpty()) if (names.get(names.size() - 1).equals(name)) return;
+//        if (names.contains(name)) return;
 
         names.add(name);
     }
 
     public void addIp(String ip) {
         if (! ips.isEmpty()) if (ips.get(ips.size() - 1).equals(ip)) return;
+//        if (ips.contains(ip)) return;
 
         ips.add(ip);
     }
@@ -93,7 +95,11 @@ public class UuidInfo implements IUuidable {
         List<String> r = new ArrayList<>();
 
         for (String[] group : groups) {
-            r.add(group[0]);
+            String thing = group[0];
+            if (! r.isEmpty()) if (r.get(r.size() - 1).equals(thing)) continue;
+
+//            if (r.contains(thing)) continue;
+            r.add(thing);
         }
 
         return r;

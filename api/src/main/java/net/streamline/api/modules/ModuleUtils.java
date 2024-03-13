@@ -193,7 +193,7 @@ public class ModuleUtils {
     }
 
     public static ConcurrentSkipListMap<String, StreamSender> getOnlineUsers() {
-        return UserUtils.getOnlineUsers();
+        return UserUtils.getOnlineSenders();
     }
 
     public static ConcurrentSkipListMap<String, StreamPlayer> getOnlinePlayers() {

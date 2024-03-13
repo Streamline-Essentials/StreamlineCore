@@ -184,6 +184,11 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
+    public String getServerPlayerIsOn(Player player) {
+        return getServerPlayerIsOn(player.getUniqueId().toString());
+    }
+
+    @Override
     public String getServerPlayerIsOn(String uuid) {
         return "--null";
     }

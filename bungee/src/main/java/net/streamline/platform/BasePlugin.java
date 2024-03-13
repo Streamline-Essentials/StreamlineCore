@@ -10,6 +10,8 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidInfo;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStartEvent;
 import net.streamline.api.events.server.ServerStopEvent;
@@ -19,6 +21,7 @@ import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.StorageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
@@ -32,10 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
@@ -81,26 +84,46 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     public void onLoad() {
         instance = this;
 
+        setupProperties();
+
         String parentPath = getDataFolder().getParent();
         if (parentPath != null) {
             File parentFile = new File(parentPath);
             File[] files = parentFile.listFiles((f) -> {
                 if (! f.isDirectory()) return false;
                 if (f.getName().equals("StreamlineAPI")) return true;
+                if (f.getName().equals("StreamlineCore-Spigot")) return true;
+                if (f.getName().equals("StreamlineCore-Bungee")) return true;
+                if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("streamlinecore")) return true;
                 return false;
             });
 
             if (files != null) {
                 Arrays.stream(files).forEach(file -> {
-                    file.renameTo(new File(parentPath, "StreamlineCore"));
+                    file.renameTo(new File(parentPath, this.name));
                 });
             }
         }
 
-        name = "StreamlineCore";
-        version = "${{project.version}}";
-
         this.load();
+    }
+
+    public void setupProperties() {
+        ConcurrentSkipListMap<String, String> properties = StorageUtils.readProperties();
+        if (properties.isEmpty()) return;
+
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (key.equals("name")) {
+                this.name = value;
+            }
+            if (key.equals("version")) {
+                this.version = value;
+            }
+        }
     }
 
     @Override
@@ -133,9 +156,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void onDisable() {
-        for (StreamPlayer user : UserUtils.getLoadedPlayersSet()) {
-            user.save();
-        }
+        UserUtils.syncAllUsers();
+        UuidManager.getUuids().forEach(UuidInfo::save);
 
         this.disable();
         fireStopEvent();

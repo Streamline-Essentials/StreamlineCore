@@ -32,6 +32,8 @@ public interface IUserManager<C, P extends C> {
 
     String getServerPlayerIsOn(String uuid);
 
+    String getServerPlayerIsOn(P player);
+
     String getDisplayName(String uuid);
 
     P getPlayer(String uuid);

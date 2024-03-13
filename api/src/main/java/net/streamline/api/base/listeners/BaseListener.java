@@ -44,7 +44,7 @@ public class BaseListener implements BaseEventListener {
                     return;
                 }
                 if (uuidInfo.isEmpty()) {
-                    UuidInfo u = new UuidInfo(player.getUuid(), player.getCurrentName(), player.getCurrentIP());
+                    UuidInfo u = new UuidInfo(player.getUuid(), player.getCurrentName(), player.getCurrentIp());
                     u.register();
                     u.save();
                 } else {
@@ -53,7 +53,7 @@ public class BaseListener implements BaseEventListener {
                     u.register();
 
                     u.addName(player.getCurrentName());
-                    u.addIp(player.getCurrentIP());
+                    u.addIp(player.getCurrentIp());
                 }
             });
         } else {
@@ -61,7 +61,7 @@ public class BaseListener implements BaseEventListener {
             u.register();
 
             u.addName(player.getCurrentName());
-            u.addIp(player.getCurrentIP());
+            u.addIp(player.getCurrentIp());
         }
     }
 

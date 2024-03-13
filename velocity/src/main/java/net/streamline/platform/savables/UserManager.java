@@ -211,6 +211,11 @@ public class UserManager implements IUserManager<CommandSource, Player> {
     }
 
     @Override
+    public String getServerPlayerIsOn(Player player) {
+        return getServerPlayerIsOn(player.getUniqueId().toString());
+    }
+
+    @Override
     public String getDisplayName(String uuid) {
         Player player = getPlayer(uuid);
         if (player == null) return null;

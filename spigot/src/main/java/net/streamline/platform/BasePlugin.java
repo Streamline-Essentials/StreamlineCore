@@ -5,6 +5,8 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.uuid.UuidInfo;
+import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.StreamlineEvent;
 import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
@@ -12,6 +14,7 @@ import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.StorageUtils;
 import net.streamline.api.utils.UserUtils;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
@@ -36,11 +39,14 @@ import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class BasePlugin extends JavaPlugin implements IStreamline {
@@ -64,7 +70,9 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private StreamlineResourcePack resourcePack;
 
     @Getter
-    private final String version = "${{project.version}}";
+    private String version;
+    @Getter
+    private String folderName;
     @Getter
     private static BasePlugin instance;
     @Getter
@@ -89,25 +97,46 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     public void onLoad() {
         instance = this;
 
+        setupProperties();
+
         String parentPath = getDataFolder().getParent();
         if (parentPath != null) {
             File parentFile = new File(parentPath);
             File[] files = parentFile.listFiles((f) -> {
                 if (! f.isDirectory()) return false;
                 if (f.getName().equals("StreamlineAPI")) return true;
+                if (f.getName().equals("StreamlineCore-Spigot")) return true;
+                if (f.getName().equals("StreamlineCore-Bungee")) return true;
+                if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("streamlinecore")) return true;
                 return false;
             });
 
             if (files != null) {
                 Arrays.stream(files).forEach(file -> {
-                    file.renameTo(new File(parentPath, "StreamlineCore"));
+                    file.renameTo(new File(parentPath, this.folderName));
                 });
             }
         }
 
-        setupCommandMap();
-
         this.load();
+    }
+
+    public void setupProperties() {
+        ConcurrentSkipListMap<String, String> properties = StorageUtils.readProperties();
+        if (properties.isEmpty()) return;
+
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (key.equals("name")) {
+                this.folderName = value;
+            }
+            if (key.equals("version")) {
+                this.version = value;
+            }
+        }
     }
 
     @Override
@@ -118,7 +147,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         messenger = new Messenger();
         consoleHolder = new ConsoleHolder();
         playerInterface = new PlayerInterface();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
+        slapi = new SLAPI<>(getFolderName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
         SLAPI.setBackendHandler(new BackendHandler());
         slapiB = new SLAPIB(getSlapi(), this);
 
@@ -136,9 +165,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
     @Override
     public void onDisable() {
-        for (StreamPlayer user : UserUtils.getLoadedPlayersSet()) {
-            user.save();
-        }
+        UserUtils.syncAllUsers();
+        UuidManager.getUuids().forEach(UuidInfo::save);
 
         this.disable();
         fireStopEvent();

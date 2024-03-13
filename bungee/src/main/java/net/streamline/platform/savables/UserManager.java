@@ -223,6 +223,11 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     }
 
     @Override
+    public String getServerPlayerIsOn(ProxiedPlayer player) {
+        return getServerPlayerIsOn(player.getUniqueId().toString());
+    }
+
+    @Override
     public String getDisplayName(String uuid) {
         ProxiedPlayer player = getPlayer(uuid);
         if (player == null) return null;
