@@ -5,6 +5,7 @@ import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainConfigHandler extends SimpleConfiguration {
     public MainConfigHandler() {
@@ -41,6 +42,8 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugPrefix();
 
 //        getHexPolicies();
+
+        getOrCreateUuid();
     }
 
     // CONSOLE
@@ -209,5 +212,11 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("debug.console.debug.prefix", "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r");
+    }
+
+    public String getOrCreateUuid() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("api.uuid", UUID.randomUUID().toString());
     }
 }

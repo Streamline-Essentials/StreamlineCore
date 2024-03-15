@@ -173,6 +173,8 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
     private static UserSyncTimer userSyncTimer;
     @Getter
     private static UserEnsureTimer userEnsureTimer;
+    @Getter
+    private static UpdateCheckerTimer updateCheckerTimer;
 
     @Getter
     private static TaskManager mainScheduler;
@@ -257,6 +259,7 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         playerExperienceTimer = new PlayerExperienceTimer();
         userSyncTimer = new UserSyncTimer();
         userEnsureTimer = new UserEnsureTimer();
+        updateCheckerTimer = new UpdateCheckerTimer();
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());
@@ -266,6 +269,10 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         UserUtils.loadConsole();
 
         setReady(true);
+    }
+
+    public static String getServerUuid() {
+        return GivenConfigs.getMainConfig().getOrCreateUuid();
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {
