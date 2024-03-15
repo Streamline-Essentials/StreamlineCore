@@ -11,6 +11,7 @@ import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.utils.UserUtils;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Getter
@@ -151,7 +152,9 @@ public class StreamPlayer extends StreamSender {
     @Override
     public void reload() {
         CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(getUuid()).join();
+            Optional<StreamPlayer> optional = SLAPI.getMainDatabase().loadPlayer(getUuid()).join();
+            if (optional.isEmpty()) return;
+            StreamPlayer streamPlayer = optional.get();
 
             setFirstJoinMillis(streamPlayer.getFirstJoinDate().getTime());
             setLastJoinMillis(streamPlayer.getLastJoinDate().getTime());

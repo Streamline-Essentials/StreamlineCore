@@ -9,6 +9,7 @@ import tv.quaint.thebase.lib.hikari.HikariDataSource;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -16,6 +17,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Getter @Setter
 public abstract class DBOperator {
@@ -87,19 +90,18 @@ public abstract class DBOperator {
         return connectorSet.getType();
     }
 
-    public ExecutionResult executeSingle(String statement) {
+    public ExecutionResult executeSingle(String statement, Consumer<PreparedStatement> statementBuilder) {
         AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
 
         try {
             Date qStart = new Date();
             Connection connection = getConnection(qStart);
-            Statement stmt = connection.createStatement();
+            PreparedStatement stmt = connection.prepareStatement(statement);
 
-            if (stmt.execute(statement)) result.set(ExecutionResult.YES);
+            statementBuilder.accept(stmt);
+
+            if (stmt.execute()) result.set(ExecutionResult.YES);
             else result.set(ExecutionResult.NO);
-
-//            stmt.close();
-//            connection.close();
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute statement: " + statement, e);
         }
@@ -107,7 +109,7 @@ public abstract class DBOperator {
         return result.get();
     }
 
-    public List<ExecutionResult> execute(String statement) {
+    public List<ExecutionResult> execute(String statement, Consumer<PreparedStatement> statementBuilder) {
         List<ExecutionResult> results = new ArrayList<>();
 
         String[] statements = statement.split(";;");
@@ -116,24 +118,23 @@ public abstract class DBOperator {
             if (s == null || s.isEmpty() || s.isBlank()) continue;
             String fs = s;
             if (! fs.endsWith(";")) fs += ";";
-            results.add(executeSingle(fs));
+            results.add(executeSingle(fs, statementBuilder));
         }
 
         return results;
     }
 
-    public void executeQuery(String statement, DBAction action) {
+    public void executeQuery(String statement, Consumer<PreparedStatement> statementBuilder, DBAction action) {
         try {
             Date qStart = new Date();
             Connection connection = getConnection(qStart);
-            Statement stmt = connection.createStatement();
-            ResultSet set = stmt.executeQuery(statement);
+            PreparedStatement stmt = connection.prepareStatement(statement);
+
+            statementBuilder.accept(stmt);
+
+            ResultSet set = stmt.executeQuery();
 
             action.accept(set);
-
-//            set.close();
-//            stmt.close();
-//            connection.close();
         } catch (Exception e) {
             MessageUtils.logInfo("Failed to execute query: " + statement, e);
         }

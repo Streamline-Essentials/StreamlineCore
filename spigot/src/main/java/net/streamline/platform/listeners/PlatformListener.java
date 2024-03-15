@@ -162,17 +162,19 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+            CompletableFuture.runAsync(() -> {
+                StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
-            try {
-                ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
-                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-                ModuleUtils.fireEvent(e);
-                if (e.isCancelled()) return;
-                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
-            } catch (Exception e) {
-                // do nothing.
-            }
+                try {
+                    ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
+                    ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+                    ModuleUtils.fireEvent(e);
+                    if (e.isCancelled()) return;
+                    SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+                } catch (Exception e) {
+                    // do nothing.
+                }
+            });
         }
     }
 
