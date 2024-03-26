@@ -275,6 +275,10 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         return GivenConfigs.getMainConfig().getOrCreateUuid();
     }
 
+    public static String getServerName() {
+        return GivenConfigs.getMainConfig().getServerName();
+    }
+
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {
         ConcurrentSkipListMap<String, File> r = new ConcurrentSkipListMap<>();
         if (! folder.isDirectory()) return r;

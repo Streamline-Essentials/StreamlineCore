@@ -14,6 +14,8 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.upkeep.UpkeepData;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.uuid.UuidInfo;
+import net.streamline.api.database.servers.SavedServer;
+import net.streamline.api.interfaces.IStreamline;
 
 public class CoreDBOperator extends DBOperator {
     @Getter @Setter
@@ -91,24 +93,24 @@ public class CoreDBOperator extends DBOperator {
 
             this.execute(s1, stmt -> {
                 try {
-                    stmt.setString(0, player.getUuid());
-                    stmt.setLong(1, player.getFirstJoinDate().getTime());
-                    stmt.setLong(2, player.getLastJoinDate().getTime());
-                    stmt.setString(3, player.getCurrentName());
-                    stmt.setString(4, player.getCurrentIp());
-                    stmt.setLong(5, player.getPlaySeconds());
-                    stmt.setDouble(6, player.getPoints());
-                    stmt.setBoolean(7, player.isProxyTouched() || SLAPI.isProxy());
+                    stmt.setString(1, player.getUuid());
+                    stmt.setLong(2, player.getFirstJoinDate().getTime());
+                    stmt.setLong(3, player.getLastJoinDate().getTime());
+                    stmt.setString(4, player.getCurrentName());
+                    stmt.setString(5, player.getCurrentIp());
+                    stmt.setLong(6, player.getPlaySeconds());
+                    stmt.setDouble(7, player.getPoints());
+                    stmt.setBoolean(8, player.isProxyTouched());
 
                     // Repeat everything except the Uuid parameter for MySql.
                     if (getType() == DatabaseType.MYSQL) {
-                        stmt.setLong(8, player.getFirstJoinDate().getTime());
-                        stmt.setLong(9, player.getLastJoinDate().getTime());
-                        stmt.setString(10, player.getCurrentName());
-                        stmt.setString(11, player.getCurrentIp());
-                        stmt.setLong(12, player.getPlaySeconds());
-                        stmt.setDouble(13, player.getPoints());
-                        stmt.setBoolean(14, player.isProxyTouched() || SLAPI.isProxy());
+                        stmt.setLong(9, player.getFirstJoinDate().getTime());
+                        stmt.setLong(10, player.getLastJoinDate().getTime());
+                        stmt.setString(11, player.getCurrentName());
+                        stmt.setString(12, player.getCurrentIp());
+                        stmt.setLong(13, player.getPlaySeconds());
+                        stmt.setDouble(14, player.getPoints());
+                        stmt.setBoolean(15, player.isProxyTouched());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -122,16 +124,16 @@ public class CoreDBOperator extends DBOperator {
 
                 this.execute(s1, stmt -> {
                     try {
-                        stmt.setString(0, player.getUuid());
-                        stmt.setString(1, player.getMeta().getNickname());
-                        stmt.setString(2, player.getMeta().getPrefix());
-                        stmt.setString(3, player.getMeta().getSuffix());
+                        stmt.setString(1, player.getUuid());
+                        stmt.setString(2, player.getMeta().getNickname());
+                        stmt.setString(3, player.getMeta().getPrefix());
+                        stmt.setString(4, player.getMeta().getSuffix());
 
                         // Repeat everything except the Uuid parameter (which is the first parameter) for MySql.
                         if (getType() == DatabaseType.MYSQL) {
-                            stmt.setString(4, player.getMeta().getNickname());
-                            stmt.setString(5, player.getMeta().getPrefix());
-                            stmt.setString(6, player.getMeta().getSuffix());
+                            stmt.setString(5, player.getMeta().getNickname());
+                            stmt.setString(6, player.getMeta().getPrefix());
+                            stmt.setString(7, player.getMeta().getSuffix());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -146,22 +148,22 @@ public class CoreDBOperator extends DBOperator {
 
                 this.execute(s1, stmt -> {
                     try {
-                        stmt.setString(0, player.getUuid());
-                        stmt.setInt(1, player.getLeveling().getLevel());
-                        stmt.setDouble(2, player.getLeveling().getTotalExperience());
-                        stmt.setDouble(3, player.getLeveling().getCurrentExperience());
-                        stmt.setString(4, player.getLeveling().getEquationString());
-                        stmt.setInt(5, player.getLeveling().getStartedLevel());
-                        stmt.setDouble(6, player.getLeveling().getStartedExperience());
+                        stmt.setString(1, player.getUuid());
+                        stmt.setInt(2, player.getLeveling().getLevel());
+                        stmt.setDouble(3, player.getLeveling().getTotalExperience());
+                        stmt.setDouble(4, player.getLeveling().getCurrentExperience());
+                        stmt.setString(5, player.getLeveling().getEquationString());
+                        stmt.setInt(6, player.getLeveling().getStartedLevel());
+                        stmt.setDouble(7, player.getLeveling().getStartedExperience());
 
                         // Repeat everything except the Uuid parameter for MySql.
                         if (getType() == DatabaseType.MYSQL) {
-                            stmt.setInt(7, player.getLeveling().getLevel());
-                            stmt.setDouble(8, player.getLeveling().getTotalExperience());
-                            stmt.setDouble(9, player.getLeveling().getCurrentExperience());
-                            stmt.setString(10, player.getLeveling().getEquationString());
-                            stmt.setInt(11, player.getLeveling().getStartedLevel());
-                            stmt.setDouble(12, player.getLeveling().getStartedExperience());
+                            stmt.setInt(8, player.getLeveling().getLevel());
+                            stmt.setDouble(9, player.getLeveling().getTotalExperience());
+                            stmt.setDouble(10, player.getLeveling().getCurrentExperience());
+                            stmt.setString(11, player.getLeveling().getEquationString());
+                            stmt.setInt(12, player.getLeveling().getStartedLevel());
+                            stmt.setDouble(13, player.getLeveling().getStartedExperience());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -176,24 +178,24 @@ public class CoreDBOperator extends DBOperator {
 
                 this.execute(s1, stmt -> {
                     try {
-                        stmt.setString(0, player.getUuid());
-                        stmt.setString(1, player.getLocation().getServerName());
-                        stmt.setString(2, player.getLocation().getWorldName());
-                        stmt.setDouble(3, player.getLocation().getX());
-                        stmt.setDouble(4, player.getLocation().getY());
-                        stmt.setDouble(5, player.getLocation().getZ());
-                        stmt.setFloat(6, player.getLocation().getYaw());
-                        stmt.setFloat(7, player.getLocation().getPitch());
+                        stmt.setString(1, player.getUuid());
+                        stmt.setString(2, player.getLocation().getServerName());
+                        stmt.setString(3, player.getLocation().getWorldName());
+                        stmt.setDouble(4, player.getLocation().getX());
+                        stmt.setDouble(5, player.getLocation().getY());
+                        stmt.setDouble(6, player.getLocation().getZ());
+                        stmt.setFloat(7, player.getLocation().getYaw());
+                        stmt.setFloat(8, player.getLocation().getPitch());
 
                         // Repeat everything except the Uuid parameter for MySql.
                         if (getType() == DatabaseType.MYSQL) {
-                            stmt.setString(8, player.getLocation().getServerName());
-                            stmt.setString(9, player.getLocation().getWorldName());
-                            stmt.setDouble(10, player.getLocation().getX());
-                            stmt.setDouble(11, player.getLocation().getY());
-                            stmt.setDouble(12, player.getLocation().getZ());
-                            stmt.setFloat(13, player.getLocation().getYaw());
-                            stmt.setFloat(14, player.getLocation().getPitch());
+                            stmt.setString(9, player.getLocation().getServerName());
+                            stmt.setString(10, player.getLocation().getWorldName());
+                            stmt.setDouble(11, player.getLocation().getX());
+                            stmt.setDouble(12, player.getLocation().getY());
+                            stmt.setDouble(13, player.getLocation().getZ());
+                            stmt.setFloat(14, player.getLocation().getYaw());
+                            stmt.setFloat(15, player.getLocation().getPitch());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -211,8 +213,8 @@ public class CoreDBOperator extends DBOperator {
 
                 this.execute(s1, stmt -> {
                     try {
-                        stmt.setString(0, player.getUuid());
-                        stmt.setBoolean(1, player.getPermissions().isBypassingPermissions());
+                        stmt.setString(1, player.getUuid());
+                        stmt.setBoolean(2, player.getPermissions().isBypassingPermissions());
 
                         // Repeat everything except the Uuid parameter for MySql.
                         if (getType() == DatabaseType.MYSQL) {
@@ -246,7 +248,7 @@ public class CoreDBOperator extends DBOperator {
 
                 this.executeQuery(s1, stmt -> {
                     try {
-                        stmt.setString(0, uuid);
+                        stmt.setString(1, uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -272,7 +274,7 @@ public class CoreDBOperator extends DBOperator {
 
                 this.executeQuery(s2, stmt -> {
                     try {
-                        stmt.setString(0, uuid);
+                        stmt.setString(1, uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -294,7 +296,7 @@ public class CoreDBOperator extends DBOperator {
 
                 this.executeQuery(s3, stmt -> {
                     try {
-                        stmt.setString(0, uuid);
+                        stmt.setString(1, uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -319,7 +321,7 @@ public class CoreDBOperator extends DBOperator {
 
                 this.executeQuery(s4, stmt -> {
                     try {
-                        stmt.setString(0, uuid);
+                        stmt.setString(1, uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -345,7 +347,7 @@ public class CoreDBOperator extends DBOperator {
 
                 this.executeQuery(s5, stmt -> {
                     try {
-                        stmt.setString(0, uuid);
+                        stmt.setString(1, uuid);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -383,7 +385,7 @@ public class CoreDBOperator extends DBOperator {
             AtomicBoolean atomicBoolean = new AtomicBoolean(false);
             this.executeQuery(s1, stmt -> {
                 try {
-                    stmt.setString(0, uuid);
+                    stmt.setString(1, uuid);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -410,9 +412,14 @@ public class CoreDBOperator extends DBOperator {
 
             this.execute(s1, stmt -> {
                 try {
-                    stmt.setString(0, uuidInfo.getUuid().toString());
-                    stmt.setString(1, uuidInfo.computableNames());
-                    stmt.setString(2, uuidInfo.computableIps());
+                    stmt.setString(1, uuidInfo.getUuid());
+                    stmt.setString(2, uuidInfo.computableNames());
+                    stmt.setString(3, uuidInfo.computableIps());
+
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setString(4, uuidInfo.computableNames());
+                        stmt.setString(5, uuidInfo.computableIps());
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -435,7 +442,7 @@ public class CoreDBOperator extends DBOperator {
             AtomicReference<Optional<UuidInfo>> uuidInfo = new AtomicReference<>(Optional.empty());
             this.executeQuery(s1, stmt -> {
                 try {
-                    stmt.setString(0, uuid);
+                    stmt.setString(1, uuid);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -489,6 +496,8 @@ public class CoreDBOperator extends DBOperator {
 
     public CompletableFuture<Boolean> pushUpkeep(StreamPlayer player) {
         return CompletableFuture.supplyAsync(() -> {
+            putServer().join();
+
             ensureUsable();
 
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_UPKEEP, this.getConnectorSet());
@@ -497,9 +506,9 @@ public class CoreDBOperator extends DBOperator {
 
             this.execute(s1, stmt -> {
                 try {
-                    stmt.setLong(0, System.currentTimeMillis());
-                    stmt.setString(1, player.getUuid());
-                    stmt.setString(2, SLAPI.getServerUuid());
+                    stmt.setLong(1, System.currentTimeMillis());
+                    stmt.setString(2, player.getUuid());
+                    stmt.setString(3, SLAPI.getServerUuid());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -522,7 +531,7 @@ public class CoreDBOperator extends DBOperator {
             AtomicReference<Optional<UpkeepData>> upkeep = new AtomicReference<>(Optional.empty());
             this.executeQuery(s1, stmt -> {
                 try {
-                    stmt.setString(0, uuid);
+                    stmt.setString(1, uuid);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -544,6 +553,72 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return upkeep.get();
+        });
+    }
+
+    public CompletableFuture<Boolean> putServer() {
+        String serverUuid = SLAPI.getServerUuid();
+        String serverName = SLAPI.getServerName();
+        String serverType = SLAPI.getInstance().getPlatform().getServerType().name();
+
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PUT_SERVER, this.getConnectorSet());
+            if (s1 == null) return false;
+            if (s1.isBlank() || s1.isEmpty()) return false;
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, serverUuid);
+                    stmt.setString(2, serverName);
+                    stmt.setString(3, serverType);
+
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setString(4, serverName);
+                        stmt.setString(5, serverType);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return true;
+        });
+    }
+
+    public CompletableFuture<ConcurrentSkipListSet<SavedServer>> getAllServers() {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_ALL_SERVERS, this.getConnectorSet());
+            if (s1 == null) return new ConcurrentSkipListSet<>();
+            if (s1.isBlank() || s1.isEmpty()) return new ConcurrentSkipListSet<>();
+
+            AtomicReference<ConcurrentSkipListSet<SavedServer>> servers = new AtomicReference<>(new ConcurrentSkipListSet<>());
+            this.executeQuery(s1, stmt -> {}, rs -> {
+                try {
+                    while (rs.next()) {
+                        try {
+                            String serverUuid = rs.getString("Uuid");
+                            String serverName = rs.getString("Name");
+                            String serverType = rs.getString("Type");
+
+                            IStreamline.ServerType type = IStreamline.ServerType.valueOf(serverType);
+
+                            SavedServer server = new SavedServer(serverUuid, serverName, type);
+
+                            servers.get().add(server);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return servers.get();
         });
     }
 }

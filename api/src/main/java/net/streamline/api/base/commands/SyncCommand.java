@@ -2,6 +2,7 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.utils.UserUtils;
@@ -27,18 +28,18 @@ public class SyncCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
+    public void run(CommandContext<StreamlineCommand> context) {
         if (SLAPI.getMainDatabase() == null) {
-            ModuleUtils.sendMessage(sender, this.messageErrorNot);
+            context.sendMessage(this.messageErrorNot);
             return;
         }
 
         UserUtils.syncAllUsers();
-        ModuleUtils.sendMessage(sender, this.messageResult);
+        context.sendMessage(this.messageResult);
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
         return new ConcurrentSkipListSet<>();
     }
 }

@@ -15,7 +15,8 @@ public class Statements {
                 "CurrentName VARCHAR(64), " +
                 "CurrentIP VARCHAR(15), " +
                 "PlaySeconds INT, " +
-                "Points INT" +
+                "Points INT, " +
+                "ProxyTouched BOOLEAN " +
                 ");;" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_meta` (" +
                 "Uuid VARCHAR(36) PRIMARY KEY, " +
@@ -52,19 +53,23 @@ public class Statements {
                 "Ips TEXT " +
                 ");;" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%saves` (" +
-                "SavedAt BIGINT, " +
+                "SavedAt BIGINT PRIMARY KEY, " +
                 "Uuid VARCHAR(36), " +
-                "ServerUuid VARCHAR(36), " +
-                "PRIMARY KEY (SavedAt, Uuid) " +
+                "ServerUuid VARCHAR(36) " +
+                ");;" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%servers` (" +
+                "Uuid VARCHAR(36) PRIMARY KEY, " +
+                "Name VARCHAR(255), " +
+                "Type VARCHAR(255) " +
                 ");;"
         ),
         PUSH_PLAYER_MAIN("INSERT INTO `%table_prefix%players` (" +
                 "Uuid, FirstJoin, LastJoin, CurrentName, CurrentIP, PlaySeconds, Points, ProxyTouched" +
                 ") VALUES (" +
-                "?, ?, ?, ?, ?, ?" +
+                "?, ?, ?, ?, ?, ?, ?, ?" +
                 ") ON DUPLICATE KEY UPDATE  " +
                 "FirstJoin = ?, LastJoin = ?, CurrentName = ?, CurrentIP = ?, " +
-                "PlaySeconds = ?, Points = ?;"),
+                "PlaySeconds = ?, Points = ?, ProxyTouched = ?;"),
         PUSH_PLAYER_META("INSERT INTO `%table_prefix%player_meta` (" +
                 "Uuid, Nickname, Prefix, Suffix" +
                 ") VALUES (" +
@@ -96,11 +101,17 @@ public class Statements {
                 "?, ?, ? " +
                 ") ON DUPLICATE KEY UPDATE  " +
                 "Usernames = ?, Ips = ?;"),
-        PUSH_UPKEEP("INSERT INTO `%table_prefix%upkeep` (" +
+        PUSH_UPKEEP("INSERT INTO `%table_prefix%saves` (" +
                 "SavedAt, Uuid, ServerUuid" +
                 ") VALUES (" +
                 "?, ?, ?" +
                 ");"),
+        PUT_SERVER("INSERT INTO `%table_prefix%servers` (" +
+                "Uuid, Name, Type" +
+                ") VALUES (" +
+                "?, ?, ?" +
+                ") ON DUPLICATE KEY UPDATE " +
+                "Name = ?, Type = ?;"),
         PULL_PLAYER_MAIN("SELECT * FROM `%table_prefix%players` WHERE Uuid = ?;"),
         PULL_PLAYER_META("SELECT * FROM `%table_prefix%player_meta` WHERE Uuid = ?;"),
         PULL_PLAYER_LEVELING("SELECT * FROM `%table_prefix%player_leveling` WHERE Uuid = ?;"),
@@ -108,7 +119,8 @@ public class Statements {
         PULL_PLAYER_PERMISSIONS("SELECT * FROM `%table_prefix%player_permissions` WHERE Uuid = ?;"),
         PULL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info` WHERE Uuid = ?;"),
         PULL_ALL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info`;"),
-        PULL_UPKEEP("SELECT MAX(SavedAt), Uuid, ServerUuid FROM `%table_prefix%upkeep` GROUP BY Uuid, ServerUuid;"),
+        PULL_UPKEEP("SELECT MAX(SavedAt) AS \"SavedAt\", Uuid, ServerUuid FROM `%table_prefix%saves` WHERE Uuid = ? GROUP BY Uuid, ServerUuid;"),
+        PULL_ALL_SERVERS("SELECT * FROM `%table_prefix%servers`;"),
         PLAYER_EXISTS("SELECT EXISTS(SELECT 1 FROM `%table_prefix%players` WHERE Uuid = ?);"),
         PLAYER_IS_TOUCHED("SELECT ProxyTouched FROM `%table_prefix%players` WHERE Uuid = ?;"),
         ;
@@ -131,7 +143,8 @@ public class Statements {
                         "    CurrentName TEXT, " +
                         "    CurrentIP TEXT, " +
                         "    PlaySeconds INTEGER, " +
-                        "    Points INTEGER" +
+                        "    Points INTEGER, " +
+                        "    ProxyTouched BOOLEAN, " +
                         "    PRIMARY KEY (Uuid)" +
                         ");;" +
                         "CREATE TABLE IF NOT EXISTS `%table_prefix%player_meta` (" +
@@ -177,13 +190,19 @@ public class Statements {
                         "    SavedAt REAL, " +
                         "    Uuid TEXT, " +
                         "    ServerUuid TEXT, " +
-                        "    PRIMARY KEY (SavedAt, Uuid)" +
+                        "    PRIMARY KEY (SavedAt)" +
+                        ");;" +
+                        "CREATE TABLE IF NOT EXISTS `%table_prefix%servers` (" +
+                        "    Uuid TEXT, " +
+                        "    Name TEXT, " +
+                        "    Type TEXT, " +
+                        "    PRIMARY KEY (Uuid)" +
                         ");;"
         ),
         PUSH_PLAYER_MAIN("INSERT INTO `%table_prefix%players` (" +
-                "    Uuid, FirstJoin, LastJoin, CurrentName, CurrentIP, PlaySeconds, Points" +
+                "    Uuid, FirstJoin, LastJoin, CurrentName, CurrentIP, PlaySeconds, Points, ProxyTouched" +
                 ") VALUES (" +
-                "    ?, ?, ?, ?, ?, ?, ?" +
+                "    ?, ?, ?, ?, ?, ?, ?, ?" +
                 ");"),
         PUSH_PLAYER_META("INSERT INTO `%table_prefix%player_meta` (" +
                 "    Uuid, Nickname, Prefix, Suffix" +
@@ -210,8 +229,13 @@ public class Statements {
                 ") VALUES (" +
                 "    ?, ?, ? " +
                 ");"),
-        PUSH_UPKEEP("INSERT INTO `%table_prefix%upkeep` (" +
+        PUSH_UPKEEP("INSERT INTO `%table_prefix%saves` (" +
                 "    SavedAt, Uuid, ServerUuid" +
+                ") VALUES (" +
+                "    ?, ?, ?" +
+                ");"),
+        PUT_SERVER("INSERT OR REPLACE INTO `%table_prefix%servers` (" +
+                "    Uuid, Name, Type" +
                 ") VALUES (" +
                 "    ?, ?, ?" +
                 ");"),
@@ -222,7 +246,8 @@ public class Statements {
         PULL_PLAYER_PERMISSIONS("SELECT * FROM `%table_prefix%player_permissions` WHERE Uuid = ?;"),
         PULL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info` WHERE Uuid = ?;"),
         PULL_ALL_UUID_INFO("SELECT * FROM `%table_prefix%uuid_info`;"),
-        PULL_UPKEEP("SELECT MAX(SavedAt), Uuid, ServerUuid FROM `%table_prefix%upkeep` GROUP BY Uuid, ServerUuid;"),
+        PULL_UPKEEP("SELECT MAX(SavedAt) AS \"SavedAt\", Uuid, ServerUuid FROM `%table_prefix%saves` WHERE Uuid = ? GROUP BY Uuid, ServerUuid;"),
+        PULL_ALL_SERVERS("SELECT * FROM `%table_prefix%servers`;"),
         PLAYER_EXISTS("SELECT EXISTS(SELECT 1 FROM `%table_prefix%players` WHERE Uuid = ?);"),
         PLAYER_IS_TOUCHED("SELECT ProxyTouched FROM `%table_prefix%players` WHERE Uuid = ?;"),
         ;
@@ -244,6 +269,7 @@ public class Statements {
         PUSH_PLAYER_PERMISSIONS,
         PUSH_UUID_INFO,
         PUSH_UPKEEP,
+        PUT_SERVER,
         PULL_PLAYER_MAIN,
         PULL_PLAYER_META,
         PULL_PLAYER_LEVELING,
@@ -252,6 +278,7 @@ public class Statements {
         PULL_UUID_INFO,
         PULL_ALL_UUID_INFO,
         PULL_UPKEEP,
+        PULL_ALL_SERVERS,
         PLAYER_EXISTS,
         PLAYER_IS_TOUCHED,
         ;

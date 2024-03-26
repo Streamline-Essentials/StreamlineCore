@@ -54,20 +54,14 @@ public class TeleportMessageBuilder {
             PlayerWorld playerWorld = new PlayerWorld(world);
             WorldPosition position = new WorldPosition(x, y, z);
             PlayerRotation rotation = new PlayerRotation(yaw, pitch);
-            location = new PlayerLocation(player, playerWorld, position, rotation);
+            location = new PlayerLocation(streamServer, playerWorld, position, rotation);
         } catch (Exception e) {
             MessageUtils.logWarning("PlayerLocationMessageBuilder received for invalid location '" + server + ", " + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + "' for player '" + uuid + "'.");
             return;
         }
 
-        IBackendHandler backendHandler = SLAPI.getBackendHandler();
-        if (backendHandler == null) {
-            MessageUtils.logWarning("PlayerLocationMessageBuilder received for player '" + uuid + "' but no backend handler is set.");
-            return;
-        }
-
         MessageUtils.logDebug("Teleporting player '" + player.getUuid() + "' to '" + location.asString() + "'.");
 
-        backendHandler.teleport(player, location);
+        SLAPI.getInstance().getUserManager().teleport(player, location);
     }
 }

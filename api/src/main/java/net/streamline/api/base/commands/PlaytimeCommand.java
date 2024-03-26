@@ -2,6 +2,7 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
@@ -36,64 +37,63 @@ public class PlaytimeCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
-        if (args.length < 1) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+    public void run(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() < 1) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        String playerName = args[0];
+        String playerName = context.getStringArg(0);
         StreamPlayer other = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (other == null) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
-        if (args.length == 1) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, other,
-                    getWithOther(sender, this.messageGet, playerName));
+        if (context.getArgCount() == 1) {
+            other.sendMessage(getWithOther(context.getSender(), this.messageGet, playerName));
             return;
         }
 
-        String action = args[2];
+        String action = context.getStringArg(2);
         int amount = 0;
         try {
-            amount = Integer.parseInt(args[3]);
+            amount = Integer.parseInt(context.getStringArg(3));
         } catch (Exception e) {
             e.printStackTrace();
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
             return;
         }
 
         switch (action) {
             case "set":
                 other.setPlaySeconds(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageSet, other));
+                context.sendMessage(getWithOther(context.getSender(), this.messageSet, other));
                 break;
             case "add":
                 other.addPlaySecond(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageAdd, other));
+                context.sendMessage(getWithOther(context.getSender(), this.messageAdd, other));
                 break;
             case "remove":
                 other.removePlaySecond(amount);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageRemove, other));
+                context.sendMessage(getWithOther(context.getSender(), this.messageRemove, other));
                 break;
             default:
-                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                 break;
         }
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
-        if (args.length <= 1) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
-        if (args.length == 2) {
+        if (context.getArgCount() == 2) {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
-        if (args.length == 3) {
+        if (context.getArgCount() == 3) {
             return getIntegerArgument();
         }
 

@@ -136,13 +136,13 @@ public class PlatformListener implements Listener {
 
             streamPlayer.setServerName(event.getServer().getInfo().getName());
 
-            new BaseRunnable(20, 1) {
-                @Override
-                public void run() {
-                    StreamPlayerMessageBuilder.build(streamPlayer, true).send();
-                    this.cancel();
-                }
-            };
+//            new BaseRunnable(20, 1) {
+//                @Override
+//                public void run() {
+//                    StreamPlayerMessageBuilder.build(streamPlayer, true).send();
+//                    this.cancel();
+//                }
+//            };
 
             streamPlayer.save();
         });
@@ -152,19 +152,17 @@ public class PlatformListener implements Listener {
     public void onChat(ChatEvent event) {
         ProxiedPlayer player = (ProxiedPlayer) event.getSender();
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
-            Streamline.getInstance().fireEvent(chatEvent, true);
-            if (chatEvent.isCanceled()) {
-                event.setCancelled(true);
-                return;
-            }
-            event.setMessage(chatEvent.getMessage());
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
+        Streamline.getInstance().fireEvent(chatEvent, true);
+        if (chatEvent.isCanceled()) {
+            event.setCancelled(true);
+            return;
+        }
+        event.setMessage(chatEvent.getMessage());
 
-            streamPlayer.save();
-        }).join();
+        streamPlayer.save();
     }
 
     @EventHandler
@@ -179,17 +177,19 @@ public class PlatformListener implements Listener {
         String tag = event.getTag();
         if (event.getData() == null) return;
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        CompletableFuture.runAsync(() -> {
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
-        try {
-            ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
-            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-            ModuleUtils.fireEvent(e);
-            if (e.isCancelled()) return;
-            SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
-        } catch (Exception e) {
-            // do nothing.
-        }
+            try {
+                ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
+                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+                ModuleUtils.fireEvent(e);
+                if (e.isCancelled()) return;
+                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+            } catch (Exception e) {
+                // do nothing.
+            }
+        });
     }
 
     @EventHandler
@@ -263,7 +263,7 @@ public class PlatformListener implements Listener {
             toName = "none";
         }
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName);
         ModuleUtils.fireEvent(kickedFromServerEvent);

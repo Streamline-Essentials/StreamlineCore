@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -76,32 +77,34 @@ public class UuidManager {
     }
 
     public static void cachePlayer(String uuid, String name, String ip) {
-        Optional<UuidInfo> infoOptional = getUuid(uuid);
-        if (infoOptional.isEmpty()) {
-            SLAPI.getMainDatabase().loadUuidInfo(uuid).whenComplete((uuidInfo, throwable) -> {
-                if (throwable != null) throwable.printStackTrace();
+        CompletableFuture.runAsync(() -> {
+            Optional<UuidInfo> infoOptional = getUuid(uuid);
+            if (infoOptional.isEmpty()) {
+                SLAPI.getMainDatabase().loadUuidInfo(uuid).whenComplete((uuidInfo, throwable) -> {
+                    if (throwable != null) throwable.printStackTrace();
 
-                if (uuidInfo.isEmpty()) {
-                    UuidInfo info = new UuidInfo(uuid, name, ip);
-                    info.register();
-                } else {
-                    UuidInfo u = uuidInfo.get();
-                    u.register();
+                    if (uuidInfo.isEmpty()) {
+                        UuidInfo info = new UuidInfo(uuid, name, ip);
+                        info.register();
+                    } else {
+                        UuidInfo u = uuidInfo.get();
+                        u.register();
 
-                    u.addName(name);
-                    u.addIp(ip);
+                        u.addName(name);
+                        u.addIp(ip);
 
-                    u.save();
-                }
-            });
-        } else {
-            UuidInfo u = infoOptional.get();
-            u.register();
+                        u.save();
+                    }
+                });
+            } else {
+                UuidInfo u = infoOptional.get();
+                u.register();
 
-            u.addName(name);
-            u.addIp(ip);
+                u.addName(name);
+                u.addIp(ip);
 
-            u.save();
-        }
+                u.save();
+            }
+        });
     }
 }

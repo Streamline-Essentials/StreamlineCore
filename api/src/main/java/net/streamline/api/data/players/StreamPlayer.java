@@ -7,6 +7,7 @@ import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.events.SenderSaveEvent;
 import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.data.players.location.PlayerWorld;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.database.CoreDBOperator;
 import net.streamline.api.interfaces.audiences.real.RealPlayer;
 import net.streamline.api.utils.UserUtils;
@@ -14,8 +15,8 @@ import net.streamline.api.utils.UserUtils;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-@Getter
 public class StreamPlayer extends StreamSender {
+    @Getter
     private String currentIp;
     @Setter
     private PlayerLocation location;
@@ -30,6 +31,14 @@ public class StreamPlayer extends StreamSender {
         this.location = new PlayerLocation(this);
     }
 
+    public PlayerLocation getLocation() {
+        if (location == null) {
+            location = new PlayerLocation(this);
+        }
+
+        return location;
+    }
+
     public StreamSender setCurrentIp(String currentIP) {
         String processed = currentIP;
 
@@ -42,10 +51,7 @@ public class StreamPlayer extends StreamSender {
     }
 
     @Override
-    public <S extends StreamSender> void thenPopulateMore(S sender) {
-        if (! (sender instanceof StreamPlayer)) return;
-        StreamPlayer player = (StreamPlayer) sender;
-
+    public void augmentMore(StreamPlayer player) {
         setCurrentIp(player.getCurrentIp());
         setLocation(player.getLocation());
 
@@ -196,5 +202,33 @@ public class StreamPlayer extends StreamSender {
 
     public String getPlaySecondsAsString() {
         return String.valueOf(getPlaySeconds());
+    }
+
+    public String getRealServer() {
+        return SLAPI.getInstance().getUserManager().getServerPlayerIsOn(getUuid());
+    }
+
+    public void setServerToRealServer() {
+        setServerName(getRealServer());
+    }
+
+    @Override
+    public void setServer(StreamServer server) {
+        getLocation().setServer(server);
+    }
+
+    @Override
+    public void setServerName(String serverName) {
+        getLocation().setServerName(serverName);
+    }
+
+    @Override
+    public StreamServer getServer() {
+        return getLocation().getServer();
+    }
+
+    @Override
+    public String getServerName() {
+        return getLocation().getServerName();
     }
 }

@@ -56,6 +56,10 @@ public class CommandContext<C extends StreamlineCommand> {
         return args.size();
     }
 
+    public String[] getArgsArray() {
+        return args.stream().map(CommandArgument::getContent).toArray(String[]::new);
+    }
+
     public boolean isEmpty() {
         return args.isEmpty();
     }

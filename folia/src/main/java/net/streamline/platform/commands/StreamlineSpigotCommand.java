@@ -31,7 +31,7 @@ public class StreamlineSpigotCommand implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args == null) args = new String[] { "" };
-        String commandName = args[0];
+        String commandName = context.getStringArg(0);
 
         StreamlineCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
         if (streamlineCommand == null) {
@@ -59,11 +59,11 @@ public class StreamlineSpigotCommand implements TabExecutor {
                     CommandHandler.getLoadedStreamlineCommands().values().stream().map(StreamlineCommand::getBase).collect(Collectors.toList()));
         }
         if (args.length == 1) {
-            return StringUtils.getAsCompletionList(args[0],
+            return StringUtils.getAsCompletionList(context.getStringArg(0),
                     CommandHandler.getLoadedStreamlineCommands().values().stream().map(StreamlineCommand::getBase).collect(Collectors.toList()));
         }
 
-        String commandName = args[0];
+        String commandName = context.getStringArg(0);
 
         StreamlineCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
         if (streamlineCommand == null) return null;

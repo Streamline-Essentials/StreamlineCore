@@ -2,6 +2,7 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.modules.ModuleUtils;
@@ -25,30 +26,30 @@ public class ParseCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
-        if (args.length < 2) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+    public void run(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() < 2) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        String playerName = args[0];
+        String playerName = context.getStringArg(0);
         StreamSender player = UserUtils.getOrCreateSenderByName(playerName).orElse(null);
 
         if (player == null) {
-            ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
-        SLAPI.getInstance().getMessenger().sendMessage(sender, MessageUtils.replaceAllPlayerBungee(sender,
-                getWithOther(sender, this.messageResult
-                        .replace("%this_parsed%", MessageUtils.replaceAllPlayerBungee(player, MessageUtils.argsToStringMinus(args, 0)))
+        context.sendMessage(MessageUtils.replaceAllPlayerBungee(context.getSender(),
+                getWithOther(context.getSender(), this.messageResult
+                        .replace("%this_parsed%", MessageUtils.replaceAllPlayerBungee(player, MessageUtils.argsToStringMinus(context.getArgsArray(), 0)))
                         , player)
         ));
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
-        if (args.length <= 1) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
 

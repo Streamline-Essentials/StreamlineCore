@@ -73,7 +73,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     @Deprecated
-    public void run(StreamSender sender, String[] args) {
+    public void run(StreamSender sender, @Nullable String[] args) {
         // Nothing.
     }
 
@@ -94,7 +94,7 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     @Deprecated
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
+    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, @Nullable String[] args) {
         return new ConcurrentSkipListSet<>();
     }
 

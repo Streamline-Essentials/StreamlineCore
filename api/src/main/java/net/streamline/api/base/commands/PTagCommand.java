@@ -2,6 +2,7 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
@@ -38,55 +39,54 @@ public class PTagCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
-        if (args.length < 2) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+    public void run(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() < 2) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        String playerName = args[0];
+        String playerName = context.getStringArg(0);
         StreamPlayer other = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (other == null) {
-            ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            ModuleUtils.sendMessage(context.getSender(), MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
-        if (args.length == 2) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, other,
-                    getWithOther(sender, this.messageTagsGet, playerName));
+        if (context.getArgCount() == 2) {
+            other.sendMessage(getWithOther(context.getSender(), this.messageTagsGet, playerName));
             return;
         }
 
-        if (args.length < 4) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+        if (context.getArgCount() < 4) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        String action = args[1];
-        String[] actions = MessageUtils.argsToStringMinus(args, 0, 1).split(" ");
+        String action = context.getStringArg(1);
+        String[] actions = MessageUtils.argsToStringMinus(context.getArgsArray(), 0, 1).split(" ");
 
         switch (action) {
             case "add":
                 Arrays.stream(actions).forEach(other::addTag);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsAdd, other));
+                context.sendMessage(getWithOther(context.getSender(), this.messageTagsAdd, other));
                 break;
             case "remove":
                 Arrays.stream(actions).forEach(other::removeTag);
-                SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageTagsRemove, other));
+                context.sendMessage(getWithOther(context.getSender(), this.messageTagsRemove, other));
                 break;
             default:
-                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                 break;
         }
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
-        if (args.length <= 1) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
-        if (args.length == 2) {
+        if (context.getArgCount() == 2) {
             return new ConcurrentSkipListSet<>(List.of("add", "remove"));
         }
 

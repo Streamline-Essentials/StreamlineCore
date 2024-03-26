@@ -1,11 +1,8 @@
 package net.streamline.api.loading;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
-
 import java.util.Optional;
 
-public abstract class ExtendedLoader<L extends Loadable, E extends L> extends Loader<L> {
+public abstract class ExtendedLoader<L extends Loadable<L>, E extends L> extends Loader<L> {
     public Optional<E> getExtended(String identifier) {
         Optional<L> optional = get(identifier);
         if (optional.isEmpty()) return Optional.empty();

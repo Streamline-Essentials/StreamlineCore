@@ -59,13 +59,17 @@ public class PlayerLocationMessageBuilder {
             PlayerWorld playerWorld = new PlayerWorld(world);
             WorldPosition position = new WorldPosition(x, y, z);
             PlayerRotation rotation = new PlayerRotation(yaw, pitch);
-            location = new PlayerLocation(player, playerWorld, position, rotation);
+
+            if (SLAPI.isProxy()) {
+                location = new PlayerLocation(player.getServer(), playerWorld, position, rotation);
+            } else {
+                location = new PlayerLocation(streamServer, playerWorld, position, rotation);
+            }
         } catch (Exception e) {
             MessageUtils.logWarning("PlayerLocationMessageBuilder received for invalid location '" + server + ", " + world + ", " + x + ", " + y + ", " + z + ", " + yaw + ", " + pitch + "' for player '" + uuid + "'.");
             return;
         }
 
-        player.setServer(streamServer);
         player.setLocation(location);
     }
 }

@@ -2,32 +2,34 @@ package net.streamline.api.data.players.location;
 
 import lombok.Getter;
 import lombok.Setter;
+import net.streamline.api.SLAPI;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.server.StreamServer;
 import org.jetbrains.annotations.NotNull;
 
 @Getter @Setter
 public class PlayerLocation implements Comparable<PlayerLocation> {
-    private StreamPlayer player;
-
+    private StreamServer server;
     private PlayerWorld world;
     private WorldPosition position;
     private PlayerRotation rotation;
 
-    public PlayerLocation(StreamPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
-        this.player = player;
-
+    public PlayerLocation(StreamServer server, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
+        this.server = server;
         this.world = world;
         this.position = position;
         this.rotation = rotation;
     }
 
     public PlayerLocation(StreamPlayer player) {
-        this(player, new PlayerWorld("--null"), new WorldPosition(0, 0, 0), new PlayerRotation());
+        this(new StreamServer(""), new PlayerWorld("--null"), new WorldPosition(0, 0, 0), new PlayerRotation());
     }
 
     @Override
     public int compareTo(@NotNull PlayerLocation o) {
-        return player.compareTo(o.getPlayer());
+        if (world.compareTo(o.world) != 0) return world.compareTo(o.world);
+        if (position.compareTo(o.position) != 0) return position.compareTo(o.position);
+        return rotation.getYaw() == o.rotation.getYaw() && rotation.getPitch() == o.rotation.getPitch() ? 0 : 1;
     }
 
     public double getX() {
@@ -71,7 +73,7 @@ public class PlayerLocation implements Comparable<PlayerLocation> {
     }
 
     public String getServerName() {
-        return player.getServerName();
+        return getServer().getIdentifier();
     }
 
     public PlayerLocation setX(double x) {
@@ -105,14 +107,13 @@ public class PlayerLocation implements Comparable<PlayerLocation> {
     }
 
     public PlayerLocation setServerName(String serverName) {
-        player.setServerName(serverName);
+        server = new StreamServer(serverName);
         return this;
     }
 
     public String asString() {
         return "[" +
-                "player=" + player.getUuid() +
-                ",server=" + getServerName() +
+                "server=" + getServerName() +
                 ",world=" + getWorldName() +
                 ",position={"
                 + "x=" + getX() +
@@ -124,5 +125,9 @@ public class PlayerLocation implements Comparable<PlayerLocation> {
                 ",pitch=" + getPitch() +
                 "}" +
                 "]";
+    }
+
+    public void teleport(StreamPlayer otherPlayer) {
+        SLAPI.getInstance().getUserManager().teleport(otherPlayer, this);
     }
 }
