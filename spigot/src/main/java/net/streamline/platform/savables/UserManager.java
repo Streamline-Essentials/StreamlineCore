@@ -7,6 +7,9 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
+import net.streamline.api.data.players.location.PlayerRotation;
+import net.streamline.api.data.players.location.WorldPosition;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.UserUtils;
@@ -14,6 +17,8 @@ import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -199,5 +204,27 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         if (player == null) return null;
 
         return player.getDisplayName();
+    }
+
+    @Override
+    public void teleport(StreamPlayer player, PlayerLocation location) {
+        if (! player.isOnline()) return;
+        Player p = Streamline.getPlayer(player.getUuid());
+        if (p == null) return;
+
+        WorldPosition pos = location.getPosition();
+        World world = Bukkit.getWorld(location.getWorldName());
+        if (world == null) return;
+        double x = pos.getX();
+        double y = pos.getY();
+        double z = pos.getZ();
+
+        PlayerRotation rot = location.getRotation();
+        float yaw = rot.getYaw();
+        float pitch = rot.getPitch();
+
+        Location loc = new Location(world, x, y, z, yaw, pitch);
+
+        p.teleport(loc);
     }
 }

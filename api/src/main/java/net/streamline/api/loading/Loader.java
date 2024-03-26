@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter @Setter
-public abstract class Loader<L extends Loadable> {
+public abstract class Loader<L extends Loadable<L>> {
     public ConcurrentSkipListSet<L> loaded;
     
     public Loader() {
@@ -101,12 +101,16 @@ public abstract class Loader<L extends Loadable> {
             return getConsole();
         }
 
-        CompletableFuture<L> loader = getOrCreateAsync(identifier);
+        CompletableFuture<Optional<L>> loader = load(identifier);
 
-        return augment(instantiate(identifier));
+        L toGet = createNew(identifier);
+
+        return toGet.augment(loader);
     }
 
-    public abstract L augment(L sender);
+    public CompletableFuture<Optional<L>> load(String uuid) {
+        return getKeeper().load(uuid);
+    }
 
     public void unload(String identifier) {
         Optional<L> optional = get(identifier);

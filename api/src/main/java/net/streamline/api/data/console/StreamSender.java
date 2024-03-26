@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.players.leveling.SenderLeveling;
 import net.streamline.api.data.players.meta.SenderMeta;
 import net.streamline.api.data.players.permissions.SenderPermissions;
@@ -13,10 +14,11 @@ import net.streamline.api.loading.Loadable;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Getter
-public class StreamSender implements Loadable {
+public class StreamSender implements Loadable<StreamPlayer> {
     public String getIdentifier() {
         return getUuid();
     }
@@ -42,9 +44,6 @@ public class StreamSender implements Loadable {
     private double points;
 
     @Setter
-    private StreamServer server;
-
-    @Setter
     private SenderMeta meta;
     @Setter
     private SenderLeveling leveling;
@@ -67,8 +66,6 @@ public class StreamSender implements Loadable {
 
         this.playSeconds = 0;
         this.points = 0;
-
-        this.server = new StreamServer(getConsoleServer());
 
         this.meta = new SenderMeta(this);
         this.leveling = new SenderLeveling(this);
@@ -102,11 +99,14 @@ public class StreamSender implements Loadable {
         // Do nothing
     }
 
-    public <S extends StreamSender> S thenPopulate(CompletableFuture<S> future) {
+    @Override
+    public StreamPlayer augment(CompletableFuture<Optional<StreamPlayer>> future) {
         loadComplete = false;
 
         CompletableFuture.runAsync(() -> {
-            S sender = future.join();
+            Optional<StreamPlayer> optional = future.join();
+            if (optional.isEmpty()) return;
+            StreamPlayer sender = optional.get();
 
             setUuid(sender.getUuid());
             setFirstJoinMillis(sender.getFirstJoinMillis());
@@ -120,17 +120,17 @@ public class StreamSender implements Loadable {
             setLeveling(sender.getLeveling());
             setPermissions(sender.getPermissions());
 
-            thenPopulateMore(sender);
+            augmentMore(sender);
 
             setCurrentNameAsProper(); // might need to be forced... need to check this...
 
             loadComplete = true;
         });
 
-        return (S) this;
+        return (StreamPlayer) this;
     }
 
-    public <S extends StreamSender> void thenPopulateMore(S sender) {
+    public void augmentMore(StreamPlayer sender) {
         // nothing
     }
 
@@ -167,12 +167,41 @@ public class StreamSender implements Loadable {
         return SLAPI.getConsole();
     }
 
+    public StreamServer getServer() {
+        if (isConsole()) return new StreamServer(getConsoleServer());
+
+        try {
+            StreamPlayer player = (StreamPlayer) this;
+            return player.getLocation().getServer();
+        } catch (ClassCastException e) {
+            return new StreamServer("");
+        }
+    }
+
+    public void setServer(StreamServer server) {
+        if (isConsole()) return;
+
+        try {
+            StreamPlayer player = (StreamPlayer) this;
+            player.getLocation().setServer(server);
+        } catch (ClassCastException e) {
+            // Do nothing
+        }
+    }
+
     public String getServerName() {
         return getServer().getIdentifier();
     }
 
     public void setServerName(String serverName) {
-        server = new StreamServer(serverName);
+        if (isConsole()) return;
+
+        try {
+            StreamPlayer player = (StreamPlayer) this;
+            player.getLocation().setServerName(serverName);
+        } catch (ClassCastException e) {
+            // Do nothing
+        }
     }
 
     public static String getConsoleDiscriminator() {

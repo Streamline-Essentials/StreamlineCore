@@ -44,6 +44,7 @@ public class MainConfigHandler extends SimpleConfiguration {
 //        getHexPolicies();
 
         getOrCreateUuid();
+        getServerName();
     }
 
     // CONSOLE
@@ -217,6 +218,12 @@ public class MainConfigHandler extends SimpleConfiguration {
     public String getOrCreateUuid() {
         reloadResource();
 
-        return getResource().getOrSetDefault("api.uuid", UUID.randomUUID().toString());
+        return getResource().getOrSetDefault("server.uuid", UUID.randomUUID().toString());
+    }
+
+    public String getServerName() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("server.name", getOrCreateUuid());
     }
 }

@@ -6,6 +6,7 @@ import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.data.players.location.PlayerRotation;
 import net.streamline.api.data.players.location.PlayerWorld;
 import net.streamline.api.data.players.location.WorldPosition;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.utils.UserUtils;
 import org.bukkit.Bukkit;
@@ -33,6 +34,7 @@ public class TenSecondTimer implements Runnable {
         CompletableFuture.runAsync(() -> {
             StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
 
+            StreamServer streamServer = streamPlayer.getServer();
             Location location = player.getLocation();
             World world = location.getWorld();
             if (world == null) world = Bukkit.getWorlds().get(0);
@@ -41,7 +43,7 @@ public class TenSecondTimer implements Runnable {
             WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
             PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
 
-            PlayerLocation streamlineLocation = new PlayerLocation(streamPlayer, streamlineWorld, streamlinePosition, streamlineRotation);
+            PlayerLocation streamlineLocation = new PlayerLocation(streamServer, streamlineWorld, streamlinePosition, streamlineRotation);
 
             PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
         });

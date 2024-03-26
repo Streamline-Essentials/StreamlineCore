@@ -42,7 +42,6 @@ import tv.quaint.events.processing.BaseProcessor;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class PlatformListener implements Listener {
@@ -96,22 +95,19 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
+        streamPlayer.setCurrentName(player.getName());
 
-            streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
-            streamPlayer.setCurrentName(player.getName());
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
+        ModuleUtils.fireEvent(loginCompletedEvent);
 
-            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
-            ModuleUtils.fireEvent(loginCompletedEvent);
+        setJoined(true);
 
-            setJoined(true);
+        new TenSecondTimer(player);
 
-            new TenSecondTimer(player);
-
-            streamPlayer.save();
-        });
+        streamPlayer.save();
     }
 
     @EventHandler
@@ -135,19 +131,17 @@ public class PlatformListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
-            Streamline.getInstance().fireEvent(chatEvent, true);
-            if (chatEvent.isCanceled()) {
-                event.setCancelled(true);
-                return;
-            }
-            event.setMessage(chatEvent.getMessage());
+        StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
+        Streamline.getInstance().fireEvent(chatEvent, true);
+        if (chatEvent.isCanceled()) {
+            event.setCancelled(true);
+            return;
+        }
+        event.setMessage(chatEvent.getMessage());
 
-            streamPlayer.save();
-        }).join();
+        streamPlayer.save();
     }
 
     @EventHandler

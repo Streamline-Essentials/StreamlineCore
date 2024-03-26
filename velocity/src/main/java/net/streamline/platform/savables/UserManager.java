@@ -12,6 +12,10 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
+import net.streamline.api.data.players.location.PlayerRotation;
+import net.streamline.api.data.players.location.WorldPosition;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.interfaces.IUserManager;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.utils.MessageUtils;
@@ -221,5 +225,20 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         if (player == null) return null;
 
         return player.getUsername();
+    }
+
+    @Override
+    public void teleport(StreamPlayer player, PlayerLocation location) {
+        if (! player.isOnline()) return;
+        Player p = StreamlineVelocity.getPlayer(player.getUuid());
+        if (p == null) return;
+
+        StreamServer server = location.getServer();
+        String serverName = server.getIdentifier();
+
+        Optional<RegisteredServer> optional = StreamlineVelocity.getInstance().getProxy().getServer(serverName);
+        if (optional.isEmpty()) return;
+
+        p.createConnectionRequest(optional.get());
     }
 }

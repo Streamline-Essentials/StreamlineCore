@@ -2,6 +2,7 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.modules.ModuleLike;
@@ -67,107 +68,107 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
-        if (args.length < 1) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+    public void run(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() < 1) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        switch (args[0].toLowerCase(Locale.ROOT)) {
+        switch (context.getStringArg(0).toLowerCase(Locale.ROOT)) {
             case "reapply":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> ModuleManager.unregisterModule(module));
                     ModuleManager.registerExternalModules();
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyAll);
+                    context.sendMessage(messageResultReapplyAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         ModuleLike module = ModuleManager.getModule(a);
                         ModuleManager.reapplyModule(module.getIdentifier());
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReapplyOne
+                        context.sendMessage(messageResultReapplyOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             case "reload":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.restartModules();
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadAll);
+                    context.sendMessage(messageResultReloadAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (! ModuleManager.hasModule(a)) return;
                         ModuleManager.getModule(a).restart();
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultReloadOne
+                        context.sendMessage(messageResultReloadOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             case "load":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.registerExternalModules();
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultLoadAll);
+                    context.sendMessage(messageResultLoadAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (ModuleManager.hasModule(a)) return;
                         ModuleManager.registerExternalModule(a);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultLoadOne
+                        context.sendMessage(messageResultLoadOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             case "unload":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.getLoadedModules().forEach(ModuleManager::unregisterModule);
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultUnloadAll);
+                    context.sendMessage(messageResultUnloadAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (! ModuleManager.hasModule(a)) return;
                         ModuleManager.unregisterModule(ModuleManager.getModule(a));
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultUnloadOne
+                        context.sendMessage(messageResultUnloadOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             case "enable":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> module.start());
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultEnableAll);
+                    context.sendMessage(messageResultEnableAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (! ModuleManager.hasModule(a)) return;
                         ModuleManager.getModule(a).start();
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultEnableOne
+                        context.sendMessage(messageResultEnableOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             case "disable":
-                if (args.length == 1) {
+                if (context.getArgCount() == 1) {
                     ModuleManager.getLoadedModules().forEach((s, module) -> module.stop());
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultDisableAll);
+                    context.sendMessage(messageResultDisableAll);
                 } else {
-                    Arrays.stream(MessageUtils.argsMinus(args, 0)).forEach(a -> {
+                    Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (! ModuleManager.hasModule(a)) return;
                         ModuleManager.getModule(a).stop();
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, messageResultDisableOne
+                        context.sendMessage(messageResultDisableOne
                                 .replace("%this_identifier%", a)
                         );
                     });
                 }
                 break;
             default:
-                ModuleUtils.sendMessage(sender, getWithOther(sender, messageResultListAll, sender));
+                context.sendMessage(getWithOther(context.getSender(), messageResultListAll, context.getSender()));
                 break;
         }
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
-        if (args.length <= 1) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() <= 1) {
             return new ConcurrentSkipListSet<>(List.of(
                     "reapply",
                     "reload",
@@ -178,12 +179,13 @@ public class ModulesCommand extends StreamlineCommand {
                     "list"
             ));
         }
-        if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("reapply") || args[0].equalsIgnoreCase("reload") || args[0].equalsIgnoreCase("unload")
-                    || args[0].equalsIgnoreCase("enable") || args[0].equalsIgnoreCase("disable")) {
+        if (context.getArgCount() == 2) {
+            if (context.getStringArg(0).equalsIgnoreCase("reapply") || context.getStringArg(0).equalsIgnoreCase("reload")
+                    || context.getStringArg(0).equalsIgnoreCase("unload") || context.getStringArg(0).equalsIgnoreCase("enable")
+                    || context.getStringArg(0).equalsIgnoreCase("disable")) {
                 return ModuleManager.getOnlyMalleableModuleIdentifiers();
             }
-            if (args[0].equalsIgnoreCase("load")) {
+            if (context.getStringArg(0).equalsIgnoreCase("load")) {
                 return ModuleManager.getUnloadedExternalModuleIdentifiers();
             }
         }

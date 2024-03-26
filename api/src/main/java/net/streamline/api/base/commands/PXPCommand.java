@@ -2,8 +2,8 @@ package net.streamline.api.base.commands;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
+import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.utils.UserUtils;
 
@@ -56,121 +56,119 @@ public class PXPCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(StreamSender sender, String[] args) {
-        if (args.length < 2) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+    public void run(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() < 2) {
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
-        String playerName = args[0];
+        String playerName = context.getStringArg(0);
         StreamPlayer player = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (player == null) {
-            SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
+            context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
             return;
         }
 
-        String type = args[1].toLowerCase();
+        String type = context.getStringArg(1).toLowerCase();
 
         switch (type) {
             case "level":
-                if (args.length == 2) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, player,
-                            getWithOther(sender, this.messageLevelGet, player));
+                if (context.getArgCount() == 2) {
+                    player.sendMessage(getWithOther(context.getSender(), this.messageLevelGet, player));
                     return;
                 }
 
-                if (args.length < 4) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+                if (context.getArgCount() < 4) {
+                    context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
                     return;
                 }
 
-                String action = args[2];
+                String action = context.getStringArg(2);
                 int amount = 0;
                 try {
-                    amount = Integer.parseInt(args[3]);
+                    amount = Integer.parseInt(context.getStringArg(3));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+                    context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
                     return;
                 }
 
                 switch (action) {
                     case "set":
                         player.setLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelSet, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageLevelSet, player));
                         break;
                     case "add":
                         player.addLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelAdd, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageLevelAdd, player));
                         break;
                     case "remove":
                         player.removeLevel(amount);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageLevelRemove, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageLevelRemove, player));
                         break;
                     default:
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                        context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                         break;
                 }
                 break;
             case "xp":
-                if (args.length == 2) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, player,
-                            getWithOther(sender, this.messageXPGet, player));
+                if (context.getArgCount() == 2) {
+                    player.sendMessage(getWithOther(context.getSender(), this.messageXPGet, player));
                     return;
                 }
 
-                if (args.length < 4) {
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
+                if (context.getArgCount() < 4) {
+                    context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
                     return;
                 }
 
-                String action2 = args[2];
+                String action2 = context.getStringArg(2);
                 double amount2 = 0;
                 try {
-                    amount2 = Double.parseDouble(args[3]);
+                    amount2 = Double.parseDouble(context.getStringArg(3));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
+                    context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());
                     return;
                 }
 
                 switch (action2) {
                     case "set":
                         player.setExperience(amount2);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPSet, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageXPSet, player));
                         break;
                     case "add":
                         player.addExperience(amount2);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPAdd, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageXPAdd, player));
                         break;
                     case "remove":
                         player.removeExperience(amount2);
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, getWithOther(sender, this.messageXPRemove, player));
+                        context.sendMessage(getWithOther(context.getSender(), this.messageXPRemove, player));
                         break;
                     default:
-                        SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                        context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                         break;
                 }
             default:
-                SLAPI.getInstance().getMessenger().sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
+                context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_DEFAULT.get());
                 break;
         }
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(StreamSender sender, String[] args) {
-        if (args.length <= 1) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+        if (context.getArgCount() <= 1) {
             return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
         }
-        if (args.length == 2) {
+        if (context.getArgCount() == 2) {
             return new ConcurrentSkipListSet<>(List.of("level", "xp"));
         }
-        if (args.length == 3) {
+        if (context.getArgCount() == 3) {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));
         }
-        if (args.length == 4) {
-            if (args[1].equals("xp")) return getDoubleArgument();
+        if (context.getArgCount() == 4) {
+            if (context.getStringArg(1).equals("xp")) return getDoubleArgument();
             return getIntegerArgument();
         }
 

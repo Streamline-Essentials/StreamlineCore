@@ -2,6 +2,7 @@ package net.streamline.api.interfaces;
 
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.players.location.PlayerLocation;
 import net.streamline.api.objects.StreamlineResourcePack;
 
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -39,4 +40,6 @@ public interface IUserManager<C, P extends C> {
     P getPlayer(String uuid);
 
     ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers();
+
+    void teleport(StreamPlayer player, PlayerLocation location);
 }
