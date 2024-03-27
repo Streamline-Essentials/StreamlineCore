@@ -53,7 +53,8 @@ public class RATRegistry {
         return replacements.get(from);
     }
 
-    public static String fetch(String from) {
+    public static String
+    fetch(String from) {
         AtomicString result = new AtomicString(from);
         getReplacements().forEach((s, replacement) -> {
             if (replacement == null) return;
@@ -74,7 +75,7 @@ public class RATRegistry {
     public static String fetchDirty(String from) {
         String temp = from;
         temp = fetch(temp);
-        while (temp != from) {
+        while (! Objects.equals(temp, from)) {
             from = temp;
             temp = fetch(temp);
         }

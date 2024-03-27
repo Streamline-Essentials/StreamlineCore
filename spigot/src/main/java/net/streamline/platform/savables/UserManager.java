@@ -66,7 +66,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     public boolean isConsole(CommandSender sender) {
-        return sender.equals(Bukkit.getConsoleSender());
+        return ! (sender instanceof Player);
     }
 
     @Override

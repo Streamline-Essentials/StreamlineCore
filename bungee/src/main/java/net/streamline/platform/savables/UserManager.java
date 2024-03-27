@@ -3,6 +3,7 @@ package net.streamline.platform.savables;
 import lombok.Getter;
 import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
@@ -70,7 +71,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     }
 
     public boolean isConsole(CommandSender sender) {
-        return sender.equals(Streamline.getInstance().getProxy().getConsole());
+        return ! (sender instanceof ProxiedPlayer);
     }
 
     @Override

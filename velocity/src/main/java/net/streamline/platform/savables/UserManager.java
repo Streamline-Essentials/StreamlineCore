@@ -68,7 +68,7 @@ public class UserManager implements IUserManager<CommandSource, Player> {
     }
 
     public boolean isConsole(CommandSource sender) {
-        return sender.equals(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource());
+        return ! (sender instanceof Player);
     }
 
     @Override

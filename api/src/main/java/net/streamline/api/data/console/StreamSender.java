@@ -11,6 +11,7 @@ import net.streamline.api.data.players.permissions.SenderPermissions;
 import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.interfaces.audiences.real.RealSender;
 import net.streamline.api.loading.Loadable;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.Date;
@@ -113,11 +114,13 @@ public class StreamSender implements Loadable<StreamPlayer> {
             setLastJoinMillis(sender.getLastJoinMillis());
             setLastQuitMillis(sender.getLastQuitMillis());
             setCurrentName(sender.getCurrentName());
-            setPlaySeconds(sender.getPlaySeconds());
-            setPoints(sender.getPoints());
+            addPlaySeconds(sender.getPlaySeconds());
+            addPoints(sender.getPoints());
             setServerName(sender.getServerName());
             setMeta(sender.getMeta());
+            double currentExp = getLeveling().getTotalExperience();
             setLeveling(sender.getLeveling());
+            getLeveling().addExperience(currentExp);
             setPermissions(sender.getPermissions());
 
             augmentMore(sender);
@@ -139,7 +142,7 @@ public class StreamSender implements Loadable<StreamPlayer> {
     }
 
     public void sendMessage(String message, boolean format) {
-        if (format) asReal().sendMessage(message);
+        if (format) asReal().sendMessage(ModuleUtils.replacePlaceholders(this, message));
         else asReal().sendMessageRaw(message);
     }
 
@@ -289,7 +292,7 @@ public class StreamSender implements Loadable<StreamPlayer> {
                 );
     }
 
-    public void addPlaySecond(long amount) {
+    public void addPlaySeconds(long amount) {
         this.playSeconds += amount;
     }
 

@@ -66,7 +66,7 @@ public class PlatformListener implements Listener {
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         String uuid = event.getUniqueId().toString();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(uuid).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -116,15 +116,13 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
-            ModuleUtils.fireEvent(logoutEvent);
+        LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
+        ModuleUtils.fireEvent(logoutEvent);
 
-            streamPlayer.save();
-            UserUtils.unloadSender(streamPlayer);
-        });
+        streamPlayer.save();
+        UserUtils.unloadSender(streamPlayer);
     }
 
     @EventHandler
@@ -156,19 +154,17 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            CompletableFuture.runAsync(() -> {
-                StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-                try {
-                    ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
-                    ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-                    ModuleUtils.fireEvent(e);
-                    if (e.isCancelled()) return;
-                    SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
-                } catch (Exception e) {
-                    // do nothing.
-                }
-            });
+            try {
+                ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
+                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+                ModuleUtils.fireEvent(e);
+                if (e.isCancelled()) return;
+                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+            } catch (Exception e) {
+                // do nothing.
+            }
         }
     }
 

@@ -57,7 +57,7 @@ public class PlatformListener {
 
         String uuid = p.getUniqueId().toString();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(uuid).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
 
         streamPlayer.setCurrentName(p.getUsername());
         p.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
@@ -89,54 +89,40 @@ public class PlatformListener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getUsername(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
-            streamPlayer.setCurrentName(player.getUsername());
-            player.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
+        streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
+        streamPlayer.setCurrentName(player.getUsername());
+        player.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
 
-            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
-            ModuleUtils.fireEvent(loginCompletedEvent);
+        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
+        ModuleUtils.fireEvent(loginCompletedEvent);
 
-            streamPlayer.save();
-        });
+        streamPlayer.save();
     }
 
     @Subscribe
     public void onLeave(DisconnectEvent event) {
         Player player = event.getPlayer();
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
-            ModuleUtils.fireEvent(logoutEvent);
+        LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
+        ModuleUtils.fireEvent(logoutEvent);
 
-            streamPlayer.save();
-            UserUtils.unloadSender(streamPlayer);
-        });
+        streamPlayer.save();
+        UserUtils.unloadSender(streamPlayer);
     }
 
     @Subscribe
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            streamPlayer.setServerName(event.getServer().getServerInfo().getName());
+        streamPlayer.setServerName(event.getServer().getServerInfo().getName());
 
-//            new BaseRunnable(20, 1) {
-//                @Override
-//                public void run() {
-//                    StreamPlayerMessageBuilder.build(streamPlayer, true).send();
-//                    this.cancel();
-//                }
-//            };
-
-            streamPlayer.save();
-        });
+        streamPlayer.save();
     }
 
     @Subscribe
@@ -167,19 +153,17 @@ public class PlatformListener {
         if (! (event.getTarget() instanceof Player)) return;
         Player player = (Player) event.getTarget();
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            try {
-                ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
-                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-                ModuleUtils.fireEvent(e);
-                if (e.isCancelled()) return;
-                SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
-            } catch (Exception e) {
-                // do nothing.
-            }
-        });
+        try {
+            ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
+            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
+            ModuleUtils.fireEvent(e);
+            if (e.isCancelled()) return;
+            SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
+        } catch (Exception e) {
+            // do nothing.
+        }
     }
 
     @Subscribe
