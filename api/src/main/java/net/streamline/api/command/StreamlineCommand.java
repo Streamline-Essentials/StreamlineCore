@@ -9,6 +9,7 @@ import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.configs.CommandResource;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.events.command.CommandResultedEvent;
+import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,13 +106,13 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     public String getWithOther(StreamSender sender, String base, StreamSender other) {
         base = base.replace("%this_other%", other.getCurrentName());
         base = base.replace("%this_other_uuid%", other.getUuid());
-        return MessageUtils.replaceAllPlayerBungee(other, getWithOther(sender, base, other.getCurrentName()));
+        return ModuleUtils.replacePlaceholders(other, getWithOther(sender, base, other.getCurrentName()));
     }
 
     public String getWithOther(StreamSender sender, String base, String other) {
         base = base.replace("%this_sender%", sender.getCurrentName());
         base = base.replace("%this_sender_uuid%", sender.getUuid());
-        return MessageUtils.replaceAllPlayerBungee(sender, getWithOther(base, other));
+        return ModuleUtils.replacePlaceholders(sender, getWithOther(base, other));
     }
 
     public String getWithOther(String base, String other) {

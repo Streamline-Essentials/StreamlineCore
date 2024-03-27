@@ -14,7 +14,7 @@ public class OneSecondTimer extends BaseRunnable {
         UserUtils.getLoadedSenders().forEach((s, user) -> {
             if (! user.isOnline()) return;
 
-            user.addPlaySecond(1);
+            user.addPlaySeconds(1);
         });
     }
 }

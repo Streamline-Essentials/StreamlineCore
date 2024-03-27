@@ -42,7 +42,7 @@ public class ParseCommand extends StreamlineCommand {
 
         context.sendMessage(MessageUtils.replaceAllPlayerBungee(context.getSender(),
                 getWithOther(context.getSender(), this.messageResult
-                        .replace("%this_parsed%", MessageUtils.replaceAllPlayerBungee(player, MessageUtils.argsToStringMinus(context.getArgsArray(), 0)))
+                        .replace("%this_parsed%", ModuleUtils.replacePlaceholders(player, MessageUtils.argsToStringMinus(context.getArgsArray(), 0)))
                         , player)
         ));
     }

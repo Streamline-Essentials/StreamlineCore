@@ -31,22 +31,20 @@ public class TenSecondTimer implements Runnable {
     public void run() {
         if (! checkPlayer()) return;
 
-        CompletableFuture.runAsync(() -> {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayerAsync(player.getUniqueId().toString()).join();
+        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-            StreamServer streamServer = streamPlayer.getServer();
-            Location location = player.getLocation();
-            World world = location.getWorld();
-            if (world == null) world = Bukkit.getWorlds().get(0);
+        StreamServer streamServer = streamPlayer.getServer();
+        Location location = player.getLocation();
+        World world = location.getWorld();
+        if (world == null) world = Bukkit.getWorlds().get(0);
 //            StreamServer streamlineServer = new StreamServer("--null");
-            PlayerWorld streamlineWorld = new PlayerWorld(world.getName());
-            WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
-            PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
+        PlayerWorld streamlineWorld = new PlayerWorld(world.getName());
+        WorldPosition streamlinePosition = new WorldPosition(location.getX(), location.getY(), location.getZ());
+        PlayerRotation streamlineRotation = new PlayerRotation(location.getYaw(), location.getPitch());
 
-            PlayerLocation streamlineLocation = new PlayerLocation(streamServer, streamlineWorld, streamlinePosition, streamlineRotation);
+        PlayerLocation streamlineLocation = new PlayerLocation(streamServer, streamlineWorld, streamlinePosition, streamlineRotation);
 
-            PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
-        });
+        PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
     }
 
     public boolean checkPlayer() {

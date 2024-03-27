@@ -4,7 +4,6 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.command.StreamlineCommand;
 import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.utils.UserUtils;
 
@@ -72,7 +71,7 @@ public class PlaytimeCommand extends StreamlineCommand {
                 context.sendMessage(getWithOther(context.getSender(), this.messageSet, other));
                 break;
             case "add":
-                other.addPlaySecond(amount);
+                other.addPlaySeconds(amount);
                 context.sendMessage(getWithOther(context.getSender(), this.messageAdd, other));
                 break;
             case "remove":
