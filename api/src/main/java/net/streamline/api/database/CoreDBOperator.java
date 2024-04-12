@@ -1,5 +1,6 @@
 package net.streamline.api.database;
 
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -485,6 +486,9 @@ public class CoreDBOperator extends DBOperator {
 
                         uuids.get().add(info);
                     }
+                } catch (SQLException e) {
+                    if (e.getMessage().contains("duplicate")) return;
+                    e.printStackTrace();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

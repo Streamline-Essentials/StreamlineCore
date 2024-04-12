@@ -27,9 +27,9 @@ public abstract class BaseRunnable implements Runnable {
         this.startedAt = new Date();
         this.currentTickCount = delay * -1;
         this.period = period;
-        this.index = ModuleUtils.getMainScheduler().getNextIndex();
+        this.index = TaskManager.getNextIndex();
 
-        ModuleUtils.getMainScheduler().start(this);
+        TaskManager.start(this);
     }
 
     public void tick() {
@@ -42,10 +42,10 @@ public abstract class BaseRunnable implements Runnable {
     }
 
     public void cancel() {
-        ModuleUtils.getMainScheduler().cancel(this);
+        TaskManager.cancel(this);
     }
 
     public boolean isCancelled() {
-        return ! ModuleUtils.getMainScheduler().currentRunnables.containsKey(this.index);
+        return ! TaskManager.getCurrentRunnables().containsKey(this.index);
     }
 }

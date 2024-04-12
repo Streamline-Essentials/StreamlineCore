@@ -64,7 +64,6 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
-        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
             ServerConnectMessageBuilder.handle(event.getMessage());
             return;

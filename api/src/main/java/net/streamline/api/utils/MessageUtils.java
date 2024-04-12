@@ -11,6 +11,7 @@ import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
@@ -19,6 +20,24 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class MessageUtils {
+    public static class CacheTimer extends BaseRunnable {
+        public CacheTimer() {
+            super(0, 10);
+        }
+
+        @Override
+        public void run() {
+            MessageUtils.getCache().clear();
+        }
+    }
+
+    @Getter @Setter
+    private static CacheTimer timer;
+
+    public static void init() {
+        timer = new CacheTimer();
+    }
+
     public static void logInfo(String message) {
         if (GivenConfigs.getMainConfig().debugConsoleInfoDisabled()) return;
         message = message.replace("%newline%", "\n");
@@ -298,6 +317,18 @@ public class MessageUtils {
 
     public static String getCachedValue(StreamSender user, String toParse) {
         return getCachedValue(user.getUuid(), toParse);
+    }
+
+    public static void uncacheValue(StreamSender user, String toParse) {
+        uncacheValue(user.getUuid(), toParse);
+    }
+
+    public static void uncacheValue(String userUuid, String toParse) {
+        ConcurrentSkipListMap<String, String> current = getCache().get(userUuid);
+        if (current == null) return;
+        current.remove(toParse);
+
+        getCache().put(userUuid, current);
     }
 
     public static String getListAsFormattedString(List<?> list) {

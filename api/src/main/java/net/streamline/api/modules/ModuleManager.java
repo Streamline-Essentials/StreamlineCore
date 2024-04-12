@@ -82,19 +82,25 @@ public class ModuleManager {
 
     @Getter
     private static final String noModulesMessage =
-            "&a&m&l                                                 %newline%" +
+            "" +
+                    "&a&m&l                                                 %newline%" +
                     "               &c&lStreamline &5&lCore%newline%" +
-                    "&eWe noticed you do not have any modules&7... &eThis%newline%" +
-                    "&eplugin works best by having modules&7. &eModules%newline%" +
+                    "&eIt appears you do not have any modules installed&7. &eThis%newline%" +
+                    "&eplugin was meant to be used with modules&7. &eModules%newline%" +
                     "&eare installable content &b(&7you can create your own&5!&b)%newline%" +
                     "&ethat either expand upon the core plugin or add%newline%" +
-                    "&ecompletely new content to your server&b(&es&b)&7. &eYou %newline%" +
-                    "&ecan check them out on our &9&lDiscord &eor on the%newline%" +
-                    "&e&7&cSpigotMC &epages for each&7. &eThank you&7!%newline%" +
+                    "&ecompletely new content to your server&b(&es&b)&7.%newline%" +
+                    "&eInstall them by placing them in your server&7'&es%newline%" +
+                    "&7\"&bplugins -> StreamlineCore -> modules&7\" &efolder&7.%newline%" +
+                    " &eYou can check them out and download them from our%newline%" +
+                    " &ewiki&7, &eour &9&lDiscord &eor on the &cSpigotMC%newline%" +
+                    "&epages for each&7. &eThank you&7!%newline%" +
                     "&a&m&l                                                 %newline%" +
-                    "&cDisable &ethis message in your &bmain-config.yml%newline%" +
+                    "&cDisable &ethis message in the &bmain-config.yml%newline%" +
                     "&a&m&l                                                 %newline%" +
-                    "&6Get Modules here&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&6Our &b&lWiki&7: &bhttps://wiki.plas.host/en/streamline/modules%newline%" +
+                    "&6Our &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&6Drak&7'&6s &c&lSpigotMC &6Page&7: &bhttps://www.spigotmc.org/resources/authors/393831%newline%" +
                     "&a&m&l                                                 "
             ;
 

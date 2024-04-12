@@ -199,27 +199,27 @@ public class Statements {
                         "    PRIMARY KEY (Uuid)" +
                         ");;"
         ),
-        PUSH_PLAYER_MAIN("INSERT INTO `%table_prefix%players` (" +
+        PUSH_PLAYER_MAIN("INSERT OR REPLACE INTO `%table_prefix%players` (" +
                 "    Uuid, FirstJoin, LastJoin, CurrentName, CurrentIP, PlaySeconds, Points, ProxyTouched" +
                 ") VALUES (" +
                 "    ?, ?, ?, ?, ?, ?, ?, ?" +
                 ");"),
-        PUSH_PLAYER_META("INSERT INTO `%table_prefix%player_meta` (" +
+        PUSH_PLAYER_META("INSERT OR REPLACE INTO `%table_prefix%player_meta` (" +
                 "    Uuid, Nickname, Prefix, Suffix" +
                 ") VALUES (" +
-                "    ?, ?, ?, '%suffix' " +
+                "    ?, ?, ?, ? " +
                 ");"),
-        PUSH_PLAYER_LEVELING("INSERT INTO `%table_prefix%player_leveling` (" +
+        PUSH_PLAYER_LEVELING("INSERT OR REPLACE INTO `%table_prefix%player_leveling` (" +
                 "    Uuid, Level, TotalExperience, CurrentExperience, EquationString, StartedLevel, StartedExperience" +
                 ") VALUES (" +
                 "    ?, ?, ?, ?, ?, ?, ?" +
                 ");"),
-        PUSH_PLAYER_LOCATION("INSERT INTO `%table_prefix%player_location` (" +
+        PUSH_PLAYER_LOCATION("INSERT OR REPLACE INTO `%table_prefix%player_location` (" +
                 "    Uuid, Server, World, X, Y, Z, Yaw, Pitch" +
                 ") VALUES (" +
                 "    ?, ?, ?, ?, ?, ?, ?, ?" +
                 ");"),
-        PUSH_PLAYER_PERMISSIONS("INSERT INTO `%table_prefix%player_permissions` (" +
+        PUSH_PLAYER_PERMISSIONS("INSERT OR REPLACE INTO `%table_prefix%player_permissions` (" +
                 "    Uuid, BypassingPermissions" +
                 ") VALUES (" +
                 "    ?, ?" +
@@ -229,7 +229,7 @@ public class Statements {
                 ") VALUES (" +
                 "    ?, ?, ? " +
                 ");"),
-        PUSH_UPKEEP("INSERT INTO `%table_prefix%saves` (" +
+        PUSH_UPKEEP("INSERT OR REPLACE INTO `%table_prefix%saves` (" +
                 "    SavedAt, Uuid, ServerUuid" +
                 ") VALUES (" +
                 "    ?, ?, ?" +

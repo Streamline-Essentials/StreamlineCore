@@ -166,7 +166,7 @@ public class PlatformListener implements Listener {
         StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         try {
-            ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, event.getData(), tag);
+            ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, false, event.getData(), tag);
             ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
             ModuleUtils.fireEvent(e);
             if (e.isCancelled()) return;

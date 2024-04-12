@@ -2,6 +2,7 @@ package net.streamline.api.base.listeners;
 
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
+import net.streamline.api.command.CommandMessageBuilder;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
@@ -12,6 +13,7 @@ import net.streamline.api.data.uuid.UuidManager;
 import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.utils.MessageUtils;
 import tv.quaint.events.BaseEventHandler;
@@ -95,6 +97,16 @@ public class BaseListener implements BaseEventListener {
             if (event.getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
                 PlayerLocationMessageBuilder.handle(event.getMessage());
             }
+        }
+    }
+
+    @BaseProcessor
+    public void onProxiedMessage(ProxyMessageInEvent event) {
+        ProxiedMessage message = event.getMessage();
+        if (message.getSubChannel() == null) return;
+        if (message.getSubChannel().equals(CommandMessageBuilder.getSubChannel())) {
+            BaseModule.getInstance().logDebug("Handling a command message...");
+            CommandMessageBuilder.handle(message);
         }
     }
 }

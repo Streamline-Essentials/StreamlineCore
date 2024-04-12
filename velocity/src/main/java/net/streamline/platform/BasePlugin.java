@@ -22,6 +22,7 @@ import net.streamline.api.events.server.ServerStopEvent;
 import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.objects.StreamlineResourcePack;
+import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.StorageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -49,17 +50,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BasePlugin implements IStreamline {
-    public static class Runner implements Runnable {
-        public Runner() {
-            MessageUtils.logInfo("Task Runner registered!");
-        }
-
-        @Override
-        public void run() {
-            SLAPI.getMainScheduler().tick();
-        }
-    }
-
     @Getter
     private final PlatformType platformType = PlatformType.VELOCITY;
     @Getter
@@ -183,7 +173,8 @@ public abstract class BasePlugin implements IStreamline {
         getSlapi().setProfiler(new VelocityProfiler());
 
         registerListener(new PlatformListener());
-        getProxy().getScheduler().buildTask(this, new Runner()).repeat(50, TimeUnit.MILLISECONDS).schedule();
+
+        TaskManager.init();
 
 //        UserUtils.loadSender(new StreamSender());
 
@@ -201,6 +192,8 @@ public abstract class BasePlugin implements IStreamline {
 
         this.disable();
         fireStopEvent();
+
+        TaskManager.stop();
     }
 
     public void fireStopEvent() {

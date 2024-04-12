@@ -23,7 +23,6 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.profile.StreamlineProfiler;
 import net.streamline.api.scheduler.BaseRunnable;
 import net.streamline.api.scheduler.ModuleTaskManager;
-import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 import tv.quaint.objects.SingleSet;
@@ -177,8 +176,6 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
     private static UpdateCheckerTimer updateCheckerTimer;
 
     @Getter
-    private static TaskManager mainScheduler;
-    @Getter
     private static ModuleTaskManager moduleScheduler;
 
     @Getter @Setter
@@ -229,7 +226,6 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
             }
         });
 
-        mainScheduler = new TaskManager();
         moduleScheduler = new ModuleTaskManager();
 
         GivenConfigs.init();
@@ -267,6 +263,8 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         setCommandRunner(new CommandRunner());
 
         UserUtils.loadConsole();
+
+        MessageUtils.init();
 
         setReady(true);
     }

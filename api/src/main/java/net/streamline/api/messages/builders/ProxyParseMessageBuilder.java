@@ -8,13 +8,14 @@ import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.utils.MessageUtils;
+import net.streamline.api.utils.UserUtils;
 
 public class ProxyParseMessageBuilder {
     @Getter
     private static final String subChannel = "api-parse";
 
     public static ReturnableMessage build(StreamPlayer carrier, String toParse, StreamSender user) {
-        ProxiedMessage r = new ProxiedMessage(carrier, false);
+        ProxiedMessage r = new ProxiedMessage(carrier, SLAPI.isProxy());
 
         r.setSubChannel(getSubChannel());
         r.write("user_uuid", user.getUuid());
@@ -38,9 +39,11 @@ public class ProxyParseMessageBuilder {
         String key = in.getString(ReturnableMessage.getKey());
 
 //        MessageUtils.logInfo("ProxiedMessage in > uuid = '" + uuid + "', parse = '" + parse + "', key = '" + key + "'.");
-        String parsed = ModuleUtils.replaceAllPlayerBungee(in.getString("user_uuid"), in.getString("parse"));
+        StreamSender sender = UserUtils.getOrCreateSender(uuid);
 
-        ProxiedMessage r = new ProxiedMessage(in.getCarrier(), true);
+        String parsed = ModuleUtils.replacePlaceholders(sender, parse);
+
+        ProxiedMessage r = new ProxiedMessage(in.getCarrier(), SLAPI.isProxy());
 
         r.setSubChannel(getSubChannel());
         r.write("user_uuid", uuid);

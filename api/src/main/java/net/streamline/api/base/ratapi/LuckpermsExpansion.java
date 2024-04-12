@@ -37,7 +37,7 @@ public class LuckpermsExpansion extends RATExpansion {
                     if (uuid == null) return s.string();
                 } catch (Exception e) {
                     // is console.
-                    return "";
+                    return s.string();
                 }
 
                 LuckPerms api = LuckPermsProvider.get();
@@ -61,7 +61,7 @@ public class LuckpermsExpansion extends RATExpansion {
                     if (uuid == null) return s.string();
                 } catch (Exception e) {
                     // is console.
-                    return "";
+                    return s.string();
                 }
 
                 LuckPerms api = LuckPermsProvider.get();
@@ -86,7 +86,7 @@ public class LuckpermsExpansion extends RATExpansion {
                     uuid = UUID.fromString(user.getUuid());
                 } catch (Exception e) {
                     // is console.
-                    return "";
+                    return s.string();
                 }
 
                 LuckPerms api = LuckPermsProvider.get();
