@@ -53,8 +53,7 @@ public class RATRegistry {
         return replacements.get(from);
     }
 
-    public static String
-    fetch(String from) {
+    public static String fetch(String from) {
         AtomicString result = new AtomicString(from);
         getReplacements().forEach((s, replacement) -> {
             if (replacement == null) return;

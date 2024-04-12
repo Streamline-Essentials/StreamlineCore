@@ -29,7 +29,6 @@ public class ProxyPluginMessenger implements ProxyMessenger {
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
-        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
         if (event.getMessage().getMainChannel().equals(SLAPI.getApiChannel())) {
             if (event.getMessage().getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
                 SingleSet<String, StreamlineResourcePack> set = ResourcePackMessageBuilder.unbuild(event.getMessage());

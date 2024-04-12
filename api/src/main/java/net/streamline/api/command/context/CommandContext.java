@@ -33,7 +33,7 @@ public class CommandContext<C extends StreamlineCommand> {
     }
 
     public boolean isArgUsable(int index) {
-        return args.stream().anyMatch(arg -> arg.getIndex() == index);
+        return args.stream().anyMatch(arg -> arg.getIndex() == index) && getArg(index).isUsable();
     }
 
     public boolean isConsole() {
@@ -61,7 +61,7 @@ public class CommandContext<C extends StreamlineCommand> {
     }
 
     public boolean isEmpty() {
-        return args.isEmpty();
+        return args.isEmpty() || isArgUsable(0);
     }
 
     public boolean hasArgs() {

@@ -14,19 +14,15 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Setter
 @Getter
 public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
-    @Setter
     private StreamlinePAPIExpansion papiExpansion;
 
     public PAPIDepend() {
         super("PlaceholderAPI", "PlaceholderAPI", "papi", "placeholderapi");
         if (isPresent()) {
-            tryLoad(() -> {
-                setApi(null);
-                setPapiExpansion(new StreamlinePAPIExpansion());
-                return null;
-            });
+            setPapiExpansion(new StreamlinePAPIExpansion());
         } else {
             MessageUtils.logInfo("Could not find PlaceholderAPI... Disabling support...!");
         }
@@ -43,8 +39,13 @@ public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
         }
 
         @Override
+        public boolean persist() {
+            return true;
+        }
+
+        @Override
         public @NotNull String getAuthor() {
-            return "Quaint";
+            return "Drak";
         }
 
         @Override

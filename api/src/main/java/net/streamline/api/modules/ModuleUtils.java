@@ -381,10 +381,6 @@ public class ModuleUtils {
         return SLAPI.getModuleScheduler();
     }
 
-    public static TaskManager getMainScheduler() {
-        return SLAPI.getMainScheduler();
-    }
-
     public static IStreamline.PlatformType getPlatformType() {
         return SLAPI.getInstance().getPlatform().getPlatformType();
     }

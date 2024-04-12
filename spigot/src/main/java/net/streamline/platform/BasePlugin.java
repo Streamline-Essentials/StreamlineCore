@@ -13,6 +13,7 @@ import net.streamline.api.interfaces.IProperEvent;
 import net.streamline.api.interfaces.IStreamline;
 import net.streamline.api.logging.StreamlineLogHandler;
 import net.streamline.api.objects.StreamlineResourcePack;
+import net.streamline.api.scheduler.TaskManager;
 import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.StorageUtils;
 import net.streamline.api.utils.UserUtils;
@@ -50,17 +51,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public abstract class BasePlugin extends JavaPlugin implements IStreamline {
-    public static class Runner implements Runnable {
-        public Runner() {
-            MessageUtils.logInfo("Task Runner registered!");
-        }
-
-        @Override
-        public void run() {
-            SLAPI.getMainScheduler().tick();
-        }
-    }
-
     @Getter
     private final PlatformType platformType = PlatformType.SPIGOT;
     @Getter
@@ -156,7 +146,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
         getSlapi().setProfiler(new SpigotProfiler());
 
-        getProxy().getScheduler().scheduleSyncRepeatingTask(this, new Runner(), 0, 1);
+        TaskManager.init();
 
         getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
@@ -172,6 +162,8 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
 
         this.disable();
         fireStopEvent();
+
+        TaskManager.stop();
     }
 
     public void fireStopEvent() {
