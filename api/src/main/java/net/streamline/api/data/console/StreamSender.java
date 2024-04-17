@@ -12,6 +12,7 @@ import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.interfaces.audiences.real.RealSender;
 import net.streamline.api.loading.Loadable;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.text.UsersReplacements;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.Date;
@@ -57,6 +58,9 @@ public class StreamSender implements Loadable<StreamPlayer> {
     @Setter
     private boolean loadComplete = false;
 
+    @Setter
+    private UsersReplacements replacements;
+
     public StreamSender(String uuid) {
         this.uuid = uuid;
 
@@ -71,6 +75,8 @@ public class StreamSender implements Loadable<StreamPlayer> {
         this.meta = new SenderMeta(this);
         this.leveling = new SenderLeveling(this);
         this.permissions = new SenderPermissions(this);
+
+        this.replacements = new UsersReplacements(getUuid());
 
         this.proxyTouched = SLAPI.isProxy();
     }
@@ -167,7 +173,15 @@ public class StreamSender implements Loadable<StreamPlayer> {
     }
 
     public RealSender<?> asReal() {
-        return SLAPI.getConsole();
+        if (this instanceof StreamPlayer) {
+            return ((StreamPlayer) this).asReal();
+        }
+
+        if (getUuid().equals(getConsoleDiscriminator())) {
+            return SLAPI.getConsole();
+        }
+
+        return SLAPI.getPlayerFromUuid(this.getUuid());
     }
 
     public StreamServer getServer() {

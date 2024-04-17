@@ -3,9 +3,14 @@ package net.streamline.api.messages.proxied;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
+import net.streamline.api.command.CommandMessageBuilder;
+import net.streamline.api.messages.builders.*;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.objects.SingleSet;
+import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.scheduler.BaseRunnable;
 import tv.quaint.utils.MathUtils;
 
@@ -46,13 +51,45 @@ public class ProxiedMessageManager {
     }
 
     public static void onProxiedMessageReceived(ProxiedMessage proxiedMessage) {
-        ProxyMessageInEvent event = new ProxyMessageInEvent(proxiedMessage);
-        ModuleUtils.fireEvent(event);
-
-        if (event.getMessage().isReturnableLike()) {
+        if (proxiedMessage.isReturnableLike()) {
             getLoadedReturnableMessaged().forEach((date, returnableMessage) -> {
-                returnableMessage.tryAnswer(event.getMessage());
+                returnableMessage.tryAnswer(proxiedMessage);
             });
+        }
+
+        if (proxiedMessage.getMainChannel().equals(SLAPI.getApiChannel())) {
+            if (proxiedMessage.getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
+                SingleSet<String, StreamlineResourcePack> set = ResourcePackMessageBuilder.unbuild(proxiedMessage);
+                StreamlineResourcePack resourcePack = set.getValue();
+
+                SLAPI.getInstance().getPlatform().sendResourcePack(resourcePack, set.getKey());
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) {
+                ServerInfoMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
+                PlayerLocationMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(TeleportMessageBuilder.getSubChannel())) {
+                TeleportMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
+                ServerConnectMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(CommandMessageBuilder.getSubChannel())) {
+                BaseModule.getInstance().logDebug("Handling a command message...");
+                CommandMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
+                ProxyParseMessageBuilder.handle(proxiedMessage);
+                return;
+            }
         }
     }
 

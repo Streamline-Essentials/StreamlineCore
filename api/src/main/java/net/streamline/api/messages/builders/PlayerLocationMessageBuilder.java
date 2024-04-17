@@ -37,10 +37,6 @@ public class PlayerLocationMessageBuilder {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + PlayerLocationMessageBuilder.class.getSimpleName() + "'.");
             return;
         }
-        if (! SLAPI.isProxy()) {
-            MessageUtils.logWarning("ProxyMessageIn for '" + PlayerLocationMessageBuilder.class.getSimpleName() + "' received on non-proxy server.");
-            return;
-        }
 
         String uuid = in.getString("user_uuid");
         String server = in.getString("server");

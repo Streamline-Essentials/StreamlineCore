@@ -14,6 +14,7 @@ import net.streamline.api.events.server.LoginCompletedEvent;
 import net.streamline.api.messages.builders.PlayerLocationMessageBuilder;
 import net.streamline.api.messages.events.ProxyMessageInEvent;
 import net.streamline.api.messages.proxied.ProxiedMessage;
+import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.objects.StreamlineTitle;
 import net.streamline.api.utils.MessageUtils;
 import tv.quaint.events.BaseEventHandler;
@@ -26,45 +27,6 @@ public class BaseListener implements BaseEventListener {
     public BaseListener() {
         BaseModule.getInstance().logInfo("Loaded " + getClass().getSimpleName());
         BaseEventHandler.bake(this, SLAPI.getInstance());
-    }
-
-    @BaseProcessor
-    public void onPlayerJoin(LoginCompletedEvent event) {
-        StreamSender user = event.getSender();
-        if (user.getUuid() == null) {
-            MessageUtils.logWarning("Could not pass a player to the UUID handler! This is very serious! Please let the Quaint (the author) know immediately.");
-            return;
-        }
-        if (! (user instanceof StreamPlayer)) return;
-        StreamPlayer player = (StreamPlayer) user;
-
-        Optional<UuidInfo> info = UuidManager.getUuid(user.getUuid());
-        if (info.isEmpty()) {
-            SLAPI.getMainDatabase().loadUuidInfo(user.getUuid()).whenComplete((uuidInfo, throwable) -> {
-                if (throwable != null) {
-                    MessageUtils.logWarning("Could not load UUID info for " + user.getUuid() + "!", throwable);
-                    return;
-                }
-                if (uuidInfo.isEmpty()) {
-                    UuidInfo u = new UuidInfo(player.getUuid(), player.getCurrentName(), player.getCurrentIp());
-                    u.register();
-                    u.save();
-                } else {
-
-                    UuidInfo u = uuidInfo.get();
-                    u.register();
-
-                    u.addName(player.getCurrentName());
-                    u.addIp(player.getCurrentIp());
-                }
-            });
-        } else {
-            UuidInfo u = info.get();
-            u.register();
-
-            u.addName(player.getCurrentName());
-            u.addIp(player.getCurrentIp());
-        }
     }
 
     @BaseProcessor
@@ -93,20 +55,8 @@ public class BaseListener implements BaseEventListener {
         if (event.getMessage() == null) return;
         if (event.getSubChannel() == null) return;
 
-        if (SLAPI.isProxy()) {
-            if (event.getSubChannel().equals(PlayerLocationMessageBuilder.getSubChannel())) {
-                PlayerLocationMessageBuilder.handle(event.getMessage());
-            }
-        }
-    }
+        MessageUtils.logDebug("Received message from " + event.getCarrier().getUuid() + " on " + event.getMessage().getMainChannel() + " with sub-channel " + event.getSubChannel() + ".");
 
-    @BaseProcessor
-    public void onProxiedMessage(ProxyMessageInEvent event) {
-        ProxiedMessage message = event.getMessage();
-        if (message.getSubChannel() == null) return;
-        if (message.getSubChannel().equals(CommandMessageBuilder.getSubChannel())) {
-            BaseModule.getInstance().logDebug("Handling a command message...");
-            CommandMessageBuilder.handle(message);
-        }
+        ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
     }
 }

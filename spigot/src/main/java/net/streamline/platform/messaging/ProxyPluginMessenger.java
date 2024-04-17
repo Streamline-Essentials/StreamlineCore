@@ -1,6 +1,7 @@
 package net.streamline.platform.messaging;
 
 import net.streamline.api.SLAPI;
+import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.messages.ProxyMessenger;
 import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
 import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
@@ -11,9 +12,14 @@ import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
+import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
@@ -23,32 +29,29 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-        new ArrayList<>(Streamline.getInstance().getProxy().getOnlinePlayers()).get(0)
-                .sendPluginMessage(Streamline.getInstance(), message.getMainChannel(), message.read());
+        StreamPlayer carrier = message.getCarrier();
+        if (carrier == null) {
+            Optional<StreamPlayer> optional = UserUtils.getOnlinePlayers().values().stream().findFirst();
+            if (optional.isEmpty()) {
+                ProxiedMessageManager.pendMessage(message);
+                return;
+            }
+
+            carrier = optional.get();
+            return;
+        }
+
+        Player player = Bukkit.getPlayer(UUID.fromString(carrier.getUuid()));
+        if (player == null) {
+            ProxiedMessageManager.pendMessage(message);
+            return;
+        }
+
+        player.sendPluginMessage(Streamline.getInstance(), message.getMainChannel(), message.read());
     }
 
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
-        if (event.getMessage().getMainChannel().equals(SLAPI.getApiChannel())) {
-            if (event.getMessage().getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
-                SingleSet<String, StreamlineResourcePack> set = ResourcePackMessageBuilder.unbuild(event.getMessage());
-                StreamlineResourcePack resourcePack = set.getValue();
-
-                Streamline.getInstance().sendResourcePack(resourcePack, set.getKey());
-            }
-            if (event.getMessage().getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) {
-                ServerInfoMessageBuilder.handle(event.getMessage());
-            }
-            if (event.getMessage().getSubChannel().equals(StreamPlayerMessageBuilder.getSubChannel())) {
-//                StreamPlayer proxiedPlayer = StreamPlayerMessageBuilder.unbuild(event.getMessage());
-//
-//                UserUtils.unloadUser(proxiedPlayer.getUuid());
-//                StreamPlayer player = new StreamPlayer(proxiedPlayer);
-//                UserUtils.loadUser(player);
-            }
-            if (event.getMessage().getSubChannel().equals(TeleportMessageBuilder.getSubChannel())) {
-                TeleportMessageBuilder.handle(event.getMessage());
-            }
-        }
+        // implemented else where.
     }
 }

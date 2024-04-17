@@ -162,22 +162,24 @@ public class Messenger implements IMessenger {
     }
 
     public BaseComponent[] codedText(String from) {
-        String raw = codedString(from);
-
-        // Assuming codedString is another method you've implemented to replace color codes etc.
-        String legacy = MessageUtils.codedString(raw);
+        String raw = from;
 
         List<BaseComponent> componentsList = new ArrayList<>();
 
         // Handle hex codes
         for (HexPolicy policy : TextManager.getHexPolicies()) {
-            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
+            for (String hexCode : TextManager.extractHexCodes(raw, policy)) {
                 String original = hexCode;
                 if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
                 String replacement = ChatColor.of(hexCode).toString();
-                legacy = legacy.replace(policy.getResult(original), replacement);
+                raw = raw.replace(policy.getResult(original), replacement);
             }
         }
+
+        raw = codedString(raw);
+
+        // Assuming codedString is another method you've implemented to replace color codes etc.
+        String legacy = MessageUtils.codedString(raw);
 
         List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 

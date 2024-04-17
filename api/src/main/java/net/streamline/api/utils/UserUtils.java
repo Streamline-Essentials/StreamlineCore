@@ -148,46 +148,12 @@ public class UserUtils {
         return (StreamPlayer) loadSender(player);
     }
 
-    public static StreamPlayer createNewPlayer(String uuid) {
-        StreamPlayer streamPlayer = new StreamPlayer(uuid);
-        streamPlayer.save();
-
-        CreateSenderEvent event = new CreateSenderEvent(streamPlayer);
-        ModuleUtils.fireEvent(event);
-
-        return loadPlayer(streamPlayer);
-    }
-
-    public static CompletableFuture<StreamPlayer> getOrCreatePlayerAsync(String uuid) {
-        return CompletableFuture.supplyAsync(() -> {
-            Optional<StreamPlayer> optional = SLAPI.getMainDatabase().loadPlayer(uuid).join();
-            StreamPlayer streamPlayer;
-            if (optional.isPresent()) {
-                streamPlayer = optional.get();
-                return loadPlayer(streamPlayer);
-            } else {
-                return createNewPlayer(uuid);
-            }
-        });
-    }
-
-    public static Optional<StreamSender> getOrLoadSender(String uuid) {
-        CompletableFuture.runAsync(() -> {
-            if (isLoaded(uuid)) return;
-
-            StreamPlayer player = getOrCreatePlayerAsync(uuid).join();
-            loadSender(player);
-        });
-
-        return getSender(uuid);
-    }
-
     public static StreamPlayer getOrCreatePlayer(StreamSender sender) {
         return getOrCreatePlayer(sender.getUuid());
     }
 
     public static StreamSender getOrCreateSender(String uuid) {
-        Optional<StreamSender> user = getOrLoadSender(uuid);
+        Optional<StreamSender> user = getSender(uuid);
         if (user.isPresent()) return user.get();
 
         if (uuid.equals(StreamSender.getConsoleDiscriminator())) {
@@ -404,6 +370,14 @@ public class UserUtils {
         if (uuid.isEmpty()) return Optional.empty();
 
         return Optional.of(getOrCreatePlayer(uuid.get()));
+    }
+
+    public static StreamPlayer getOrCreatePlayerByNameNullable(String name) {
+        return getOrCreatePlayerByName(name).orElse(null);
+    }
+
+    public static StreamSender getOrCreateSenderByNameNullable(String name) {
+        return getOrCreateSenderByName(name).orElse(null);
     }
 
     public static ConcurrentSkipListSet<StreamPlayer> getPlayersOn(String server) {

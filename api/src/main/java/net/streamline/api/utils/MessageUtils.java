@@ -1,5 +1,7 @@
 package net.streamline.api.utils;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -7,35 +9,23 @@ import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.messages.proxied.ProxiedMessage;
 import net.streamline.api.modules.ModuleLike;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.messages.builders.ProxyParseMessageBuilder;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.objects.SingleSet;
 import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class MessageUtils {
-    public static class CacheTimer extends BaseRunnable {
-        public CacheTimer() {
-            super(0, 10);
-        }
-
-        @Override
-        public void run() {
-            MessageUtils.getCache().clear();
-        }
-    }
-
-    @Getter @Setter
-    private static CacheTimer timer;
-
     public static void init() {
-        timer = new CacheTimer();
     }
 
     public static void logInfo(String message) {
@@ -222,17 +212,21 @@ public class MessageUtils {
         SLAPI.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
 
-    /**
-     * < UUID , < ToParse , Parsed > >
-     */
-    @Getter @Setter
-    private static ConcurrentSkipListMap<String, ConcurrentSkipListMap<String, String>> cache = new ConcurrentSkipListMap<>();
-
     public static String replaceAllPlayerBungee(StreamSender user, String of) {
         if (user == null) return of;
 
 //        return SLAPI.getRatAPI().parseAllPlaceholders(user, of).completeOnTimeout(of, 77, TimeUnit.MILLISECONDS).join();
-        return ModuleUtils.replacePlaceholders(user, of);
+
+        SingleSet<String, String> key = new SingleSet<>(user.getUuid(), of);
+        String cached = CACHE.getIfPresent(key);
+
+        if (cached != null) return cached;
+        else {
+            String parsed = ModuleUtils.replacePlaceholders(user, of);
+            CACHE.put(key, parsed);
+
+            return parsed;
+        }
     }
 
     public static String replaceAllPlayerBungee(String to, String of) {
@@ -241,94 +235,36 @@ public class MessageUtils {
         return replaceAllPlayerBungee(user, of);
     }
 
-    public static String parseOnProxyForNow(StreamPlayer StreamPlayer, String toParse) {
-        return parseOnProxyForNow(StreamPlayer, toParse, 2);
-    }
-
-    public static String parseOnProxyForNow(StreamSender streamSender, String toParse, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
-        return parseOnProxyForNow(streamSender, toParse, 1, maxIterations);
-    }
-
-    public static String parseOnProxyForNow(StreamSender streamSender, String toParse,
-                                      @Range(from = 1, to = Integer.MAX_VALUE) int iterations, @Range(from = 1, to = Integer.MAX_VALUE) int maxIterations) {
-        parseOnProxyForNowThenSet(streamSender, toParse);
-
-        if (iterations < maxIterations) {
-            return parseOnProxyForNow(streamSender, toParse, iterations + 1, maxIterations);
-        }
-        String parsed = getCachedValue(streamSender, toParse);
-        return parsed == null ? toParse : parsed;
-    }
-
-    public static void parseOnProxyForNowThenSet(StreamSender player, String toParse) {
-        StreamPlayer c;
-        if (player instanceof StreamPlayer) {
-            c = (StreamPlayer) player;
-        } else {
-            c = UserUtils.getLoadedPlayersSet().first();
-        }
-        ReturnableMessage message = ProxyParseMessageBuilder.build(c, toParse, player);
-        message.registerEventCall((pm) -> {
-            if (pm.getString(ReturnableMessage.getKey()).equals(message.getAnswerKey())) cacheValue(player, toParse, pm.getString("parsed"));
-        });
-    }
-
-    public static String parseOnProxyForNowLimited(StreamSender user, String toParse) {
-        return parseOnProxyForNow(user, toParse, 1);
-    }
-
-//    public static String parseOnProxy(String toParse) {
-//        return parseOnProxy(UserUtils.getConsole(), toParse);
-//    }
+    public static Cache<SingleSet<String, String>, String> CACHE = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(1))
+            .build();
 
     public static String parseOnProxy(StreamSender streamSender, String toParse) {
-//        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-//        final Future<String> future = executorService.submit(new ExpensiveProxyGet(StreamPlayer, toParse));
-//        try {
-//            return future.get();
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//            return toParse;
-//        }
-        return parseOnProxyForNowLimited(streamSender, toParse);
-    }
+        StreamPlayer player;
+        if (streamSender instanceof StreamPlayer) {
+            player = (StreamPlayer) streamSender;
+        } else {
+            try {
+                player = UserUtils.getLoadedPlayersSet().first();
+            } catch (Exception e) {
+                player = null;
+            }
+        }
+        if (player == null) {
+            streamSender.getReplacements().addReplacement(toParse, "&cNo Valid Proxy-able Player");
+        }
 
-    public static void cacheValue(String userUuid, String toParse, String parsedAs) {
-        if (userUuid == null) return;
+        ReturnableMessage message = ProxyParseMessageBuilder.build(player, toParse, streamSender);
 
-        ConcurrentSkipListMap<String, String> map = cache.get(userUuid);
-        if (map == null) map = new ConcurrentSkipListMap<>();
-        map.put(toParse, parsedAs);
-        cache.put(userUuid, map);
-    }
+        message.registerEventCall(m -> {
+            String parsed = ProxyParseMessageBuilder.parse(m);
 
-    public static String getCachedValue(String userUuid, String toParse) {
-        if (userUuid == null) return null;
+            streamSender.getReplacements().addReplacement(toParse, parsed);
+        });
 
-        ConcurrentSkipListMap<String, String> map = cache.get(userUuid);
-        if (map == null) return null;
+        message.send();
 
-        return map.get(toParse);
-    }
-
-    public static void cacheValue(StreamSender user, String toParse, String parsedAs) {
-        cacheValue(user.getUuid(), toParse, parsedAs);
-    }
-
-    public static String getCachedValue(StreamSender user, String toParse) {
-        return getCachedValue(user.getUuid(), toParse);
-    }
-
-    public static void uncacheValue(StreamSender user, String toParse) {
-        uncacheValue(user.getUuid(), toParse);
-    }
-
-    public static void uncacheValue(String userUuid, String toParse) {
-        ConcurrentSkipListMap<String, String> current = getCache().get(userUuid);
-        if (current == null) return;
-        current.remove(toParse);
-
-        getCache().put(userUuid, current);
+        return streamSender.getReplacements().getReplacement(toParse, "Loading...");
     }
 
     public static String getListAsFormattedString(List<?> list) {

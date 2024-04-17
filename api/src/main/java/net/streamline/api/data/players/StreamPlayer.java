@@ -95,6 +95,7 @@ public class StreamPlayer extends StreamSender {
         return SLAPI.getInstance().getUserManager().isOnline(this.getUuid());
     }
 
+    @Override
     public RealPlayer<?> asReal() {
         return SLAPI.getPlayerFromUuid(this.getUuid());
     }

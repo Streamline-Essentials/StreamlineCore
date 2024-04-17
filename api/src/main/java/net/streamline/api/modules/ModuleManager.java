@@ -264,10 +264,10 @@ public class ModuleManager {
     }
 
     public static void reapplyModule(String id) {
-        ModuleLike ModuleLike = getModule(id);
+        ModuleLike moduleLike = getModule(id);
 
         if (SLAPI.getBaseModule() != null) {
-            if (ModuleLike.equals(SLAPI.getBaseModule())) {
+            if (moduleLike.equals(SLAPI.getBaseModule())) {
                 SLAPI.getBaseModule().stop();
                 BaseModule module = new BaseModule();
                 SLAPI.setBaseModule(module);
@@ -281,13 +281,29 @@ public class ModuleManager {
             }
         }
 
-        BaseEventHandler.unbake(ModuleLike);
+        BaseEventHandler.unbake(moduleLike);
 
         Path path = safePluginManager().getPlugin(id).getPluginPath();
-        safePluginManager().stopPlugin(id);
-        safePluginManager().unloadPlugin(id);
-        safePluginManager().loadPlugin(path);
-        safePluginManager().startPlugin(id);
+        try {
+            safePluginManager().stopPlugin(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            safePluginManager().unloadPlugin(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            safePluginManager().loadPlugin(path);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            safePluginManager().startPlugin(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void restartModules() {
