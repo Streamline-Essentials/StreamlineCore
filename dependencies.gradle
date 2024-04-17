@@ -1,5 +1,6 @@
 ext {
     IMPL = [
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
@@ -8,6 +9,7 @@ ext {
             'mysql:mysql-connector-java:5.1.6',
     ]
     SHADOW = [
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
@@ -16,6 +18,7 @@ ext {
             'mysql:mysql-connector-java:5.1.6',
     ]
     ANNO = [
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',
@@ -23,6 +26,7 @@ ext {
     ]
     COMP_ONLY = [
             'net.luckperms:api:5.4',
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
             'org.projectlombok:lombok:1.18.30',

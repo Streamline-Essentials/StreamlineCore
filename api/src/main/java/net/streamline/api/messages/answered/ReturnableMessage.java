@@ -9,6 +9,7 @@ import net.streamline.api.modules.ModuleUtils;
 import net.streamline.api.scheduler.BaseRunnable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
@@ -27,8 +28,6 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
     private ProxiedMessage payload;
     @Getter
-    private boolean answered = false;
-    @Getter
     private boolean fired = false;
     @Getter
     private boolean called = false;
@@ -36,6 +35,8 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     private TimeoutTimer timeoutTimer;
     @Getter
     private ConcurrentSkipListMap<Integer, Consumer<ProxiedMessage>> registeredEvents = new ConcurrentSkipListMap<>();
+    @Getter
+    private Optional<ProxiedMessage> answer = Optional.empty();
 
     public ReturnableMessage(ProxiedMessage payload, boolean send) {
         this.payload = payload;
@@ -61,11 +62,14 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
         return false;
     }
 
-    public void acceptAnswer(ProxiedMessage message) {
-        setAnswered(true);
+    public boolean isAnswered() {
+        return answer.isPresent();
+    }
 
-        AnsweredMessageEvent event = new AnsweredMessageEvent(this, message);
-        ModuleUtils.fireEvent(event);
+    public void acceptAnswer(ProxiedMessage message) {
+        answer = Optional.of(message);
+
+        AnsweredMessageEvent event = new AnsweredMessageEvent(this, message).fire();
         if (event.isCancelled()) {
             return;
         }
@@ -109,9 +113,9 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
         return Long.compare(getPayload().getGottenAt().getTime(), o.getPayload().getGottenAt().getTime());
     }
 
+    @Setter
     @Getter
     public static class TimeoutTimer extends BaseRunnable {
-        @Setter
         private ReturnableMessage parent;
 
         public TimeoutTimer(ReturnableMessage returnableMessage) {

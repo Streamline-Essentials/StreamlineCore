@@ -55,10 +55,10 @@ public class PlaytimeCommand extends StreamlineCommand {
             return;
         }
 
-        String action = context.getStringArg(2);
+        String action = context.getStringArg(1);
         int amount = 0;
         try {
-            amount = Integer.parseInt(context.getStringArg(3));
+            amount = Integer.parseInt(context.getStringArg(2));
         } catch (Exception e) {
             e.printStackTrace();
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TYPE_NUMBER.get());

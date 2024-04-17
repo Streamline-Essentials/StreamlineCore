@@ -85,8 +85,6 @@ public class PlatformListener implements Listener {
 
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, MessageUtils.codedString(loginReceivedEvent.getResult().getDisconnectMessage()));
         }
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -106,8 +104,6 @@ public class PlatformListener implements Listener {
         setJoined(true);
 
         new TenSecondTimer(player);
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -138,8 +134,6 @@ public class PlatformListener implements Listener {
             return;
         }
         event.setMessage(chatEvent.getMessage());
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -158,8 +152,7 @@ public class PlatformListener implements Listener {
 
             try {
                 ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
-                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-                ModuleUtils.fireEvent(e);
+                ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn).fire();
                 if (e.isCancelled()) return;
                 SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
             } catch (Exception e) {

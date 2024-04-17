@@ -36,50 +36,26 @@ public class Messenger implements IMessenger {
     public void sendMessage(@Nullable CommandSender to, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            try {
-                to.spigot().sendMessage(codedText(message));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(message));
-            }
+            to.sendMessage(simplify(codedText(message)));
         } else {
-            try {
-                to.spigot().sendMessage(codedText(replaceAllPlayerBungee(to, message)));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(replaceAllPlayerBungee(to, message)));
-            }
+            to.sendMessage(simplify(codedText(replaceAllPlayerBungee(to, message))));
         }
     }
 
     public void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            try {
-                to.spigot().sendMessage(codedText(message));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(message));
-            }
+            to.sendMessage(simplify(codedText(message)));
         } else {
-            try {
-                to.spigot().sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
-            }
+            to.sendMessage(simplify(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message))));
         }
     }
     public void sendMessage(@Nullable CommandSender to, StreamSender other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
-            try {
-                to.spigot().sendMessage(codedText(message));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(message));
-            }
+            to.sendMessage(simplify(codedText(message)));
         } else {
-            try {
-                to.spigot().sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(other, message)));
-            } catch (NoSuchMethodError e) {
-                to.sendMessage(codedString(MessageUtils.replaceAllPlayerBungee(other, message)));
-            }
+            to.sendMessage(simplify(codedText(MessageUtils.replaceAllPlayerBungee(other, message))));
         }
     }
 
@@ -152,6 +128,10 @@ public class Messenger implements IMessenger {
         else sendMessageRaw(Bukkit.getConsoleSender(), other, message);
     }
 
+    public String simplify(BaseComponent... components) {
+        return TextComponent.fromArray(components).toLegacyText();
+    }
+
     public void sendTitle(StreamSender player, StreamlineTitle title) {
         Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
@@ -178,22 +158,24 @@ public class Messenger implements IMessenger {
     }
 
     public BaseComponent[] codedText(String from) {
-        String raw = codedString(from);
-
-        // Assuming codedString is another method you've implemented to replace color codes etc.
-        String legacy = MessageUtils.codedString(raw);
+        String raw = from;
 
         List<BaseComponent> componentsList = new ArrayList<>();
 
         // Handle hex codes
         for (HexPolicy policy : TextManager.getHexPolicies()) {
-            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
+            for (String hexCode : TextManager.extractHexCodes(raw, policy)) {
                 String original = hexCode;
                 if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
                 String replacement = ChatColor.of(hexCode).toString();
-                legacy = legacy.replace(policy.getResult(original), replacement);
+                raw = raw.replace(policy.getResult(original), replacement);
             }
         }
+
+        raw = codedString(raw);
+
+        // Assuming codedString is another method you've implemented to replace color codes etc.
+        String legacy = MessageUtils.codedString(raw);
 
         List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 

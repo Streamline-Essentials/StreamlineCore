@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.data.server.StreamServer;
 import net.streamline.api.messages.answered.ReturnableMessage;
 import net.streamline.api.objects.SingleSet;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +32,6 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
 
     @Setter
     private ConcurrentSkipListMap<String, String> literalContents = new ConcurrentSkipListMap<>();
-    @Setter
-    private String server = "lobby";
 
     public void setSubChannel(String subChannel) {
         write(getSubChannelKey(), subChannel);
@@ -263,5 +262,13 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     @Override
     public int compareTo(@NotNull ProxiedMessage o) {
         return Long.compare(getGottenAt().getTime(), o.getGottenAt().getTime());
+    }
+
+    public String getServerName() {
+        return getCarrier().getServerName();
+    }
+
+    public StreamServer getServer() {
+        return getCarrier().getServer();
     }
 }

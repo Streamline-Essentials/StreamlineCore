@@ -21,10 +21,19 @@ public class ProxyParseMessageBuilder {
         r.write("user_uuid", user.getUuid());
         r.write("parse", toParse);
 
-        return new ReturnableMessage(r);
+        return new ReturnableMessage(r, false);
+    }
+
+    public static String parse(ProxiedMessage answeredMessage) {
+        return answeredMessage.getString("parsed");
     }
 
     public static void handle(ProxiedMessage in) {
+        if (! SLAPI.isProxy()) {
+            MessageUtils.logDebug("Tried to handle a ProxiedMessage with sub-channel '" + in.getSubChannel() + "', but this is not a proxy.");
+            return;
+        }
+
         if (! in.getSubChannel().equals(getSubChannel())) {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + ServerConnectMessageBuilder.class.getSimpleName() + "'.");
             return;
@@ -51,6 +60,6 @@ public class ProxyParseMessageBuilder {
         r.write("parsed", parsed);
         r.write(ReturnableMessage.getKey(), key);
 
-        SLAPI.getInstance().getProxyMessenger().sendMessage(r);
+        r.send();
     }
 }

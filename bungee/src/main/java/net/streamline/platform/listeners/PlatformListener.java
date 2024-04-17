@@ -87,8 +87,6 @@ public class PlatformListener implements Listener {
             event.setCancelReason(Messenger.getInstance().codedText(loginReceivedEvent.getResult().getDisconnectMessage()));
             event.setCancelled(true);
         }
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -106,8 +104,6 @@ public class PlatformListener implements Listener {
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -130,8 +126,6 @@ public class PlatformListener implements Listener {
         StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setServerName(event.getServer().getInfo().getName());
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -147,8 +141,6 @@ public class PlatformListener implements Listener {
             return;
         }
         event.setMessage(chatEvent.getMessage());
-
-        streamPlayer.save();
     }
 
     @EventHandler
@@ -167,8 +159,7 @@ public class PlatformListener implements Listener {
 
         try {
             ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, false, event.getData(), tag);
-            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn);
-            ModuleUtils.fireEvent(e);
+            ProxyMessageInEvent e = new ProxyMessageInEvent(messageIn).fire();
             if (e.isCancelled()) return;
             SLAPI.getInstance().getProxyMessenger().receiveMessage(e);
         } catch (Exception e) {
