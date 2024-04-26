@@ -6,9 +6,12 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.configs.given.GivenConfigs;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.data.players.StreamPlayer;
+import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.utils.MessageUtils;
 import net.streamline.api.utils.UserUtils;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Getter @Setter
 public class CommandExecution {
@@ -50,16 +53,28 @@ public class CommandExecution {
         if (serverInput == null) {
             executeHere();
         } else {
-            if (serverInput.equals("HERE") || (SLAPI.isProxy() && (serverInput.equals("PROXY") || serverInput.equals("--null")))) {
+            if (
+                    serverInput.equals("HERE") ||
+                    (SLAPI.isProxy() && (serverInput.equals("PROXY") || serverInput.equals("--null")))
+            ) {
                 executeHere();
-                return;
+            } else {
+                executeServer(serverInput);
             }
-            executeServer(serverInput);
         }
     }
 
     public void executeHere() {
-        getSender().ifPresent(sender -> sender.runCommand(getCommand()));
+        Optional<StreamSender> optional = getSender();
+        if (optional.isEmpty()) return;
+        StreamSender s = optional.get();
+        if (s.isConsole()) {
+            MessageUtils.logDebug("Executing command " + getCommand() + " as " + getSenderValue() + " on console.");
+            ModuleUtils.getConsole().runCommand(getCommand());
+        } else {
+            MessageUtils.logDebug("Executing command " + getCommand() + " as " + getSenderValue() + " on " + s.getCurrentName() + ".");
+            s.runCommand(getCommand());
+        }
     }
 
     public void executeServer(String server) {
@@ -68,17 +83,29 @@ public class CommandExecution {
             try {
                 player = UserUtils.getPlayersOn(server).first();
             } catch (Exception e) {
+                e.printStackTrace();
                 return;
             }
         } else {
             try {
-                player = UserUtils.getLoadedPlayersSet().first();
+                AtomicReference<StreamPlayer> ref = new AtomicReference<>();
+                UserUtils.getOnlinePlayers().forEach((s, p) -> {
+                    if (ref.get() != null) return;
+
+                    if (p.isOnline()) ref.set(p);
+                });
+
+                player = ref.get();
             } catch (Exception e) {
+                e.printStackTrace();
                 return;
             }
         }
 
-        if (player == null) return;
+        if (player == null) {
+            MessageUtils.logDebug("No player found on server " + server + " to execute command " + getCommand() + " as " + getSenderValue() + ".");
+            return;
+        }
         CommandMessageBuilder.build(player, server, this).send();
     }
 }

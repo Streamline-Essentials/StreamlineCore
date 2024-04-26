@@ -172,8 +172,6 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
     private static UserSyncTimer userSyncTimer;
     @Getter
     private static UserEnsureTimer userEnsureTimer;
-    @Getter
-    private static UpdateCheckerTimer updateCheckerTimer;
 
     @Getter
     private static ModuleTaskManager moduleScheduler;
@@ -255,7 +253,6 @@ public class SLAPI<C, P extends C, S extends IStreamline, U extends IUserManager
         playerExperienceTimer = new PlayerExperienceTimer();
         userSyncTimer = new UserSyncTimer();
         userEnsureTimer = new UserEnsureTimer();
-        updateCheckerTimer = new UpdateCheckerTimer();
         ProxiedMessageManager.init();
 
         setBaseModule(new BaseModule());

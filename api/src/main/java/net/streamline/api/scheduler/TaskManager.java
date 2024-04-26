@@ -29,7 +29,11 @@ public class TaskManager {
 
     public static void tick() {
         for (BaseRunnable runnable : currentRunnables.values()) {
-            runnable.tick();
+            try {
+                runnable.tick();
+            } catch (Throwable e) {
+                MessageUtils.logDebug("Error while ticking runnable: " + runnable, e);
+            }
         }
     }
 
