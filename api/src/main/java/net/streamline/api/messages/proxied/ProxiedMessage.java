@@ -204,7 +204,11 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
     }
 
     public List<String> getStringList(String key, String separator) {
-        return Arrays.stream(getString(key).split(separator)).collect(Collectors.toList());
+        String s = getString(key);
+        if (s == null) return new ArrayList<>();
+        return Arrays.stream(
+                    s.split(MatcherUtils.makeLiteral(separator))
+                ).collect(Collectors.toList());
     }
 
     public List<String> getStringList(String key) {

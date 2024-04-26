@@ -65,6 +65,14 @@ public class ProxiedMessageManager {
                 SLAPI.getInstance().getPlatform().sendResourcePack(resourcePack, set.getKey());
                 return;
             }
+            if (proxiedMessage.getSubChannel().equals(CommandMessageBuilder.getSubChannel())) {
+                CommandMessageBuilder.handle(proxiedMessage);
+                return;
+            }
+            if (proxiedMessage.getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
+                ProxyParseMessageBuilder.handle(proxiedMessage);
+                return;
+            }
             if (proxiedMessage.getSubChannel().equals(ServerInfoMessageBuilder.getSubChannel())) {
                 ServerInfoMessageBuilder.handle(proxiedMessage);
                 return;
@@ -79,15 +87,6 @@ public class ProxiedMessageManager {
             }
             if (proxiedMessage.getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
                 ServerConnectMessageBuilder.handle(proxiedMessage);
-                return;
-            }
-            if (proxiedMessage.getSubChannel().equals(CommandMessageBuilder.getSubChannel())) {
-                BaseModule.getInstance().logDebug("Handling a command message...");
-                CommandMessageBuilder.handle(proxiedMessage);
-                return;
-            }
-            if (proxiedMessage.getSubChannel().equals(ProxyParseMessageBuilder.getSubChannel())) {
-                ProxyParseMessageBuilder.handle(proxiedMessage);
                 return;
             }
         }

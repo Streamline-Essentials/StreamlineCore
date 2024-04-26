@@ -3,18 +3,16 @@ package net.streamline.api.scheduler;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.modules.ModuleUtils;
+import net.streamline.api.utils.MessageUtils;
 
 import java.util.Date;
 
+@Setter
 @Getter
 public abstract class BaseRunnable implements Runnable {
-    @Setter
     private Date startedAt;
-    @Setter
     private long currentTickCount;
-    @Setter
     private long period;
-    @Setter
     private int index;
 
     /**
@@ -35,7 +33,11 @@ public abstract class BaseRunnable implements Runnable {
     public void tick() {
         if (this.currentTickCount >= this.period) {
             this.currentTickCount = 0;
-            this.run();
+            try {
+                this.run();
+            } catch (Throwable e) {
+                MessageUtils.logDebug("Error while ticking runnable: " + this, e);
+            }
         }
 
         this.currentTickCount ++;

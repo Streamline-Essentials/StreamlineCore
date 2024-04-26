@@ -32,20 +32,12 @@ public class CommandMessageBuilder {
         String command = in.getString("command");
         String as = in.getString("as");
 
-        if (server == null || command == null || as == null) return;
+        if (server == null || command == null || as == null) {
+            MessageUtils.logWarning("Received a command message with null values: " + in);
+            return;
+        }
 
         CommandExecution execution = new CommandExecution(as, command);
-
-        if (SLAPI.isProxy()) {
-            if (server.equals("PROXY") || server.equals("--null")) {
-                execution.executeHere();
-            } else {
-                StreamPlayer player = UserUtils.getPlayersOn(server).first();
-                if (player == null) return;
-                CommandMessageBuilder.build(player, server, execution).send();
-            }
-        } else {
-            execution.executeHere();
-        }
+        execution.execute(server);
     }
 }

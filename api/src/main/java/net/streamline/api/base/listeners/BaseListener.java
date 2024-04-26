@@ -55,8 +55,6 @@ public class BaseListener implements BaseEventListener {
         if (event.getMessage() == null) return;
         if (event.getSubChannel() == null) return;
 
-        MessageUtils.logDebug("Received message from " + event.getCarrier().getUuid() + " on " + event.getMessage().getMainChannel() + " with sub-channel " + event.getSubChannel() + ".");
-
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
     }
 }

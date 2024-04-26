@@ -1,7 +1,6 @@
 package net.streamline.api.database;
 
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -11,12 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.upkeep.UpkeepData;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.uuid.UuidInfo;
-import net.streamline.api.database.servers.SavedServer;
-import net.streamline.api.interfaces.IStreamline;
 
 public class CoreDBOperator extends DBOperator {
     @Getter @Setter
@@ -226,8 +221,6 @@ public class CoreDBOperator extends DBOperator {
                     }
                 });
             }
-
-            pushUpkeep(player).join();
 
             return true;
         });
@@ -495,134 +488,6 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return uuids.get();
-        });
-    }
-
-    public CompletableFuture<Boolean> pushUpkeep(StreamPlayer player) {
-        return CompletableFuture.supplyAsync(() -> {
-            putServer().join();
-
-            ensureUsable();
-
-            String s1 = Statements.getStatement(Statements.StatementType.PUSH_UPKEEP, this.getConnectorSet());
-            if (s1 == null) return false;
-            if (s1.isBlank() || s1.isEmpty()) return false;
-
-            this.execute(s1, stmt -> {
-                try {
-                    stmt.setLong(1, System.currentTimeMillis());
-                    stmt.setString(2, player.getUuid());
-                    stmt.setString(3, SLAPI.getServerUuid());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            return true;
-        });
-    }
-
-    public CompletableFuture<Optional<UpkeepData>> pullUpkeep(String uuid) {
-        return CompletableFuture.supplyAsync(() -> {
-            ensureUsable();
-
-            String s1 = Statements.getStatement(Statements.StatementType.PULL_UPKEEP, this.getConnectorSet());
-            if (s1 == null) return Optional.empty();
-            if (s1.isBlank() || s1.isEmpty()) return Optional.empty();
-
-            s1 = s1.replace("%uuid%", uuid);
-
-            AtomicReference<Optional<UpkeepData>> upkeep = new AtomicReference<>(Optional.empty());
-            this.executeQuery(s1, stmt -> {
-                try {
-                    stmt.setString(1, uuid);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, rs -> {
-                try {
-                    if (rs.next()) {
-                        long savedAt = rs.getLong("SavedAt");
-                        String serverUuid = rs.getString("ServerUuid");
-
-                        Date date = new Date(savedAt);
-
-                        UpkeepData data = new UpkeepData(uuid, date, serverUuid);
-
-                        upkeep.set(Optional.of(data));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            return upkeep.get();
-        });
-    }
-
-    public CompletableFuture<Boolean> putServer() {
-        String serverUuid = SLAPI.getServerUuid();
-        String serverName = SLAPI.getServerName();
-        String serverType = SLAPI.getInstance().getPlatform().getServerType().name();
-
-        return CompletableFuture.supplyAsync(() -> {
-            ensureUsable();
-
-            String s1 = Statements.getStatement(Statements.StatementType.PUT_SERVER, this.getConnectorSet());
-            if (s1 == null) return false;
-            if (s1.isBlank() || s1.isEmpty()) return false;
-
-            this.execute(s1, stmt -> {
-                try {
-                    stmt.setString(1, serverUuid);
-                    stmt.setString(2, serverName);
-                    stmt.setString(3, serverType);
-
-                    if (getType() == DatabaseType.MYSQL) {
-                        stmt.setString(4, serverName);
-                        stmt.setString(5, serverType);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            return true;
-        });
-    }
-
-    public CompletableFuture<ConcurrentSkipListSet<SavedServer>> getAllServers() {
-        return CompletableFuture.supplyAsync(() -> {
-            ensureUsable();
-
-            String s1 = Statements.getStatement(Statements.StatementType.PULL_ALL_SERVERS, this.getConnectorSet());
-            if (s1 == null) return new ConcurrentSkipListSet<>();
-            if (s1.isBlank() || s1.isEmpty()) return new ConcurrentSkipListSet<>();
-
-            AtomicReference<ConcurrentSkipListSet<SavedServer>> servers = new AtomicReference<>(new ConcurrentSkipListSet<>());
-            this.executeQuery(s1, stmt -> {}, rs -> {
-                try {
-                    while (rs.next()) {
-                        try {
-                            String serverUuid = rs.getString("Uuid");
-                            String serverName = rs.getString("Name");
-                            String serverType = rs.getString("Type");
-
-                            IStreamline.ServerType type = IStreamline.ServerType.valueOf(serverType);
-
-                            SavedServer server = new SavedServer(serverUuid, serverName, type);
-
-                            servers.get().add(server);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            return servers.get();
         });
     }
 }
