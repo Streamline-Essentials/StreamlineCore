@@ -36,3 +36,7 @@ dependencies {
     // Files.
     compileOnly(files(FILES))
 }
+
+tasks.named("compileJava").configure {
+    dependsOn(":StreamlineCore-API:jar")
+}

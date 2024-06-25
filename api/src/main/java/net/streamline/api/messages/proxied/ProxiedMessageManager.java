@@ -34,6 +34,9 @@ public class ProxiedMessageManager {
     }
 
     public static void unloadReturnableMessage(ReturnableMessage returnableMessage) {
+        if (returnableMessage.getTimeoutTimer() != null) {
+            returnableMessage.getTimeoutTimer().cancel();
+        }
         getLoadedReturnableMessaged().remove(returnableMessage.getPayload().getGottenAt());
     }
 
@@ -52,9 +55,11 @@ public class ProxiedMessageManager {
 
     public static void onProxiedMessageReceived(ProxiedMessage proxiedMessage) {
         if (proxiedMessage.isReturnableLike()) {
-            getLoadedReturnableMessaged().forEach((date, returnableMessage) -> {
-                returnableMessage.tryAnswer(proxiedMessage);
-            });
+            if (proxiedMessage.isReturnableLike()) {
+                getLoadedReturnableMessaged().forEach((date, returnableMessage) -> {
+                    returnableMessage.tryAnswer(proxiedMessage);
+                });
+            }
         }
 
         if (proxiedMessage.getMainChannel().equals(SLAPI.getApiChannel())) {

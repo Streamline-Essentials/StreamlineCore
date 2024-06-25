@@ -7,6 +7,8 @@ import net.streamline.api.command.context.CommandArgument;
 import net.streamline.api.command.context.CommandContext;
 import net.streamline.api.command.result.CommandResult;
 import net.streamline.api.configs.CommandResource;
+import net.streamline.api.configs.given.GivenConfigs;
+import net.streamline.api.configs.given.MainMessagesHandler;
 import net.streamline.api.data.console.StreamSender;
 import net.streamline.api.events.command.CommandResultedEvent;
 import net.streamline.api.modules.ModuleUtils;
@@ -57,6 +59,11 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     public CommandResult<?> baseRun(StreamSender sender, @Nullable String[] args) {
+        if (! sender.hasPermission(getPermission())) {
+            sender.sendMessage(MainMessagesHandler.MESSAGES.INVALID.PERMISSIONS.get());
+            return CommandResult.Failure.get();
+        }
+
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
@@ -89,6 +96,8 @@ public abstract class StreamlineCommand implements Comparable<StreamlineCommand>
     }
 
     public ConcurrentSkipListSet<String> baseTabComplete(StreamSender sender, @Nullable String[] args) {
+        if (! sender.hasPermission(getPermission())) return new ConcurrentSkipListSet<>();
+
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
         return doTabComplete(new CommandContext<>(sender, this, notSet(), args));
