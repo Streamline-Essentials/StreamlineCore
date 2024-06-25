@@ -19,9 +19,9 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
     @Getter
     private static final String key = "{{key}}";
     @Getter
-    private static final int timeoutTicks = 200;
+    private static final int timeoutTicks = 60;
     @Getter
-    private static final int testingTicks = 40;
+    private static final int testingTicks = 1;
 
     @Getter
     private String answerKey;
@@ -79,6 +79,8 @@ public class ReturnableMessage implements Comparable<ReturnableMessage> {
 
         callEvents(message);
         setCalled(true);
+
+        killNow();
     }
 
     public void fire(ProxiedMessage message) {

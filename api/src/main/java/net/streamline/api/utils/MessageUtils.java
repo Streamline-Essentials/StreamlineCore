@@ -358,7 +358,12 @@ public class MessageUtils {
     }
 
     public static String codedString(String text){
-        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text))).replace("&", "§");
+        return formatted(newLined(SLAPI.getInstance().getMessenger().codedString(text)));
+    }
+
+    public static String replaceAmpersand(String text) {
+        String regex = "((&)([0-9a-fklmnor]))";
+        return text.replaceAll(regex, "§$3");
     }
 
     public static String formatted(String string) {

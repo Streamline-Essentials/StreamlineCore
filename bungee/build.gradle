@@ -14,3 +14,7 @@ dependencies {
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 }
+
+tasks.named("compileJava").configure {
+    dependsOn(":StreamlineCore-API:jar")
+}

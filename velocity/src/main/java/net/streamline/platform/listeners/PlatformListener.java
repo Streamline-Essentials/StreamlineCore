@@ -177,7 +177,8 @@ public class PlatformListener {
     public void onPing(ProxyPingEvent event) {
         ServerPing ping = event.getPing();
 
-        PingedResponse.Protocol protocol = new PingedResponse.Protocol(ping.getVersion().getName(), ping.getVersion().getProtocol());
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol(
+                ModuleUtils.replacePlaceholders(ping.getVersion().getName()), ping.getVersion().getProtocol());
         PingedResponse.Players players;
         List<PingedResponse.PlayerInfo> infos = new ArrayList<>();
         if (ping.getPlayers().isPresent()) {
@@ -213,14 +214,14 @@ public class PlatformListener {
         ServerPing.SamplePlayer[] infosServer = new ServerPing.SamplePlayer[pingReceivedEvent.getResponse().getPlayers().getSample().length];
         for (int i = 0; i < pingReceivedEvent.getResponse().getPlayers().getSample().length; i++) {
             PingedResponse.PlayerInfo info = pingReceivedEvent.getResponse().getPlayers().getSample()[i];
-            infosServer[i] = new ServerPing.SamplePlayer(info.getName(), info.getUniqueId());
+            infosServer[i] = new ServerPing.SamplePlayer(MessageUtils.replaceAmpersand(ModuleUtils.replacePlaceholders(info.getName())), info.getUniqueId());
         }
 
         builder.samplePlayers(infosServer);
         builder.onlinePlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
         builder.maximumPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
 
-        builder.description(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription()));
+        builder.description(Messenger.getInstance().codedText(ModuleUtils.replacePlaceholders(pingReceivedEvent.getResponse().getDescription())));
 
         try {
             Favicon favicon = Favicon.create(Paths.get(pingReceivedEvent.getResponse().getFavicon().getEncoded()));
