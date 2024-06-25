@@ -102,7 +102,7 @@ subprojects {
             )
         }
 
-        relocate('tv.quaint.thebase.lib', 'net.streamline.thebase.lib')
+//        relocate('tv.quaint.thebase.lib', 'net.streamline.thebase.lib') // broken in 1.21-R0.1-SNAPSHOT
 
         archiveFileName = project.name + '-' + project.version + '.jar'
 
