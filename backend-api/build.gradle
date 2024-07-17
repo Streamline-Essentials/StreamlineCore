@@ -20,6 +20,7 @@ dependencies {
 
     // Defaults.
     annotationProcessor(ANNO)
+    shadow(implementation(compileOnly(files(SH_FILES))))
     compileOnly(COMP_ONLY)
 
     // Other Plugins

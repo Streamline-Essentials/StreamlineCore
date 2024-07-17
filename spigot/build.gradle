@@ -4,6 +4,7 @@ dependencies {
 
     // Defaults.
     compileOnly(files(FILES))
+    shadow(implementation(compileOnly(files(SH_FILES))))
     annotationProcessor(ANNO)
     compileOnly(COMP_ONLY)
 
