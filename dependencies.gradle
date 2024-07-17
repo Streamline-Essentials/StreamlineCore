@@ -38,9 +38,9 @@ ext {
             'org.geysermc.floodgate:api:2.2.2-SNAPSHOT',
     ]
     FILES = [
-//            rootProject.rootDir.getPath().toString() + 'impl/sqlite-jdbc.jar'
+//            rootProject.rootDir.getPath().toString() + '/impl/sqlite-jdbc.jar' // not needed
     ]
     SH_FILES = [
-            'implement/UniversalScheduler.jar',
+            rootProject.rootDir.getPath().toString() + '/implement/UniversalScheduler.jar',
     ]
 }

@@ -42,8 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
