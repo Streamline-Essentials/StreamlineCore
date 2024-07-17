@@ -11,14 +11,10 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 @Getter @Setter
 public abstract class DBOperator {
@@ -31,9 +27,6 @@ public abstract class DBOperator {
     public DBOperator(ConnectorSet connectorSet, String pluginUser) {
         this.connectorSet = connectorSet;
         this.pluginUser = pluginUser;
-
-//        this.connectionMap = new ConcurrentSkipListMap<>();
-//        this.connectionTimers = new ConcurrentSkipListMap<>();
 
         this.dataSource = buildDataSource();
     }
@@ -55,23 +48,21 @@ public abstract class DBOperator {
         }
         config.setPoolName(pluginUser + " - Pool");
         config.setMaximumPoolSize(10);
+        config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);
-        config.setIdleTimeout(600000);
-        config.setMaxLifetime(1800000);
+        config.setIdleTimeout(30000);
+        config.setMaxLifetime(30000);
         config.setDriverClassName(connectorSet.getType().getDriver());
-        config.addDataSourceProperty("allowMultiQueries", true);
 
         dataSource = new HikariDataSource(config);
         return dataSource;
     }
 
-    public Connection getConnection(Date qStart) {
+    public Connection getConnection() {
         try {
             if (dataSource == null) {
                 dataSource = buildDataSource();
             }
-
-//            Connection rawConnection = getConnectionMap().get(qStart);
 
             if (rawConnection != null && ! rawConnection.isClosed()) {
                 return rawConnection;
@@ -94,8 +85,7 @@ public abstract class DBOperator {
         AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
 
         try {
-            Date qStart = new Date();
-            Connection connection = getConnection(qStart);
+            Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(statement);
 
             statementBuilder.accept(stmt);
@@ -126,8 +116,7 @@ public abstract class DBOperator {
 
     public void executeQuery(String statement, Consumer<PreparedStatement> statementBuilder, DBAction action) {
         try {
-            Date qStart = new Date();
-            Connection connection = getConnection(qStart);
+            Connection connection = getConnection();
             PreparedStatement stmt = connection.prepareStatement(statement);
 
             statementBuilder.accept(stmt);

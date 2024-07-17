@@ -40,4 +40,7 @@ ext {
     FILES = [
 //            rootProject.rootDir.getPath().toString() + 'impl/sqlite-jdbc.jar'
     ]
+    SH_FILES = [
+            'implement/UniversalScheduler.jar',
+    ]
 }

@@ -1,5 +1,6 @@
 package net.streamline.base;
 
+import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
 import lombok.Getter;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.players.location.PlayerLocation;
@@ -20,11 +21,11 @@ import java.util.concurrent.CompletableFuture;
 @Getter
 public class TenSecondTimer implements Runnable {
     final Player player;
-    final int taskId;
+    final MyScheduledTask task;
 
     public TenSecondTimer(Player player) {
         this.player = player;
-        this.taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(Streamline.getInstance(), this, 20 * 2, 20 * 10);
+        this.task = Streamline.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 10);
     }
 
     @Override
@@ -49,11 +50,11 @@ public class TenSecondTimer implements Runnable {
 
     public boolean checkPlayer() {
         if (player == null) {
-            Bukkit.getScheduler().cancelTask(taskId);
+            task.cancel();
             return false;
         }
         if (! player.isOnline()) {
-            Bukkit.getScheduler().cancelTask(taskId);
+            task.cancel();
             return false;
         }
         return true;

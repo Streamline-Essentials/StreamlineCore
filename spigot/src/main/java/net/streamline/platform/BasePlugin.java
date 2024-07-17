@@ -1,5 +1,7 @@
 package net.streamline.platform;
 
+import com.github.Anon8281.universalScheduler.UniversalScheduler;
+import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -83,9 +85,14 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     @Getter
     private PlayerInterface playerInterface;
 
+    @Getter @Setter
+    private static TaskScheduler scheduler;
+
     @Override
     public void onLoad() {
         instance = this;
+
+        scheduler = UniversalScheduler.getScheduler(this);
 
         setupProperties();
 

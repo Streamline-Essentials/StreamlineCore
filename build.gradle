@@ -104,6 +104,8 @@ subprojects {
 
 //        relocate('tv.quaint.thebase.lib', 'net.streamline.thebase.lib') // broken in 1.21-R0.1-SNAPSHOT
 
+        relocate('com.github.Anon8281.universalScheduler', 'net.streamline.libs.universalScheduler')
+
         archiveFileName = project.name + '-' + project.version + '.jar'
 
 //        minimize()

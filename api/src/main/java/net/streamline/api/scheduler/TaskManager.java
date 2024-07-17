@@ -2,7 +2,6 @@ package net.streamline.api.scheduler;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
 import net.streamline.api.utils.MessageUtils;
 
 import javax.swing.*;
