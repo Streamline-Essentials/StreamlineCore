@@ -3,44 +3,29 @@ ext {
             'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
-            'org.projectlombok:lombok:1.18.30',
             'commons-codec:commons-codec:1.5',
-            'org.xerial:sqlite-jdbc:3.45.1.0',
-            'mysql:mysql-connector-java:5.1.6',
     ]
     SHADOW = [
             'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
             'org.pf4j:pf4j:3.10.0',
-            'org.projectlombok:lombok:1.18.30',
             'commons-codec:commons-codec:1.5',
-            'org.xerial:sqlite-jdbc:3.45.1.0',
-            'mysql:mysql-connector-java:5.1.6',
     ]
     ANNO = [
             'com.github.ben-manes.caffeine:caffeine:3.1.8',
             'com.github.server-utilities:TheBase:master-SNAPSHOT',
-            'org.pf4j:pf4j:3.10.0',
-            'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5',
+            'org.pf4j:pf4j:3.10.0'
     ]
     COMP_ONLY = [
-            'net.luckperms:api:5.4',
-            'com.github.ben-manes.caffeine:caffeine:3.1.8',
-            'com.github.server-utilities:TheBase:master-SNAPSHOT',
-            'org.pf4j:pf4j:3.10.0',
-            'org.projectlombok:lombok:1.18.30',
-            'commons-codec:commons-codec:1.5',
     ]
     OTHER_PLUGINS = [
+            'net.luckperms:api:5.4',
             'me.clip:placeholderapi:2.11.5',
             'org.geysermc.geyser:api:2.2.0-SNAPSHOT',
             'org.geysermc.floodgate:api:2.2.2-SNAPSHOT',
+            'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
     ]
     FILES = [
 //            rootProject.rootDir.getPath().toString() + '/impl/sqlite-jdbc.jar' // not needed
-    ]
-    SH_FILES = [
-            rootProject.rootDir.getPath().toString() + '/implement/UniversalScheduler.jar',
     ]
 }

@@ -1,33 +1,17 @@
-repositories {
-    jcenter()
-    mavenCentral()
-    mavenLocal()
-    // OpenCollab
-    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
-    maven { url 'https://repo.opencollab.dev/maven-releases/'}
-    // JitPack
-    maven { url 'https://jitpack.io' }
-    maven { url 'https://mvnrepository.com/artifact' }
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url 'https://oss.sonatype.org/content/repositories/central' }
-    maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
-}
-
 dependencies {
     // Platform Backend.
-    compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly 'org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT'
 
     // Defaults.
+    compileOnly(files(FILES))
     annotationProcessor(ANNO)
-    shadow(implementation(compileOnly(files(SH_FILES))))
     compileOnly(COMP_ONLY)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
     // Inventories.
-    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.11'
+    implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')
 
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')

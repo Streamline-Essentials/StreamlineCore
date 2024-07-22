@@ -1,6 +1,6 @@
 package net.streamline.base;
 
-import com.github.Anon8281.universalScheduler.scheduling.tasks.MyScheduledTask;
+import host.plas.bou.libs.universalScheduler.scheduling.tasks.MyScheduledTask;
 import lombok.Getter;
 import net.streamline.api.data.players.StreamPlayer;
 import net.streamline.api.data.players.location.PlayerLocation;
@@ -14,9 +14,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Getter
 public class TenSecondTimer implements Runnable {

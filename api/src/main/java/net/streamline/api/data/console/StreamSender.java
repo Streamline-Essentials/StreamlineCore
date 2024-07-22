@@ -112,7 +112,10 @@ public class StreamSender implements Loadable<StreamPlayer> {
 
         CompletableFuture.runAsync(() -> {
             Optional<StreamPlayer> optional = future.join();
-            if (optional.isEmpty()) return;
+            if (optional.isEmpty()) {
+                loadComplete = true;
+                return;
+            }
             StreamPlayer sender = optional.get();
 
             setUuid(sender.getUuid());
