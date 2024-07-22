@@ -50,7 +50,7 @@ public class UserUtils {
     }
 
     public static void loadConsole() {
-        if (! hasConsole()) console = new StreamSender();
+        if (! hasConsole()) console = createSender();
     }
 
     public static boolean hasConsole() {
@@ -152,6 +152,24 @@ public class UserUtils {
         return getOrCreatePlayer(sender.getUuid());
     }
 
+    public static StreamSender createSender() {
+        StreamSender console = new StreamSender();
+        ModuleUtils.fireEvent(new CreateSenderEvent(console));
+        return console;
+    }
+
+    public static StreamSender createSender(String uuid) {
+        StreamSender sender = new StreamSender(uuid);
+        ModuleUtils.fireEvent(new CreateSenderEvent(sender));
+        return sender;
+    }
+
+    public static StreamPlayer createPlayer(String uuid) {
+        StreamPlayer player = new StreamPlayer(uuid);
+        ModuleUtils.fireEvent(new CreateSenderEvent(player));
+        return player;
+    }
+
     public static StreamSender getOrCreateSender(String uuid) {
         Optional<StreamSender> user = getSender(uuid);
         if (user.isPresent()) return user.get();
@@ -162,7 +180,7 @@ public class UserUtils {
 
         CompletableFuture<Optional<StreamPlayer>> loader = SLAPI.getMainDatabase().loadPlayer(uuid);
 
-        StreamPlayer player = new StreamPlayer(uuid).augment(loader);
+        StreamPlayer player = createPlayer(uuid).augment(loader);
 
         return loadPlayer(player);
     }
@@ -173,7 +191,7 @@ public class UserUtils {
 
         CompletableFuture<Optional<StreamPlayer>> loader = SLAPI.getMainDatabase().loadPlayer(uuid);
 
-        StreamPlayer player = new StreamPlayer(uuid).augment(loader);
+        StreamPlayer player = createPlayer(uuid).augment(loader);
 
         return loadPlayer(player);
     }

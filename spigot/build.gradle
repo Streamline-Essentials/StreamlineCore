@@ -4,13 +4,12 @@ dependencies {
 
     // Defaults.
     compileOnly(files(FILES))
-    shadow(implementation(compileOnly(files(SH_FILES))))
     annotationProcessor(ANNO)
     compileOnly(COMP_ONLY)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
-    implementation 'com.github.hamza-cskn.obliviate-invs:core:4.1.12'
+    implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')
 
     // Streamline API.
     implementation project(path: ':StreamlineCore-API')

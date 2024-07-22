@@ -1,7 +1,8 @@
 package net.streamline.platform;
 
-import com.github.Anon8281.universalScheduler.UniversalScheduler;
-import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
+import host.plas.bou.PluginBase;
+import host.plas.bou.libs.universalScheduler.UniversalScheduler;
+import host.plas.bou.libs.universalScheduler.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -50,7 +51,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class BasePlugin extends JavaPlugin implements IStreamline {
+public abstract class BasePlugin extends PluginBase implements IStreamline {
     @Getter
     private final PlatformType platformType = PlatformType.SPIGOT;
     @Getter
@@ -87,7 +88,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     private static TaskScheduler scheduler;
 
     @Override
-    public void onLoad() {
+    public void onBaseConstruct() {
         instance = this;
 
         scheduler = UniversalScheduler.getScheduler(this);
@@ -135,7 +136,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public void onEnable() {
+    public void onBaseEnabled() {
         setupCommandMap();
 
         getLogger().addHandler(new StreamlineLogHandler());
@@ -161,7 +162,7 @@ public abstract class BasePlugin extends JavaPlugin implements IStreamline {
     }
 
     @Override
-    public void onDisable() {
+    public void onBaseDisable() {
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
 
