@@ -20,6 +20,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'io.freefair.lombok'
+    apply plugin: 'maven-publish'
 
     apply from: rootDir.toString() + '/dependencies.gradle'
 
@@ -116,9 +117,25 @@ subprojects {
     artifacts {
         archives shadowJar
     }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+    }
 }
 
 wrapper {
     gradleVersion = '8.9'
     distributionType = Wrapper.DistributionType.ALL
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
 }
