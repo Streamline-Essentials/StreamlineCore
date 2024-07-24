@@ -13,14 +13,14 @@ buildscript {
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'maven-publish'
+//    id 'maven-publish'
 }
 
 subprojects {
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'io.freefair.lombok'
-    apply plugin: 'maven-publish'
+//    apply plugin: 'maven-publish'
 
     apply from: rootDir.toString() + '/dependencies.gradle'
 
@@ -118,13 +118,13 @@ subprojects {
         archives shadowJar
     }
 
-    publishing {
-        publications {
-            maven(MavenPublication) {
-                from components.java
-            }
-        }
-    }
+//    publishing {
+//        publications {
+//            maven(MavenPublication) {
+//                from components.java
+//            }
+//        }
+//    }
 }
 
 wrapper {
@@ -132,10 +132,11 @@ wrapper {
     distributionType = Wrapper.DistributionType.ALL
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-        }
-    }
-}
+// JitPack publishing
+//publishing {
+//    publications {
+//        maven(MavenPublication) {
+//            from components.java
+//        }
+//    }
+//}
