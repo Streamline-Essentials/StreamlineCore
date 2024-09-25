@@ -1,16 +1,16 @@
 package net.streamline.api.base.ratapi;
 
-import net.streamline.api.SLAPI;
+import singularity.Singularity;
 import net.streamline.api.base.module.BaseModule;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.placeholders.expansions.RATExpansion;
-import net.streamline.api.placeholders.replaceables.IdentifiedReplaceable;
-import net.streamline.api.placeholders.replaceables.IdentifiedUserReplaceable;
-import net.streamline.api.utils.UserUtils;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
+import singularity.modules.ModuleManager;
+import singularity.modules.ModuleUtils;
+import singularity.placeholders.expansions.RATExpansion;
+import singularity.placeholders.replaceables.IdentifiedReplaceable;
+import singularity.placeholders.replaceables.IdentifiedUserReplaceable;
+import singularity.utils.UserUtils;
 import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
@@ -24,8 +24,8 @@ public class StreamlineExpansion extends RATExpansion {
 
     @Override
     public void init() {
-        new IdentifiedReplaceable(this, "version", (s) -> SLAPI.getInstance().getPlatform().getVersion()).register();
-        new IdentifiedReplaceable(this, "players_max", (s) -> String.valueOf(SLAPI.getInstance().getPlatform().getMaxPlayers())).register();
+        new IdentifiedReplaceable(this, "version", (s) -> Singularity.getInstance().getPlatform().getVersion()).register();
+        new IdentifiedReplaceable(this, "players_max", (s) -> String.valueOf(Singularity.getInstance().getPlatform().getMaxPlayers())).register();
         new IdentifiedReplaceable(this, "players_online", (s) -> String.valueOf(UserUtils.getOnlinePlayers().size())).register();
         new IdentifiedReplaceable(this, "users_online", (s) -> String.valueOf(UserUtils.getOnlineSenders().size())).register();
         new IdentifiedReplaceable(this, "players_loaded", (s) -> String.valueOf(UserUtils.getLoadedPlayers().size())).register();
@@ -55,7 +55,7 @@ public class StreamlineExpansion extends RATExpansion {
             try {
                 if (s.get().contains(":::")) {
                     String[] things = s.get().split(":::", 2);
-                    Optional<StreamSender> userOptional = UserUtils.getOrCreateSenderByName(things[0]);
+                    Optional<CosmicSender> userOptional = UserUtils.getOrCreateSenderByName(things[0]);
                     if (userOptional.isEmpty()) return s.string();
                     String parse = things[1].replace("*/*", "%");
                     return ModuleUtils.replacePlaceholders(userOptional.get(), parse);
@@ -87,7 +87,7 @@ public class StreamlineExpansion extends RATExpansion {
 
         new IdentifiedUserReplaceable(this, "user_ping", (s, user) -> {
             if (user.isConsole()) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_OFFLINE.get();
-            else return String.valueOf(SLAPI.getInstance().getUserManager().getPlayerPing(user.getUuid()));
+            else return String.valueOf(Singularity.getInstance().getUserManager().getPlayerPing(user.getUuid()));
         }).register();
         new IdentifiedUserReplaceable(this, "user_online", (s, user) -> user.isOnline() ?
                 MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_ONLINE.get() :
@@ -99,26 +99,19 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedUserReplaceable(this, "user_formatted", (s, user) -> UserUtils.getFormatted(user)).register();
         new IdentifiedUserReplaceable(this, "user_formatted_onlined", (s, user) -> UserUtils.getOffOnFormatted(user)).register();
 
-        new IdentifiedUserReplaceable(this, "user_prefix", (s, user) -> UserUtils.getLuckPermsPrefix(user.getCurrentName())).register();
-        new IdentifiedUserReplaceable(this, "user_suffix", (s, user) -> UserUtils.getLuckPermsSuffix(user.getCurrentName())).register();
+        new IdentifiedUserReplaceable(this, "user_prefix", (s, user) -> UserUtils.getPrefix(user)).register();
+        new IdentifiedUserReplaceable(this, "user_suffix", (s, user) -> UserUtils.getSuffix(user)).register();
 
-        new IdentifiedUserReplaceable(this, "user_level",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(user.getLeveling().getLevel()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "user_xp_current",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(user.getLeveling().getCurrentExperience()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "user_xp_total",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(user.getLeveling().getTotalExperience()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_seconds",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getPlaySecondsAsString()) : s.string()).register();
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPlaySecondsAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_minutes",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getPlayMinutesAsString()) : s.string()).register();
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPlayMinutesAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_hours",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getPlayHoursAsString()) : s.string()).register();
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPlayHoursAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_play_days",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getPlayDaysAsString()) : s.string()).register();
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPlayDaysAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_ip",
-                (s, user) -> user instanceof StreamPlayer ? String.valueOf(((StreamPlayer) user).getCurrentIp()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "user_points", (s, user) -> String.valueOf(user.getPoints())).register();
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getCurrentIp()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getServerName())).register();
         new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> user.getMeta().getTagsAsString()).register();
 

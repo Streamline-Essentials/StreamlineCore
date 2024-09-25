@@ -39,7 +39,7 @@ public class StreamlineVelocity extends BasePlugin {
         try {
             ModuleManager.registerExternalModules();
             ModuleManager.startModules();
-            setServerPusher(new ServerPusher());
+//            setServerPusher(new ServerPusher());
         } catch (Exception e) {
             e.printStackTrace();
         }

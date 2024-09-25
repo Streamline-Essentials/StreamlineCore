@@ -4,10 +4,10 @@ import com.velocitypowered.api.command.CommandSource;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
-import net.streamline.api.interfaces.audiences.IConsoleHolder;
-import net.streamline.api.interfaces.audiences.real.RealSender;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
+import singularity.interfaces.audiences.IConsoleHolder;
+import singularity.interfaces.audiences.real.RealSender;
 
 @Getter @Setter
 public class ConsoleHolder implements IConsoleHolder<CommandSource> {

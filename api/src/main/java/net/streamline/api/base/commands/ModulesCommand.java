@@ -1,21 +1,18 @@
 package net.streamline.api.base.commands;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.context.CommandContext;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.modules.ModuleLike;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.utils.MessageUtils;
+import singularity.command.CosmicCommand;
+import singularity.command.context.CommandContext;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.modules.ModuleLike;
+import singularity.modules.ModuleManager;
+import singularity.utils.MessageUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class ModulesCommand extends StreamlineCommand {
+public class ModulesCommand extends CosmicCommand {
     private final String messageResultReapplyAll;
     private final String messageResultReapplyOne;
     private final String messageResultReloadAll;
@@ -68,7 +65,7 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(CommandContext<StreamlineCommand> context) {
+    public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 1) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
@@ -167,7 +164,7 @@ public class ModulesCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {
             return new ConcurrentSkipListSet<>(List.of(
                     "reapply",

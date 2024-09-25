@@ -3,23 +3,9 @@ package net.streamline.platform.listeners;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.configs.given.whitelist.WhitelistConfig;
-import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.uuid.UuidManager;
-import net.streamline.api.events.server.*;
-import net.streamline.api.events.server.ping.PingReceivedEvent;
-import net.streamline.api.messages.events.ProxyMessageInEvent;
-import net.streamline.api.messages.proxied.ProxiedMessage;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.base.Streamline;
 import net.streamline.base.TenSecondTimer;
+import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.Bukkit;
@@ -35,6 +21,21 @@ import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.NotNull;
+import singularity.configs.given.GivenConfigs;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.configs.given.whitelist.WhitelistConfig;
+import singularity.configs.given.whitelist.WhitelistEntry;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidManager;
+import singularity.events.server.*;
+import singularity.events.server.ping.PingReceivedEvent;
+import singularity.messages.events.ProxyMessageInEvent;
+import singularity.messages.proxied.ProxiedMessage;
+import singularity.modules.ModuleManager;
+import singularity.modules.ModuleUtils;
+import singularity.objects.PingedResponse;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 import tv.quaint.events.BaseEventListener;
 import tv.quaint.events.processing.BaseProcessor;
@@ -42,7 +43,6 @@ import tv.quaint.events.processing.BaseProcessor;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class PlatformListener implements Listener {
     @Getter @Setter
@@ -66,7 +66,7 @@ public class PlatformListener implements Listener {
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         String uuid = event.getUniqueId().toString();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
 
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
@@ -93,7 +93,7 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
         streamPlayer.setCurrentName(player.getName());
@@ -112,7 +112,7 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
         ModuleUtils.fireEvent(logoutEvent);
@@ -125,9 +125,9 @@ public class PlatformListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
+        CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
         Streamline.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
@@ -138,7 +138,7 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onProperEvent(ProperEvent event) {
-        ModuleManager.fireEvent(event.getStreamlineEvent());
+        ModuleManager.fireEvent(event.getCosmicEvent());
     }
 
     public static class ProxyMessagingListener implements PluginMessageListener {
@@ -148,7 +148,7 @@ public class PlatformListener implements Listener {
 
         @Override
         public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-            StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
             try {
                 ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, true, message, channel);
@@ -200,7 +200,11 @@ public class PlatformListener implements Listener {
             return;
         }
 
-        event.setMotd(pingReceivedEvent.getResponse().getDescription());
+        event.setMotd(Messenger.colorAsString(pingReceivedEvent.getResponse().getDescription()));
+
+        // Set the sample of the server (the players displayed when hovering over the player count)
+        // does not work right now...
+
         event.setMaxPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
 //        event.setNumPlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
 

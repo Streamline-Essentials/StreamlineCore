@@ -1,0 +1,31 @@
+repositories {
+    mavenCentral()
+    // OpenCollab
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+    maven { url 'https://repo.opencollab.dev/maven-releases/'}
+    // JitPack
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://mvnrepository.com/artifact' }
+}
+
+dependencies {
+    // Defaults.
+    compileOnly(files(FILES))
+    annotationProcessor(ANNO)
+    implementation(IMPL)
+    compileOnly(COMP_ONLY)
+    shadow(SHADOW)
+
+    // Google IO.
+    shadow(implementation('com.google.guava:guava:30.1-jre'))
+    shadow(implementation('com.google.code.gson:gson:2.8.8'))
+
+    // JetBrains.
+    annotationProcessor(shadow(implementation('org.jetbrains:annotations:20.1.0')))
+
+    // Caffeine.
+    shadow(implementation('com.github.ben-manes.caffeine:caffeine:3.1.8'))
+
+    // Files.
+//    implementation(shadow(files(FILES)));
+}

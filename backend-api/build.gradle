@@ -15,6 +15,7 @@ dependencies {
 
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
 
     compileOnly 'me.clip:placeholderapi:2.11.2'
 

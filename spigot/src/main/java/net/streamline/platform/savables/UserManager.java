@@ -1,18 +1,7 @@
 package net.streamline.platform.savables;
 
 import lombok.Getter;
-import net.luckperms.api.model.user.User;
-import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.players.location.PlayerLocation;
-import net.streamline.api.data.players.location.PlayerRotation;
-import net.streamline.api.data.players.location.WorldPosition;
-import net.streamline.api.interfaces.IUserManager;
-import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.utils.UserUtils;
+import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.base.Streamline;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
@@ -21,6 +10,16 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import singularity.configs.given.GivenConfigs;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.players.location.CosmicLocation;
+import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.WorldPosition;
+import singularity.interfaces.IUserManager;
+import singularity.objects.CosmicResourcePack;
+import singularity.utils.UserUtils;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -36,12 +35,12 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public StreamPlayer getOrCreatePlayer(Player player) {
+    public CosmicPlayer getOrCreatePlayer(Player player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
     @Override
-    public StreamSender getOrCreateSender(CommandSender sender) {
+    public CosmicSender getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
             return UserUtils.getConsole();
         } else {
@@ -92,7 +91,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public boolean runAs(StreamPlayer player, boolean bypass, String command) {
+    public boolean runAs(CosmicSender player, boolean bypass, String command) {
         CommandSender source;
         if (! player.isConsole()) {
             source = Streamline.getPlayer(player.getUuid());
@@ -105,25 +104,29 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
-            User u = SLAPI.getLuckPerms().getUserManager().getUser(player.getUuid());
-            if (u == null) return false;
-            UserUtils.addPermission(u, "*");
+            if (LuckPermsHandler.hasLuckPerms()) {
+                LuckPermsHandler.addPermission(player.getUuid(), "*");
+            } else {
+                return false;
+            }
         }
         Bukkit.dispatchCommand(source, command);
         if (bypass && !already) {
-            User u = SLAPI.getLuckPerms().getUserManager().getUser(player.getUuid());
-            if (u == null) return false;
-            UserUtils.removePermission(u, "*");
+            if (LuckPermsHandler.hasLuckPerms()) {
+                LuckPermsHandler.removePermission(player.getUuid(), "*");
+            } else {
+                return false;
+            }
         }
         return true;
     }
 
     @Override
-    public ConcurrentSkipListSet<StreamPlayer> getUsersOn(String server) {
-        ConcurrentSkipListSet<StreamPlayer> r = new ConcurrentSkipListSet<>();
+    public ConcurrentSkipListSet<CosmicPlayer> getUsersOn(String server) {
+        ConcurrentSkipListSet<CosmicPlayer> r = new ConcurrentSkipListSet<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            StreamPlayer p = getOrCreatePlayer(player);
+            CosmicPlayer p = getOrCreatePlayer(player);
             if (p.isOnline() && p.getServerName().equals(server)) r.add(p);
         }
 
@@ -131,12 +134,12 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public void connect(StreamPlayer user, String server) {
+    public void connect(CosmicPlayer user, String server) {
         // not applicable
     }
 
     @Override
-    public void sendUserResourcePack(StreamPlayer user, StreamlineResourcePack pack) {
+    public void sendUserResourcePack(CosmicPlayer user, CosmicResourcePack pack) {
         if (! user.isOnline()) return;
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
@@ -166,7 +169,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public void kick(StreamPlayer user, String message) {
+    public void kick(CosmicPlayer user, String message) {
         Player player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.kickPlayer(Messenger.getInstance().codedString(message));
@@ -178,8 +181,8 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public ConcurrentSkipListMap<String, StreamPlayer> ensurePlayers() {
-        ConcurrentSkipListMap<String, StreamPlayer> r = new ConcurrentSkipListMap<>();
+    public ConcurrentSkipListMap<String, CosmicPlayer> ensurePlayers() {
+        ConcurrentSkipListMap<String, CosmicPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
             r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
@@ -207,7 +210,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public void teleport(StreamPlayer player, PlayerLocation location) {
+    public void teleport(CosmicPlayer player, CosmicLocation location) {
         if (! player.isOnline()) return;
         Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) return;

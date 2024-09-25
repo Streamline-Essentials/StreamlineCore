@@ -4,19 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.holders.StreamlineDependencyHolder;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.utils.MessageUtils;
 import net.streamline.apib.SLAPIB;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.data.players.CosmicPlayer;
+import singularity.holders.CosmicDependencyHolder;
+import singularity.modules.ModuleUtils;
+import singularity.utils.MessageUtils;
 
 @Setter
 @Getter
-public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
+public class PAPIDepend extends CosmicDependencyHolder<PlaceholderAPI> {
     private StreamlinePAPIExpansion papiExpansion;
 
     public PAPIDepend() {
@@ -60,7 +60,7 @@ public class PAPIDepend extends StreamlineDependencyHolder<PlaceholderAPI> {
 
         @Override
         public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
-            StreamPlayer streamPlayer = ModuleUtils.getOrCreatePlayer(player.getUniqueId().toString());
+            CosmicPlayer streamPlayer = ModuleUtils.getOrCreatePlayer(player.getUniqueId().toString());
             if (streamPlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
             String toParse;
             if (params.startsWith("!")) toParse = "%" + params.substring("!".length()) + "%";

@@ -1,17 +1,17 @@
 package net.streamline.api.base.commands;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.context.CommandContext;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
+import singularity.Singularity;
+import singularity.command.CosmicCommand;
+import singularity.command.context.CommandContext;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.data.console.CosmicSender;
+import singularity.modules.ModuleUtils;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class ParseCommand extends StreamlineCommand {
+public class ParseCommand extends CosmicCommand {
     private final String messageResult;
 
     public ParseCommand() {
@@ -26,14 +26,14 @@ public class ParseCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(CommandContext<StreamlineCommand> context) {
+    public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 2) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = context.getStringArg(0);
-        StreamSender player = UserUtils.getOrCreateSenderByName(playerName).orElse(null);
+        CosmicSender player = UserUtils.getOrCreateSenderByName(playerName).orElse(null);
 
         if (player == null) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
@@ -48,9 +48,9 @@ public class ParseCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {
-            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
+            return Singularity.getInstance().getPlatform().getOnlinePlayerNames();
         }
 
         return new ConcurrentSkipListSet<>();

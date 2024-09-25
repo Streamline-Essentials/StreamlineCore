@@ -1,17 +1,15 @@
 package net.streamline.api.base.commands;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.command.CommandHandler;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.context.CommandContext;
-import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.modules.ModuleManager;
+import singularity.command.CommandHandler;
+import singularity.command.CosmicCommand;
+import singularity.command.context.CommandContext;
+import singularity.configs.given.GivenConfigs;
+import singularity.modules.ModuleManager;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class ReloadCommand extends StreamlineCommand {
+public class ReloadCommand extends CosmicCommand {
     private final String messageResult;
 
     public ReloadCommand() {
@@ -27,11 +25,11 @@ public class ReloadCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(CommandContext<StreamlineCommand> context) {
+    public void run(CommandContext<CosmicCommand> context) {
         GivenConfigs.getMainConfig().reloadResource(true);
         GivenConfigs.getMainMessages().reloadResource(true);
 
-        for (StreamlineCommand command : new ArrayList<>(CommandHandler.getLoadedStreamlineCommands().values())) {
+        for (CosmicCommand command : new ArrayList<>(CommandHandler.getLoadedStreamlineCommands().values())) {
             CommandHandler.unregisterStreamlineCommand(command);
             command.getCommandResource().reloadResource(true);
             command.getCommandResource().syncCommand();
@@ -44,7 +42,7 @@ public class ReloadCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         return new ConcurrentSkipListSet<>();
     }
 }

@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
-import net.streamline.api.modules.ModuleManager;
 import net.streamline.platform.commands.StreamlineSpigotCommand;
+import singularity.modules.ModuleManager;
 
 public class Streamline extends BasePlugin {
     @Getter @Setter

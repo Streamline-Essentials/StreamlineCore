@@ -2,8 +2,8 @@ package net.streamline.base;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.modules.ModuleManager;
 import net.streamline.base.runnables.ServerPusher;
+import net.streamline.libs.singularity.modules.ModuleManager;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
 
@@ -16,7 +16,7 @@ public class Streamline extends BasePlugin {
         try {
             ModuleManager.registerExternalModules();
             ModuleManager.startModules();
-            setServerPusher(new ServerPusher());
+//            setServerPusher(new ServerPusher());
         } catch (Exception e) {
             e.printStackTrace();
         }

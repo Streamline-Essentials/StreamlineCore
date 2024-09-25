@@ -16,33 +16,30 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.configs.given.whitelist.WhitelistConfig;
-import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.uuid.UuidManager;
-import net.streamline.api.events.server.*;
-import net.streamline.api.events.server.ping.PingReceivedEvent;
-import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
-import net.streamline.api.messages.events.ProxyMessageInEvent;
-import net.streamline.api.messages.proxied.ProxiedMessage;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
+import singularity.configs.given.GivenConfigs;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.configs.given.whitelist.WhitelistConfig;
+import singularity.configs.given.whitelist.WhitelistEntry;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidManager;
+import singularity.events.server.*;
+import singularity.events.server.ping.PingReceivedEvent;
+import singularity.messages.events.ProxyMessageInEvent;
+import singularity.messages.proxied.ProxiedMessage;
+import singularity.modules.ModuleManager;
+import singularity.modules.ModuleUtils;
+import singularity.objects.PingedResponse;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 public class PlatformListener {
     public PlatformListener() {
@@ -57,7 +54,7 @@ public class PlatformListener {
 
         String uuid = p.getUniqueId().toString();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
 
         streamPlayer.setCurrentName(p.getUsername());
         p.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
@@ -87,7 +84,7 @@ public class PlatformListener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getUsername(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
         streamPlayer.setCurrentName(player.getUsername());
@@ -101,7 +98,7 @@ public class PlatformListener {
     public void onLeave(DisconnectEvent event) {
         Player player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
         ModuleUtils.fireEvent(logoutEvent);
@@ -114,7 +111,7 @@ public class PlatformListener {
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setServerName(event.getServer().getServerInfo().getName());
     }
@@ -123,9 +120,9 @@ public class PlatformListener {
     public void onChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
+        CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
         if (chatEvent.isCanceled()) {
             event.setResult(PlayerChatEvent.ChatResult.denied());
@@ -136,7 +133,7 @@ public class PlatformListener {
 
     @Subscribe
     public void onProperEvent(ProperEvent event) {
-        ModuleManager.fireEvent(event.getStreamlineEvent());
+        ModuleManager.fireEvent(event.getCosmicEvent());
     }
 
     @Subscribe
@@ -145,7 +142,7 @@ public class PlatformListener {
         if (! (event.getTarget() instanceof Player)) return;
         Player player = (Player) event.getTarget();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         try {
             ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, false, event.getData(), tag);
@@ -248,7 +245,7 @@ public class PlatformListener {
             toName = "none";
         }
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName).fire();
 

@@ -2,11 +2,11 @@ package net.streamline.platform.savables;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.interfaces.audiences.IConsoleHolder;
-import net.streamline.api.interfaces.audiences.real.RealSender;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import singularity.interfaces.audiences.IConsoleHolder;
+import singularity.interfaces.audiences.real.RealSender;
 
 @Getter @Setter
 public class ConsoleHolder implements IConsoleHolder<CommandSender> {

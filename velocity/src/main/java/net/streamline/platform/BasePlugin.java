@@ -12,44 +12,39 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.uuid.UuidInfo;
-import net.streamline.api.data.uuid.UuidManager;
-import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.events.server.ServerStopEvent;
-import net.streamline.api.interfaces.IProperEvent;
-import net.streamline.api.interfaces.IStreamline;
-import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.scheduler.TaskManager;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.StorageUtils;
-import net.streamline.api.utils.UserUtils;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
-import net.streamline.platform.profile.VelocityProfiler;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import singularity.command.CosmicCommand;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidInfo;
+import singularity.data.uuid.UuidManager;
+import singularity.events.CosmicEvent;
+import singularity.events.server.ServerStopEvent;
+import singularity.interfaces.IProperEvent;
+import singularity.interfaces.ISingularityExtension;
+import singularity.objects.CosmicResourcePack;
+import singularity.scheduler.TaskManager;
+import singularity.utils.MessageUtils;
+import singularity.utils.StorageUtils;
+import singularity.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 
-public abstract class BasePlugin implements IStreamline {
+public abstract class BasePlugin implements ISingularityExtension {
     @Getter
     private final PlatformType platformType = PlatformType.VELOCITY;
     @Getter
@@ -73,11 +68,8 @@ public abstract class BasePlugin implements IStreamline {
     @Getter
     private PlayerInterface playerInterface;
 
-    @Setter
-    private VelocityProfiler profiler;
-
     @Getter @Setter
-    private StreamlineResourcePack resourcePack;
+    private CosmicResourcePack resourcePack;
 
     @Getter
     private final ProxyServer proxy;
@@ -170,7 +162,6 @@ public abstract class BasePlugin implements IStreamline {
         playerInterface = new PlayerInterface();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-        getSlapi().setProfiler(new VelocityProfiler());
 
         registerListener(new PlatformListener());
 
@@ -214,8 +205,8 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers() {
-        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
+    public @NotNull ConcurrentSkipListSet<CosmicPlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<CosmicPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
             players.add(getUserManager().getOrCreatePlayer(player));
@@ -225,7 +216,7 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public ProperCommand createCommand(StreamlineCommand command) {
+    public ProperCommand createCommand(CosmicCommand command) {
         return new ProperCommand(command);
     }
 
@@ -334,12 +325,12 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public void fireEvent(StreamlineEvent event) {
+    public void fireEvent(CosmicEvent event) {
         fireEvent(event, true);
     }
 
     @Override
-    public void fireEvent(StreamlineEvent event, boolean async) {
+    public void fireEvent(CosmicEvent event, boolean async) {
         try {
             BaseEventHandler.fireEvent(event);
         } catch (Exception e) {
@@ -348,7 +339,7 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public void handleMisSync(StreamlineEvent event, boolean async) {
+    public void handleMisSync(CosmicEvent event, boolean async) {
         BaseEventHandler.fireEvent(event);
     }
 
@@ -363,18 +354,18 @@ public abstract class BasePlugin implements IStreamline {
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, CosmicPlayer player) {
         Player p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, String uuid) {
         Player p = getPlayer(uuid);
         sendResourcePack(resourcePack, p);
     }
 
-    public void sendResourcePack(StreamlineResourcePack resourcePack, Player player) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, Player player) {
         if (player == null) return;
         try {
             ResourcePackInfo.Builder infoBuilder = getInstance().getProxy().createResourcePackBuilder(resourcePack.getUrl()).setShouldForce(resourcePack.isForce());

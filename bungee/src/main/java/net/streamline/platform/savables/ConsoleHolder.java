@@ -5,9 +5,9 @@ import lombok.Setter;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.streamline.api.interfaces.audiences.IConsoleHolder;
-import net.streamline.api.interfaces.audiences.real.RealSender;
 import net.streamline.platform.Messenger;
+import singularity.interfaces.audiences.IConsoleHolder;
+import singularity.interfaces.audiences.real.RealSender;
 
 @Getter @Setter
 public class ConsoleHolder implements IConsoleHolder<CommandSender> {

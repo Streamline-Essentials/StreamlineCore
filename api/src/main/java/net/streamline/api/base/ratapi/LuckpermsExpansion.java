@@ -8,9 +8,9 @@ import net.luckperms.api.node.NodeType;
 import net.luckperms.api.query.QueryMode;
 import net.luckperms.api.query.QueryOptions;
 import net.streamline.api.base.module.BaseModule;
-import net.streamline.api.placeholders.expansions.RATExpansion;
-import net.streamline.api.placeholders.replaceables.IdentifiedUserReplaceable;
-import net.streamline.api.utils.UserUtils;
+import singularity.placeholders.expansions.RATExpansion;
+import singularity.placeholders.replaceables.IdentifiedUserReplaceable;
+import singularity.utils.UserUtils;
 import tv.quaint.objects.AtomicString;
 
 import java.util.Optional;
@@ -24,8 +24,8 @@ public class LuckpermsExpansion extends RATExpansion {
 
     @Override
     public void init() {
-        new IdentifiedUserReplaceable(this, "prefix", (s, user) -> UserUtils.getLuckPermsPrefix(user.getCurrentName())).register();
-        new IdentifiedUserReplaceable(this, "suffix", (s, user) -> UserUtils.getLuckPermsSuffix(user.getCurrentName())).register();
+        new IdentifiedUserReplaceable(this, "prefix", (s, user) -> UserUtils.getPrefix(user)).register();
+        new IdentifiedUserReplaceable(this, "suffix", (s, user) -> UserUtils.getSuffix(user)).register();
 
         new IdentifiedUserReplaceable(this, "primary_group", (s, user) -> {
             try {

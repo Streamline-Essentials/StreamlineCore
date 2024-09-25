@@ -10,15 +10,15 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.SLAPI;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.interfaces.IMessenger;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.StreamlineTitle;
-import net.streamline.api.text.HexPolicy;
-import net.streamline.api.text.TextManager;
-import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
+import singularity.interfaces.IMessenger;
+import singularity.modules.ModuleUtils;
+import singularity.objects.CosmicTitle;
+import singularity.text.HexPolicy;
+import singularity.text.TextManager;
+import singularity.utils.MessageUtils;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +52,7 @@ public class Messenger implements IMessenger {
         }
     }
 
-    public void sendMessage(@Nullable CommandSender to, StreamSender other, String message) {
+    public void sendMessage(@Nullable CommandSender to, CosmicSender other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
             to.sendMessage(codedText(message));
@@ -61,21 +61,21 @@ public class Messenger implements IMessenger {
         }
     }
 
-    public void sendMessage(@Nullable StreamSender to, String message) {
+    public void sendMessage(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), message);
         else sendMessage(ProxyServer.getInstance().getConsole(), message);
     }
 
-    public void sendMessage(@Nullable StreamSender to, String otherUUID, String message) {
+    public void sendMessage(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
-    public void sendMessage(@Nullable StreamSender to, StreamSender other, String message) {
+    public void sendMessage(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof StreamPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), other, message);
     }
 
@@ -105,7 +105,7 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(CommandSender to, StreamSender other, String message) {
+    public void sendMessageRaw(CommandSender to, CosmicSender other, String message) {
         if (to == null) return;
 
         BaseComponent[] component;
@@ -118,25 +118,25 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), message);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, String otherUUID, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, StreamSender other, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), other, message);
     }
 
-    public void sendTitle(StreamSender player, StreamlineTitle title) {
+    public void sendTitle(CosmicSender player, CosmicTitle title) {
         ProxiedPlayer p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
@@ -212,7 +212,7 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         return MessageUtils.replaceAllPlayerBungee(s, of);
     }

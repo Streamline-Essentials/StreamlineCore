@@ -10,17 +10,17 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import net.streamline.api.SLAPI;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.interfaces.IMessenger;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.StreamlineTitle;
-import net.streamline.api.text.HexPolicy;
-import net.streamline.api.text.TextManager;
-import net.streamline.api.utils.MessageUtils;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
+import singularity.interfaces.IMessenger;
+import singularity.modules.ModuleUtils;
+import singularity.objects.CosmicTitle;
+import singularity.text.HexPolicy;
+import singularity.text.TextManager;
+import singularity.utils.MessageUtils;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -52,7 +52,7 @@ public class Messenger implements IMessenger {
             to.sendMessage(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message)));
         }
     }
-    public void sendMessage(@Nullable CommandSource to, StreamSender other, String message) {
+    public void sendMessage(@Nullable CommandSource to, CosmicSender other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
             to.sendMessage(codedText(message));
@@ -61,21 +61,21 @@ public class Messenger implements IMessenger {
         }
     }
 
-    public void sendMessage(@Nullable StreamSender to, String message) {
+    public void sendMessage(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), message);
         else sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), message);
     }
 
-    public void sendMessage(@Nullable StreamSender to, String otherUUID, String message) {
+    public void sendMessage(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
     }
 
-    public void sendMessage(@Nullable StreamSender to, StreamSender other, String message) {
+    public void sendMessage(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
         else sendMessage(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), other, message);
     }
 
@@ -105,7 +105,7 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(CommandSource to, StreamSender other, String message) {
+    public void sendMessageRaw(CommandSource to, CosmicSender other, String message) {
         if (to == null) return;
 
         Component component;
@@ -118,26 +118,26 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), message);
         else sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), message);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, String otherUUID, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), otherUUID, message);
     }
 
-    public void sendMessageRaw(@Nullable StreamSender to, StreamSender other, String message) {
+    public void sendMessageRaw(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null) return;
-        if (to instanceof StreamPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), other, message);
     }
 
     @Override
-    public void sendTitle(StreamSender player, StreamlineTitle title) {
+    public void sendTitle(CosmicSender player, CosmicTitle title) {
         Player p = StreamlineVelocity.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
@@ -229,7 +229,7 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         return MessageUtils.replaceAllPlayerBungee(s, of);
     }

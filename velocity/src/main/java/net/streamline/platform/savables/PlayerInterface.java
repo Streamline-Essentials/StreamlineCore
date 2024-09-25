@@ -7,11 +7,12 @@ import net.kyori.adventure.text.Component;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.node.types.PermissionNode;
 import net.streamline.api.SLAPI;
-import net.streamline.api.interfaces.audiences.IPlayerInterface;
-import net.streamline.api.interfaces.audiences.getters.PlayerGetter;
-import net.streamline.api.interfaces.audiences.real.RealPlayer;
+import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
+import singularity.interfaces.audiences.IPlayerInterface;
+import singularity.interfaces.audiences.getters.PlayerGetter;
+import singularity.interfaces.audiences.real.RealPlayer;
 
 import java.util.UUID;
 
@@ -57,18 +58,12 @@ public class PlayerInterface implements IPlayerInterface<Player> {
 
             @Override
             public void addPermission(String permission) {
-                LuckPerms luckPerms = SLAPI.getLuckPerms();
-                if (luckPerms == null) return;
-
-                luckPerms.getUserManager().modifyUser(getPlayer().getUniqueId(), user -> user.data().add(PermissionNode.builder(permission).build()));
+                LuckPermsHandler.addPermission(getPlayer().getUniqueId().toString(), permission);
             }
 
             @Override
             public void removePermission(String permission) {
-                LuckPerms luckPerms = SLAPI.getLuckPerms();
-                if (luckPerms == null) return;
-
-                luckPerms.getUserManager().modifyUser(getPlayer().getUniqueId(), user -> user.data().remove(PermissionNode.builder(permission).build()));
+                LuckPermsHandler.removePermission(getPlayer().getUniqueId().toString(), permission);
             }
         };
     }

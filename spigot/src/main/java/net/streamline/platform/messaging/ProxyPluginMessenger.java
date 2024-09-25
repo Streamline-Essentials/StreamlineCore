@@ -1,23 +1,15 @@
 package net.streamline.platform.messaging;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.messages.ProxyMessenger;
-import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.messages.builders.ServerInfoMessageBuilder;
-import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
-import net.streamline.api.messages.builders.TeleportMessageBuilder;
-import net.streamline.api.messages.events.ProxyMessageInEvent;
-import net.streamline.api.messages.proxied.ProxiedMessage;
-import net.streamline.api.messages.proxied.ProxiedMessageManager;
-import net.streamline.api.objects.SingleSet;
-import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.utils.UserUtils;
+import singularity.data.players.CosmicPlayer;
 import net.streamline.base.Streamline;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import singularity.messages.ProxyMessenger;
+import singularity.messages.events.ProxyMessageInEvent;
+import singularity.messages.proxied.ProxiedMessage;
+import singularity.messages.proxied.ProxiedMessageManager;
+import singularity.utils.UserUtils;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,9 +21,9 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-        StreamPlayer carrier = message.getCarrier();
+        CosmicPlayer carrier = message.getCarrier();
         if (carrier == null) {
-            Optional<StreamPlayer> optional = UserUtils.getOnlinePlayers().values().stream().findFirst();
+            Optional<CosmicPlayer> optional = UserUtils.getOnlinePlayers().values().stream().findFirst();
             if (optional.isEmpty()) {
                 ProxiedMessageManager.pendMessage(message);
                 return;
