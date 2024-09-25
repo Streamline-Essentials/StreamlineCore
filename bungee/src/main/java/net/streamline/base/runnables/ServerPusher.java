@@ -1,6 +1,6 @@
 package net.streamline.base.runnables;
 
-import net.streamline.libs.singularity.scheduler.BaseRunnable;
+import singularity.scheduler.BaseRunnable;
 
 public class ServerPusher extends BaseRunnable {
     public ServerPusher() {
