@@ -2,8 +2,8 @@ package net.streamline.platform.events;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.interfaces.IProperEvent;
+import singularity.events.CosmicEvent;
+import singularity.interfaces.IProperEvent;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -11,10 +11,10 @@ import java.util.concurrent.CompletableFuture;
 @Getter
 public class ProperEvent extends CompletableFuture<Void> implements IProperEvent<CompletableFuture<Void>> {
         private CompletableFuture<Void> event;
-        StreamlineEvent streamlineEvent;
+        CosmicEvent cosmicEvent;
 
-        public ProperEvent(StreamlineEvent streamlineEvent) {
+        public ProperEvent(CosmicEvent streamlineEvent) {
                 setEvent(this);
-                setStreamlineEvent(streamlineEvent);
+                setCosmicEvent(streamlineEvent);
         }
 }

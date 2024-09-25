@@ -8,42 +8,37 @@ import net.md_5.bungee.api.plugin.Event;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.uuid.UuidInfo;
-import net.streamline.api.data.uuid.UuidManager;
-import net.streamline.api.events.StreamlineEvent;
-import net.streamline.api.events.server.ServerStartEvent;
-import net.streamline.api.events.server.ServerStopEvent;
-import net.streamline.api.interfaces.IProperEvent;
-import net.streamline.api.interfaces.IStreamline;
-import net.streamline.api.logging.StreamlineLogHandler;
-import net.streamline.api.messages.builders.ResourcePackMessageBuilder;
-import net.streamline.api.objects.StreamlineResourcePack;
-import net.streamline.api.scheduler.TaskManager;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.StorageUtils;
-import net.streamline.api.utils.UserUtils;
+import singularity.logging.CosmicLogHandler;
+import singularity.messages.builders.ResourcePackMessageBuilder;
+import singularity.objects.CosmicResourcePack;
+import singularity.utils.StorageUtils;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
-import net.streamline.platform.profile.BungeeProfiler;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import singularity.command.CosmicCommand;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidInfo;
+import singularity.data.uuid.UuidManager;
+import singularity.events.CosmicEvent;
+import singularity.events.server.ServerStartEvent;
+import singularity.events.server.ServerStopEvent;
+import singularity.interfaces.IProperEvent;
+import singularity.interfaces.ISingularityExtension;
+import singularity.scheduler.TaskManager;
+import singularity.utils.UserUtils;
 import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 
-public abstract class BasePlugin extends Plugin implements IStreamline {
+public abstract class BasePlugin extends Plugin implements ISingularityExtension {
     @Getter
     private final PlatformType platformType = PlatformType.BUNGEE;
     @Getter
@@ -68,7 +63,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     private PlayerInterface playerInterface;
 
     @Getter @Setter
-    private StreamlineResourcePack resourcePack;
+    private CosmicResourcePack resourcePack;
 
     @Override
     public void onLoad() {
@@ -118,7 +113,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
 
     @Override
     public void onEnable() {
-        getLogger().addHandler(new StreamlineLogHandler());
+        getLogger().addHandler(new CosmicLogHandler());
 
         userManager = new UserManager();
         messenger = new Messenger();
@@ -126,7 +121,6 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
         playerInterface = new PlayerInterface();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
-        getSlapi().setProfiler(new BungeeProfiler());
 
         registerListener(new PlatformListener());
 
@@ -174,8 +168,8 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public @NotNull ConcurrentSkipListSet<StreamPlayer> getOnlinePlayers() {
-        ConcurrentSkipListSet<StreamPlayer> players = new ConcurrentSkipListSet<>();
+    public @NotNull ConcurrentSkipListSet<CosmicPlayer> getOnlinePlayers() {
+        ConcurrentSkipListSet<CosmicPlayer> players = new ConcurrentSkipListSet<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
             players.add(getUserManager().getOrCreatePlayer(player));
@@ -185,7 +179,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public ProperCommand createCommand(StreamlineCommand command) {
+    public ProperCommand createCommand(CosmicCommand command) {
         return new ProperCommand(command);
     }
 
@@ -281,12 +275,12 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public void fireEvent(StreamlineEvent event) {
+    public void fireEvent(CosmicEvent event) {
         fireEvent(event, true);
     }
 
     @Override
-    public void fireEvent(StreamlineEvent event, boolean async) {
+    public void fireEvent(CosmicEvent event, boolean async) {
         try {
             BaseEventHandler.fireEvent(event);
         } catch (Exception e) {
@@ -295,7 +289,7 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public void handleMisSync(StreamlineEvent event, boolean async) {
+    public void handleMisSync(CosmicEvent event, boolean async) {
         BaseEventHandler.fireEvent(event);
     }
 
@@ -305,20 +299,20 @@ public abstract class BasePlugin extends Plugin implements IStreamline {
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, StreamPlayer player) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, CosmicPlayer player) {
         ProxiedPlayer p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }
 
     @Override
-    public void sendResourcePack(StreamlineResourcePack resourcePack, String uuid) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, String uuid) {
         ProxiedPlayer p = getPlayer(uuid);
         sendResourcePack(resourcePack, p);
     }
 
-    public void sendResourcePack(StreamlineResourcePack resourcePack, ProxiedPlayer player) {
+    public void sendResourcePack(CosmicResourcePack resourcePack, ProxiedPlayer player) {
         if (player == null) return;
-        StreamPlayer streamPlayer = getUserManager().getOrCreatePlayer(player);
+        CosmicPlayer streamPlayer = getUserManager().getOrCreatePlayer(player);
         if (streamPlayer == null) return;
 
         ResourcePackMessageBuilder.build(streamPlayer, true, streamPlayer, resourcePack).send();

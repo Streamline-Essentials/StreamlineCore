@@ -1,6 +1,10 @@
 dependencies {
     // Platform.
-    compileOnly 'org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT'
+    // Spigot.
+//    compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
+    // Paper.
+//    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    compileOnly 'dev.folia:folia-api:1.20.4-R0.1-SNAPSHOT'
 
     // Defaults.
     compileOnly(files(FILES))
@@ -12,8 +16,9 @@ dependencies {
     implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')
 
     // Streamline API.
-    implementation project(path: ':StreamlineCore-API')
+    compileOnly project(path: ':StreamlineCore-API')
     implementation project(path: ':StreamlineCore-BAPI', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
 }
 
 tasks.named("compileJava").configure {

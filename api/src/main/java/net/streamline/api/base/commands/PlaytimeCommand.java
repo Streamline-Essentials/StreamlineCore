@@ -1,16 +1,16 @@
 package net.streamline.api.base.commands;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.context.CommandContext;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.utils.UserUtils;
+import singularity.Singularity;
+import singularity.command.CosmicCommand;
+import singularity.command.context.CommandContext;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.data.players.CosmicPlayer;
+import singularity.utils.UserUtils;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class PlaytimeCommand extends StreamlineCommand {
+public class PlaytimeCommand extends CosmicCommand {
     private final String messageGet;
     private final String messageSet;
     private final String messageAdd;
@@ -36,14 +36,14 @@ public class PlaytimeCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(CommandContext<StreamlineCommand> context) {
+    public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 1) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }
 
         String playerName = context.getStringArg(0);
-        StreamPlayer other = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
+        CosmicPlayer other = UserUtils.getOrCreatePlayerByName(playerName).orElse(null);
 
         if (other == null) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.USER_OTHER.get());
@@ -85,9 +85,9 @@ public class PlaytimeCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {
-            return SLAPI.getInstance().getPlatform().getOnlinePlayerNames();
+            return Singularity.getInstance().getPlatform().getOnlinePlayerNames();
         }
         if (context.getArgCount() == 2) {
             return new ConcurrentSkipListSet<>(List.of("set", "add", "remove"));

@@ -4,29 +4,29 @@ import lombok.Getter;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.interfaces.IProperCommand;
-import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
+import singularity.command.CosmicCommand;
+import singularity.data.console.CosmicSender;
+import singularity.interfaces.IProperCommand;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
+import singularity.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
 public class ProperCommand extends Command implements TabExecutor, IProperCommand {
-    private final StreamlineCommand parent;
+    private final CosmicCommand parent;
 
-    public ProperCommand(StreamlineCommand parent) {
+    public ProperCommand(CosmicCommand parent) {
         super(parent.getBase(), parent.getPermission(), parent.getAliases());
         this.parent = parent;
     }
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         parent.baseRun(s, args);
     }
@@ -36,7 +36,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 

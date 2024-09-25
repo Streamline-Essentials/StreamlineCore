@@ -6,6 +6,7 @@ website: https://github.com/Streamline-Essentials
 description: True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.
 depend:
   - LuckPerms
+  - BukkitOfUtils
 soft-depend:
   - Geyser-Spigot
   - Geyser-Folia
@@ -14,7 +15,6 @@ soft-depend:
   - CMI
   - EssentialsX
   - Essentials
-  - BukkitOfUtils
 folia-supported: true
 
 commands:

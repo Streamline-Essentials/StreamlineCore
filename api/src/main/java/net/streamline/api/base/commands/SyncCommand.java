@@ -1,15 +1,13 @@
 package net.streamline.api.base.commands;
 
-import net.streamline.api.SLAPI;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.context.CommandContext;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.utils.UserUtils;
+import singularity.Singularity;
+import singularity.command.CosmicCommand;
+import singularity.command.context.CommandContext;
+import singularity.utils.UserUtils;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public class SyncCommand extends StreamlineCommand {
+public class SyncCommand extends CosmicCommand {
     private final String messageResult;
     private final String messageErrorNot;
 
@@ -28,8 +26,8 @@ public class SyncCommand extends StreamlineCommand {
     }
 
     @Override
-    public void run(CommandContext<StreamlineCommand> context) {
-        if (SLAPI.getMainDatabase() == null) {
+    public void run(CommandContext<CosmicCommand> context) {
+        if (Singularity.getMainDatabase() == null) {
             context.sendMessage(this.messageErrorNot);
             return;
         }
@@ -39,7 +37,7 @@ public class SyncCommand extends StreamlineCommand {
     }
 
     @Override
-    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<StreamlineCommand> context) {
+    public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         return new ConcurrentSkipListSet<>();
     }
 }

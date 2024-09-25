@@ -10,7 +10,7 @@ import net.streamline.api.messages.proxied.ProxiedMessageManager;
 import net.streamline.api.objects.SingleSet;
 import net.streamline.api.objects.StreamlineResourcePack;
 import net.streamline.api.savables.users.StreamPlayer;
-import net.streamline.api.utils.UserUtils;
+import net.streamline.api.permissions.UserUtils;
 import net.streamline.base.Streamline;
 
 import java.util.ArrayList;

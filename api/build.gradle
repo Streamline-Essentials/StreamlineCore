@@ -14,7 +14,7 @@ dependencies {
     annotationProcessor(ANNO)
     implementation(IMPL)
     compileOnly(COMP_ONLY)
-    shadow(SHADOW)
+    implementation project(path: ':StreamlineCore-Singularity', configuration: 'shadow')
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)

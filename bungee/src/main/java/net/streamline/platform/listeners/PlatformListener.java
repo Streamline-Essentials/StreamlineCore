@@ -5,7 +5,6 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
-import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
@@ -13,33 +12,29 @@ import net.md_5.bungee.api.event.*;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.streamline.api.SLAPI;
-import net.streamline.api.configs.given.GivenConfigs;
-import net.streamline.api.configs.given.MainMessagesHandler;
-import net.streamline.api.configs.given.whitelist.WhitelistConfig;
-import net.streamline.api.configs.given.whitelist.WhitelistEntry;
-import net.streamline.api.data.players.StreamPlayer;
-import net.streamline.api.data.uuid.UuidManager;
-import net.streamline.api.events.server.*;
-import net.streamline.api.events.server.ping.PingReceivedEvent;
-import net.streamline.api.messages.builders.StreamPlayerMessageBuilder;
-import net.streamline.api.messages.events.ProxyMessageInEvent;
-import net.streamline.api.messages.proxied.ProxiedMessage;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.ModuleUtils;
-import net.streamline.api.objects.PingedResponse;
-import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.MessageUtils;
-import net.streamline.api.utils.UserUtils;
+import singularity.configs.given.GivenConfigs;
+import singularity.configs.given.MainMessagesHandler;
+import singularity.configs.given.whitelist.WhitelistConfig;
+import singularity.configs.given.whitelist.WhitelistEntry;
+import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidManager;
+import singularity.events.server.*;
+import singularity.events.server.ping.PingReceivedEvent;
+import singularity.messages.events.ProxyMessageInEvent;
+import singularity.messages.proxied.ProxiedMessage;
+import singularity.modules.ModuleManager;
+import singularity.modules.ModuleUtils;
+import singularity.objects.PingedResponse;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 public class PlatformListener implements Listener {
     public PlatformListener() {
@@ -63,7 +58,7 @@ public class PlatformListener implements Listener {
             uuid = optional.get();
         }
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
 
         streamPlayer.setCurrentName(name);
 //        streamPlayer.getLocation().setServerName(proxiedPlayer.getServer().getInfo().getName());
@@ -95,7 +90,7 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
         streamPlayer.setCurrentName(player.getName());
@@ -110,7 +105,7 @@ public class PlatformListener implements Listener {
     public void onLeave(PlayerDisconnectEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
         ModuleUtils.fireEvent(logoutEvent);
@@ -123,7 +118,7 @@ public class PlatformListener implements Listener {
     public void onServerSwitch(ServerConnectedEvent event) {
         ProxiedPlayer player = event.getPlayer();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         streamPlayer.setServerName(event.getServer().getInfo().getName());
     }
@@ -132,9 +127,9 @@ public class PlatformListener implements Listener {
     public void onChat(ChatEvent event) {
         ProxiedPlayer player = (ProxiedPlayer) event.getSender();
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
-        StreamlineChatEvent chatEvent = new StreamlineChatEvent(streamPlayer, event.getMessage());
+        CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
         Streamline.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
@@ -145,7 +140,7 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onProperEvent(ProperEvent event) {
-        ModuleManager.fireEvent(event.getStreamlineEvent());
+        ModuleManager.fireEvent(event.getCosmicEvent());
     }
 
     @EventHandler
@@ -155,7 +150,7 @@ public class PlatformListener implements Listener {
         String tag = event.getTag();
         if (event.getData() == null) return;
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         try {
             ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, false, event.getData(), tag);
@@ -238,7 +233,7 @@ public class PlatformListener implements Listener {
             toName = "none";
         }
 
-        StreamPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName);
         ModuleUtils.fireEvent(kickedFromServerEvent);

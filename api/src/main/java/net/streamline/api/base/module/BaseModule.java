@@ -2,13 +2,13 @@ package net.streamline.api.base.module;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.SLAPI;
+import net.streamline.api.base.commands.GivenCommands;
+import singularity.Singularity;
 import net.streamline.api.base.listeners.BaseListener;
-import net.streamline.api.base.ratapi.LuckpermsExpansion;
 import net.streamline.api.base.ratapi.StreamlineExpansion;
 import net.streamline.api.base.text.HexInit;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.api.modules.SimpleModule;
+import singularity.modules.ModuleManager;
+import singularity.modules.SimpleModule;
 import org.pf4j.PluginDependency;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginWrapper;
@@ -25,8 +25,6 @@ public class BaseModule extends SimpleModule {
 
     @Getter @Setter
     private static StreamlineExpansion streamlineExpansion;
-    @Getter @Setter
-    private static LuckpermsExpansion luckpermsExpansion;
 
     public BaseModule() {
         super(new PluginWrapper(ModuleManager.safePluginManager(), new PluginDescriptor() {
@@ -42,7 +40,7 @@ public class BaseModule extends SimpleModule {
 
             @Override
             public String getPluginClass() {
-                return "net.streamline.api.base.module.BaseModule";
+                return "singularity.base.module.BaseModule";
             }
 
             @Override
@@ -69,7 +67,7 @@ public class BaseModule extends SimpleModule {
             public List<PluginDependency> getDependencies() {
                 return Collections.emptyList();
             }
-        }, SLAPI.getModuleFolder().toPath(), SLAPI.getInstance().getClass().getClassLoader()));
+        }, Singularity.getModuleFolder().toPath(), Singularity.getInstance().getClass().getClassLoader()));
 
         setMalleable(false);
         setEnabled(true);
@@ -83,7 +81,6 @@ public class BaseModule extends SimpleModule {
 //        ModuleUtils.listen(getBaseListener(), this);
 
         setStreamlineExpansion(new StreamlineExpansion());
-        setLuckpermsExpansion(new LuckpermsExpansion());
 
 //        GivenConfigs.getMainConfig().getHexPolicies().forEach(TextManager::registerHexPolicy);
         HexInit.init();

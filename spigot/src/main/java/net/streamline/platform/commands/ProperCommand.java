@@ -1,11 +1,6 @@
 package net.streamline.platform.commands;
 
 import lombok.Getter;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.command.result.CommandResult;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.interfaces.IProperCommand;
-import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.Command;
@@ -14,6 +9,11 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import singularity.command.CosmicCommand;
+import singularity.command.result.CommandResult;
+import singularity.data.console.CosmicSender;
+import singularity.interfaces.IProperCommand;
+import singularity.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +21,9 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
 public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
-    private final StreamlineCommand parent;
+    private final CosmicCommand parent;
 
-    public ProperCommand(StreamlineCommand parent) {
+    public ProperCommand(CosmicCommand parent) {
         super(parent.getBase(), "Not defined.", "Not defined.", List.of(parent.getAliases()));
         this.parent = parent;
     }
@@ -39,7 +39,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 
@@ -64,14 +64,14 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
 
         CommandResult<?> result = parent.baseRun(s, args);
 
         if (result == null) return false;
-        if (result == StreamlineCommand.notSet()) return true;
-        if (result == StreamlineCommand.error()) return false;
-        if (result == StreamlineCommand.failure()) return false;
-        return result == StreamlineCommand.success();
+        if (result == CosmicCommand.notSet()) return true;
+        if (result == CosmicCommand.error()) return false;
+        if (result == CosmicCommand.failure()) return false;
+        return result == CosmicCommand.success();
     }
 }

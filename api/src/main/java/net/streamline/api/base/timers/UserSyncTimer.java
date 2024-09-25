@@ -1,7 +1,7 @@
 package net.streamline.api.base.timers;
 
-import net.streamline.api.scheduler.BaseRunnable;
-import net.streamline.api.utils.UserUtils;
+import singularity.scheduler.BaseRunnable;
+import singularity.utils.UserUtils;
 
 public class UserSyncTimer extends BaseRunnable {
     public UserSyncTimer() {

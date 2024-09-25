@@ -2,7 +2,7 @@ package net.streamline.platform.commands;
 
 import net.streamline.api.command.CommandHandler;
 import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.data.console.StreamSender;
+import singularity.data.console.CosmicSender;
 import net.streamline.api.modules.ModuleUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;

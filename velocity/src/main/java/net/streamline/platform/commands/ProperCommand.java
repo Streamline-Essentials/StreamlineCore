@@ -3,12 +3,13 @@ package net.streamline.platform.commands;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import lombok.Getter;
-import net.streamline.api.command.StreamlineCommand;
-import net.streamline.api.data.console.StreamSender;
-import net.streamline.api.interfaces.IProperCommand;
-import net.streamline.api.utils.MessageUtils;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
+import singularity.command.CosmicCommand;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
+import singularity.interfaces.IProperCommand;
+import singularity.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +18,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
 public class ProperCommand implements SimpleCommand, IProperCommand {
-    private final StreamlineCommand parent;
+    private final CosmicCommand parent;
     private final String base;
     private final String permission;
     private final String[] aliases;
 
-    public ProperCommand(StreamlineCommand parent) {
+    public ProperCommand(CosmicCommand parent) {
         this.parent = parent;
         this.base = parent.getBase();
         this.permission = parent.getPermission();
@@ -31,7 +32,7 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
 
     @Override
     public void execute(Invocation invocation) {
-        StreamSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
 
         parent.baseRun(s, invocation.arguments());
     }
@@ -40,7 +41,7 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
         String[] args = invocation.arguments();
         if (args.length < 1) args = new String[] { "" };
-        StreamSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, invocation.arguments());
 
