@@ -20,6 +20,7 @@ import singularity.data.players.location.CosmicLocation;
 import singularity.data.server.CosmicServer;
 import singularity.interfaces.IUserManager;
 import singularity.objects.CosmicResourcePack;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.net.InetSocketAddress;

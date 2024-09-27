@@ -22,9 +22,7 @@ import singularity.text.HexPolicy;
 import singularity.text.TextManager;
 import singularity.utils.MessageUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Messenger implements IMessenger {
     @Getter
