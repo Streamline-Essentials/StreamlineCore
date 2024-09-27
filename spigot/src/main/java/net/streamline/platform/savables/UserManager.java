@@ -144,7 +144,8 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         Player p = Streamline.getPlayer(user.getUuid());
         if (p == null) return;
 
-        p.setResourcePack(pack.getUrl(), pack.getHash(), pack.getPrompt(), pack.isForce());
+//        p.setResourcePack(pack.getUrl(), pack.getHash(), pack.getPrompt(), pack.isForce());
+        p.setResourcePack(pack.getUrl(), pack.getHash());
     }
 
     @Override
