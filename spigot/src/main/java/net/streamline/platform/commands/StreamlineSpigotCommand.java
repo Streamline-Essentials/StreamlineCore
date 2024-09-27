@@ -1,9 +1,5 @@
 package net.streamline.platform.commands;
 
-import net.streamline.api.command.CommandHandler;
-import net.streamline.api.command.StreamlineCommand;
-import singularity.data.console.CosmicSender;
-import net.streamline.api.modules.ModuleUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.ChatColor;
@@ -12,6 +8,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import singularity.command.CommandHandler;
+import singularity.command.CosmicCommand;
+import singularity.data.console.CosmicSender;
 import tv.quaint.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -33,7 +32,7 @@ public class StreamlineSpigotCommand implements TabExecutor {
         if (args == null) args = new String[] { "" };
         String commandName = args[0];
 
-        StreamlineCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
+        CosmicCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
         if (streamlineCommand == null) {
             sender.sendMessage(ChatColor.RED + "Command not found.");
             return true;
@@ -41,7 +40,7 @@ public class StreamlineSpigotCommand implements TabExecutor {
 
         String[] newArgs = StringUtils.argsMinus(args, 0);
 
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
         if (s == null) {
             sender.sendMessage(ChatColor.RED + "Could not find your user...");
             return true;
@@ -56,21 +55,21 @@ public class StreamlineSpigotCommand implements TabExecutor {
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
             return StringUtils.getAsCompletionList("",
-                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(StreamlineCommand::getBase).collect(Collectors.toList()));
+                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(CosmicCommand::getBase).collect(Collectors.toList()));
         }
         if (args.length == 1) {
             return StringUtils.getAsCompletionList(args[0],
-                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(StreamlineCommand::getBase).collect(Collectors.toList()));
+                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(CosmicCommand::getBase).collect(Collectors.toList()));
         }
 
         String commandName = args[0];
 
-        StreamlineCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
+        CosmicCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
         if (streamlineCommand == null) return null;
 
         String[] newArgs = StringUtils.argsMinus(args, 0);
 
-        StreamSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
         if (s == null) return null;
 
         return new ArrayList<>(streamlineCommand.baseTabComplete(s, newArgs));

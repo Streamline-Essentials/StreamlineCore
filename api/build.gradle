@@ -22,3 +22,7 @@ dependencies {
     // Files.
 //    implementation(shadow(files(FILES)));
 }
+
+compileJava {
+    dependsOn(":StreamlineCore-Singularity:jar")
+}

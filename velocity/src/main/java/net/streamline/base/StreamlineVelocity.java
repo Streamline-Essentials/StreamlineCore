@@ -6,11 +6,10 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.modules.ModuleManager;
-import net.streamline.base.runnables.ServerPusher;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
+import singularity.modules.ModuleManager;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -25,10 +24,6 @@ import java.nio.file.Path;
         }
 )
 public class StreamlineVelocity extends BasePlugin {
-    @Getter
-    @Setter
-    private static ServerPusher serverPusher;
-
     @Inject
     public StreamlineVelocity(ProxyServer s, Logger l, @DataDirectory Path dd, Metrics.Factory mf) {
         super(s, l, dd, mf);
