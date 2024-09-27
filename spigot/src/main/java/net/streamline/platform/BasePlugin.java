@@ -363,11 +363,12 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
             try {
                 if (resourcePack.getHash().length > 0) {
-                    if (! resourcePack.getPrompt().isEmpty()) {
-                        player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
-                        return;
-                    }
-                    player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
+//                    if (! resourcePack.getPrompt().isEmpty()) {
+//                        player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.getPrompt(), resourcePack.isForce());
+//                        return;
+//                    }
+//                    player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash(), resourcePack.isForce());
+                    player.setResourcePack(resourcePack.getUrl(), resourcePack.getHash());
                     return;
                 }
                 player.setResourcePack(resourcePack.getUrl());

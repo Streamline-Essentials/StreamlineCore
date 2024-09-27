@@ -139,7 +139,13 @@ public class Messenger implements IMessenger {
     }
 
     public String simplify(BaseComponent... components) {
-        return TextComponent.fromArray(components).toLegacyText();
+        StringBuilder builder = new StringBuilder();
+
+        for (BaseComponent component : components) {
+            builder.append(component.toLegacyText());
+        }
+
+        return builder.toString();
     }
 
     public void sendTitle(CosmicSender player, CosmicTitle title) {
