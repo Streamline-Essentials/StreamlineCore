@@ -1,6 +1,5 @@
 package net.streamline.api.permissions;
 
-import host.plas.bou.utils.UuidUtils;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
@@ -9,12 +8,15 @@ import net.luckperms.api.node.types.PrefixNode;
 import net.luckperms.api.node.types.SuffixNode;
 import net.streamline.api.SLAPI;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.uuid.UuidManager;
 import singularity.permissions.MetaGrabber;
 import singularity.permissions.MetaKey;
 import singularity.permissions.MetaValue;
+import singularity.utils.UUIDFetcher;
 import tv.quaint.objects.AtomicString;
 import tv.quaint.utils.MathUtils;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -38,7 +40,17 @@ public class MetaGrabberImpl implements MetaGrabber {
         AtomicString prefix = new AtomicString("");
         AtomicInteger priority = new AtomicInteger(0);
         withLuckPerms(luckPerms -> {
-            String uuid = UuidUtils.toUuid(username);
+            String uuid = "";
+            Optional<String> s = UuidManager.getUuidFromName(username);
+            if (s.isEmpty()) {
+                UUID u = UUIDFetcher.getUUID(username);
+                if (u != null) uuid = u.toString();
+            } else {
+                uuid = s.get();
+            }
+
+            if (Objects.equals(uuid, "")) return;
+
             User user = luckPerms.getUserManager().getUser(UUID.fromString(uuid));
 
             Group group = luckPerms.getGroupManager().getGroup(user.getPrimaryGroup());
@@ -85,7 +97,16 @@ public class MetaGrabberImpl implements MetaGrabber {
         AtomicString suffix = new AtomicString("");
         AtomicInteger priority = new AtomicInteger(0);
         withLuckPerms(luckPerms -> {
-            String uuid = UuidUtils.toUuid(username);
+            String uuid = "";
+            Optional<String> s = UuidManager.getUuidFromName(username);
+            if (s.isEmpty()) {
+                UUID u = UUIDFetcher.getUUID(username);
+                if (u != null) uuid = u.toString();
+            } else {
+                uuid = s.get();
+            }
+
+            if (Objects.equals(uuid, "")) return;
             User user = luckPerms.getUserManager().getUser(UUID.fromString(uuid));
 
             Group group = luckPerms.getGroupManager().getGroup(user.getPrimaryGroup());
