@@ -95,6 +95,12 @@ subprojects {
                     'version': rootProject.version.toString(),
             )
         }
+        filesMatching('**/singularity.properties') {
+            expand (
+                    'name': rootProject.name.toString(),
+                    'version': rootProject.version.toString(),
+            )
+        }
     }
 
     shadowJar {

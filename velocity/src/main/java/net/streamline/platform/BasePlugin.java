@@ -12,6 +12,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
@@ -160,7 +161,7 @@ public abstract class BasePlugin implements ISingularityExtension {
         messenger = new Messenger();
         consoleHolder = new ConsoleHolder();
         playerInterface = new PlayerInterface();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
 
         registerListener(new PlatformListener());
