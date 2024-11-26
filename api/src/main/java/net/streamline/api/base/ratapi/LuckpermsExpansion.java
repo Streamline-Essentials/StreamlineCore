@@ -40,11 +40,16 @@ public class LuckpermsExpansion extends RATExpansion {
                     return s.string();
                 }
 
-                LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(uuid);
-                if (u == null) return s.string();
+                try {
+                    LuckPerms api = LuckPermsProvider.get();
 
-                return u.getPrimaryGroup();
+                    User u = api.getUserManager().getUser(uuid);
+                    if (u == null) return s.string();
+
+                    return u.getPrimaryGroup();
+                } catch (Exception e) {
+                    return s.string();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return s.string();
@@ -64,13 +69,17 @@ public class LuckpermsExpansion extends RATExpansion {
                     return s.string();
                 }
 
-                LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(uuid);
-                if (u == null) return s.string();
+                try {
+                    LuckPerms api = LuckPermsProvider.get();
+                    User u = api.getUserManager().getUser(uuid);
+                    if (u == null) return s.string();
 
-                Optional<Group> group = u.getInheritedGroups(QueryOptions.builder(QueryMode.CONTEXTUAL).build()).stream().findFirst();
+                    Optional<Group> group = u.getInheritedGroups(QueryOptions.builder(QueryMode.CONTEXTUAL).build()).stream().findFirst();
 
-                return group.map(Group::getName).orElse(s.string());
+                    return group.map(Group::getName).orElse(s.string());
+                } catch (Exception e) {
+                    return s.string();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return s.string();
@@ -89,35 +98,39 @@ public class LuckpermsExpansion extends RATExpansion {
                     return s.string();
                 }
 
-                LuckPerms api = LuckPermsProvider.get();
-                User u = api.getUserManager().getUser(uuid);
-                if (u == null) return s.string();
+                try {
+                    LuckPerms api = LuckPermsProvider.get();
+                    User u = api.getUserManager().getUser(uuid);
+                    if (u == null) return s.string();
 
-                AtomicString s1 = new AtomicString("");
-                u.getNodes(NodeType.META).forEach(node -> {
-                    if (node.getMetaKey().equals(params)) {
-                        s1.set(node.getMetaValue());
+                    AtomicString s1 = new AtomicString("");
+                    u.getNodes(NodeType.META).forEach(node -> {
+                        if (node.getMetaKey().equals(params)) {
+                            s1.set(node.getMetaValue());
+                        }
+                    });
+
+                    if (!s1.get().isEmpty() || !s1.get().isBlank()) {
+                        return s1.get();
                     }
-                });
 
-                if (! s1.get().isEmpty() || !s1.get().isBlank()) {
-                    return s1.get();
-                }
+                    Group group = api.getGroupManager().getGroup(u.getPrimaryGroup());
+                    if (group == null) return s.string();
 
-                Group group = api.getGroupManager().getGroup(u.getPrimaryGroup());
-                if (group == null) return s.string();
+                    group.getNodes(NodeType.META).forEach(node -> {
+                        if (node.getMetaKey().equals(params)) {
+                            s1.set(node.getMetaValue());
+                        }
+                    });
 
-                group.getNodes(NodeType.META).forEach(node -> {
-                    if (node.getMetaKey().equals(params)) {
-                        s1.set(node.getMetaValue());
+                    if (!s1.get().isEmpty() || !s1.get().isBlank()) {
+                        return s1.get();
                     }
-                });
 
-                if (! s1.get().isEmpty() || !s1.get().isBlank()) {
-                    return s1.get();
+                    return s.string();
+                } catch (Exception e) {
+                    return s.string();
                 }
-
-                return s.string();
             } catch (Exception e) {
                 e.printStackTrace();
                 return s.string();

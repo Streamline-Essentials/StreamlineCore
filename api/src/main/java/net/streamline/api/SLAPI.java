@@ -16,11 +16,13 @@ import singularity.interfaces.ISingularityExtension;
 import singularity.interfaces.IUserManager;
 import singularity.interfaces.audiences.IConsoleHolder;
 import singularity.interfaces.audiences.IPlayerInterface;
+import singularity.modules.CosmicModule;
 import singularity.permissions.PermissionUtil;
 import singularity.utils.MessageUtils;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IUserManager<C, P>, M extends IMessenger> extends Singularity<C, P, S, U, M> {
     @Getter @Setter
@@ -40,14 +42,14 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
     private static UserEnsureTimer userEnsureTimer;
 
     @Getter
-    private static final String apiChannel = "streamline:api";
+    private static final String slApiChannel = "streamline:api";
 
     public static boolean isReady() {
         return Singularity.isReady();
     }
 
-    public SLAPI(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface) {
-        super(identifier, platform, userManager, messenger, consoleHolder, playerInterface);
+    public SLAPI(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter) {
+        super(identifier, platform, userManager, messenger, consoleHolder, playerInterface, baseModuleGetter, slApiChannel);
         instance = this;
 
         lpOptional = Optional.empty();
@@ -60,8 +62,6 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
         oneSecondTimer = new OneSecondTimer();
         userSyncTimer = new UserSyncTimer();
         userEnsureTimer = new UserEnsureTimer();
-
-        setBaseModule(new BaseModule());
     }
 
     public static void onEnable() {

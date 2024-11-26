@@ -3,6 +3,7 @@ package net.streamline.api.base.module;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.base.commands.GivenCommands;
+import net.streamline.api.base.ratapi.LuckpermsExpansion;
 import singularity.Singularity;
 import net.streamline.api.base.listeners.BaseListener;
 import net.streamline.api.base.ratapi.StreamlineExpansion;
@@ -25,6 +26,9 @@ public class BaseModule extends SimpleModule {
 
     @Getter @Setter
     private static StreamlineExpansion streamlineExpansion;
+
+    @Getter @Setter
+    private static LuckpermsExpansion luckpermsExpansion;
 
     public BaseModule() {
         super(new PluginWrapper(ModuleManager.safePluginManager(), new PluginDescriptor() {
@@ -81,6 +85,7 @@ public class BaseModule extends SimpleModule {
 //        ModuleUtils.listen(getBaseListener(), this);
 
         setStreamlineExpansion(new StreamlineExpansion());
+        setLuckpermsExpansion(new LuckpermsExpansion());
 
 //        GivenConfigs.getMainConfig().getHexPolicies().forEach(TextManager::registerHexPolicy);
         HexInit.init();

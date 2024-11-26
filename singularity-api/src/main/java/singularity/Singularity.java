@@ -28,14 +28,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class Singularity<C, P extends C, S extends ISingularityExtension, U extends IUserManager<C, P>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
@@ -169,9 +167,9 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     private static CoreDBOperator mainDatabase;
 
     @Getter @Setter
-    private static String apiChannel = "singularity:api";
+    private static String apiChannel;
 
-    public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface) {
+    public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter, String apiChannel) {
         super(identifier);
         instance = this;
 
@@ -180,6 +178,8 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         this.messenger = messenger;
         this.consoleHolder = consoleHolder;
         this.playerInterface = playerInterface;
+
+        setApiChannel(apiChannel);
 
 //        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.BACKEND));
         setProxy(platform.getServerType().equals(ISingularityExtension.ServerType.PROXY));
@@ -192,6 +192,12 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         moduleFolder.mkdirs();
         moduleSaveFolder.mkdirs();
         mainCommandsFolder.mkdirs();
+
+        // Must go here.
+        GivenConfigs.init();
+
+        // Must go here.
+        if (baseModuleGetter != null) setBaseModule(baseModuleGetter.get());
 
         getFiles(getModuleFolder(), file -> {
             if (file.isDirectory()) return true;
@@ -207,7 +213,6 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
         moduleScheduler = new ModuleTaskManager();
 
-        GivenConfigs.init();
         setMainDatabase(GivenConfigs.getMainDatabase());
         CompletableFuture.runAsync(() -> {
             try {
@@ -236,6 +241,10 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         MessageUtils.init();
 
         setReady(true);
+    }
+
+    public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, String apiChannel) {
+        this(identifier, platform, userManager, messenger, consoleHolder, playerInterface, null, apiChannel);
     }
 
     public static String getServerUuid() {

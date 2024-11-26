@@ -8,6 +8,7 @@ import net.md_5.bungee.api.plugin.Event;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import singularity.logging.CosmicLogHandler;
 import singularity.messages.builders.ResourcePackMessageBuilder;
 import singularity.objects.CosmicResourcePack;
@@ -119,7 +120,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         messenger = new Messenger();
         consoleHolder = new ConsoleHolder();
         playerInterface = new PlayerInterface();
-        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
+        slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
 
         registerListener(new PlatformListener());
