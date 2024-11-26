@@ -67,7 +67,6 @@ subprojects {
         maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
     }
 
-
     processResources {
         // Debugging: Print values
         doFirst {
@@ -95,6 +94,12 @@ subprojects {
                     'version': rootProject.version.toString(),
             )
         }
+        filesMatching('**/singularity.properties') {
+            expand (
+                    'name': rootProject.name.toString(),
+                    'version': rootProject.version.toString(),
+            )
+        }
     }
 
     shadowJar {
@@ -104,8 +109,6 @@ subprojects {
                     'Implementation-Version': rootProject.version.toString()
             )
         }
-
-//        relocate('tv.quaint.thebase.lib', 'net.streamline.thebase.lib') // broken in 1.21-R0.1-SNAPSHOT
 
         relocate('com.github.Anon8281.universalScheduler', 'host.plas.bou.libs.universalScheduler')
 
@@ -117,26 +120,9 @@ subprojects {
     artifacts {
         archives shadowJar
     }
-
-//    publishing {
-//        publications {
-//            maven(MavenPublication) {
-//                from components.java
-//            }
-//        }
-//    }
 }
 
 wrapper {
     gradleVersion = '8.9'
     distributionType = Wrapper.DistributionType.ALL
 }
-
-// JitPack publishing
-//publishing {
-//    publications {
-//        maven(MavenPublication) {
-//            from components.java
-//        }
-//    }
-//}

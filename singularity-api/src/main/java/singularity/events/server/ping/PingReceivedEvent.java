@@ -8,9 +8,11 @@ import singularity.objects.PingedResponse;
 @Setter
 @Getter
 public class PingReceivedEvent extends CosmicEvent {
-    PingedResponse response;
+    private PingedResponse response;
+    private String hostname;
 
-    public PingReceivedEvent(PingedResponse response) {
+    public PingReceivedEvent(PingedResponse response, String hostname) {
         this.response = response;
+        this.hostname = hostname;
     }
 }

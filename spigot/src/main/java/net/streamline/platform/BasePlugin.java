@@ -6,6 +6,7 @@ import host.plas.bou.libs.universalScheduler.scheduling.schedulers.TaskScheduler
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
+import net.streamline.api.base.module.BaseModule;
 import net.streamline.apib.SLAPIB;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
@@ -143,7 +144,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
             messenger = new Messenger();
             consoleHolder = new ConsoleHolder();
             playerInterface = new PlayerInterface();
-            slapi = new SLAPI<>(getFolderName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface());
+            slapi = new SLAPI<>(getFolderName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface(), BaseModule::new);
             SLAPI.setBackendHandler(new BackendHandler());
             slapiB = new SLAPIB(getSlapi(), this);
 
