@@ -165,6 +165,12 @@ public class PlatformListener implements Listener {
     @EventHandler
     public void onPing(ProxyPingEvent event) {
         ServerPing ping = event.getResponse();
+        String hostName;
+        try {
+            hostName = event.getConnection().getVirtualHost().getHostString();
+        } catch (Throwable e) {
+            hostName = "";
+        }
 
         PingedResponse.Protocol protocol = new PingedResponse.Protocol(ping.getVersion().getName(), ping.getVersion().getProtocol());
         List<PingedResponse.PlayerInfo> infos = new ArrayList<>();
@@ -184,7 +190,7 @@ public class PlatformListener implements Listener {
             response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText());
         }
 
-        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
+        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response, hostName).fire();
 
         if (pingReceivedEvent.isCancelled()) {
             return;
