@@ -1,0 +1,45 @@
+name: Release with Compiled JARs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build and package JARs
+      run: |
+        ./gradlew clean build
+        mkdir -p release-jars
+        find . -name "*.jar" -exec cp {} release-jars/ \;
+
+    - name: Get commit history
+      run: |
+        git log --pretty=format:'%h - %s' origin/master..HEAD > commit_history.txt
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      with:
+        tag_name: "v${{ github.run_number }}"
+        release_name: "Release v${{ github.run_number }}"
+        body: |
+          Commits:
+          ${{ steps.get-commits.outputs.history }}
+        draft: false
+        prerelease: false
+        files: |
+          release-jars/*.jar
+
+    - name: Upload Commit History
+      run: |
+        gh release upload "v${{ github.run_number }}" commit_history.txt
