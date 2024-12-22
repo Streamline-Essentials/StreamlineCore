@@ -11,25 +11,26 @@ buildscript {
 }
 
 plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'maven-publish' // for jitpack.io
+    id "java"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "maven-publish" // for jitpack.io
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'io.freefair.lombok'
+    apply plugin: "java"
+    apply plugin: "com.github.johnrengelman.shadow"
+    apply plugin: "io.freefair.lombok"
+    apply plugin: "maven-publish"
 
-    apply from: rootDir.toString() + '/dependencies.gradle'
+    apply from: rootDir.toString() + "/dependencies.gradle"
 
-    group = properties['group']
-    version = properties['version']
+    group = properties["group"]
+    version = properties["version"]
 
     ext {
-        pluginMain = properties['plugin.main'] == 'default' ?
-                project.group.toString() + '.' + project.name.toString().toLowerCase() + '.' + project.name.toString() :
-                properties['plugin.main']
+        pluginMain = properties["plugin.main"] == "default" ?
+                project.group.toString() + "." + project.name.toString().toLowerCase() + "." + project.name.toString() :
+                properties["plugin.main"]
     }
 
     sourceCompatibility = JavaVersion.VERSION_11
@@ -41,23 +42,23 @@ subprojects {
 
         // Spigot / Bukkit
         maven {
-            url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots'
+            url "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
             content {
-                includeGroup 'org.bukkit'
-                includeGroup 'org.spigotmc'
+                includeGroup "org.bukkit"
+                includeGroup "org.spigotmc"
             }
         }
-        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-        maven { url 'https://oss.sonatype.org/content/repositories/central' }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url "https://oss.sonatype.org/content/repositories/central" }
         // Paper / Velocity
-        maven { url 'https://repo.papermc.io/repository/maven-public' }
+        maven { url "https://repo.papermc.io/repository/maven-public" }
         // Fabric
-        maven { url 'https://maven.fabricmc.net' }
-        maven { url 'https://libraries.minecraft.net' }
+        maven { url "https://maven.fabricmc.net" }
+        maven { url "https://libraries.minecraft.net" }
 
         // JitPack
-        maven { url 'https://jitpack.io' }
-        maven { url 'https://mvnrepository.com/artifact' }
+        maven { url "https://jitpack.io" }
+        maven { url "https://mvnrepository.com/artifact" }
         // OpenCollab
         maven {
             name "opencollabRepositoryMavenSnapshots"
@@ -69,40 +70,40 @@ subprojects {
         }
 
         // PlaceholderAPI
-        maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi' }
+        maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi" }
     }
 
     processResources {
         // Debugging: Print values
         doFirst {
-            println 'Version: ' + rootProject.version.toString() + ', Name: ' + rootProject.name.toString() + ', Main: ' + project.ext.pluginMain.toString()
+            println "Version: " + rootProject.version.toString() + ", Name: " + rootProject.name.toString() + ", Main: " + project.ext.pluginMain.toString()
         }
 
-        inputs.property('name', rootProject.name.toString())
-        inputs.property('version', rootProject.version.toString())
-        inputs.property('main', project.ext.pluginMain.toString())
-        outputs.dir(file('build/generated-src'))
+        inputs.property("name", rootProject.name.toString())
+        inputs.property("version", rootProject.version.toString())
+        inputs.property("main", project.ext.pluginMain.toString())
+        outputs.dir(file("build/generated-src"))
 
         java.sourceCompatibility = JavaVersion.VERSION_11
         java.targetCompatibility = JavaVersion.VERSION_11
 
-        filesMatching('**/plugin.yml') {
+        filesMatching("**/plugin.yml") {
             expand (
-                    'name': rootProject.name.toString(),
-                    'version': rootProject.version.toString(),
-                    'main': project.ext.pluginMain.toString(),
+                    "name": rootProject.name.toString(),
+                    "version": rootProject.version.toString(),
+                    "main": project.ext.pluginMain.toString(),
             )
         }
-        filesMatching('**/streamline.properties') {
+        filesMatching("**/streamline.properties") {
             expand (
-                    'name': rootProject.name.toString(),
-                    'version': rootProject.version.toString(),
+                    "name": rootProject.name.toString(),
+                    "version": rootProject.version.toString(),
             )
         }
-        filesMatching('**/singularity.properties') {
+        filesMatching("**/singularity.properties") {
             expand (
-                    'name': rootProject.name.toString(),
-                    'version': rootProject.version.toString(),
+                    "name": rootProject.name.toString(),
+                    "version": rootProject.version.toString(),
             )
         }
     }
@@ -110,14 +111,14 @@ subprojects {
     shadowJar {
         manifest {
             attributes(
-                    'Implementation-Title': rootProject.name.toString(),
-                    'Implementation-Version': rootProject.version.toString()
+                    "Implementation-Title": rootProject.name.toString(),
+                    "Implementation-Version": rootProject.version.toString()
             )
         }
 
-        relocate('com.github.Anon8281.universalScheduler', 'host.plas.bou.libs.universalScheduler')
+        relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
 
-        archiveFileName = project.name + '-' + project.version + '.jar'
+        archiveFileName = project.name + "-" + project.version + ".jar"
 
 //        minimize()
     }
@@ -126,7 +127,7 @@ subprojects {
         archives shadowJar
     }
 
-    tasks.register('copyToDeployDir', Copy) {
+    tasks.register('deploy', Copy) {
         // Define the deployment directory
         def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
 
@@ -137,21 +138,69 @@ subprojects {
             println "Generated JAR file: ${shadowJar.archiveFile}"
         }
 
-        // Copy the generated jar(s) to the deploy directory
+        // Copy the shadowJar output
         from shadowJar.archiveFile
         into deployDir
     }
 
-    // Ensure that the copyToDeployDir task runs after the shadowJar task
-    shadowJar.finalizedBy(copyToDeployDir)
+    // Ensure that the deploy task runs after the shadowJar task
+    shadowJar.finalizedBy(deploy)
 
-    tasks.named('copyToDeployDir').configure {
-        dependsOn shadowJar
-        dependsOn jar
+    tasks.named('deploy').configure {
+        dependsOn 'shadowJar', 'sourcesJar', /*'javadocJar',*/ 'jar'
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+    java {
+        withSourcesJar()
+//        withJavadocJar()
     }
 }
 
+tasks.register('deploy', Copy) {
+    // Define the deployment directory
+    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
+
+    // Ensure the deployment directory exists
+    doFirst {
+        println "Deploying to: $deployDir"
+        deployDir.mkdirs()
+        println "Generated JAR file: ${shadowJar.archiveFile}"
+    }
+
+    // Copy the shadowJar output
+    from shadowJar.archiveFile
+    into deployDir
+}
+
+// Ensure that the deploy task runs after the shadowJar task
+shadowJar.finalizedBy(deploy)
+
+tasks.named('deploy').configure {
+    dependsOn 'shadowJar', 'sourcesJar', /*'javadocJar',*/ 'jar'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+java {
+    withSourcesJar()
+//    withJavadocJar()
+}
+
 wrapper {
-    gradleVersion = '8.9'
+    gradleVersion = "8.9"
     distributionType = Wrapper.DistributionType.ALL
 }
