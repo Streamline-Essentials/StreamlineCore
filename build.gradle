@@ -13,6 +13,7 @@ buildscript {
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'maven-publish' // for jitpack.io
 }
 
 subprojects {
@@ -123,6 +124,30 @@ subprojects {
 
     artifacts {
         archives shadowJar
+    }
+
+    tasks.register('copyToDeployDir', Copy) {
+        // Define the deployment directory
+        def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
+
+        // Ensure the deployment directory exists
+        doFirst {
+            println "Deploying to: $deployDir"
+            deployDir.mkdirs()
+            println "Generated JAR file: ${shadowJar.archiveFile}"
+        }
+
+        // Copy the generated jar(s) to the deploy directory
+        from shadowJar.archiveFile
+        into deployDir
+    }
+
+    // Ensure that the copyToDeployDir task runs after the shadowJar task
+    shadowJar.finalizedBy(copyToDeployDir)
+
+    tasks.named('copyToDeployDir').configure {
+        dependsOn shadowJar
+        dependsOn jar
     }
 }
 
