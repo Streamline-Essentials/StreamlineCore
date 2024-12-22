@@ -1,7 +1,5 @@
 package net.streamline.base.runnables;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import host.plas.bou.scheduling.TaskManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
@@ -19,9 +16,8 @@ import singularity.data.teleportation.TPTicket;
 import singularity.scheduler.BaseRunnable;
 import singularity.utils.MessageUtils;
 
-import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PlayerTeleporter extends BaseRunnable {
@@ -45,7 +41,7 @@ public class PlayerTeleporter extends BaseRunnable {
             }
 
             tickets.forEach(ticket -> {
-                Player player = Streamline.getInstance().getProxy().getPlayer(ticket.getIdentifier());
+                Player player = Streamline.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
                 if (player == null) {
                     ticket.clear();
                     return;
