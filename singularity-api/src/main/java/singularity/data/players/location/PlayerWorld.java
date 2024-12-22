@@ -11,4 +11,9 @@ public class PlayerWorld implements Identifiable {
     public PlayerWorld(String worldName) {
         this.identifier = worldName;
     }
+
+    @Override
+    public String toString() {
+        return getIdentifier();
+    }
 }

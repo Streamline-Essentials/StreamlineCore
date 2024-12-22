@@ -14,24 +14,19 @@ public class UuidManager {
     @Getter @Setter
     private static ConcurrentSkipListSet<UuidInfo> uuids = new ConcurrentSkipListSet<>();
 
-    public static Optional<UuidInfo> registerUuid(UuidInfo uuidInfo) {
-        if (uuids.contains(uuidInfo)) {
-            return Optional.empty();
-        }
+    public static void registerUuid(UuidInfo uuidInfo) {
+        if (uuids.contains(uuidInfo)) unregisterUuid(uuidInfo);
         uuids.add(uuidInfo);
-        return Optional.of(uuidInfo);
     }
 
     public static Optional<UuidInfo> unregisterUuid(UuidInfo uuidInfo) {
-        if (! uuids.contains(uuidInfo)) {
-            return Optional.empty();
-        }
+        if (! uuids.contains(uuidInfo)) return Optional.empty();
         uuids.removeIf(uuidInfo1 -> uuidInfo1.getUuid().equals(uuidInfo.getUuid()));
         return Optional.of(uuidInfo);
     }
 
     public static Optional<UuidInfo> getUuid(String uuid) {
-        return uuids.stream().filter(uuidInfo -> uuidInfo.getUuid().toString().equals(uuid)).findFirst();
+        return uuids.stream().filter(uuidInfo -> uuidInfo.getUuid().equals(uuid)).findFirst();
     }
 
     public static Optional<UuidInfo> unregister(String uuid) {
@@ -59,7 +54,7 @@ public class UuidManager {
         AtomicReference<Optional<UuidInfo>> uuidInfo = new AtomicReference<>(Optional.empty());
 
         getUuids().forEach(ui -> {
-            if (ui.getNames().contains(name)) {
+            if (ui.getNamesCaseInsensitive().contains(name.toLowerCase())) {
                 uuidInfo.set(Optional.of(ui));
             }
         });
@@ -68,7 +63,7 @@ public class UuidManager {
     }
 
     public static Optional<String> getUuidFromName(String name) {
-        return getFromName(name).map(UuidInfo::getUuid).map(Object::toString);
+        return getFromName(name).map(UuidInfo::getUuid);
     }
 
     public static String makeDashedUUID(String uuid) {
@@ -80,22 +75,21 @@ public class UuidManager {
         CompletableFuture.runAsync(() -> {
             Optional<UuidInfo> infoOptional = getUuid(uuid);
             if (infoOptional.isEmpty()) {
-                Singularity.getMainDatabase().loadUuidInfo(uuid).whenComplete((uuidInfo, throwable) -> {
-                    if (throwable != null) throwable.printStackTrace();
+                Optional<UuidInfo> optional = Singularity.getMainDatabase().loadUuidInfo(uuid).join();
+                if (optional.isEmpty()) {
+                    UuidInfo u = new UuidInfo(uuid, name, ip);
+                    u.register();
 
-                    if (uuidInfo.isEmpty()) {
-                        UuidInfo info = new UuidInfo(uuid, name, ip);
-                        info.register();
-                    } else {
-                        UuidInfo u = uuidInfo.get();
-                        u.register();
+                    u.save();
+                } else {
+                    UuidInfo u = optional.get();
+                    u.register();
 
-                        u.addName(name);
-                        u.addIp(ip);
+                    u.addName(name);
+                    u.addIp(ip);
 
-                        u.save();
-                    }
-                });
+                    u.save();
+                }
             } else {
                 UuidInfo u = infoOptional.get();
                 u.register();

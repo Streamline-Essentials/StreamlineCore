@@ -182,6 +182,13 @@ public class PlatformListener implements Listener {
 
     @EventHandler
     public void onPing(ServerListPingEvent event) {
+        String hostName;
+        try {
+            hostName = event.getAddress().getHostName();
+        } catch (Throwable e) {
+            hostName = "";
+        }
+
         PingedResponse.Protocol protocol = new PingedResponse.Protocol("latest", 1);
 
         List<PingedResponse.PlayerInfo> playerInfos = new ArrayList<>();
@@ -194,7 +201,7 @@ public class PlatformListener implements Listener {
 
         PingedResponse response = new PingedResponse(protocol, players, event.getMotd());
 
-        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response).fire();
+        PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response, hostName).fire();
 
         if (pingReceivedEvent.isCancelled()) {
             return;

@@ -3,12 +3,15 @@ package net.streamline.platform;
 import lombok.Getter;
 import lombok.Setter;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Event;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
+import net.streamline.base.runnables.PlayerChecker;
+import net.streamline.base.runnables.PlayerTeleporter;
 import singularity.logging.CosmicLogHandler;
 import singularity.messages.builders.ResourcePackMessageBuilder;
 import singularity.objects.CosmicResourcePack;
@@ -62,6 +65,11 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
     private ConsoleHolder consoleHolder;
     @Getter
     private PlayerInterface playerInterface;
+
+    @Getter @Setter
+    private static PlayerChecker playerChecker;
+    @Getter @Setter
+    private static PlayerTeleporter playerTeleporter;
 
     @Getter @Setter
     private CosmicResourcePack resourcePack;
@@ -128,6 +136,9 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         TaskManager.init();
 
         getProxy().registerChannel(SLAPI.getApiChannel());
+
+        playerChecker = new PlayerChecker();
+        playerTeleporter = new PlayerTeleporter();
 
         this.enable();
         fireStartEvent();
@@ -322,5 +333,13 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
     @Override
     public ClassLoader getMainClassLoader() {
         return getProxy().getClass().getClassLoader();
+    }
+
+    public static ConcurrentSkipListMap<String, ProxiedPlayer> getPlayersByUUID() {
+        ConcurrentSkipListMap<String, ProxiedPlayer> map = new ConcurrentSkipListMap<>();
+        for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
+            map.put(player.getUniqueId().toString(), player);
+        }
+        return map;
     }
 }

@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
+import singularity.data.runners.PlayerSaver;
+import singularity.data.update.defaults.DefaultUpdaters;
 import singularity.data.uuid.UuidInfo;
 import singularity.data.uuid.UuidManager;
 import singularity.database.CoreDBOperator;
@@ -163,11 +165,19 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     @Getter @Setter
     private static boolean ready = false;
 
-    @Getter @Setter
-    private static CoreDBOperator mainDatabase;
+    public static CoreDBOperator getMainDatabase() {
+        return GivenConfigs.getMainDatabase();
+    }
+
+    public static void setMainDatabase(CoreDBOperator mainDatabase) {
+        GivenConfigs.setMainDatabase(mainDatabase);
+    }
 
     @Getter @Setter
     private static String apiChannel;
+
+    @Getter @Setter
+    private static PlayerSaver playerSaver;
 
     public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter, String apiChannel) {
         super(identifier);
@@ -213,7 +223,6 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
         moduleScheduler = new ModuleTaskManager();
 
-        setMainDatabase(GivenConfigs.getMainDatabase());
         CompletableFuture.runAsync(() -> {
             try {
                 getMainDatabase().ensureUsable();
@@ -239,6 +248,10 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         UserUtils.loadConsole();
 
         MessageUtils.init();
+
+        DefaultUpdaters.init();
+
+        playerSaver = new PlayerSaver();
 
         setReady(true);
     }

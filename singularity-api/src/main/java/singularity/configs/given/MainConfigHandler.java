@@ -75,6 +75,12 @@ public class MainConfigHandler extends SimpleConfiguration {
 
     // USER
 
+    public long getPlayerDataSaveInterval() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("players.save-interval", 1000L * 10 / 20); // 10 seconds (in ticks)
+    }
+
     public String getDefaultMetaNickname() {
         reloadResource();
 

@@ -7,7 +7,6 @@ import singularity.data.players.location.CosmicLocation;
 import singularity.interfaces.ISingularityExtension;
 import singularity.interfaces.audiences.real.RealSender;
 import singularity.interfaces.audiences.real.RealPlayer;
-import singularity.messages.builders.TeleportMessageBuilder;
 import singularity.objects.CosmicResourcePack;
 import singularity.placeholders.RATRegistry;
 import singularity.events.CosmicEvent;
@@ -389,12 +388,12 @@ public class ModuleUtils {
         Singularity.getInstance().getUserManager().kick(user, "&cConnection Closed by Server");
     }
 
-    public static void teleport(CosmicPlayer player, CosmicLocation location) {
-        TeleportMessageBuilder.build(player, location, player).send();
+    public static void teleport(CosmicPlayer player, CosmicPlayer target) {
+        UserUtils.teleport(player, target);
     }
 
-    public static void teleport(CosmicPlayer player, CosmicPlayer target) {
-        teleport(player, target.getLocation());
+    public static void teleport(CosmicPlayer player, CosmicLocation location) {
+        UserUtils.teleport(player, location);
     }
 
     public static String replacePlaceholders(String string) {
