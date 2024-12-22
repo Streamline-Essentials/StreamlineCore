@@ -21,4 +21,4 @@ jobs:
     - name: Auto Merge Pull Request
       uses: pascalgn/automerge-action@v0.15.3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
