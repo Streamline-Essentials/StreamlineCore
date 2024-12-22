@@ -8,6 +8,8 @@ import singularity.configs.given.MainMessagesHandler;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.events.CreateSenderEvent;
+import singularity.data.players.location.CosmicLocation;
+import singularity.data.teleportation.TPTicket;
 import singularity.data.uuid.UuidManager;
 import singularity.modules.ModuleUtils;
 import singularity.data.players.events.LoadStreamSenderEvent;
@@ -82,6 +84,8 @@ public class UserUtils {
     }
 
     public static CosmicSender loadSender(CosmicSender sender) {
+        if (isLoaded(sender.getUuid())) unloadSender(sender.getUuid()); // unload the sender if it's already loaded
+
         getLoadedSenders().put(sender.getUuid(), sender);
         ModuleUtils.fireEvent(new LoadStreamSenderEvent(sender));
         return sender;
@@ -164,6 +168,17 @@ public class UserUtils {
         return player;
     }
 
+    public static CosmicPlayer createAndAugmentPlayer(String uuid) {
+        CompletableFuture<Optional<CosmicPlayer>> loader = Singularity.getMainDatabase().loadPlayer(uuid);
+
+        CosmicPlayer player = createPlayer(uuid);
+        player.augment(loader);
+
+        loadPlayer(player);
+
+        return player;
+    }
+
     public static CosmicSender getOrCreateSender(String uuid) {
         Optional<CosmicSender> user = getSender(uuid);
         if (user.isPresent()) return user.get();
@@ -172,22 +187,14 @@ public class UserUtils {
             return getConsole();
         }
 
-        CompletableFuture<Optional<CosmicPlayer>> loader = Singularity.getMainDatabase().loadPlayer(uuid);
-
-        CosmicPlayer player = createPlayer(uuid).augment(loader);
-
-        return loadPlayer(player);
+        return createAndAugmentPlayer(uuid);
     }
 
     public static CosmicPlayer getOrCreatePlayer(String uuid) {
         CosmicSender sender = getOrCreateSender(uuid);
         if (sender instanceof CosmicPlayer) return (CosmicPlayer) sender;
 
-        CompletableFuture<Optional<CosmicPlayer>> loader = Singularity.getMainDatabase().loadPlayer(uuid);
-
-        CosmicPlayer player = createPlayer(uuid).augment(loader);
-
-        return loadPlayer(player);
+        return createAndAugmentPlayer(uuid);
     }
 
     public static boolean isConsole(String uuid) {
@@ -285,10 +292,7 @@ public class UserUtils {
 
     public static Optional<CosmicSender> getOrCreateSenderByName(String name) {
         Optional<String> uuid = getUUIDFromName(name);
-        if (uuid.isEmpty()) return Optional.empty();
-
-        return Optional.of(getOrCreateSender(uuid.get()));
-
+        return uuid.map(UserUtils::getOrCreateSender);
     }
 
     public static Optional<CosmicPlayer> getOrCreatePlayerByName(String name) {
@@ -328,5 +332,16 @@ public class UserUtils {
         getLoadedSenders().forEach((s, user) -> {
             user.save();
         });
+    }
+
+    public static void teleport(CosmicSender sender, CosmicPlayer target) {
+        teleport(sender, target.getLocation());
+    }
+
+    public static void teleport(CosmicSender sender, CosmicLocation location) {
+        if (sender.isConsole()) return;
+
+        TPTicket ticket = new TPTicket(sender.getIdentifier(), location);
+        ticket.post();
     }
 }

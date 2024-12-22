@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.base.commands.GivenCommands;
-import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.UserEnsureTimer;
 import net.streamline.api.base.timers.UserSyncTimer;

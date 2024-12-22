@@ -13,6 +13,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
+import net.streamline.base.runnables.PlayerChecker;
+import net.streamline.base.runnables.PlayerTeleporter;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
@@ -80,6 +82,11 @@ public abstract class BasePlugin implements ISingularityExtension {
     private final File dataFolder;
     @Getter
     private final Metrics.Factory metricsFactory;
+
+    @Getter @Setter
+    private static PlayerChecker playerChecker;
+    @Getter @Setter
+    private static PlayerTeleporter playerTeleporter;
 
     public BasePlugin(ProxyServer s, Logger l, Path dd, Metrics.Factory mf) {
         this.proxy = s;
@@ -171,6 +178,9 @@ public abstract class BasePlugin implements ISingularityExtension {
 //        UserUtils.loadSender(new StreamSender());
 
         getProxy().getChannelRegistrar().register(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
+
+        playerChecker = new PlayerChecker();
+        playerTeleporter = new PlayerTeleporter();
 
         this.enable();
     }
@@ -381,5 +391,13 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Override
     public ClassLoader getMainClassLoader() {
         return getProxy().getClass().getClassLoader();
+    }
+
+    public static ConcurrentSkipListMap<String, Player> getPlayersByUUID() {
+        ConcurrentSkipListMap<String, Player> map = new ConcurrentSkipListMap<>();
+        for (Player player : getInstance().getProxy().getAllPlayers()) {
+            map.put(player.getUniqueId().toString(), player);
+        }
+        return map;
     }
 }

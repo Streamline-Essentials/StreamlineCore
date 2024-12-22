@@ -90,4 +90,9 @@ public class PlayerRotation {
 
         return this;
     }
+
+    @Override
+    public String toString() {
+        return getYaw() + ";" + getPitch();
+    }
 }
