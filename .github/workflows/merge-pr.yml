@@ -1,6 +1,9 @@
-name: Auto Merge Pull Request
+name: Auto Merge Dev to Master
 
 on:
+#  schedule:
+#    - cron: "0 * * * *" # Runs every hour
+  workflow_dispatch: # Allows manual trigger
   pull_request:
     branches:
       - master
@@ -13,19 +16,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0 # Ensures full history and all branches are fetched
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Fetch master branch
-      run: git fetch origin master
+      - name: Set up GitHub CLI
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-    - name: Check for merge conflicts
-      run: |
-        git merge --no-commit --no-ff dev || exit 1
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
 
-    - name: Auto Merge Pull Request
-      uses: pascalgn/automerge-action@v0.15.3
-      with:
-        github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+
+      - name: Find and Merge Pull Requests
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          # Fetch PRs from `dev` to `master`
+          PRS=$(gh pr list --base master --head dev --state open --json number,mergeable -q '.[] | select(.mergeable == true) | .number')
+          echo "Found PRs: $PRS"
+
+          for PR in $PRS; do
+            echo "Merging PR #$PR"
+            gh pr merge $PR --merge --admin
+          done
