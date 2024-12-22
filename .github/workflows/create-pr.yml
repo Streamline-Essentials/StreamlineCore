@@ -20,4 +20,4 @@ jobs:
         destination_branch: master
         pr_title: "Auto PR: Merge dev into master"
         pr_body: "This PR merges changes from dev into master."
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
