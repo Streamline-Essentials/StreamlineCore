@@ -12,6 +12,8 @@ console:
 
 # Settings for actual player users.
 players:
+  # The amount of time (in server ticks; 20 ticks per second) to save player user profiles.
+  save-interval: 500
   meta:
     nickname: ""
     prefix: ""

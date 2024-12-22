@@ -80,6 +80,16 @@ public class UuidInfo implements IUuidable {
         ips.removeIf(i -> i.equals(ip));
     }
 
+    public List<String> getNamesCaseInsensitive() {
+        List<String> r = new ArrayList<>();
+
+        for (String name : names) {
+            r.add(name.toLowerCase());
+        }
+
+        return r;
+    }
+
     public static List<String> computeNames(String names) {
         return computeList(names);
     }
@@ -89,6 +99,8 @@ public class UuidInfo implements IUuidable {
     }
 
     public static List<String> computeList(String listString) {
+        if (! isComputable(listString)) return new ArrayList<>(List.of(listString));
+
         Matcher matcher = MatcherUtils.matcherBuilder("[!][!][!](.*?)[:][:][:]", listString);
         List<String[]> groups = MatcherUtils.getGroups(matcher, 1);
 
@@ -103,5 +115,9 @@ public class UuidInfo implements IUuidable {
         }
 
         return r;
+    }
+
+    public static boolean isComputable(String listString) {
+        return listString.startsWith("!!!") && listString.endsWith(":::");
     }
 }

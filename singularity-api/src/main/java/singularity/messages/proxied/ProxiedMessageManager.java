@@ -91,10 +91,6 @@ public class ProxiedMessageManager {
                 PlayerLocationMessageBuilder.handle(proxiedMessage);
                 return;
             }
-            if (proxiedMessage.getSubChannel().equals(TeleportMessageBuilder.getSubChannel())) {
-                TeleportMessageBuilder.handle(proxiedMessage);
-                return;
-            }
             if (proxiedMessage.getSubChannel().equals(ServerConnectMessageBuilder.getSubChannel())) {
                 ServerConnectMessageBuilder.handle(proxiedMessage);
                 return;

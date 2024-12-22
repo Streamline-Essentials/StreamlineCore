@@ -7,6 +7,7 @@ import singularity.configs.given.whitelist.WhitelistConfig;
 import singularity.data.console.CosmicSender;
 import singularity.database.ConnectorSet;
 import singularity.database.CoreDBOperator;
+import singularity.database.servers.SavedServer;
 import singularity.utils.UserUtils;
 
 import java.io.File;
@@ -20,6 +21,8 @@ public class GivenConfigs {
     private static WhitelistConfig whitelistConfig;
     @Getter @Setter
     private static DatabaseConfigHandler databaseConfig;
+    @Getter @Setter
+    private static ServerConfigHandler serverConfig;
 
     @Getter @Setter
     private static File punishmentFolder;
@@ -32,11 +35,14 @@ public class GivenConfigs {
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
         setDatabaseConfig(new DatabaseConfigHandler());
+        setServerConfig(new ServerConfigHandler());
 
         try {
             ConnectorSet connectorSet = getDatabaseConfig().getConnectorSet();
             CoreDBOperator operator = new CoreDBOperator(connectorSet);
             setMainDatabase(operator);
+
+            ensureServer();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,5 +67,13 @@ public class GivenConfigs {
             user.save();
             user.reload();
         }
+    }
+
+    public static SavedServer getServer() {
+        return getServerConfig().getServer();
+    }
+
+    public static void ensureServer() {
+        getServer().push();
     }
 }

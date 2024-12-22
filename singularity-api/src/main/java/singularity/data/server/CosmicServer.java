@@ -11,4 +11,9 @@ public class CosmicServer implements Identifiable {
     public CosmicServer(String identifier) {
         this.identifier = identifier;
     }
+
+    @Override
+    public String toString() {
+        return getIdentifier();
+    }
 }

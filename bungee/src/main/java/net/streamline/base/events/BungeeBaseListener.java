@@ -1,10 +1,10 @@
 package net.streamline.base.events;
 
-import host.plas.bou.utils.MessageUtils;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.streamline.api.base.listeners.BaseListener;
 import net.streamline.base.Streamline;
 import singularity.events.player.updates.properties.PlayerIPUpdateEvent;
+import singularity.utils.MessageUtils;
 import tv.quaint.events.processing.BaseProcessor;
 
 public class BungeeBaseListener extends BaseListener {

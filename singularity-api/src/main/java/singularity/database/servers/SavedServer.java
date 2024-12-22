@@ -2,6 +2,7 @@ package singularity.database.servers;
 
 import lombok.Getter;
 import lombok.Setter;
+import singularity.Singularity;
 import singularity.interfaces.ISingularityExtension;
 import tv.quaint.objects.Identifiable;
 
@@ -24,5 +25,10 @@ public class SavedServer implements Identifiable {
         this.identifier = identifier;
         this.name = name;
         this.type = type;
+    }
+
+    public void push() {
+        // Push to database.
+        Singularity.getMainDatabase().putServerAsync(this);
     }
 }

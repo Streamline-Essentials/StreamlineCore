@@ -2,6 +2,7 @@ package singularity.database;
 
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -12,8 +13,20 @@ import com.github.benmanes.caffeine.cache.AsyncCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
+import singularity.configs.given.GivenConfigs;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.PlayerWorld;
+import singularity.data.players.location.WorldPosition;
+import singularity.data.server.CosmicServer;
+import singularity.data.teleportation.TPTicket;
+import singularity.data.update.UpdateType;
+import singularity.data.update.defaults.DefaultUpdaters;
 import singularity.data.uuid.UuidInfo;
+import singularity.database.servers.SavedServer;
+import singularity.database.servers.UpdateInfo;
+import singularity.interfaces.ISingularityExtension;
+import singularity.utils.UserUtils;
 
 public class CoreDBOperator extends DBOperator {
     @Getter @Setter
@@ -195,6 +208,8 @@ public class CoreDBOperator extends DBOperator {
                 });
             }
 
+            DefaultUpdaters.getPlayerUpdater().update(player.getUuid());
+
             return true;
         });
     }
@@ -205,7 +220,12 @@ public class CoreDBOperator extends DBOperator {
             CompletableFuture<Optional<CosmicPlayer>> loading = CompletableFuture.supplyAsync(() -> {
                 ensureUsable();
 
-                if (! exists(uuid).join()) return Optional.empty();
+                if (! exists(uuid).join()) {
+                    CosmicPlayer player = UserUtils.createPlayer(uuid);
+                    savePlayer(player, false);
+
+                    return Optional.of(player);
+                }
 
                 CosmicPlayer player = new CosmicPlayer(uuid);
 
@@ -435,6 +455,320 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return uuids.get();
+        });
+    }
+
+    public void clearUpdateAsync(UpdateType<?> updateType, String identifier) {
+        CompletableFuture.runAsync(() -> clearUpdate(updateType, identifier).join());
+    }
+
+    public CompletableFuture<Void> clearUpdate(UpdateType<?> updateType, String identifier) {
+        return CompletableFuture.runAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.CLEAR_UPDATE, this.getConnectorSet());
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, updateType.getIdentifier());
+                    stmt.setString(2, identifier);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    public void postUpdateAsync(UpdateType<?> updateType, String identifier) {
+        CompletableFuture.runAsync(() -> postUpdate(updateType, identifier).join());
+    }
+
+    public CompletableFuture<Void> postUpdate(UpdateType<?> updateType, String identifier) {
+        return CompletableFuture.runAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PUT_UPDATE, this.getConnectorSet());
+
+            SavedServer server = GivenConfigs.getServer();
+
+            long time = System.currentTimeMillis();
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, updateType.getIdentifier());
+                    stmt.setString(2, identifier);
+                    stmt.setString(3, server.getIdentifier());
+                    stmt.setLong(4, time);
+
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setString(5, server.getIdentifier());
+                        stmt.setLong(6, time);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    public CompletableFuture<Optional<UpdateInfo>> checkUpdate(UpdateType<?> updateType, String identifier) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.CHECK_UPDATE, this.getConnectorSet());
+
+            AtomicReference<Optional<UpdateInfo>> date = new AtomicReference<>(Optional.empty());
+
+            this.executeQuery(s1, stmt -> {
+                try {
+                    stmt.setString(1, updateType.getIdentifier());
+                    stmt.setString(2, identifier);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, rs -> {
+                try {
+                    if (rs.next()) {
+                        try {
+                            String serverUuid = rs.getString("ServerUuid");
+                            long time = rs.getLong("PostDate");
+                            Date d = new Date(time);
+
+                            UpdateInfo info = new UpdateInfo(d, serverUuid);
+
+                            date.set(Optional.of(info));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return date.get();
+        });
+    }
+
+    public void putServerAsync(SavedServer server) {
+        CompletableFuture.runAsync(() -> putServer(server).join());
+    }
+
+    public CompletableFuture<Void> putServer(SavedServer server) {
+        return CompletableFuture.runAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PUT_SERVER, this.getConnectorSet());
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, server.getIdentifier());
+                    stmt.setString(2, server.getName());
+                    stmt.setString(3, server.getType().name());
+
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setString(4, server.getName());
+                        stmt.setString(5, server.getType().name());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    public CompletableFuture<Optional<SavedServer>> pullServer(String uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_SERVER, this.getConnectorSet());
+            if (s1.isBlank()) return Optional.empty();
+
+            AtomicReference<Optional<SavedServer>> server = new AtomicReference<>(Optional.empty());
+            this.executeQuery(s1, stmt -> {
+                try {
+                    stmt.setString(1, uuid);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, rs -> {
+                try {
+                    if (rs.next()) {
+                        try {
+                            String name = rs.getString("Name");
+                            String type = rs.getString("Type");
+
+                            ISingularityExtension.ServerType t = ISingularityExtension.ServerType.valueOf(type);
+
+                            SavedServer s = new SavedServer(uuid, name, t);
+
+                            server.set(Optional.of(s));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return server.get();
+        });
+    }
+
+    public void postTPTicketAsync(TPTicket ticket) {
+        CompletableFuture.runAsync(() -> postTPTicket(ticket).join());
+    }
+
+    public CompletableFuture<Void> postTPTicket(TPTicket ticket) {
+        return CompletableFuture.runAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PUT_TP_TICKET, this.getConnectorSet());
+            if (s1.isBlank()) return;
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, ticket.getIdentifier());
+                    stmt.setString(2, ticket.getTargetServer().getIdentifier());
+                    stmt.setString(3, ticket.getTargetWorld().getIdentifier());
+                    stmt.setDouble(4, ticket.getTargetLocation().getX());
+                    stmt.setDouble(5, ticket.getTargetLocation().getY());
+                    stmt.setDouble(6, ticket.getTargetLocation().getZ());
+                    stmt.setFloat(7, ticket.getTargetRotation().getYaw());
+                    stmt.setFloat(8, ticket.getTargetRotation().getPitch());
+                    stmt.setLong(9, ticket.getCreateDate().getTime());
+
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setString(10, ticket.getTargetServer().getIdentifier());
+                        stmt.setString(11, ticket.getTargetWorld().getIdentifier());
+                        stmt.setDouble(12, ticket.getTargetLocation().getX());
+                        stmt.setDouble(13, ticket.getTargetLocation().getY());
+                        stmt.setDouble(14, ticket.getTargetLocation().getZ());
+                        stmt.setFloat(15, ticket.getTargetRotation().getYaw());
+                        stmt.setFloat(16, ticket.getTargetRotation().getPitch());
+                        stmt.setLong(17, ticket.getCreateDate().getTime());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    public void clearTPTicketAsync(String uuid) {
+        CompletableFuture.runAsync(() -> clearTPTicket(uuid).join());
+    }
+
+    public CompletableFuture<Void> clearTPTicket(String uuid) {
+        return CompletableFuture.runAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.CLEAR_TP_TICKET, this.getConnectorSet());
+            if (s1.isBlank()) return;
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, uuid);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
+    public CompletableFuture<Optional<TPTicket>> getTPTicket(String uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_TP_TICKET, this.getConnectorSet());
+            if (s1.isBlank()) return Optional.empty();
+
+            AtomicReference<Optional<TPTicket>> ticket = new AtomicReference<>(Optional.empty());
+            this.executeQuery(s1, stmt -> {
+                try {
+                    stmt.setString(1, uuid);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, rs -> {
+                try {
+                    if (rs.next()) {
+                        try {
+                            String serverName = rs.getString("ServerName");
+                            String worldName = rs.getString("WorldName");
+                            double x = rs.getDouble("X");
+                            double y = rs.getDouble("Y");
+                            double z = rs.getDouble("Z");
+                            float yaw = rs.getFloat("Yaw");
+                            float pitch = rs.getFloat("Pitch");
+                            long time = rs.getLong("PostDate");
+
+                            CosmicServer server = new CosmicServer(serverName);
+                            PlayerWorld world = new PlayerWorld(worldName);
+                            WorldPosition position = new WorldPosition(x, y, z);
+                            PlayerRotation rotation = new PlayerRotation(yaw, pitch);
+
+                            Date d = new Date(time);
+
+                            TPTicket t = new TPTicket(uuid, server, world, position, rotation, d);
+
+                            ticket.set(Optional.of(t));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return ticket.get();
+        });
+    }
+
+    public CompletableFuture<ConcurrentSkipListSet<TPTicket>> pullAllTPTickets() {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.PULL_ALL_TP_TICKETS, this.getConnectorSet());
+            if (s1.isBlank()) return new ConcurrentSkipListSet<>();
+
+            ConcurrentSkipListSet<TPTicket> tickets = new ConcurrentSkipListSet<>();
+            this.executeQuery(s1, stmt -> {}, rs -> {
+                try {
+                    while (rs.next()) {
+                        try {
+                            String uuid = rs.getString("Uuid");
+                            String serverName = rs.getString("ServerName");
+                            String worldName = rs.getString("WorldName");
+                            double x = rs.getDouble("X");
+                            double y = rs.getDouble("Y");
+                            double z = rs.getDouble("Z");
+                            float yaw = rs.getFloat("Yaw");
+                            float pitch = rs.getFloat("Pitch");
+                            long time = rs.getLong("PostDate");
+
+                            CosmicServer server = new CosmicServer(serverName);
+                            PlayerWorld world = new PlayerWorld(worldName);
+                            WorldPosition position = new WorldPosition(x, y, z);
+                            PlayerRotation rotation = new PlayerRotation(yaw, pitch);
+
+                            Date d = new Date(time);
+
+                            TPTicket t = new TPTicket(uuid, server, world, position, rotation, d);
+
+                            tickets.add(t);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return tickets;
         });
     }
 }
