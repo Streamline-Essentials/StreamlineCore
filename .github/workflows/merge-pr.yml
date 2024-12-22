@@ -19,26 +19,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up GitHub CLI
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y gh
 
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
-
       - name: Find and Merge Pull Requests
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Configure `gh` CLI to use GITHUB_TOKEN directly
+          gh auth status || echo "Using GITHUB_TOKEN for authentication."
+
           # Fetch PRs from `dev` to `master`
           PRS=$(gh pr list --base master --head dev --state open --json number,mergeable -q '.[] | select(.mergeable == true) | .number')
           echo "Found PRs: $PRS"
