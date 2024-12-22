@@ -20,10 +20,9 @@ ext {
     ]
     OTHER_PLUGINS = [
             'net.luckperms:api:5.4',
-            'me.clip:placeholderapi:2.11.5',
+            'me.clip:placeholderapi:2.11.6',
             'org.geysermc.geyser:api:2.2.0-SNAPSHOT',
-            'org.geysermc.floodgate:api:2.2.2-SNAPSHOT',
-            'com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT',
+            'org.geysermc.floodgate:api:2.2.3-SNAPSHOT',
     ]
     FILES = [
 //            rootProject.rootDir.getPath().toString() + '/impl/sqlite-jdbc.jar' // not needed

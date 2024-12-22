@@ -1,0 +1,10 @@
+# Server information
+server:
+  # Server name.
+  # This is the name that you set the server as in your BungeeCord or Velocity config.
+  # This is only really used if it is a backend server on a network.
+  # Otherwise, it can be anything you want.
+  name: "Proxy" # Set as "Proxy" by default. Please change this.
+  # The server's UUID (for the database).
+  # DO NOT CHANGE this unless you know what you're doing.
+  uuid: "00000000-0000-0000-0000-000000000000"

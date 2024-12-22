@@ -13,14 +13,12 @@ buildscript {
 plugins {
     id 'java'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-//    id 'maven-publish'
 }
 
 subprojects {
     apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'io.freefair.lombok'
-//    apply plugin: 'maven-publish'
 
     apply from: rootDir.toString() + '/dependencies.gradle'
 
@@ -42,7 +40,7 @@ subprojects {
 
         // Spigot / Bukkit
         maven {
-            url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+            url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots'
             content {
                 includeGroup 'org.bukkit'
                 includeGroup 'org.spigotmc'
@@ -51,20 +49,26 @@ subprojects {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         maven { url 'https://oss.sonatype.org/content/repositories/central' }
         // Paper / Velocity
-        maven { url 'https://repo.papermc.io/repository/maven-public/' }
+        maven { url 'https://repo.papermc.io/repository/maven-public' }
         // Fabric
-        maven { url 'https://maven.fabricmc.net/' }
-        maven { url 'https://libraries.minecraft.net/' }
+        maven { url 'https://maven.fabricmc.net' }
+        maven { url 'https://libraries.minecraft.net' }
 
         // JitPack
         maven { url 'https://jitpack.io' }
         maven { url 'https://mvnrepository.com/artifact' }
         // OpenCollab
-        maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
-        maven { url 'https://repo.opencollab.dev/maven-releases/'}
+        maven {
+            name "opencollabRepositoryMavenSnapshots"
+            url "https://repo.opencollab.dev/maven-snapshots"
+        }
+        maven {
+            name "opencollabRepositoryMavenReleases"
+            url "https://repo.opencollab.dev/maven-releases"
+        }
 
         // PlaceholderAPI
-        maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+        maven { url 'https://repo.extendedclip.com/content/repositories/placeholderapi' }
     }
 
     processResources {

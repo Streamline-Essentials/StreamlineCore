@@ -36,4 +36,9 @@ public class WorldPosition implements Comparable<WorldPosition> {
 
         return new BlockPosition(x, y, z);
     }
+
+    @Override
+    public String toString() {
+        return getX() + ";" + getY() + ";" + getZ();
+    }
 }

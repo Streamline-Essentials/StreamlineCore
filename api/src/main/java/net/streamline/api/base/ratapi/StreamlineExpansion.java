@@ -115,6 +115,20 @@ public class StreamlineExpansion extends RATExpansion {
         new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getServerName())).register();
         new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> user.getMeta().getTagsAsString()).register();
 
+        new IdentifiedUserReplaceable(this, "user_location_server", (s, user) -> user.getServerName()).register();
+        new IdentifiedUserReplaceable(this, "user_location_world",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getWorld()) : s.string()).register();
+        new IdentifiedUserReplaceable(this, "user_location_x",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getX()) : s.string()).register();
+        new IdentifiedUserReplaceable(this, "user_location_y",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getY()) : s.string()).register();
+        new IdentifiedUserReplaceable(this, "user_location_z",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getZ()) : s.string()).register();
+        new IdentifiedUserReplaceable(this, "user_location_pitch",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPitch()) : s.string()).register();
+        new IdentifiedUserReplaceable(this, "user_location_yaw",
+                (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getYaw()) : s.string()).register();
+
         new IdentifiedUserReplaceable(this, "[?][R][:](.*?)", 1, (s, user) -> {
             try {
                 String params = s.get();

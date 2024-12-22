@@ -5,6 +5,7 @@ import lombok.Setter;
 import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.meta.SenderMeta;
 import singularity.data.players.permissions.SenderPermissions;
 import singularity.data.server.CosmicServer;
@@ -99,32 +100,52 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
         // Do nothing
     }
 
+    public void load() {
+        if (this instanceof CosmicPlayer) {
+            UserUtils.loadPlayer((CosmicPlayer) this);
+            return;
+        }
+
+        UserUtils.loadSender(this);
+    }
+
+    public void unload() {
+        UserUtils.unloadSender(this);
+    }
+
+    public boolean isLoaded() {
+        return UserUtils.isLoaded(getUuid());
+    }
+
+    public void ensureLoaded() {
+        if (! isLoaded()) load();
+    }
+
     @Override
     public CosmicPlayer augment(CompletableFuture<Optional<CosmicPlayer>> future) {
         loadComplete = false;
 
         CompletableFuture.runAsync(() -> {
             Optional<CosmicPlayer> optional = future.join();
-            if (optional.isEmpty()) {
-                loadComplete = true;
-                return;
+            if (optional.isPresent()) {
+                CosmicPlayer sender = optional.get();
+
+                setUuid(sender.getUuid());
+                setFirstJoinMillis(sender.getFirstJoinMillis());
+                setLastJoinMillis(sender.getLastJoinMillis());
+                setLastQuitMillis(sender.getLastQuitMillis());
+                setCurrentName(sender.getCurrentName());
+                addPlaySeconds(sender.getPlaySeconds());
+                setServerName(sender.getServerName());
+                setMeta(sender.getMeta());
+                setPermissions(sender.getPermissions());
+
+                augmentMore(sender);
+
+                setCurrentNameAsProper(); // might need to be forced... need to check this...
             }
-            CosmicPlayer sender = optional.get();
 
-            setUuid(sender.getUuid());
-            setFirstJoinMillis(sender.getFirstJoinMillis());
-            setLastJoinMillis(sender.getLastJoinMillis());
-            setLastQuitMillis(sender.getLastQuitMillis());
-            setCurrentName(sender.getCurrentName());
-            addPlaySeconds(sender.getPlaySeconds());
-            setServerName(sender.getServerName());
-            setMeta(sender.getMeta());
-            setPermissions(sender.getPermissions());
-
-            augmentMore(sender);
-
-            setCurrentNameAsProper(); // might need to be forced... need to check this...
-
+            ensureLoaded();
             loadComplete = true;
         });
 
@@ -324,5 +345,13 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
 
     public void reload() {
         // Do nothing
+    }
+
+    public void teleport(CosmicPlayer player) {
+        UserUtils.teleport(this, player);
+    }
+
+    public void teleport(CosmicLocation location) {
+        UserUtils.teleport(this, location);
     }
 }

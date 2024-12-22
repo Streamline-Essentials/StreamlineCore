@@ -4,8 +4,6 @@ import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import lombok.Getter;
-import lombok.Setter;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
