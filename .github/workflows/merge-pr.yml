@@ -13,9 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # Ensures full history and all branches are fetched
+
+    - name: Fetch master branch
+      run: git fetch origin master
+
     - name: Check for merge conflicts
       run: |
-        git fetch origin master
         git merge --no-commit --no-ff dev || exit 1
 
     - name: Auto Merge Pull Request
