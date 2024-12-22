@@ -16,6 +16,7 @@ import singularity.scheduler.BaseRunnable;
 import tv.quaint.objects.AtomicString;
 
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,7 +42,7 @@ public class PlayerTeleporter extends BaseRunnable {
             }
 
             tickets.forEach(ticket -> {
-                ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(ticket.getIdentifier());
+                ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
                 if (player == null) {
                     ticket.clear();
                     return;
