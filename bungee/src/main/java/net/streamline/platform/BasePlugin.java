@@ -68,8 +68,6 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     @Getter @Setter
     private static PlayerChecker playerChecker;
-    @Getter @Setter
-    private static PlayerTeleporter playerTeleporter;
 
     @Getter @Setter
     private CosmicResourcePack resourcePack;
@@ -138,7 +136,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         getProxy().registerChannel(SLAPI.getApiChannel());
 
         playerChecker = new PlayerChecker();
-        playerTeleporter = new PlayerTeleporter();
+        PlayerTeleporter.init();
 
         this.enable();
         fireStartEvent();
@@ -153,6 +151,8 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     @Override
     public void onDisable() {
+        PlayerTeleporter.stopInstance();
+
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
 
