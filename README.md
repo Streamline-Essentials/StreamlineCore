@@ -132,7 +132,7 @@ More information can be found on our wiki: [**click here**](https://wiki.plas.ho
 3. Submit a bug on the issue tracker (this is rarely checked): [**click here**](https://github.com/Streamline-Essentials/StreamlineCore/issues)
 
 # StreamlineCore API
-# What does the `StreamlineCore API` allow for?
+## What does the `StreamlineCore API` allow for?
 - Friendly API to create your own addons
 - `RATAPI` (Replace A Thing API)
     - This is an API that gives you the ability to easily and efficiently add your own placeholders (similar to `PlaceholderAPI`), but for **both** proxies and backends.
