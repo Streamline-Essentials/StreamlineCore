@@ -1,7 +1,5 @@
 package net.streamline.base.runnables;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
 import net.md_5.bungee.api.ServerConnectRequest;
@@ -9,71 +7,97 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.base.Streamline;
-import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
-import singularity.scheduler.BaseRunnable;
-import tv.quaint.objects.AtomicString;
 
-import java.util.Optional;
+import java.util.Date;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class PlayerTeleporter extends BaseRunnable {
+public class PlayerTeleporter extends Thread {
+    public static final long TICKING_FREQUENCY = 50L;
+
     @Getter @Setter
-    private static AtomicBoolean checking = new AtomicBoolean(false);
+    private static PlayerTeleporter instance;
+
+    public static void init() {
+        instance = new PlayerTeleporter();
+        instance.start();
+    }
+
+    public static void stopInstance() {
+        try {
+            if (instance != null) {
+                instance.interrupt();
+                instance = null;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    @Getter @Setter
+    private static AtomicReference<TeleportStage> stage = new AtomicReference<>(TeleportStage.READY);
+    @Getter @Setter
+    private static AtomicLong lastRun = new AtomicLong(0);
+
+    public enum TeleportStage {
+        COLLECTION,
+        TELEPORTATION,
+        READY,
+        ;
+    }
+
+    public static boolean isAbleToRunAgain() {
+        return lastRun.get() + TICKING_FREQUENCY < System.currentTimeMillis();
+    }
+
+    public static void setLastRun() {
+        lastRun.set(System.currentTimeMillis());
+    }
 
     public PlayerTeleporter() {
-        super(0, 10);
+        super("SL - Player Teleporter");
     }
 
     @Override
     public void run() {
-        if (checking.get()) return;
+        if (! isAbleToRunAgain()) return;
 
-        checking.set(true);
-        GivenConfigs.getMainDatabase().pullAllTPTickets().whenComplete((tickets, throwable) -> {
-            if (throwable != null) {
-                throwable.printStackTrace();
-                checking.set(false);
+        setLastRun();
+
+        stage.set(TeleportStage.COLLECTION);
+        ConcurrentSkipListSet<TPTicket> tickets = GivenConfigs.getMainDatabase().pullAllTPTickets().join();
+
+        stage.set(TeleportStage.TELEPORTATION);
+        tickets.forEach(ticket -> {
+            if (ticket.getCreateDate().before(new Date(System.currentTimeMillis() - 7 * 1000))) {
+                ticket.clear();
                 return;
             }
 
-            tickets.forEach(ticket -> {
-                ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
-                if (player == null) {
-                    ticket.clear();
-                    return;
-                }
+            ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
+            if (player == null) {
+                ticket.clear();
+                return;
+            }
 
-                teleportPlayerAsync(player, ticket.getTargetServer().getIdentifier());
-            });
-
-            checking.set(false);
+            teleportPlayerAsync(player, ticket.getTargetServer().getIdentifier());
         });
+
+        stage.set(TeleportStage.READY);
     }
 
     private static void teleportPlayerAsync(ProxiedPlayer player, String server) {
-        CompletableFuture.runAsync(() -> {
-            ServerInfo targetServer = Streamline.getInstance().getProxy().getServerInfo(server);
-            if (targetServer != null) {
-                ServerConnectRequest request = ServerConnectRequest.builder()
-                        .target(targetServer)
-                        .reason(ServerConnectEvent.Reason.PLUGIN)
-                        .build();
-                player.connect(request);
-            }
-
-            AtomicString playerServer = new AtomicString("");
-            Optional.ofNullable(player.getServer()).ifPresent(s -> playerServer.set(s.getInfo().getName()));
-
-            long startTime = System.currentTimeMillis();
-            while (! playerServer.get().equals(server) && System.currentTimeMillis() - startTime < 5000) {
-                Thread.onSpinWait();
-                Optional.ofNullable(player.getServer()).ifPresent(s -> playerServer.set(s.getInfo().getName()));
-            }
-        });
+        ServerInfo targetServer = Streamline.getInstance().getProxy().getServerInfo(server);
+        if (targetServer != null) {
+            ServerConnectRequest request = ServerConnectRequest.builder()
+                    .target(targetServer)
+                    .reason(ServerConnectEvent.Reason.PLUGIN)
+                    .build();
+            player.connect(request);
+        }
     }
 }

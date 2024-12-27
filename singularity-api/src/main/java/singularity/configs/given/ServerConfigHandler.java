@@ -54,4 +54,13 @@ public class ServerConfigHandler extends SimpleConfiguration {
     public SavedServer getServer() {
         return new SavedServer(getUUID(), getName(), Singularity.getInstance().getPlatform().getServerType());
     }
+
+    public void setServer(SavedServer server) {
+        write("server.uuid", server.getIdentifier());
+        setServerName(server.getName());
+    }
+
+    public void setServerName(String name) {
+        write("server.name", name);
+    }
 }

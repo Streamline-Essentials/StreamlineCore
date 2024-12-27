@@ -76,4 +76,12 @@ public class GivenConfigs {
     public static void ensureServer() {
         getServer().push();
     }
+
+    public static void setServer(SavedServer server) {
+        getServerConfig().setServer(server);
+    }
+
+    public static void setServerName(String name) {
+        getServerConfig().setServerName(name);
+    }
 }
