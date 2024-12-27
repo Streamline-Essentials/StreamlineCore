@@ -23,6 +23,10 @@ dependencies {
     compileOnly(files(FILES))
 }
 
-tasks.named("compileJava").configure {
+compileJava {
+    dependsOn(":StreamlineCore-API:jar")
+}
+
+delombok {
     dependsOn(":StreamlineCore-API:jar")
 }

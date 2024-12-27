@@ -31,6 +31,10 @@ dependencies {
     compileOnly project(path: ":StreamlineCore-Singularity")
 }
 
-tasks.named("compileJava").configure {
+compileJava {
+    dependsOn(":StreamlineCore-BAPI:jar")
+}
+
+delombok {
     dependsOn(":StreamlineCore-BAPI:jar")
 }
