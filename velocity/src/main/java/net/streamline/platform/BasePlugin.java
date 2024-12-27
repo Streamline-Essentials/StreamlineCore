@@ -85,8 +85,6 @@ public abstract class BasePlugin implements ISingularityExtension {
 
     @Getter @Setter
     private static PlayerChecker playerChecker;
-    @Getter @Setter
-    private static PlayerTeleporter playerTeleporter;
 
     public BasePlugin(ProxyServer s, Logger l, Path dd, Metrics.Factory mf) {
         this.proxy = s;
@@ -180,13 +178,15 @@ public abstract class BasePlugin implements ISingularityExtension {
         getProxy().getChannelRegistrar().register(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
 
         playerChecker = new PlayerChecker();
-        playerTeleporter = new PlayerTeleporter();
+        PlayerTeleporter.init();
 
         this.enable();
     }
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
+        PlayerTeleporter.stopInstance();
+
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
 
