@@ -94,12 +94,6 @@ public class UpdateType<T> implements Identifiable {
      * Adjusts the given time in milliseconds, ensuring that the `millis + millisBetweenUpdates - adjusted amount`
      * is always less than @link{System#currentTimeMillis()} when the method is called @link{millisBetweenUpdates}
      * after the last update.
-     * For example,
-     * given getAdjustedMillis(date.getTime()) + getMillisBetweenUpdates() < System.currentTimeMillis(),
-     * if date.getTime() = 1000, getMillisBetweenUpdates() = 1000, System.currentTimeMillis() = 2000,
-     * it will return 1000 - 1 = 999
-     * if date.getTime() = 1010, getMillisBetweenUpdates() = 1000, System.currentTimeMillis() = 2000,
-     * it will return 1001 - 1 = 1000
      *
      * @param millis The time in milliseconds to adjust.
      * @return The adjusted time in milliseconds.
