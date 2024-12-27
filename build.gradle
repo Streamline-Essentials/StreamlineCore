@@ -10,10 +10,9 @@ buildscript {
     }
 }
 
-plugins {
-    id "java"
-    id "com.github.johnrengelman.shadow" version "7.1.2"
-    id "maven-publish" // for jitpack.io
+allprojects {
+    version = rootProject.properties["version"]
+    group = rootProject.properties["group"]
 }
 
 subprojects {
@@ -24,11 +23,8 @@ subprojects {
 
     apply from: rootDir.toString() + "/dependencies.gradle"
 
-    group = properties["group"]
-    version = properties["version"]
-
     ext {
-        pluginMain = properties["plugin.main"] == "default" ?
+        pluginMain = rootProject.properties["plugin.main"] == "default" ?
                 project.group.toString() + "." + project.name.toString().toLowerCase() + "." + project.name.toString() :
                 properties["plugin.main"]
     }
@@ -147,57 +143,24 @@ subprojects {
     shadowJar.finalizedBy(deploy)
 
     tasks.named('deploy').configure {
-        dependsOn 'shadowJar', 'sourcesJar', /*'javadocJar',*/ 'jar'
+        dependsOn 'shadowJar', 'sourcesJar', 'javadocJar', 'jar'
+    }
+
+    java {
+        withSourcesJar()
+        withJavadocJar()
     }
 
     publishing {
         publications {
             maven(MavenPublication) {
+                groupId project.group
+                artifactId project.name
+                version project.version
                 from components.java
             }
         }
     }
-
-    java {
-        withSourcesJar()
-//        withJavadocJar()
-    }
-}
-
-tasks.register('deploy', Copy) {
-    // Define the deployment directory
-    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
-
-    // Ensure the deployment directory exists
-    doFirst {
-        println "Deploying to: $deployDir"
-        deployDir.mkdirs()
-        println "Generated JAR file: ${shadowJar.archiveFile}"
-    }
-
-    // Copy the shadowJar output
-    from shadowJar.archiveFile
-    into deployDir
-}
-
-// Ensure that the deploy task runs after the shadowJar task
-shadowJar.finalizedBy(deploy)
-
-tasks.named('deploy').configure {
-    dependsOn 'shadowJar', 'sourcesJar', /*'javadocJar',*/ 'jar'
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-        }
-    }
-}
-
-java {
-    withSourcesJar()
-//    withJavadocJar()
 }
 
 wrapper {

@@ -26,3 +26,7 @@ dependencies {
 compileJava {
     dependsOn(":StreamlineCore-Singularity:jar")
 }
+
+delombok {
+    dependsOn(":StreamlineCore-Singularity:jar")
+}
