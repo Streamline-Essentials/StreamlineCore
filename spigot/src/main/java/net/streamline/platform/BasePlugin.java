@@ -57,8 +57,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     @Getter
     private final ServerType serverType = ServerType.BACKEND;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private CosmicResourcePack resourcePack;
 
     @Getter
@@ -87,8 +86,6 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     @Getter @Setter
     private static PlayerChecker playerChecker;
-    @Getter @Setter
-    private static PlayerTeleporter playerTeleporter;
 
     @Getter @Setter
     private static TaskScheduler scheduler;
@@ -163,7 +160,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
 
         playerChecker = new PlayerChecker();
-        playerTeleporter = new PlayerTeleporter();
+        PlayerTeleporter.init();
 
         this.enable();
         registerListener(new PlatformListener());
@@ -171,6 +168,8 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     @Override
     public void onBaseDisable() {
+        PlayerTeleporter.stopInstance();
+
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
 
