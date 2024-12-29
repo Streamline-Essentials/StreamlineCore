@@ -26,6 +26,7 @@ import singularity.data.uuid.UuidInfo;
 import singularity.database.servers.SavedServer;
 import singularity.database.servers.UpdateInfo;
 import singularity.interfaces.ISingularityExtension;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 public class CoreDBOperator extends DBOperator {
@@ -767,6 +768,8 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
+
+            if (! tickets.isEmpty()) MessageUtils.logDebug("Collected " + tickets.size() + " teleportation tickets.");
 
             return tickets;
         });
