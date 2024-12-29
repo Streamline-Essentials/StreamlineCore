@@ -69,12 +69,16 @@ public class GivenConfigs {
         }
     }
 
+    public static void ensureServer() {
+        getServer().push();
+    }
+
     public static SavedServer getServer() {
         return getServerConfig().getServer();
     }
 
-    public static void ensureServer() {
-        getServer().push();
+    public static String getServerName() {
+        return getServerConfig().getName();
     }
 
     public static void setServer(SavedServer server) {
