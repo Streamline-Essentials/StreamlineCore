@@ -42,6 +42,8 @@ public abstract class DBOperator {
 
                 break;
             case SQLITE:
+                initializeSQLiteDatabase();
+
                 config.setJdbcUrl(connectorSet.getUri() + getDatabaseFolder().getPath() + File.separator + connectorSet.getSqliteFileName());
 
                 break;
@@ -55,8 +57,7 @@ public abstract class DBOperator {
         config.setDriverClassName(connectorSet.getType().getDriver());
         config.setConnectionTestQuery("SELECT 1");
 
-        dataSource = new HikariDataSource(config);
-        return dataSource;
+        return new HikariDataSource(config);
     }
 
     public Connection getConnection() {
@@ -64,16 +65,9 @@ public abstract class DBOperator {
             if (dataSource == null) {
                 dataSource = buildDataSource();
             }
-
-            if (rawConnection != null && ! rawConnection.isClosed()) {
-                return rawConnection;
-            }
-
-            rawConnection = dataSource.getConnection();
-
-            return rawConnection;
+            return dataSource.getConnection();
         } catch (Exception e) {
-            e.printStackTrace();
+            MessageUtils.logWarning("Failed to get connection", e);
             return null;
         }
     }
@@ -83,21 +77,29 @@ public abstract class DBOperator {
     }
 
     public ExecutionResult executeSingle(String statement, Consumer<PreparedStatement> statementBuilder) {
-        AtomicReference<ExecutionResult> result = new AtomicReference<>(ExecutionResult.ERROR);
-
-        try {
-            Connection connection = getConnection();
-            PreparedStatement stmt = connection.prepareStatement(statement);
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(statement)) {
 
             statementBuilder.accept(stmt);
 
-            if (stmt.execute()) result.set(ExecutionResult.YES);
-            else result.set(ExecutionResult.NO);
+            return stmt.execute() ? ExecutionResult.YES : ExecutionResult.NO;
         } catch (Exception e) {
-            MessageUtils.logInfo("Failed to execute statement: " + statement, e);
+            MessageUtils.logWarning("Failed to execute statement: " + statement, e);
+            return ExecutionResult.ERROR;
         }
+    }
 
-        return result.get();
+    public void executeQuery(String statement, Consumer<PreparedStatement> statementBuilder, DBAction action) {
+        try (Connection connection = getConnection();
+             PreparedStatement stmt = connection.prepareStatement(statement)) {
+
+            statementBuilder.accept(stmt);
+            try (ResultSet set = stmt.executeQuery()) {
+                action.accept(set);
+            }
+        } catch (Exception e) {
+            MessageUtils.logWarning("Failed to execute query: " + statement, e);
+        }
     }
 
     public List<ExecutionResult> execute(String statement, Consumer<PreparedStatement> statementBuilder) {
@@ -115,42 +117,14 @@ public abstract class DBOperator {
         return results;
     }
 
-    public void executeQuery(String statement, Consumer<PreparedStatement> statementBuilder, DBAction action) {
-        try {
-            Connection connection = getConnection();
-            PreparedStatement stmt = connection.prepareStatement(statement);
-
-            statementBuilder.accept(stmt);
-
-            ResultSet set = stmt.executeQuery();
-
-            action.accept(set);
-        } catch (Exception e) {
-            MessageUtils.logInfo("Failed to execute query: " + statement, e);
-        }
-    }
-
-    public void createSqliteFileIfNotExists() {
-        if (connectorSet.getType() != DatabaseType.SQLITE) return;
-
-        File file = new File(getDatabaseFolder(), connectorSet.getSqliteFileName());
-        if (! file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public void ensureFile() {
         if (this.getConnectorSet().getType() != DatabaseType.SQLITE) return;
 
         String s1 = this.getConnectorSet().getSqliteFileName();
         if (s1 == null) return;
-        if (s1.isBlank() || s1.isEmpty()) return;
+        if (s1.isBlank()) return;
 
-        createSqliteFileIfNotExists();
+        initializeSQLiteDatabase();
     }
 
     public abstract void ensureTables();
@@ -171,5 +145,18 @@ public abstract class DBOperator {
         }
 
         return folder;
+    }
+
+    private void initializeSQLiteDatabase() {
+        if (connectorSet.getType() == DatabaseType.SQLITE) {
+            File file = new File(getDatabaseFolder(), connectorSet.getSqliteFileName());
+            if (! file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (Exception e) {
+                    MessageUtils.logWarning("Failed to create SQLite database file", e);
+                }
+            }
+        }
     }
 }
