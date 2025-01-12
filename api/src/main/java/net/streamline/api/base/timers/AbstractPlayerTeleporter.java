@@ -2,9 +2,13 @@ package net.streamline.api.base.timers;
 
 import lombok.Getter;
 import lombok.Setter;
+import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -33,7 +37,7 @@ public abstract class AbstractPlayerTeleporter extends Thread {
         if (instance == null) {
             throw new IllegalStateException("Teleporter instance is not set.");
         }
-        if (!instance.isAlive()) {
+        if (! instance.isAlive()) {
             instance.start();
         }
     }
@@ -93,6 +97,25 @@ public abstract class AbstractPlayerTeleporter extends Thread {
                 break; // Exit the loop
             }
         }
+    }
+
+    @Getter @Setter
+    private static AtomicReference<CompletableFuture<ConcurrentSkipListSet<TPTicket>>> atomicTicketsPending = new AtomicReference<>(null);
+
+    public CompletableFuture<ConcurrentSkipListSet<TPTicket>> getTicketsPending() {
+        if (getAtomicTicketsPending().get() == null) {
+            getAtomicTicketsPending().set(GivenConfigs.getMainDatabase().pullAllTPTickets());
+        }
+
+        return getAtomicTicketsPending().get();
+    }
+
+    public void unpendTickets() {
+        getAtomicTicketsPending().set(null);
+    }
+
+    public boolean areTicketsPending() {
+        return getAtomicTicketsPending().get() != null;
     }
 
     /**

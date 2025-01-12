@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PlayerTeleporter extends AbstractPlayerTeleporter {
-    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed
+//    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed
 
     public static void init() {
         setInstance(new PlayerTeleporter());
@@ -29,12 +29,16 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
 
     @Override
     public void tick() {
+        if (areTicketsPending()) return;
+
         getStage().set(TeleportStage.COLLECTION);
-        ConcurrentSkipListSet<TPTicket> tickets = GivenConfigs.getMainDatabase().pullAllTPTickets().join();
+        ConcurrentSkipListSet<TPTicket> tickets = getTicketsPending().join();
 
         getStage().set(TeleportStage.TELEPORTATION);
-        tickets.forEach(ticket -> executor.submit(() -> processTicket(ticket)));
+//        tickets.forEach(ticket -> executor.submit(() -> processTicket(ticket)));
+        tickets.forEach(this::processTicket);
 
+        unpendTickets();
         getStage().set(TeleportStage.READY);
     }
 
