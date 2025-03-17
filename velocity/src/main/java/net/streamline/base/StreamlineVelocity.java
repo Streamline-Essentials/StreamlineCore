@@ -1,5 +1,6 @@
 package net.streamline.base;
 
+import com.google.inject.Inject;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -9,7 +10,7 @@ import net.streamline.platform.BasePlugin;
 import org.slf4j.Logger;
 import singularity.modules.ModuleManager;
 
-import javax.inject.Inject;
+import java.io.File;
 import java.nio.file.Path;
 
 @Plugin(
@@ -23,8 +24,76 @@ import java.nio.file.Path;
 )
 public class StreamlineVelocity extends BasePlugin {
     @Inject
-    public StreamlineVelocity(ProxyServer s, Logger l, @DataDirectory Path dd, Metrics.Factory mf) {
-        super(s, l, dd, mf);
+    public StreamlineVelocity(ProxyServer server,
+                              Logger logger,
+                              Metrics.Factory metricsFactory) {
+        super(server, logger, getStreamlineFolder(), metricsFactory);
+    }
+
+    public static File getStreamlineFolder() {
+        return new File(getPluginsDirectory(), "StreamlineCore");
+    }
+
+    public static File getPluginsDirectory() {
+        File file = getSystemFile();
+
+        File[] files = file.listFiles();
+        if (files == null) {
+            return null;
+        }
+
+        File pluginDirectory = null;
+        for (File f : files) {
+            if (f.getName().equals("plugins")) {
+                pluginDirectory = f;
+                break;
+            }
+        }
+        if (pluginDirectory == null) {
+            file = file.getParentFile();
+
+            files = file.listFiles();
+            if (files == null) {
+                return null;
+            }
+
+            for (File f : files) {
+                if (f.getName().equals("plugins")) {
+                    pluginDirectory = f;
+                    break;
+                }
+            }
+        }
+
+        return pluginDirectory;
+    }
+
+    public static Path getSystemPath() {
+        return Path.of(System.getProperty("user.dir"));
+    }
+
+    public static File getSystemFile() {
+        return getSystemPath().toFile();
+    }
+
+    public static String getStreamlineName() {
+        String name = "${name}"; // Gets injected by Gradle
+
+        if (name.startsWith("$")) {
+            name = "StreamlineCore";
+        }
+
+        return name;
+    }
+
+    public static String getStreamlineVersion() {
+        String version = "${version}"; // Gets injected by Gradle
+
+        if (version.startsWith("$")) {
+            version = "2.5.2.0";
+        }
+
+        return version;
     }
 
     @Override
