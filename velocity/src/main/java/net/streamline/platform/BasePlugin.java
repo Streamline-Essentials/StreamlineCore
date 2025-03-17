@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
+import net.streamline.base.StreamlineVelocity;
 import net.streamline.base.runnables.PlayerChecker;
 import net.streamline.base.runnables.PlayerTeleporter;
 import net.streamline.metrics.Metrics;
@@ -79,6 +80,8 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Getter
     private final Logger logger;
     @Getter
+    private final Path dataDirectory;
+    @Getter
     private final File dataFolder;
     @Getter
     private final Metrics.Factory metricsFactory;
@@ -86,13 +89,14 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Getter @Setter
     private static PlayerChecker playerChecker;
 
-    public BasePlugin(ProxyServer s, Logger l, Path dd, Metrics.Factory mf) {
-        this.proxy = s;
-        this.logger = l;
-        this.dataFolder = dd.toFile();
-        this.metricsFactory = mf;
+    public BasePlugin(ProxyServer server, Logger logger, File dataFolder, Metrics.Factory metricsFactory) {
+        this.proxy = server;
+        this.logger = logger;
+        this.dataDirectory = dataFolder.toPath();
+        this.dataFolder = dataFolder;
+        this.metricsFactory = metricsFactory;
 
-        Path parentPath = dd.getParent();
+        Path parentPath = this.dataDirectory.getParent();
         if (parentPath != null) {
             File parentFile = new File(parentPath.toString());
             File[] files = parentFile.listFiles((f) -> {
@@ -107,7 +111,7 @@ public abstract class BasePlugin implements ISingularityExtension {
 
             if (files != null) {
                 Arrays.stream(files).forEach(file -> {
-                    file.renameTo(new File(parentPath.toString(), this.name));
+                    file.renameTo(new File(parentPath.toString(), StreamlineVelocity.getStreamlineName()));
                 });
             }
         }
