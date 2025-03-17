@@ -1,97 +1,73 @@
 package net.streamline.base.runnables;
 
-import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
-import lombok.Getter;
-import lombok.Setter;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import net.streamline.api.base.timers.AbstractPlayerTeleporter;
 import net.streamline.base.StreamlineVelocity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
+import singularity.utils.MessageUtils;
 
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class PlayerTeleporter extends Thread {
-    public static final long TICKING_FREQUENCY = 50L;
-
-    @Getter @Setter
-    private static PlayerTeleporter instance;
+public class PlayerTeleporter extends AbstractPlayerTeleporter {
+//    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed
 
     public static void init() {
-        instance = new PlayerTeleporter();
-        instance.start();
-    }
-
-    public static void stopInstance() {
-        try {
-            if (instance != null) {
-                instance.interrupt();
-                instance = null;
-            }
-        } catch (Exception e) {
-            // ignore
-        }
-    }
-
-    @Getter @Setter
-    private static AtomicReference<TeleportStage> stage = new AtomicReference<>(TeleportStage.READY);
-    @Getter @Setter
-    private static AtomicLong lastRun = new AtomicLong(0);
-
-    public enum TeleportStage {
-        COLLECTION,
-        TELEPORTATION,
-        READY,
-        ;
-    }
-
-    public static boolean isAbleToRunAgain() {
-        return lastRun.get() + TICKING_FREQUENCY < System.currentTimeMillis();
-    }
-
-    public static void setLastRun() {
-        lastRun.set(System.currentTimeMillis());
-    }
-
-    public PlayerTeleporter() {
-        super("SL - Player Teleporter");
+        setInstance(new PlayerTeleporter());
+        startInstance();
     }
 
     @Override
-    public void run() {
-        if (! isAbleToRunAgain()) return;
+    public void tick() {
+        if (areTicketsPending()) return;
 
-        setLastRun();
+        getStage().set(TeleportStage.COLLECTION);
+        ConcurrentSkipListSet<TPTicket> tickets = getTicketsPending().join();
 
-        stage.set(TeleportStage.COLLECTION);
-        ConcurrentSkipListSet<TPTicket> tickets = GivenConfigs.getMainDatabase().pullAllTPTickets().join();
+        getStage().set(TeleportStage.TELEPORTATION);
+//        tickets.forEach(ticket -> executor.submit(() -> processTicket(ticket)));
+        tickets.forEach(this::processTicket);
 
-        stage.set(TeleportStage.TELEPORTATION);
-        tickets.forEach(ticket -> {
-            if (ticket.getCreateDate().before(new Date(System.currentTimeMillis() - 7 * 1000))) {
-                ticket.clear();
-                return;
-            }
-
-            Player player = StreamlineVelocity.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier())).orElse(null);
-            if (player == null) {
-                ticket.clear();
-                return;
-            }
-
-            teleportPlayerAsync(player, ticket.getTargetServer().getIdentifier());
-        });
-
-        stage.set(TeleportStage.READY);
+        unpendTickets();
+        getStage().set(TeleportStage.READY);
     }
 
-    private static void teleportPlayerAsync(Player player, String server) {
-        StreamlineVelocity.getInstance().getProxy().getServer(server).ifPresent(serverInfo -> {
-            ConnectionRequestBuilder builder = player.createConnectionRequest(serverInfo);
-            builder.connect().join();
-        });
+    private void processTicket(TPTicket ticket) {
+        try {
+            if (ticket.getCreateDate().before(new Date(System.currentTimeMillis() - (7 * 1000)))) {
+                clearTicket(ticket, 1);
+                return;
+            }
+
+            Optional<Player> player = StreamlineVelocity.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
+            if (player.isEmpty()) {
+                clearTicket(ticket, 2);
+                return;
+            }
+
+            teleportPlayerAsync(player.get(), ticket.getTargetServer().getIdentifier());
+//            clearTicket(ticket, 3); // Handled by the Spigot side
+        } catch (Exception e) {
+            MessageUtils.logWarning("Error processing ticket: " + ticket.getIdentifier(), e);
+        }
+    }
+
+    private void teleportPlayerAsync(Player player, String server) {
+        Optional<RegisteredServer> targetServer = StreamlineVelocity.getInstance().getProxy().getServer(server);
+        if (targetServer.isPresent()) {
+            player.createConnectionRequest(targetServer.get()).connect();
+            MessageUtils.logInfo("Teleported player " + player.getUsername() + " to server " + server + ".");
+        }
+    }
+
+    private static void clearTicket(TPTicket ticket, int instance) {
+        ticket.clear();
+        MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
     }
 }

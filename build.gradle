@@ -47,7 +47,10 @@ subprojects {
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         maven { url "https://oss.sonatype.org/content/repositories/central" }
         // Paper / Velocity
-        maven { url "https://repo.papermc.io/repository/maven-public" }
+        maven {
+            name = 'papermc'
+            url = 'https://repo.papermc.io/repository/maven-public/'
+        }
         // Fabric
         maven { url "https://maven.fabricmc.net" }
         maven { url "https://libraries.minecraft.net" }
@@ -69,6 +72,11 @@ subprojects {
         maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi" }
     }
 
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
     processResources {
         // Debugging: Print values
         doFirst {
@@ -79,9 +87,6 @@ subprojects {
         inputs.property("version", rootProject.version.toString())
         inputs.property("main", project.ext.pluginMain.toString())
         outputs.dir(file("build/generated-src"))
-
-        java.sourceCompatibility = JavaVersion.VERSION_11
-        java.targetCompatibility = JavaVersion.VERSION_11
 
         filesMatching("**/plugin.yml") {
             expand (

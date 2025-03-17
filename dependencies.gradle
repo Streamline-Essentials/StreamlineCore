@@ -1,19 +1,19 @@
 ext {
     IMPL = [
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "com.github.server-utilities:TheBase:${rootProject.properties['base-version']}",
+            "com.github.Server-Utilities:TheBase:master-SNAPSHOT",
             "org.pf4j:pf4j:3.10.0",
             "commons-codec:commons-codec:1.5",
     ]
     SHADOW = [
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "com.github.server-utilities:TheBase:${rootProject.properties['base-version']}",
+            "com.github.Server-Utilities:TheBase:master-SNAPSHOT",
             "org.pf4j:pf4j:3.10.0",
             "commons-codec:commons-codec:1.5",
     ]
     ANNO = [
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "com.github.server-utilities:TheBase:${rootProject.properties['base-version']}",
+            "com.github.Server-Utilities:TheBase:master-SNAPSHOT",
             "org.pf4j:pf4j:3.10.0"
     ]
     COMP_ONLY = [
