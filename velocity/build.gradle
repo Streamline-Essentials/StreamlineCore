@@ -1,6 +1,6 @@
 dependencies {
-    compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
-    annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
 
 //    implementation 'net.kyori:adventure-text-serializer-gson:4.15.0'
 
@@ -23,4 +23,9 @@ compileJava {
 
 delombok {
     dependsOn(":StreamlineCore-API:jar")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }

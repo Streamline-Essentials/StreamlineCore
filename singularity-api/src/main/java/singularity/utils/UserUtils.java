@@ -339,7 +339,10 @@ public class UserUtils {
     }
 
     public static void teleport(CosmicSender sender, CosmicLocation location) {
-        if (sender.isConsole()) return;
+        if (sender.isConsole()) {
+            MessageUtils.logWarning("Console attempted to teleport to " + location.asString());
+            return;
+        }
 
         TPTicket ticket = new TPTicket(sender.getIdentifier(), location);
         ticket.post();
