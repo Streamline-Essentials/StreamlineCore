@@ -24,6 +24,7 @@ import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleManager;
 import singularity.modules.ModuleUtils;
+import singularity.objects.CosmicFavicon;
 import singularity.objects.PingedResponse;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
@@ -184,10 +185,17 @@ public class PlatformListener implements Listener {
         PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getMax(), ping.getPlayers().getOnline(),
                 infos.toArray(new PingedResponse.PlayerInfo[0]));
         PingedResponse response;
-        if (ping.getFaviconObject() != null) {
-            response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
-        } else {
-            response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText());
+        try {
+            if (ping.getFaviconObject() != null) {
+                response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
+            } else {
+                response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText());
+            }
+        } catch (Throwable e) {
+            MessageUtils.logWarning("Failed to get favicon from ping response: " + e.getMessage());
+            MessageUtils.logWarning(e.getStackTrace());
+
+            return;
         }
 
         PingReceivedEvent pingReceivedEvent = new PingReceivedEvent(response, hostName).fire();
@@ -215,8 +223,11 @@ public class PlatformListener implements Listener {
         ping.setDescriptionComponent(new TextComponent(Messenger.getInstance().codedText(pingReceivedEvent.getResponse().getDescription())));
 
         try {
-            Favicon favicon = Favicon.create(pingReceivedEvent.getResponse().getFavicon().getEncoded());
-            ping.setFavicon(favicon);
+            CosmicFavicon favicon = pingReceivedEvent.getResponse().getFavicon();
+            if (favicon != null) {
+                Favicon fav = Favicon.create(favicon.getImage());
+                ping.setFavicon(fav);
+            }
         } catch (Exception e) {
             // do nothing.
         }

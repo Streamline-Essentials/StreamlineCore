@@ -105,6 +105,8 @@ public abstract class Loader<L extends Loadable<L>> {
 
         L toGet = createNew(identifier);
 
+        load(toGet);
+
         return toGet.augment(loader);
     }
 

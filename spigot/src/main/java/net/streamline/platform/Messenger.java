@@ -1,6 +1,8 @@
 package net.streamline.platform;
 
+import host.plas.bou.commands.Sender;
 import host.plas.bou.utils.ColorUtils;
+import host.plas.bou.utils.SenderUtils;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -33,57 +35,57 @@ public class Messenger implements IMessenger {
     }
 
     public static String colorAsString(String message) {
-        StringBuilder builder = new StringBuilder();
-
-        for (BaseComponent component : ColorUtils.color(message)) {
-            builder.append(component.toLegacyText());
-        }
-
-        return builder.toString();
+        return ColorUtils.colorAsString(message);
     }
 
     public void sendMessage(@Nullable CommandSender to, String message) {
         if (to == null) return;
+        Sender s = SenderUtils.getSender(to);
         if (! SLAPI.isReady()) {
-            to.sendMessage(simplify(codedText(message)));
+            s.sendMessage(message);
         } else {
-            to.sendMessage(simplify(codedText(replaceAllPlayerBungee(to, message))));
+            s.sendMessage(replaceAllPlayerBungee(to, message));
         }
     }
 
     public void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
         if (to == null) return;
+        Sender s = SenderUtils.getSender(to);
         if (! SLAPI.isReady()) {
-            to.sendMessage(simplify(codedText(message)));
+            s.sendMessage(message);
         } else {
-            to.sendMessage(simplify(codedText(MessageUtils.replaceAllPlayerBungee(otherUUID, message))));
+            s.sendMessage(MessageUtils.replaceAllPlayerBungee(otherUUID, message));
         }
     }
 
     public void sendMessage(@Nullable CommandSender to, CosmicSender other, String message) {
         if (to == null) return;
+        Sender s = SenderUtils.getSender(to);
         if (! SLAPI.isReady()) {
-            to.sendMessage(simplify(codedText(message)));
+            s.sendMessage(message);
         } else {
-            to.sendMessage(simplify(codedText(MessageUtils.replaceAllPlayerBungee(other, message))));
+            s.sendMessage(MessageUtils.replaceAllPlayerBungee(other, message));
         }
     }
 
+    @Override
     public void sendMessage(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(UUID.fromString(to.getUuid())), message);
         else sendMessage(Bukkit.getConsoleSender(), message);
     }
-
+    
+    @Override
     public void sendMessage(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(UUID.fromString(to.getUuid())), otherUUID, message);
         else sendMessage(Bukkit.getConsoleSender(), otherUUID, message);
     }
 
+    @Override
     public void sendMessage(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessage(Bukkit.getPlayer(UUID.fromString(to.getUuid())), other, message);
         else sendMessage(Bukkit.getConsoleSender(), other, message);
     }
 
@@ -120,34 +122,28 @@ public class Messenger implements IMessenger {
         to.sendMessage(r);
     }
 
+    @Override
     public void sendMessageRaw(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(UUID.fromString(to.getUuid())), message);
         else sendMessageRaw(Bukkit.getConsoleSender(), message);
     }
 
+    @Override
     public void sendMessageRaw(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(UUID.fromString(to.getUuid())), otherUUID, message);
         else sendMessageRaw(Bukkit.getConsoleSender(), otherUUID, message);
     }
 
+    @Override
     public void sendMessageRaw(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(Bukkit.getPlayer(UUID.fromString(to.getUuid())), other, message);
         else sendMessageRaw(Bukkit.getConsoleSender(), other, message);
     }
 
-    public String simplify(BaseComponent... components) {
-        StringBuilder builder = new StringBuilder();
-
-        for (BaseComponent component : components) {
-            builder.append(component.toLegacyText());
-        }
-
-        return builder.toString();
-    }
-
+    @Override
     public void sendTitle(CosmicSender player, CosmicTitle title) {
         Player p = Streamline.getPlayer(player.getUuid());
         if (p == null) {
@@ -166,61 +162,28 @@ public class Messenger implements IMessenger {
 
     @Override
     public String codedString(String from) {
-        return ChatColor.translateAlternateColorCodes('&', ModuleUtils.newLined(from));
+        return codedStringBOU(from);
     }
 
+    @Override
     public String stripColor(String string){
         return ChatColor.stripColor(string).replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "");
     }
 
+    public String codedStringBOU(String value) {
+        return host.plas.bou.utils.MessageUtils.codedString(value); // Already new-lined.
+    }
+    
+    public BaseComponent[] colorizeBOU(String value) {
+        return ColorUtils.color(value);
+    }
+    
     public BaseComponent[] codedText(String from) {
-        String raw = from;
+        return colorizeBOU(from);
+    }
 
-        List<BaseComponent> componentsList = new ArrayList<>();
-
-        // Handle hex codes
-        for (HexPolicy policy : TextManager.getHexPolicies()) {
-            for (String hexCode : TextManager.extractHexCodes(raw, policy)) {
-                String original = hexCode;
-                if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
-                String replacement = ChatColor.of(hexCode).toString();
-                raw = raw.replace(policy.getResult(original), replacement);
-            }
-        }
-
-        raw = codedString(raw);
-
-        // Assuming codedString is another method you've implemented to replace color codes etc.
-        String legacy = MessageUtils.codedString(raw);
-
-        List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
-
-        int lastEnd = 0;
-
-        for (String jsonStr : jsonStrings) {
-            int index = legacy.indexOf("!!json:" + jsonStr);
-            String before = legacy.substring(lastEnd, index);
-            BaseComponent[] beforeComponent = TextComponent.fromLegacyText(before);
-            Collections.addAll(componentsList, beforeComponent);
-
-            try {
-                BaseComponent[] jsonComponent = ComponentSerializer.parse(jsonStr);
-                Collections.addAll(componentsList, jsonComponent);
-            } catch (Exception e) {
-                // Handle exception
-                e.printStackTrace();
-            }
-
-            lastEnd = index + jsonStr.length() + 7; // 7 is the length of "!!json:"
-        }
-
-        // Append any remaining text after the last JSON block
-        if (lastEnd < legacy.length()) {
-            BaseComponent[] remainingComponent = TextComponent.fromLegacyText(legacy.substring(lastEnd));
-            Collections.addAll(componentsList, remainingComponent);
-        }
-
-        return componentsList.toArray(new BaseComponent[0]);
+    public String colorizeHard(String value) {
+        return ColorUtils.colorizeHard(value);
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {

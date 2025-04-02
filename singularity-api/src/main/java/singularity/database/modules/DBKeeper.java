@@ -63,6 +63,22 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
         }
     }
 
+    public String getTablePrefix() {
+        return getDatabase().getConnectorSet().getTablePrefix();
+    }
+
+    public String injectTablePrefix(String statement) {
+        return statement.replace("%table_prefix%", getTablePrefix());
+    }
+
+    public String getDatabaseName() {
+        return getDatabase().getConnectorSet().getDatabase();
+    }
+
+    public String injectDatabaseName(String statement) {
+        return statement.replace("%database_name%", getDatabaseName());
+    }
+
     public abstract void saveMysql(T obj);
 
     public abstract void saveSqlite(T obj);

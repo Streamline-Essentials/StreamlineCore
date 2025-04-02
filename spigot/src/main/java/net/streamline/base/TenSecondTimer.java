@@ -42,6 +42,8 @@ public class TenSecondTimer implements Runnable {
 
         CosmicLocation streamlineLocation = new CosmicLocation(cosmicServer, streamlineWorld, streamlinePosition, streamlineRotation);
 
+        streamPlayer.setLocation(streamlineLocation);
+
         PlayerLocationMessageBuilder.build(streamPlayer, streamlineLocation, streamPlayer).send();
     }
 
