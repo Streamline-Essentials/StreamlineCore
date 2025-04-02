@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.data.uuid.UuidManager;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -96,13 +98,12 @@ public class PingedResponse {
     // create the server ping. Vanilla clients will ignore this.
     private final ModInfo modinfo = new ModInfo();
 
-    public PingedResponse(Protocol version, Players players, String description) {
+    public PingedResponse(Protocol version, Players players, String description) throws IOException {
         this(version, players, description, (String) null);
     }
 
-    public PingedResponse(Protocol version, Players players, String description, String favicon)
-    {
-        this( version, players, description, favicon == null ? null : CosmicFavicon.create(favicon));
+    public PingedResponse(Protocol version, Players players, String description, String favicon) throws IOException {
+        this( version, players, description, favicon == null ? null : CosmicFavicon.createFromURL(favicon));
     }
 
     public PingedResponse(Protocol version, Players players, String description, CosmicFavicon favicon)
@@ -116,10 +117,5 @@ public class PingedResponse {
     public String getFaviconString()
     {
         return getFavicon() == null ? null : getFavicon().getEncoded();
-    }
-
-    public void setFaviconString(String favicon)
-    {
-        setFavicon(favicon == null ? null : CosmicFavicon.create( favicon ) );
     }
 }

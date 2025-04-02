@@ -5,7 +5,11 @@ import lombok.Setter;
 import singularity.Singularity;
 import singularity.interfaces.IProperCommand;
 
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CommandHandler {
     @Getter @Setter
@@ -80,5 +84,56 @@ public class CommandHandler {
         getProperlyRegisteredCommands().forEach((s, iProperCommand) -> {
             iProperCommand.unregister();
         });
+    }
+
+    public static ConcurrentSkipListSet<String> getAllAliases() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getLoadedStreamlineCommands().forEach((s, command) -> {
+            r.addAll(Arrays.asList(command.getAliases()));
+
+            r.add(command.getBase());
+        });
+
+        getLoadedModuleCommands().forEach((s, command) -> {
+            r.addAll(Arrays.asList(command.getAliases()));
+
+            r.add(command.getBase());
+        });
+
+        return r;
+    }
+
+    public static CosmicCommand getCommandByAlias(String alias) {
+        CosmicCommand command = getStreamlineCommand(alias);
+        if (command != null) return command;
+
+        AtomicReference<CosmicCommand> commandRef = new AtomicReference<>(null);
+
+        getLoadedStreamlineCommands().forEach((s, c) -> {
+            if (commandRef.get() != null) return;
+
+            for (String a : c.getAliases()) {
+                if (a.equalsIgnoreCase(alias)) {
+                    commandRef.set(c);
+                    break;
+                }
+            }
+        });
+
+        if (commandRef.get() != null) return commandRef.get();
+
+        getLoadedModuleCommands().forEach((s, c) -> {
+            if (commandRef.get() != null) return;
+
+            for (String a : c.getAliases()) {
+                if (a.equalsIgnoreCase(alias)) {
+                    commandRef.set(c);
+                    break;
+                }
+            }
+        });
+
+        return commandRef.get();
     }
 }

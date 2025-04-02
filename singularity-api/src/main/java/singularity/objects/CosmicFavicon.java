@@ -7,14 +7,17 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 
-@Getter
+@Getter @Setter
 public class CosmicFavicon {
     private static final TypeAdapter<CosmicFavicon> FAVICON_TYPE_ADAPTER = new TypeAdapter<>() {
         @Override
@@ -25,12 +28,41 @@ public class CosmicFavicon {
         @Override
         public CosmicFavicon read(JsonReader in) throws IOException {
             String enc = TypeAdapters.STRING.read(in);
-            return enc == null ? null : create(enc);
+            if ( enc == null )
+            {
+                return null;
+            }
+
+            // decode
+            byte[] imageBytes = BaseEncoding.base64().decode( enc.substring( "data:image/png;base64,".length() ) );
+            BufferedImage image;
+            try
+            {
+                image = ImageIO.read( new ByteArrayInputStream( imageBytes ) );
+            } catch ( IOException e )
+            {
+                throw new IOException( "Failed to decode favicon", e );
+            }
+
+            // check size
+            if ( image.getWidth() != 64 || image.getHeight() != 64 )
+            {
+                throw new IOException( "Favicon must be exactly 64x64 pixels" );
+            }
+
+            // create
+            CosmicFavicon favicon = new CosmicFavicon( enc, image );
+            if ( favicon.getEncoded().length() > Short.MAX_VALUE )
+            {
+                throw new IOException( "Favicon file too large for server to process" );
+            }
+            return favicon;
         }
     };
 
-    public CosmicFavicon(@NonNull String encoded) {
+    public CosmicFavicon(@NonNull String encoded, @NonNull BufferedImage image) {
         this.encoded = encoded;
+        this.image = image;
     }
 
     public static TypeAdapter<CosmicFavicon> getFaviconTypeAdapter()
@@ -43,6 +75,9 @@ public class CosmicFavicon {
      */
     @NonNull
     private final String encoded;
+
+    @NonNull
+    private final BufferedImage image;
 
     /**
      * Creates a favicon from an image.
@@ -83,23 +118,14 @@ public class CosmicFavicon {
         }
 
         // create
-        return new CosmicFavicon( encoded );
-    }
-
-    /**
-     * Creates a Favicon from an encoded PNG.
-     *
-     * @param encodedString a base64 mime encoded PNG string
-     * @return the created favicon
-     * @deprecated Use #create(java.awt.image.BufferedImage) instead
-     */
-    @Deprecated
-    public static CosmicFavicon create(String encodedString)
-    {
-        return new CosmicFavicon( encodedString );
+        return new CosmicFavicon( encoded, image );
     }
 
     public static CosmicFavicon createFromURL(URL url) throws IOException {
         return create(ImageIO.read(url));
+    }
+
+    public static CosmicFavicon createFromURL(String url) throws IOException {
+        return createFromURL(URI.create(url).toURL());
     }
 }

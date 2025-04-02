@@ -14,7 +14,6 @@ public abstract class ModuleCommand extends CosmicCommand {
         this(module, base, permission, new File(module.getDataFolder(), Singularity.getCommandsFolderChild()), aliases);
     }
 
-
     public ModuleCommand(ModuleLike module, String base, String permission, File parentDirectory, String... aliases) {
         super(module.getIdentifier(), base, permission, parentDirectory, aliases);
         this.owningModule = module;
@@ -34,14 +33,10 @@ public abstract class ModuleCommand extends CosmicCommand {
 //    }
 
     public void modulize() {
-        if (isEnabled()) return;
-
         getOwningModule().addCommand(this);
     }
 
     public void demodulize() {
-        if (! isEnabled()) return;
-
         getOwningModule().removeCommand(this);
     }
 
@@ -50,6 +45,8 @@ public abstract class ModuleCommand extends CosmicCommand {
         if (! isEnabled()) return;
 
         CommandHandler.registerModuleCommand(this);
+
+        modulize();
     }
 
     @Override
@@ -57,6 +54,8 @@ public abstract class ModuleCommand extends CosmicCommand {
         if (! isEnabled()) if (! CommandHandler.getLoadedModuleCommands().containsKey(getIdentifier())) return;
 
         CommandHandler.unregisterModuleCommand(this);
+
+        demodulize();
     }
 
     @Override

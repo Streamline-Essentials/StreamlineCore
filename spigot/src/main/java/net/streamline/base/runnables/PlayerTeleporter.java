@@ -10,6 +10,7 @@ import singularity.configs.given.GivenConfigs;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.server.CosmicServer;
 import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
@@ -49,7 +50,7 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 return;
             }
 
-            if (ticket.getTargetServer().getIdentifier().equals(GivenConfigs.getServerName())) {
+            if (isOnCorrectServer(ticket)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(ticket.getIdentifier()));
                 if (player == null) {
                     clearTicket(ticket, 2);
@@ -62,6 +63,19 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
         } catch (Exception e) {
             MessageUtils.logWarning("Error processing ticket: " + ticket.getIdentifier(), e);
         }
+    }
+
+    public static boolean isOnCorrectServer(TPTicket ticket) {
+        CosmicServer targetServer = ticket.getTargetServer();
+        String myServer = GivenConfigs.getServerName();
+
+        if (targetServer == null || myServer == null) {
+            return true;
+        }
+
+        if (targetServer.getIdentifier().equals("--null")) return true;
+
+        return targetServer.getIdentifier().equals(myServer);
     }
 
     private void teleportPlayer(Player player, TPTicket ticket) {
@@ -87,7 +101,8 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 );
 
                 player.teleport(location);
-                MessageUtils.logInfo("Teleported " + player.getName() + " to " + location);
+//                MessageUtils.logInfo("Teleported " + player.getName() + " to X: " + position.getX() +
+//                        ", Y: " + position.getY() + ", Z: " + position.getZ() + " in world " + world.getIdentifier());
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to teleport player " + player.getName(), e);
             }
@@ -96,6 +111,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
 
     private static void clearTicket(TPTicket ticket, int instance) {
         ticket.clear();
-        MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
+//        MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
     }
 }

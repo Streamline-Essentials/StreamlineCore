@@ -86,8 +86,13 @@ public abstract class CosmicModule extends ModuleLike {
         if (! isEnabled()) return;
 
         for (ModuleCommand command : this.getCommands()) {
-            ModuleUtils.logInfo(this, "Unregistering command: " + command.getIdentifier());
-            command.unregister();
+            try {
+                ModuleUtils.logInfo(this, "Unregistering command: " + command.getIdentifier());
+                command.unregister();
+            } catch (Throwable e) {
+                ModuleUtils.logWarning(this, "Failed to unregister command: " + command.getIdentifier());
+                ModuleUtils.logWarning(this, e.getStackTrace());
+            }
         }
 
         ModuleUtils.fireEvent(new ModuleDisableEvent(this));
@@ -99,6 +104,14 @@ public abstract class CosmicModule extends ModuleLike {
     public void restart() {
         stop();
         start();
+    }
+
+    public void unregister() {
+        ModuleManager.unregisterModule(this);
+    }
+
+    public void register() {
+        ModuleManager.registerModule(this);
     }
 
     public void onLoad() {

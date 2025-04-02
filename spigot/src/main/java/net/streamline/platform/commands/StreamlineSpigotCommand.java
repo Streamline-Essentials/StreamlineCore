@@ -30,9 +30,9 @@ public class StreamlineSpigotCommand implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args == null) args = new String[] { "" };
-        String commandName = args[0];
+        String alias = args[0];
 
-        CosmicCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
+        CosmicCommand streamlineCommand = CommandHandler.getCommandByAlias(alias);
         if (streamlineCommand == null) {
             sender.sendMessage(ChatColor.RED + "Command not found.");
             return true;
@@ -54,17 +54,15 @@ public class StreamlineSpigotCommand implements TabExecutor {
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 0) {
-            return StringUtils.getAsCompletionList("",
-                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(CosmicCommand::getBase).collect(Collectors.toList()));
+            return StringUtils.getAsCompletionList("", CommandHandler.getAllAliases());
         }
         if (args.length == 1) {
-            return StringUtils.getAsCompletionList(args[0],
-                    CommandHandler.getLoadedStreamlineCommands().values().stream().map(CosmicCommand::getBase).collect(Collectors.toList()));
+            return StringUtils.getAsCompletionList(args[0], CommandHandler.getAllAliases());
         }
 
-        String commandName = args[0];
+        String alias = args[0];
 
-        CosmicCommand streamlineCommand = CommandHandler.getStreamlineCommand(commandName);
+        CosmicCommand streamlineCommand = CommandHandler.getCommandByAlias(alias);
         if (streamlineCommand == null) return null;
 
         String[] newArgs = StringUtils.argsMinus(args, 0);
