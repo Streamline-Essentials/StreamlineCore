@@ -1,5 +1,6 @@
 package net.streamline.platform.savables;
 
+import host.plas.bou.commands.Sender;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.LuckPerms;
@@ -31,23 +32,23 @@ public class PlayerInterface implements IPlayerInterface<Player> {
     public RealPlayer<Player> getPlayer(PlayerGetter<Player> playerGetter) {
         return new RealPlayer<>(playerGetter) {
             @Override
-            public void chatAs(String command) {
-                getPlayer().chat(command);
+            public void chatAs(String message) {
+                new Sender(getPlayer()).chatAs(message);
             }
 
             @Override
             public void runCommand(String command) {
-                Bukkit.dispatchCommand(getPlayer(), command);
+                new Sender(getPlayer()).executeCommand(command);
             }
 
             @Override
             public void sendMessage(String message) {
-                getPlayer().sendMessage(Messenger.getInstance().codedString(message));
+                new Sender(getPlayer()).sendMessage(message);
             }
 
             @Override
             public void sendMessageRaw(String message) {
-                getPlayer().sendMessage(message);
+                new Sender(getPlayer()).sendMessage(message, false);
             }
 
             @Override

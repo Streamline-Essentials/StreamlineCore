@@ -2,7 +2,6 @@ package net.streamline.platform.listeners;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.ProfileProperty;
 import host.plas.bou.utils.ClassHelper;
 import host.plas.bou.utils.ColorUtils;
 import net.streamline.base.Streamline;
@@ -62,7 +61,7 @@ public class PaperListener implements Listener {
             return;
         }
 
-        event.setMotd(Messenger.colorAsString(pingReceivedEvent.getResponse().getDescription()));
+        event.setMotd(Messenger.getInstance().codedString(pingReceivedEvent.getResponse().getDescription()));
 
         // Set the sample of the server (the players displayed when hovering over the player count)
         try {
@@ -72,7 +71,7 @@ public class PaperListener implements Listener {
             for (PingedResponse.PlayerInfo playerInfo : pingReceivedEvent.getResponse().getPlayers().getSample()) {
                 try {
                     PlayerProfile profile = Bukkit.getServer().createProfile(playerInfo.getUniqueId());
-                    profile.setName(ColorUtils.colorizeHard(playerInfo.getName()));
+                    profile.setName(Messenger.getInstance().codedString(playerInfo.getName()));
                     playerSample.add(profile);
                 } catch (Throwable e) {
                     // do nothing.
