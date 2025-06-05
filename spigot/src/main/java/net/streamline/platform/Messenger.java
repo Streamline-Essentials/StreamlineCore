@@ -34,8 +34,14 @@ public class Messenger implements IMessenger {
         instance = this;
     }
 
+    @Deprecated
     public static String colorAsString(String message) {
-        return ColorUtils.colorAsString(message);
+        return colorAsStringBOU(message);
+    }
+
+    @Deprecated
+    public static String colorAsStringBOU(String message) {
+        return host.plas.bou.utils.MessageUtils.codedString(message); // Already new-lined.
     }
 
     public void sendMessage(@Nullable CommandSender to, String message) {

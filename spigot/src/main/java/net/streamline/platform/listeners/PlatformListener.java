@@ -246,7 +246,7 @@ public class PlatformListener implements Listener {
             return;
         }
 
-        event.setMotd(Messenger.colorAsString(pingReceivedEvent.getResponse().getDescription()));
+        event.setMotd(Messenger.getInstance().codedString(pingReceivedEvent.getResponse().getDescription()));
 
         // Set the sample of the server (the players displayed when hovering over the player count)
         // does not work right now...
