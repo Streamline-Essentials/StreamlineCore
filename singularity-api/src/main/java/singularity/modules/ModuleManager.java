@@ -97,9 +97,10 @@ public class ModuleManager {
                     "&a&m&l                                                 %newline%" +
                     "&cDisable &ethis message in the &bmain-config.yml%newline%" +
                     "&a&m&l                                                 %newline%" +
-                    "&6Our &b&lWiki&7: &bhttps://wiki.plas.host/en/streamline/modules%newline%" +
-                    "&6Our &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&6Streamline &b&lWiki&7: &bhttps://wiki.plas.host/streamline/modules.html%newline%" +
+                    "&6Streamline &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
                     "&6Drak&7'&6s &c&lSpigotMC &6Page&7: &bhttps://www.spigotmc.org/resources/authors/393831%newline%" +
+                    "&6Drak&7'&6s &c&lModrinth &6Page&7: &bhttps://modrinth.com/user/MrDrak%newline%" +
                     "&a&m&l                                                 "
             ;
 
