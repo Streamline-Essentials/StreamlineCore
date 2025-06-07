@@ -1,5 +1,7 @@
 package net.streamline.platform.commands;
 
+import host.plas.bou.commands.CommandContext;
+import host.plas.bou.commands.SimplifiedCommand;
 import net.streamline.base.Streamline;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.ChatColor;
@@ -16,33 +18,34 @@ import tv.quaint.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
-public class StreamlineSpigotCommand implements TabExecutor {
+public class StreamlineSpigotCommand extends SimplifiedCommand {
     public StreamlineSpigotCommand() {
-        try {
-            Objects.requireNonNull(Streamline.getInstance().getCommand("streamlinespigot")).setExecutor(this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        super("streamlinespigot", Streamline.getInstance());
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args == null) args = new String[] { "" };
-        String alias = args[0];
+    public boolean command(CommandContext ctx) {
+        if (ctx.getArgCount() < 1) {
+            ctx.sendMessage("&cCommand not found.");
+            return false;
+        }
+
+        String alias = ctx.getStringArg(0);
 
         CosmicCommand streamlineCommand = CommandHandler.getCommandByAlias(alias);
         if (streamlineCommand == null) {
-            sender.sendMessage(ChatColor.RED + "Command not found.");
-            return true;
+            ctx.sendMessage("&cCommand not found.");
+            return false;
         }
 
-        String[] newArgs = StringUtils.argsMinus(args, 0);
+        String[] newArgs = StringUtils.argsMinus(ctx.getArgsAsStringArray(), 0);
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender());
         if (s == null) {
-            sender.sendMessage(ChatColor.RED + "Could not find your user...");
+            ctx.sendMessage("&cCould not find your user...");
             return true;
         }
 
@@ -52,24 +55,21 @@ public class StreamlineSpigotCommand implements TabExecutor {
 
     @Nullable
     @Override
-    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 0) {
-            return StringUtils.getAsCompletionList("", CommandHandler.getAllAliases());
-        }
-        if (args.length == 1) {
-            return StringUtils.getAsCompletionList(args[0], CommandHandler.getAllAliases());
+    public ConcurrentSkipListSet<String> tabComplete(CommandContext ctx) {
+        if (ctx.getArgCount() <= 1) {
+            return CommandHandler.getAllAliases();
         }
 
-        String alias = args[0];
+        String alias = ctx.getStringArg(0);
 
         CosmicCommand streamlineCommand = CommandHandler.getCommandByAlias(alias);
         if (streamlineCommand == null) return null;
 
-        String[] newArgs = StringUtils.argsMinus(args, 0);
+        String[] newArgs = StringUtils.argsMinus(ctx.getArgsAsStringArray(), 0);
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender());
         if (s == null) return null;
 
-        return new ArrayList<>(streamlineCommand.baseTabComplete(s, newArgs));
+        return streamlineCommand.baseTabComplete(s, newArgs);
     }
 }
