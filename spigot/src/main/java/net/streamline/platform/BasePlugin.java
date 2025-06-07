@@ -19,6 +19,7 @@ import net.streamline.platform.savables.PlayerInterface;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import singularity.command.CosmicCommand;
@@ -417,6 +418,12 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
             // Register all the commands into the map
             for (final ProperCommand command : commands) {
                 commandMap.register(command.getLabel(), command.getParent().getBase(), command);
+
+                try {
+                    commandMap.register("streamlinecore", command);
+                } catch (Throwable e) {
+                    MessageUtils.logDebugWithInfo("Failed to register command: " + command.getLabel(), e);
+                }
             }
 
             CompletableFuture.runAsync(BasePlugin::syncCommands);
@@ -441,7 +448,26 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
                     continue;
                 }
 
-                com.unregister(commandMap);
+                try {
+                    com.unregister(commandMap);
+                } catch (Throwable e) {
+                    MessageUtils.logDebugWithInfo("Failed to unregister command: " + command, e);
+                }
+
+                try {
+                    // Unregister the command
+                    final Field knownCommandsField = commandMap.getClass().getDeclaredField("knownCommands");
+                    knownCommandsField.setAccessible(true);
+                    @SuppressWarnings("unchecked") final Map<String, Command> knownCommands = (java.util.Map<String, Command>) knownCommandsField.get(commandMap);
+
+                    // Remove the command and its aliases
+                    knownCommands.remove(com.getName());
+                    for (String alias : com.getAliases()) {
+                        knownCommands.remove(alias);
+                    }
+                } catch (Throwable e) {
+                    MessageUtils.logDebugWithInfo("Failed to unregister command: " + command, e);
+                }
             }
 
             CompletableFuture.runAsync(BasePlugin::syncCommands);
@@ -478,5 +504,9 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
             map.put(player.getUniqueId().toString(), player);
         }
         return map;
+    }
+
+    public static Command getBukkitCommand(String name) {
+        return commandMap.getCommand(name);
     }
 }

@@ -17,7 +17,9 @@ import singularity.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.stream.Collectors;
 
 @Getter
 public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
@@ -44,6 +46,20 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 
         return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
+    }
+
+    @Override
+    public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String @NotNull [] args) throws IllegalArgumentException {
+        List<String> completions = onTabComplete(sender, this, alias, args);
+        if (completions == null) {
+            return new ArrayList<>();
+        }
+
+        return completions.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> ! s.isEmpty())
+                .collect(Collectors.toList());
     }
 
     public void register() {
