@@ -2,8 +2,6 @@ name: '${name}'
 version: '${version}'
 main: 'net.streamline.base.Streamline'
 
-api-version: 1.21
-
 authors: [ Drak ]
 website: https://github.com/Streamline-Essentials
 description: True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.

@@ -1,11 +1,11 @@
 package singularity.database.modules;
 
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
 import singularity.database.DatabaseType;
-import tv.quaint.objects.Identifiable;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -61,6 +61,22 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
         } else if (getDatabaseType() == DatabaseType.SQLITE) {
             saveSqlite(obj);
         }
+    }
+
+    public String getTablePrefix() {
+        return getDatabase().getConnectorSet().getTablePrefix();
+    }
+
+    public String injectTablePrefix(String statement) {
+        return statement.replace("%table_prefix%", getTablePrefix());
+    }
+
+    public String getDatabaseName() {
+        return getDatabase().getConnectorSet().getDatabase();
+    }
+
+    public String injectDatabaseName(String statement) {
+        return statement.replace("%database_name%", getDatabaseName());
     }
 
     public abstract void saveMysql(T obj);

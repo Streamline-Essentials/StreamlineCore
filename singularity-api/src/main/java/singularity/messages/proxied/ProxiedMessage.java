@@ -1,5 +1,6 @@
 package singularity.messages.proxied;
 
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
@@ -11,7 +12,6 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,6 +1,6 @@
 package singularity.placeholders.replaceables;
 
-import tv.quaint.objects.AtomicString;
+import gg.drak.thebase.objects.AtomicString;
 import singularity.placeholders.callbacks.CallbackString;
 import singularity.placeholders.callbacks.PlaceholderCallback;
 import org.jetbrains.annotations.Nullable;

@@ -1,10 +1,10 @@
 package singularity.placeholders.replaceables;
 
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import singularity.placeholders.RATRegistry;
 import singularity.placeholders.callbacks.PlaceholderCallback;
 import singularity.placeholders.expansions.RATExpansion;
-import tv.quaint.utils.MatcherUtils;
 
 @Getter
 public class IdentifiedReplaceable extends GenericReplaceable {

@@ -3,7 +3,6 @@ package net.streamline.base;
 import com.google.inject.Inject;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
-import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;

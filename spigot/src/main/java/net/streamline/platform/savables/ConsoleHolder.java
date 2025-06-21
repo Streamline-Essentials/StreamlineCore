@@ -1,8 +1,9 @@
 package net.streamline.platform.savables;
 
+import host.plas.bou.commands.Sender;
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.platform.Messenger;
+import net.streamline.base.Streamline;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import singularity.interfaces.audiences.IConsoleHolder;
@@ -31,12 +32,12 @@ public class ConsoleHolder implements IConsoleHolder<CommandSender> {
 
             @Override
             public void sendMessage(String message) {
-                getConsole().sendMessage(Messenger.getInstance().codedString(message));
+                new Sender(getConsole()).sendMessage(message);
             }
 
             @Override
             public void sendMessageRaw(String message) {
-                getConsole().sendMessage(message);
+                new Sender(getConsole()).sendMessage(message, false);
             }
 
             @Override
@@ -46,12 +47,12 @@ public class ConsoleHolder implements IConsoleHolder<CommandSender> {
 
             @Override
             public void sendLogMessage(String message) {
-                Bukkit.getLogger().info(message);
+                Streamline.getInstance().logInfo(message);
             }
 
             @Override
             public void runCommand(String command) {
-                Bukkit.dispatchCommand(getConsole(), command);
+                new Sender(getConsole()).executeCommand(command);
             }
         };
     }

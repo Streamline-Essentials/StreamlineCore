@@ -1,12 +1,11 @@
 package singularity.configs.given;
 
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
-import singularity.data.server.CosmicServer;
 import singularity.database.servers.SavedServer;
 import singularity.utils.UuidUtils;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.UUID;
 

@@ -1,7 +1,7 @@
 package singularity.interfaces;
 
+import gg.drak.thebase.objects.handling.derived.IModifierEventable;
 import singularity.command.ModuleCommand;
-import tv.quaint.objects.handling.derived.IModifierEventable;
 
 import java.io.File;
 import java.io.InputStream;

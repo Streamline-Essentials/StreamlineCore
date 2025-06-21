@@ -6,15 +6,12 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.base.timers.AbstractPlayerTeleporter;
 import net.streamline.base.Streamline;
-import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PlayerTeleporter extends AbstractPlayerTeleporter {
 //    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed

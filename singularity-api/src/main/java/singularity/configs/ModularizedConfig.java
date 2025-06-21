@@ -1,8 +1,8 @@
 package singularity.configs;
 
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 import lombok.Getter;
 import singularity.modules.ModuleLike;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.io.File;
 

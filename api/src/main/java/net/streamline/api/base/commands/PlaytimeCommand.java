@@ -51,7 +51,7 @@ public class PlaytimeCommand extends CosmicCommand {
         }
 
         if (context.getArgCount() == 1) {
-            other.sendMessage(getWithOther(context.getSender(), this.messageGet, playerName));
+            context.sendMessage(getWithOther(context.getSender(), this.messageGet, playerName));
             return;
         }
 
