@@ -1,5 +1,6 @@
 package net.streamline.api.base.ratapi;
 
+import gg.drak.thebase.objects.AtomicString;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.group.Group;
@@ -11,7 +12,6 @@ import net.streamline.api.base.module.BaseModule;
 import singularity.placeholders.expansions.RATExpansion;
 import singularity.placeholders.replaceables.IdentifiedUserReplaceable;
 import singularity.utils.UserUtils;
-import tv.quaint.objects.AtomicString;
 
 import java.util.Optional;
 import java.util.UUID;

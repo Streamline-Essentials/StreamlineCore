@@ -1,8 +1,8 @@
 package singularity.objects;
 
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.objects.Identifiable;
 
 @Setter
 @Getter

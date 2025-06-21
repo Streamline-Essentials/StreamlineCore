@@ -10,18 +10,15 @@ import singularity.configs.given.GivenConfigs;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.server.CosmicServer;
 import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PlayerTeleporter extends AbstractPlayerTeleporter {
-//    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed
-
     public static void init() {
         setInstance(new PlayerTeleporter());
         startInstance();
@@ -35,7 +32,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
         ConcurrentSkipListSet<TPTicket> tickets = getTicketsPending().join();
 
         getStage().set(TeleportStage.TELEPORTATION);
-//        tickets.forEach(ticket -> executor.submit(() -> processTicket(ticket)));
         tickets.forEach(this::processTicket);
 
         unpendTickets();
@@ -49,7 +45,7 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 return;
             }
 
-            if (ticket.getTargetServer().getIdentifier().equals(GivenConfigs.getServerName())) {
+            if (isOnCorrectServer(ticket)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(ticket.getIdentifier()));
                 if (player == null) {
                     clearTicket(ticket, 2);
@@ -62,6 +58,19 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
         } catch (Exception e) {
             MessageUtils.logWarning("Error processing ticket: " + ticket.getIdentifier(), e);
         }
+    }
+
+    public static boolean isOnCorrectServer(TPTicket ticket) {
+        CosmicServer targetServer = ticket.getTargetServer();
+        String myServer = GivenConfigs.getServerName();
+
+        if (targetServer == null || myServer == null) {
+            return true;
+        }
+
+        if (targetServer.getIdentifier().equals("--null")) return true;
+
+        return targetServer.getIdentifier().equals(myServer);
     }
 
     private void teleportPlayer(Player player, TPTicket ticket) {
@@ -87,7 +96,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 );
 
                 player.teleport(location);
-                MessageUtils.logInfo("Teleported " + player.getName() + " to " + location);
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to teleport player " + player.getName(), e);
             }
@@ -96,6 +104,5 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
 
     private static void clearTicket(TPTicket ticket, int instance) {
         ticket.clear();
-        MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
     }
 }

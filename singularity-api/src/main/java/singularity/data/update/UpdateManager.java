@@ -6,7 +6,6 @@ import singularity.Singularity;
 import singularity.database.servers.UpdateInfo;
 import singularity.utils.MessageUtils;
 
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;

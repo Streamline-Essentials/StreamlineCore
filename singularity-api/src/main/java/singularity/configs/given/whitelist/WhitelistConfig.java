@@ -1,9 +1,9 @@
 package singularity.configs.given.whitelist;
 
+import gg.drak.thebase.storage.documents.SimpleJsonDocument;
 import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.utils.MessageUtils;
-import tv.quaint.storage.documents.SimpleJsonDocument;
 
 import java.util.Date;
 

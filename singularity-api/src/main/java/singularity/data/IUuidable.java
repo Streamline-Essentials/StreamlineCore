@@ -1,6 +1,6 @@
 package singularity.data;
 
-import tv.quaint.objects.Identifiable;
+import gg.drak.thebase.objects.Identifiable;
 
 import java.util.UUID;
 

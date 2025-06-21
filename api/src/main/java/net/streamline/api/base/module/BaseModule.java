@@ -2,7 +2,6 @@ package net.streamline.api.base.module;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.base.commands.GivenCommands;
 import net.streamline.api.base.ratapi.LuckpermsExpansion;
 import singularity.Singularity;
 import net.streamline.api.base.listeners.BaseListener;

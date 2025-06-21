@@ -7,7 +7,6 @@ import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;

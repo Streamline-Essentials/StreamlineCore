@@ -1,5 +1,6 @@
 package net.streamline.api.base.ratapi;
 
+import gg.drak.thebase.utils.MatcherUtils;
 import singularity.Singularity;
 import net.streamline.api.base.module.BaseModule;
 import singularity.configs.given.MainMessagesHandler;
@@ -11,7 +12,6 @@ import singularity.placeholders.expansions.RATExpansion;
 import singularity.placeholders.replaceables.IdentifiedReplaceable;
 import singularity.placeholders.replaceables.IdentifiedUserReplaceable;
 import singularity.utils.UserUtils;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.Optional;

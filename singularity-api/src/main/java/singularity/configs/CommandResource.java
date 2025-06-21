@@ -1,12 +1,12 @@
 package singularity.configs;
 
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.command.CommandHandler;
 import singularity.command.CosmicCommand;
 import singularity.modules.ModuleLike;
 import singularity.modules.CosmicModule;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.io.File;
 import java.util.Arrays;

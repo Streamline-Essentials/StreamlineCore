@@ -1,11 +1,11 @@
 package singularity.configs.given;
 
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.database.ConnectorSet;
 import singularity.database.DatabaseType;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 @Getter @Setter
 public class DatabaseConfigHandler extends SimpleConfiguration {

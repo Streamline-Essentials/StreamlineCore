@@ -1,6 +1,5 @@
 package singularity.scheduler;
 
-
 import singularity.modules.ModuleLike;
 
 import java.util.TreeMap;
