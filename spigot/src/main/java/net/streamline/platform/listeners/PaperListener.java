@@ -3,7 +3,6 @@ package net.streamline.platform.listeners;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import host.plas.bou.utils.ClassHelper;
-import host.plas.bou.utils.ColorUtils;
 import net.streamline.base.Streamline;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;

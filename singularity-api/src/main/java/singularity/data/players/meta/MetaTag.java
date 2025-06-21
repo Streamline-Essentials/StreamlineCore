@@ -1,10 +1,10 @@
 package singularity.data.players.meta;
 
+import gg.drak.thebase.lib.re2j.Matcher;
+import gg.drak.thebase.objects.Identifiable;
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.objects.Identifiable;
-import tv.quaint.thebase.lib.re2j.Matcher;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.List;

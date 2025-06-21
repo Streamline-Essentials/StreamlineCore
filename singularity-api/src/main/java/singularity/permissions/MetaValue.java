@@ -1,10 +1,10 @@
 package singularity.permissions;
 
+import gg.drak.thebase.objects.Identified;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.data.players.CosmicPlayer;
 import singularity.utils.UserUtils;
-import tv.quaint.objects.Identified;
 
 @Getter @Setter
 public class MetaValue implements Identified {

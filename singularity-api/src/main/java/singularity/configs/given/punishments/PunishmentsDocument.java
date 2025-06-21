@@ -1,8 +1,8 @@
 package singularity.configs.given.punishments;
 
+import gg.drak.thebase.objects.AtomicString;
+import gg.drak.thebase.storage.datastores.SimpleJsonDatastore;
 import singularity.Singularity;
-import tv.quaint.objects.AtomicString;
-import tv.quaint.storage.datastores.SimpleJsonDatastore;
 
 import java.util.Date;
 

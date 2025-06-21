@@ -1,5 +1,6 @@
 package singularity.modules;
 
+import gg.drak.thebase.events.BaseEventListener;
 import singularity.Singularity;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
@@ -15,7 +16,6 @@ import singularity.scheduler.ModuleTaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 import org.jetbrains.annotations.Nullable;
-import tv.quaint.events.BaseEventListener;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;

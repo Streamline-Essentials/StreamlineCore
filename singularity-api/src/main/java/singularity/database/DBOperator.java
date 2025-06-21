@@ -1,11 +1,11 @@
 package singularity.database;
 
+import gg.drak.thebase.lib.hikari.HikariConfig;
+import gg.drak.thebase.lib.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.utils.MessageUtils;
-import tv.quaint.thebase.lib.hikari.HikariConfig;
-import tv.quaint.thebase.lib.hikari.HikariDataSource;
 
 import java.io.File;
 import java.sql.Connection;
@@ -13,7 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Getter @Setter

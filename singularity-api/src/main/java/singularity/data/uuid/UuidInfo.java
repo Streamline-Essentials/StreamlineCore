@@ -1,11 +1,11 @@
 package singularity.data.uuid;
 
+import gg.drak.thebase.lib.re2j.Matcher;
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.data.IUuidable;
-import tv.quaint.thebase.lib.re2j.Matcher;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.ArrayList;
 import java.util.List;

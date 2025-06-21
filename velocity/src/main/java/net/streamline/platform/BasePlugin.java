@@ -9,6 +9,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import gg.drak.thebase.events.BaseEventHandler;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
@@ -39,7 +40,6 @@ import singularity.scheduler.TaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.StorageUtils;
 import singularity.utils.UserUtils;
-import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
 import java.nio.file.Path;

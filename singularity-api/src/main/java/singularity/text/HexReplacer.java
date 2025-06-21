@@ -1,11 +1,11 @@
 package singularity.text;
 
+import gg.drak.thebase.lib.re2j.Matcher;
+import gg.drak.thebase.objects.AtomicString;
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.objects.AtomicString;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.thebase.lib.re2j.Matcher;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.List;
 

@@ -2,7 +2,6 @@ package singularity.scheduler;
 
 import lombok.Getter;
 import lombok.Setter;
-import singularity.modules.ModuleUtils;
 import singularity.utils.MessageUtils;
 
 import java.util.Date;

@@ -17,12 +17,8 @@ import singularity.utils.MessageUtils;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PlayerTeleporter extends AbstractPlayerTeleporter {
-//    private static final ExecutorService executor = Executors.newFixedThreadPool(4); // Adjust as needed
-
     public static void init() {
         setInstance(new PlayerTeleporter());
         startInstance();
@@ -36,7 +32,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
         ConcurrentSkipListSet<TPTicket> tickets = getTicketsPending().join();
 
         getStage().set(TeleportStage.TELEPORTATION);
-//        tickets.forEach(ticket -> executor.submit(() -> processTicket(ticket)));
         tickets.forEach(this::processTicket);
 
         unpendTickets();
@@ -101,8 +96,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 );
 
                 player.teleport(location);
-//                MessageUtils.logInfo("Teleported " + player.getName() + " to X: " + position.getX() +
-//                        ", Y: " + position.getY() + ", Z: " + position.getZ() + " in world " + world.getIdentifier());
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to teleport player " + player.getName(), e);
             }
@@ -111,6 +104,5 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
 
     private static void clearTicket(TPTicket ticket, int instance) {
         ticket.clear();
-//        MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
     }
 }

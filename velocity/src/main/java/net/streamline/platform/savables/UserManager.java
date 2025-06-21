@@ -6,8 +6,6 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import lombok.Getter;
-import net.luckperms.api.model.user.User;
-import net.streamline.api.SLAPI;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.BasePlugin;
