@@ -1,16 +1,16 @@
 package singularity.placeholders;
 
+import gg.drak.thebase.objects.AtomicString;
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.data.console.CosmicSender;
 import singularity.modules.ModuleLike;
 import singularity.modules.CosmicModule;
-import tv.quaint.objects.AtomicString;
 import singularity.placeholders.callbacks.RATCallback;
 import singularity.placeholders.expansions.RATExpansion;
 import singularity.placeholders.replaceables.*;
 import singularity.utils.UserUtils;
-import tv.quaint.utils.MatcherUtils;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListMap;

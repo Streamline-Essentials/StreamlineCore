@@ -1,11 +1,11 @@
 package singularity.data.update;
 
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.database.servers.UpdateInfo;
-import tv.quaint.objects.Identifiable;
 
 import java.util.Date;
 import java.util.Optional;

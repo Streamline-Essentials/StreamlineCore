@@ -4,7 +4,6 @@ import host.plas.bou.commands.Sender;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.base.Streamline;
-import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import singularity.interfaces.audiences.IConsoleHolder;

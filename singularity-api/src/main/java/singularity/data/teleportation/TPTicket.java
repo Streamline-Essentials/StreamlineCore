@@ -1,5 +1,6 @@
 package singularity.data.teleportation;
 
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
@@ -8,7 +9,6 @@ import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
-import tv.quaint.objects.Identifiable;
 
 import java.util.Date;
 

@@ -1,5 +1,8 @@
 package net.streamline.platform.listeners;
 
+import gg.drak.thebase.events.BaseEventHandler;
+import gg.drak.thebase.events.BaseEventListener;
+import gg.drak.thebase.events.processing.BaseProcessor;
 import host.plas.bou.utils.ClassHelper;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,9 +44,6 @@ import singularity.modules.ModuleUtils;
 import singularity.objects.PingedResponse;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
-import tv.quaint.events.BaseEventHandler;
-import tv.quaint.events.BaseEventListener;
-import tv.quaint.events.processing.BaseProcessor;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;

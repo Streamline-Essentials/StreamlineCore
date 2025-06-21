@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import gg.drak.thebase.events.BaseEventHandler;
 import lombok.Getter;
 import lombok.Setter;
 import net.md_5.bungee.api.CommandSender;
@@ -35,7 +36,6 @@ import singularity.interfaces.IProperEvent;
 import singularity.interfaces.ISingularityExtension;
 import singularity.scheduler.TaskManager;
 import singularity.utils.UserUtils;
-import tv.quaint.events.BaseEventHandler;
 
 import java.io.File;
 import java.util.*;

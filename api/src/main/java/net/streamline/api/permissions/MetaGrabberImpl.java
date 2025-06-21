@@ -1,5 +1,7 @@
 package net.streamline.api.permissions;
 
+import gg.drak.thebase.objects.AtomicString;
+import gg.drak.thebase.utils.MathUtils;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
@@ -13,8 +15,6 @@ import singularity.permissions.MetaGrabber;
 import singularity.permissions.MetaKey;
 import singularity.permissions.MetaValue;
 import singularity.utils.UUIDFetcher;
-import tv.quaint.objects.AtomicString;
-import tv.quaint.utils.MathUtils;
 
 import java.util.Objects;
 import java.util.Optional;

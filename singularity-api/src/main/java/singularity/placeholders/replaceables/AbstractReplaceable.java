@@ -1,5 +1,6 @@
 package singularity.placeholders.replaceables;
 
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.placeholders.RATRegistry;
@@ -7,7 +8,6 @@ import singularity.placeholders.callbacks.RATCallback;
 import singularity.placeholders.handling.RATHandledString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import tv.quaint.utils.MatcherUtils;
 
 @Setter
 @Getter

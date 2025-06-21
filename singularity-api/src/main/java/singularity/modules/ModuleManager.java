@@ -1,6 +1,8 @@
 package singularity.modules;
 
 import com.google.common.base.Preconditions;
+import gg.drak.thebase.events.BaseEventHandler;
+import gg.drak.thebase.events.BaseEventListener;
 import org.pf4j.*;
 import lombok.Getter;
 import lombok.NonNull;
@@ -12,8 +14,6 @@ import singularity.events.*;
 import singularity.events.modules.ModuleLoadEvent;
 import singularity.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.events.BaseEventHandler;
-import tv.quaint.events.BaseEventListener;
 
 import java.io.File;
 import java.nio.file.Path;

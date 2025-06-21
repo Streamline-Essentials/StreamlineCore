@@ -2,9 +2,9 @@ package singularity.text;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.objects.Identifiable;
 
 import java.time.Duration;
 import java.util.Optional;

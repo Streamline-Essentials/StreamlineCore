@@ -52,12 +52,12 @@ public class PTagCommand extends CosmicCommand {
             return;
         }
 
-        if (context.getArgCount() == 2) {
-            other.sendMessage(getWithOther(context.getSender(), this.messageTagsGet, playerName));
+        if (context.getArgCount() == 1) {
+            context.sendMessage(getWithOther(context.getSender(), this.messageTagsGet, playerName));
             return;
         }
 
-        if (context.getArgCount() < 4) {
+        if (context.getArgCount() < 3) {
             context.sendMessage(MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }

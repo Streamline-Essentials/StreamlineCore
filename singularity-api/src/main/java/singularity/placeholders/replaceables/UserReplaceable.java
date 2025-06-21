@@ -1,7 +1,7 @@
 package singularity.placeholders.replaceables;
 
+import gg.drak.thebase.objects.AtomicString;
 import singularity.data.console.CosmicSender;
-import tv.quaint.objects.AtomicString;
 import singularity.placeholders.callbacks.CallbackString;
 import singularity.placeholders.callbacks.UserPlaceholderCallback;
 

@@ -1,12 +1,12 @@
 package singularity.board.data;
 
+import gg.drak.thebase.lib.re2j.Matcher;
+import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.board.data.constructor.BoardConstructable;
 import singularity.board.data.constructor.StringConstructable;
-import tv.quaint.utils.MatcherUtils;
 import org.jetbrains.annotations.NotNull;
-import tv.quaint.thebase.lib.re2j.Matcher;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;

@@ -23,9 +23,6 @@ dependencies {
     // JetBrains.
     annotationProcessor(shadow(implementation('org.jetbrains:annotations:20.1.0')))
 
-    // Caffeine.
-    shadow(implementation('com.github.ben-manes.caffeine:caffeine:3.1.8'))
-
     // Files.
 //    implementation(shadow(files(FILES)));
 }

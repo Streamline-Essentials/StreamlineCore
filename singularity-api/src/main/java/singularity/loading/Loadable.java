@@ -1,6 +1,6 @@
 package singularity.loading;
 
-import tv.quaint.objects.Identifiable;
+import gg.drak.thebase.objects.Identifiable;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

@@ -1,12 +1,12 @@
 package net.streamline.api.base.listeners;
 
+import gg.drak.thebase.events.BaseEventHandler;
+import gg.drak.thebase.events.BaseEventListener;
+import gg.drak.thebase.events.processing.BaseProcessor;
 import singularity.Singularity;
 import net.streamline.api.base.module.BaseModule;
 import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessageManager;
-import tv.quaint.events.BaseEventHandler;
-import tv.quaint.events.BaseEventListener;
-import tv.quaint.events.processing.BaseProcessor;
 
 public class BaseListener implements BaseEventListener {
     public BaseListener() {

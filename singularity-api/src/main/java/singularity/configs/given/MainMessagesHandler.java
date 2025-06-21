@@ -1,7 +1,7 @@
 package singularity.configs.given;
 
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 import singularity.Singularity;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.List;
 

@@ -1,11 +1,11 @@
 package singularity.database.modules;
 
+import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
 import singularity.database.DatabaseType;
-import tv.quaint.objects.Identifiable;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

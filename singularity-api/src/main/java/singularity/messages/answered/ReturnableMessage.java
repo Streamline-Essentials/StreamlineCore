@@ -5,7 +5,6 @@ import lombok.Setter;
 import singularity.messages.events.AnsweredMessageEvent;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.messages.proxied.ProxiedMessageManager;
-import singularity.modules.ModuleUtils;
 import singularity.scheduler.BaseRunnable;
 import org.jetbrains.annotations.NotNull;
 

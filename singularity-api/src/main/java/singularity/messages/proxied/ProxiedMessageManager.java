@@ -2,6 +2,7 @@ package singularity.messages.proxied;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import gg.drak.thebase.utils.MathUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
@@ -11,7 +12,6 @@ import singularity.messages.answered.ReturnableMessage;
 import singularity.objects.SingleSet;
 import singularity.objects.CosmicResourcePack;
 import singularity.scheduler.BaseRunnable;
-import tv.quaint.utils.MathUtils;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;

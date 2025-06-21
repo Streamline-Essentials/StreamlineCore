@@ -7,7 +7,6 @@ import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.savables.UserManager;
 import singularity.command.CosmicCommand;
 import singularity.data.console.CosmicSender;
-import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.IProperCommand;
 import singularity.utils.MessageUtils;
 

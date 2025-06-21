@@ -1,5 +1,7 @@
 package singularity;
 
+import gg.drak.thebase.objects.SingleSet;
+import gg.drak.thebase.objects.handling.derived.PluginEventable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.configs.given.GivenConfigs;
@@ -22,8 +24,6 @@ import singularity.scheduler.BaseRunnable;
 import singularity.scheduler.ModuleTaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
-import tv.quaint.objects.SingleSet;
-import tv.quaint.objects.handling.derived.PluginEventable;
 
 import java.io.File;
 import java.io.IOException;
