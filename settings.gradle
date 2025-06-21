@@ -1,18 +1,24 @@
 rootProject.name = properties['name']
 
+include ':singularity-api'
 include ':api'
 include ':backend-api'
-include ':bungee'
-include ':spigot'
-include ':velocity'
-include ':singularity-api'
+
+if (!System.env.JITPACK) {
+    include ':bungee'
+    include ':spigot'
+    include ':velocity'
+}
 
 findProject(':backend-api').name = 'bapi'
 findProject(':singularity-api').name = 'sapi'
 
+findProject(':sapi').name = rootProject.name + '-Singularity'
 findProject(':api').name = rootProject.name + '-API'
 findProject(':bapi').name = rootProject.name + '-BAPI'
-findProject(':bungee').name = rootProject.name + '-Bungee'
-findProject(':spigot').name = rootProject.name + '-Spigot'
-findProject(':velocity').name = rootProject.name + '-Velocity'
-findProject(':sapi').name = rootProject.name + '-Singularity'
+
+if (!System.env.JITPACK) {
+    findProject(':bungee').name = rootProject.name + '-Bungee'
+    findProject(':spigot').name = rootProject.name + '-Spigot'
+    findProject(':velocity').name = rootProject.name + '-Velocity'
+}
