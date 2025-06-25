@@ -1,7 +1,7 @@
 package net.streamline.platform.messaging;
 
 import singularity.data.players.CosmicPlayer;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import singularity.messages.ProxyMessenger;
@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ProxyPluginMessenger implements ProxyMessenger {
     @Override
     public void sendMessage(ProxiedMessage message) {
-        if (Streamline.getInstance().getProxy().getOnlinePlayers().isEmpty()) {
+        if (StreamlineSpigot.getInstance().getProxy().getOnlinePlayers().isEmpty()) {
             ProxiedMessageManager.pendMessage(message);
             return;
         }
@@ -39,7 +39,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
             return;
         }
 
-        player.sendPluginMessage(Streamline.getInstance(), message.getMainChannel(), message.read());
+        player.sendPluginMessage(StreamlineSpigot.getInstance(), message.getMainChannel(), message.read());
     }
 
     @Override

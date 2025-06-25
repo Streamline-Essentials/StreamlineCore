@@ -22,7 +22,7 @@ public class TenSecondTimer implements Runnable {
 
     public TenSecondTimer(Player player) {
         this.player = player;
-        this.task = Streamline.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 2);
+        this.task = StreamlineSpigot.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 2);
     }
 
     @Override

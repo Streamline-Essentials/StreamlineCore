@@ -102,6 +102,10 @@ public abstract class AbstractPlayerTeleporter extends Thread {
     private static AtomicReference<CompletableFuture<ConcurrentSkipListSet<TPTicket>>> atomicTicketsPending = new AtomicReference<>(null);
 
     public CompletableFuture<ConcurrentSkipListSet<TPTicket>> getTicketsPending() {
+        if (GivenConfigs.getMainDatabase() == null) {
+            return CompletableFuture.completedFuture(new ConcurrentSkipListSet<>());
+        }
+
         if (getAtomicTicketsPending().get() == null) {
             getAtomicTicketsPending().set(GivenConfigs.getMainDatabase().pullAllTPTickets());
         }

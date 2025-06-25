@@ -105,10 +105,12 @@ public class StreamlineVelocity extends BasePlugin {
             e.printStackTrace();
         }
 
-        Metrics metrics = getMetricsFactory().make(this, 16971);
+        Metrics metrics = getMetricsFactory().make(this, 26274);
         metrics.addCustomChart(new Metrics.SimplePie("plugin_version", () -> getProxy().getPluginManager().getPlugin("streamlinecore").get().getDescription().getVersion().get()));
         metrics.addCustomChart(new Metrics.SimplePie("modules_loaded_count", () -> String.valueOf(ModuleManager.getLoadedModules().size())));
         metrics.addCustomChart(new Metrics.SimplePie("modules_enabled_count", () -> String.valueOf(ModuleManager.getEnabledModules().size())));
+        metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_loaded", () -> ModuleManager.getLoadedModules().size()));
+        metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_enabled", () -> ModuleManager.getEnabledModules().size()));
     }
 
 //    public Map<String, Integer> getInstalledModulesCount() {

@@ -3,7 +3,7 @@ package net.streamline.platform.commands;
 import gg.drak.thebase.utils.StringUtils;
 import host.plas.bou.commands.CommandContext;
 import host.plas.bou.commands.SimplifiedCommand;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.Nullable;
 import singularity.command.CommandHandler;
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class StreamlineSpigotCommand extends SimplifiedCommand {
     public StreamlineSpigotCommand() {
-        super("streamlinespigot", Streamline.getInstance());
+        super("streamlinespigot", StreamlineSpigot.getInstance());
     }
 
     @Override

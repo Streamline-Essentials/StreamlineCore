@@ -5,7 +5,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.base.timers.AbstractPlayerTeleporter;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import singularity.data.teleportation.TPTicket;
 import singularity.utils.MessageUtils;
 
@@ -43,7 +43,7 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
                 return;
             }
 
-            ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
+            ProxiedPlayer player = StreamlineBungee.getInstance().getProxy().getPlayer(UUID.fromString(ticket.getIdentifier()));
             if (player == null) {
                 clearTicket(ticket, 2);
                 return;
@@ -57,7 +57,7 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
     }
 
     private void teleportPlayerAsync(ProxiedPlayer player, String server) {
-        ServerInfo targetServer = Streamline.getInstance().getProxy().getServerInfo(server);
+        ServerInfo targetServer = StreamlineBungee.getInstance().getProxy().getServerInfo(server);
         if (targetServer != null) {
             ServerConnectRequest request = ServerConnectRequest.builder()
                     .target(targetServer)
