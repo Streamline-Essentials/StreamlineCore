@@ -60,7 +60,7 @@ public class PAPIDepend extends CosmicDependencyHolder<PlaceholderAPI> {
 
         @Override
         public @Nullable String onRequest(OfflinePlayer player, @NotNull String params) {
-            CosmicPlayer streamPlayer = ModuleUtils.getOrCreatePlayer(player.getUniqueId().toString());
+            CosmicPlayer streamPlayer = ModuleUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
             if (streamPlayer == null) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
             String toParse;
             if (params.startsWith("!")) toParse = "%" + params.substring("!".length()) + "%";

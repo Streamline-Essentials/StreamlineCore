@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.data.console.CosmicSender;
-import singularity.data.players.events.SenderSaveEvent;
+import singularity.data.players.events.SaveSenderEvent;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.server.CosmicServer;
@@ -87,7 +87,7 @@ public class CosmicPlayer extends CosmicSender {
 
         getDatabase().savePlayer(this);
 
-        new SenderSaveEvent(this).fire();
+        new SaveSenderEvent(this).fire();
     }
 
     @Override

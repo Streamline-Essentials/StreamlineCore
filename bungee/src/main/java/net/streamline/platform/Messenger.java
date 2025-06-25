@@ -10,7 +10,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.SLAPI;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.IMessenger;
@@ -63,19 +63,19 @@ public class Messenger implements IMessenger {
 
     public void sendMessage(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), message);
         else sendMessage(ProxyServer.getInstance().getConsole(), message);
     }
 
     public void sendMessage(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
     public void sendMessage(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof CosmicPlayer) sendMessage(Streamline.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), other, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), other, message);
     }
 
@@ -120,30 +120,30 @@ public class Messenger implements IMessenger {
 
     public void sendMessageRaw(@Nullable CosmicSender to, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), message);
     }
 
     public void sendMessageRaw(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), otherUUID, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
     public void sendMessageRaw(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
-        if (to instanceof CosmicPlayer) sendMessageRaw(Streamline.getPlayer(to.getUuid()), other, message);
+        if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), other, message);
     }
 
     public void sendTitle(CosmicSender player, CosmicTitle title) {
-        ProxiedPlayer p = Streamline.getPlayer(player.getUuid());
+        ProxiedPlayer p = StreamlineBungee.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
             return;
         }
 
-        p.sendTitle(Streamline.getInstance().getProxy().createTitle()
+        p.sendTitle(StreamlineBungee.getInstance().getProxy().createTitle()
                 .title(codedText(title.getMain()))
                 .subTitle(codedText(title.getSub()))
                 .fadeIn((int) title.getFadeIn())
@@ -212,7 +212,10 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            return of;
+        }
 
         return MessageUtils.replaceAllPlayerBungee(s, of);
     }

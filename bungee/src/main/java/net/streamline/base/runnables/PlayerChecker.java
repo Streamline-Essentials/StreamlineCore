@@ -1,7 +1,7 @@
 package net.streamline.base.runnables;
 
 import net.md_5.bungee.api.connection.Server;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import net.streamline.platform.savables.UserManager;
 import singularity.data.players.CosmicPlayer;
 import singularity.scheduler.BaseRunnable;
@@ -14,10 +14,11 @@ public class PlayerChecker extends BaseRunnable {
 
     @Override
     public void run() {
-        Streamline.getPlayersByUUID().forEach((uuid, player) -> {
+        StreamlineBungee.getPlayersByUUID().forEach((uuid, player) -> {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) return;
 
-            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+            if (streamPlayer == null) return;
 
             streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
             streamPlayer.setCurrentName(player.getName());

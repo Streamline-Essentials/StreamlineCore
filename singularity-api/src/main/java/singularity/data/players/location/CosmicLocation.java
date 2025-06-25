@@ -130,4 +130,10 @@ public class CosmicLocation implements Comparable<CosmicLocation> {
     public void teleport(CosmicPlayer otherPlayer) {
         Singularity.getInstance().getUserManager().teleport(otherPlayer, this);
     }
+
+    public double distance(CosmicLocation other) {
+        return Math.sqrt(Math.pow(getX() - other.getX(), 2) +
+                Math.pow(getY() - other.getY(), 2) +
+                Math.pow(getZ() - other.getZ(), 2));
+    }
 }

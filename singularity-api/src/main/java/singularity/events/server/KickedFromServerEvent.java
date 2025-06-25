@@ -3,11 +3,11 @@ package singularity.events.server;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.data.players.CosmicPlayer;
-import singularity.data.players.events.StreamSenderEvent;
+import singularity.data.players.events.CosmicSenderEvent;
 
 @Setter
 @Getter
-public class KickedFromServerEvent extends StreamSenderEvent {
+public class KickedFromServerEvent extends CosmicSenderEvent {
     private String fromServer;
     private String reason;
     private String toServer;

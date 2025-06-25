@@ -2,8 +2,8 @@ package singularity.data.players.events;
 
 import singularity.data.console.CosmicSender;
 
-public class LoadStreamSenderEvent extends StreamSenderEvent {
-    public LoadStreamSenderEvent(CosmicSender player) {
+public class LoadSenderEvent extends CosmicSenderEvent {
+    public LoadSenderEvent(CosmicSender player) {
         super(player);
     }
 }
