@@ -22,14 +22,18 @@ public class TenSecondTimer implements Runnable {
 
     public TenSecondTimer(Player player) {
         this.player = player;
-        this.task = Streamline.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 2);
+        this.task = StreamlineSpigot.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 2);
     }
 
     @Override
     public void run() {
         if (! checkPlayer()) return;
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            task.cancel();
+            return;
+        }
 
         CosmicServer cosmicServer = streamPlayer.getServer();
         Location location = player.getLocation();

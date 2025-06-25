@@ -3,7 +3,7 @@ package net.streamline.platform.listeners;
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import host.plas.bou.utils.ClassHelper;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,8 +22,8 @@ public class PaperListener implements Listener {
     public PaperListener() {
         if (! ClassHelper.isPaper()) return;
 
-        Bukkit.getPluginManager().registerEvents(this, Streamline.getInstance());
-        Streamline.getInstance().logInfo("PaperListener registered.");
+        Bukkit.getPluginManager().registerEvents(this, StreamlineSpigot.getInstance());
+        StreamlineSpigot.getInstance().logInfo("PaperListener registered.");
     }
 
     @EventHandler
@@ -49,8 +49,8 @@ public class PaperListener implements Listener {
         try {
             response = new PingedResponse(protocol, players, event.getMotd());
         } catch (Throwable e) {
-            Streamline.getInstance().logWarning("Failed to create PingedResponse: " + e.getMessage());
-            Streamline.getInstance().logWarning(e.getStackTrace());
+            StreamlineSpigot.getInstance().logWarning("Failed to create PingedResponse: " + e.getMessage());
+            StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
             return;
         }
 
@@ -79,8 +79,8 @@ public class PaperListener implements Listener {
 
             event.getPlayerSample().addAll(playerSample);
         } catch (Throwable e) {
-            Streamline.getInstance().logWarning("Failed to set player sample: " + e.getMessage());
-            Streamline.getInstance().logWarning(e.getStackTrace());
+            StreamlineSpigot.getInstance().logWarning("Failed to set player sample: " + e.getMessage());
+            StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
         }
 
         event.setMaxPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
@@ -92,8 +92,8 @@ public class PaperListener implements Listener {
                 CachedServerIcon icon = Bukkit.loadServerIcon(favicon.getImage());
                 event.setServerIcon(icon);
             } catch (Throwable e) {
-                Streamline.getInstance().logWarning("Failed to set server icon: " + e.getMessage());
-                Streamline.getInstance().logWarning(e.getStackTrace());
+                StreamlineSpigot.getInstance().logWarning("Failed to set server icon: " + e.getMessage());
+                StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
             }
         }
 

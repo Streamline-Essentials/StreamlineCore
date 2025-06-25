@@ -5,6 +5,8 @@ import lombok.Setter;
 import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.events.CreatePlayerEvent;
+import singularity.data.players.events.CreateSenderEvent;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.meta.SenderMeta;
 import singularity.data.players.permissions.SenderPermissions;
@@ -13,6 +15,7 @@ import singularity.interfaces.audiences.real.RealSender;
 import singularity.loading.Loadable;
 import singularity.modules.ModuleUtils;
 import singularity.text.UsersReplacements;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.util.Date;
@@ -52,13 +55,18 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
     private boolean proxyTouched;
 
     @Setter
-    private boolean loadComplete = false;
+    private boolean fullyLoaded = false;
+
+    @Setter
+    private boolean temporary = false;
 
     @Setter
     private UsersReplacements replacements;
 
-    public CosmicSender(String uuid) {
+    public CosmicSender(String uuid, boolean temporary) {
         this.uuid = uuid;
+
+        this.temporary = temporary;
 
         this.firstJoinDate = new Date();
         this.lastJoinDate = new Date();
@@ -73,6 +81,10 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
         this.replacements = new UsersReplacements(getUuid());
 
         this.proxyTouched = Singularity.isProxy();
+    }
+
+    public CosmicSender(String uuid) {
+        this(uuid, false);
     }
 
     public CosmicSender() {
@@ -96,10 +108,12 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
         setCurrentName(Singularity.getInstance().getUserManager().getUsername(getUuid()));
     }
 
-    public void save() {
-        // Do nothing
+    @Override
+    public void save(boolean async) {
+        UserUtils.saveSender(this, async);
     }
 
+    @Override
     public void load() {
         if (this instanceof CosmicPlayer) {
             UserUtils.loadPlayer((CosmicPlayer) this);
@@ -109,8 +123,15 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
         UserUtils.loadSender(this);
     }
 
+    @Override
     public void unload() {
         UserUtils.unloadSender(this);
+    }
+
+    @Override
+    public void saveAndUnload(boolean async) {
+        save(async);
+        unload();
     }
 
     public boolean isLoaded() {
@@ -122,11 +143,16 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
     }
 
     @Override
-    public CosmicPlayer augment(CompletableFuture<Optional<CosmicPlayer>> future) {
-        loadComplete = false;
+    public CosmicPlayer augment(CompletableFuture<Optional<CosmicPlayer>> future, boolean isGet) {
+        fullyLoaded = false;
 
-        CompletableFuture.runAsync(() -> {
-            Optional<CosmicPlayer> optional = future.join();
+        future.whenComplete((optional, error) -> {
+            if (error != null) {
+                MessageUtils.logWarning("Failed to augment CosmicSender for UUID: " + getUuid(), error);
+                this.fullyLoaded = true;
+                return;
+            }
+
             if (optional.isPresent()) {
                 CosmicPlayer sender = optional.get();
 
@@ -143,10 +169,23 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
                 augmentMore(sender);
 
                 setCurrentNameAsProper(); // might need to be forced... need to check this...
+            } else {
+                if (! isGet) {
+                    this.temporary = false;
+                    if (this instanceof CosmicPlayer) new CreatePlayerEvent((CosmicPlayer) this).fire();
+                    else new CreateSenderEvent(this).fire();
+                    MessageUtils.logInfo("Created new CosmicPlayer for UUID: " + getUuid() + " (Console: " + isConsole() + ")");
+
+                    this.save();
+                } else {
+                    unload();
+                    fullyLoaded = true;
+                    return;
+                }
             }
 
             ensureLoaded();
-            loadComplete = true;
+            fullyLoaded = true;
         });
 
         return (CosmicPlayer) this;

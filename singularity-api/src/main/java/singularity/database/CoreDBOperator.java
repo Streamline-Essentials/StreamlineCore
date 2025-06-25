@@ -14,7 +14,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.configs.given.GivenConfigs;
+import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.events.SavePlayerEvent;
+import singularity.data.players.events.SaveSenderEvent;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
@@ -60,9 +63,15 @@ public class CoreDBOperator extends DBOperator {
 
     public void savePlayer(CosmicPlayer player, boolean async) {
         if (async) {
-            CompletableFuture.runAsync(() -> savePlayerAsync(player).join());
+            CompletableFuture.runAsync(() -> {
+                savePlayerAsync(player).join();
+
+                new SavePlayerEvent(player).fire();
+            });
         } else {
             savePlayerAsync(player).join();
+
+            new SavePlayerEvent(player).fire();
         }
     }
 
@@ -99,7 +108,7 @@ public class CoreDBOperator extends DBOperator {
         
         return atomicBoolean.get();
     }
-    
+
     private CompletableFuture<Boolean> savePlayerAsync(CosmicPlayer player) {
         return CompletableFuture.supplyAsync(() -> {
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
@@ -210,6 +219,144 @@ public class CoreDBOperator extends DBOperator {
             }
 
             DefaultUpdaters.getPlayerUpdater().update(player.getUuid());
+
+            return true;
+        });
+    }
+
+    public void saveSender(CosmicSender sender, boolean async) {
+        if (sender instanceof CosmicPlayer) {
+            savePlayer((CosmicPlayer) sender, async);
+            return;
+        }
+
+        if (async) {
+            CompletableFuture.runAsync(() -> {
+                saveSenderAsync(sender).join();
+
+                new SaveSenderEvent(sender).fire();
+            });
+        } else {
+            saveSenderAsync(sender).join();
+
+            new SaveSenderEvent(sender).fire();
+        }
+    }
+
+    public void saveSender(CosmicSender sender) {
+        saveSender(sender, true);
+    }
+
+    private CompletableFuture<Boolean> saveSenderAsync(CosmicSender sender) {
+        return CompletableFuture.supplyAsync(() -> {
+            String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
+            if (s1 == null) return false;
+            if (s1.isBlank() || s1.isEmpty()) return false;
+
+            this.execute(s1, stmt -> {
+                try {
+                    stmt.setString(1, sender.getUuid());
+                    stmt.setLong(2, sender.getFirstJoinDate().getTime());
+                    stmt.setLong(3, sender.getLastJoinDate().getTime());
+                    stmt.setString(4, sender.getCurrentName());
+                    stmt.setString(5, "--null");
+                    stmt.setLong(6, sender.getPlaySeconds());
+                    stmt.setBoolean(7, sender.isProxyTouched());
+
+                    // Repeat everything except the Uuid parameter for MySql.
+                    if (getType() == DatabaseType.MYSQL) {
+                        stmt.setLong(8, sender.getFirstJoinDate().getTime());
+                        stmt.setLong(9, sender.getLastJoinDate().getTime());
+                        stmt.setString(10, sender.getCurrentName());
+                        stmt.setString(11, "--null");
+                        stmt.setLong(12, sender.getPlaySeconds());
+                        stmt.setBoolean(13, sender.isProxyTouched());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            if (sender.getMeta() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_META, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                this.execute(s1, stmt -> {
+                    try {
+                        stmt.setString(1, sender.getUuid());
+                        stmt.setString(2, sender.getMeta().getNickname());
+                        stmt.setString(3, sender.getMeta().getPrefix());
+                        stmt.setString(4, sender.getMeta().getSuffix());
+
+                        // Repeat everything except the Uuid parameter (which is the first parameter) for MySql.
+                        if (getType() == DatabaseType.MYSQL) {
+                            stmt.setString(5, sender.getMeta().getNickname());
+                            stmt.setString(6, sender.getMeta().getPrefix());
+                            stmt.setString(7, sender.getMeta().getSuffix());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+
+            if (true) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LOCATION, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                this.execute(s1, stmt -> {
+                    try {
+                        stmt.setString(1, sender.getUuid());
+                        stmt.setString(2, "--null");
+                        stmt.setString(3, "--null");
+                        stmt.setDouble(4, 0d);
+                        stmt.setDouble(5, 0d);
+                        stmt.setDouble(6, 0d);
+                        stmt.setFloat(7, 0f);
+                        stmt.setFloat(8, 0f);
+
+                        // Repeat everything except the Uuid parameter for MySql.
+                        if (getType() == DatabaseType.MYSQL) {
+                            stmt.setString(9, "--null");
+                            stmt.setString(10, "--null");
+                            stmt.setDouble(11, 0d);
+                            stmt.setDouble(12, 0d);
+                            stmt.setDouble(13, 0d);
+                            stmt.setFloat(14, 0f);
+                            stmt.setFloat(15, 0f);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+
+            if (sender.getPermissions() != null) {
+                s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_PERMISSIONS, this.getConnectorSet());
+                if (s1 == null) return false;
+                if (s1.isBlank() || s1.isEmpty()) return false;
+
+                s1 = s1.replace("%uuid%", sender.getUuid());
+                s1 = s1.replace("%bypassing_permissions%", String.valueOf(sender.getPermissions().isBypassingPermissions()));
+
+                this.execute(s1, stmt -> {
+                    try {
+                        stmt.setString(1, sender.getUuid());
+                        stmt.setBoolean(2, sender.getPermissions().isBypassingPermissions());
+
+                        // Repeat everything except the Uuid parameter for MySql.
+                        if (getType() == DatabaseType.MYSQL) {
+                            stmt.setBoolean(3, sender.getPermissions().isBypassingPermissions());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+
+            DefaultUpdaters.getPlayerUpdater().update(sender.getUuid());
 
             return true;
         });
@@ -772,6 +919,52 @@ public class CoreDBOperator extends DBOperator {
             if (! tickets.isEmpty()) MessageUtils.logDebug("Collected " + tickets.size() + " teleportation tickets.");
 
             return tickets;
+        });
+    }
+
+    public void delete(String uuid) {
+        delete(uuid, true);
+    }
+
+    public void delete(String uuid, boolean async) {
+        if (async) {
+            CompletableFuture.runAsync(() -> deletePlayer(uuid).join());
+        } else {
+            deletePlayer(uuid).join();
+        }
+    }
+
+    public CompletableFuture<Boolean> deletePlayer(String uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            ensureUsable();
+
+            String s1 = Statements.getStatement(Statements.StatementType.DROP_PLAYER, this.getConnectorSet());
+            if (s1.isBlank()) return false;
+
+            AtomicBoolean success = new AtomicBoolean(false);
+            this.executeQuery(s1, stmt -> {
+                try {
+                    stmt.setString(1, uuid);
+                    stmt.setString(2, uuid);
+                    stmt.setString(3, uuid);
+                    stmt.setString(4, uuid);
+                    stmt.setString(5, uuid);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }, rs -> {
+                try {
+                    if (rs.next()) {
+                        success.set(true);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            if (success.get()) MessageUtils.logDebug("Deleted player data for " + uuid + ".");
+
+            return success.get();
         });
     }
 }

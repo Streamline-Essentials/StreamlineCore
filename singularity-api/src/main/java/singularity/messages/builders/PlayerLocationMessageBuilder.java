@@ -47,7 +47,11 @@ public class PlayerLocationMessageBuilder {
         float yaw = Float.parseFloat(in.getString("yaw"));
         float pitch = Float.parseFloat(in.getString("pitch"));
 
-        CosmicPlayer player = ModuleUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer player = ModuleUtils.getOrCreatePlayer(uuid).orElse(null);
+        if (player == null) {
+            MessageUtils.logWarning("PlayerLocationMessageBuilder received for invalid player '" + uuid + "'.");
+            return;
+        }
 
         CosmicServer cosmicServer = new CosmicServer(server);
         CosmicLocation location;

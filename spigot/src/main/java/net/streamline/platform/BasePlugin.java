@@ -200,7 +200,9 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
         for (Player player : onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                players.add(getUserManager().getOrCreatePlayer(player));
+                CosmicPlayer cosmicPlayer = getUserManager().getOrCreatePlayer(player).orElse(null);
+                if (cosmicPlayer == null) continue;
+                players.add(cosmicPlayer);
             }
         }
 
@@ -228,6 +230,11 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         //        r.add(getUserManager().getConsole().latestName);
 
         return r;
+    }
+
+    @Override
+    public boolean isOfflineMode() {
+        return ! Bukkit.getOnlineMode();
     }
 
     @Override

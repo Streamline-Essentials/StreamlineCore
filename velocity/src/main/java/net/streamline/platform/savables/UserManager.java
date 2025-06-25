@@ -35,17 +35,17 @@ public class UserManager implements IUserManager<CommandSource, Player> {
     }
 
     @Override
-    public CosmicPlayer getOrCreatePlayer(Player player) {
+    public Optional<CosmicPlayer> getOrCreatePlayer(Player player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
     @Override
-    public CosmicSender getOrCreateSender(CommandSource sender) {
+    public Optional<CosmicSender> getOrCreateSender(CommandSource sender) {
         if (isConsole(sender)) {
-            return UserUtils.getConsole();
+            return Optional.ofNullable(UserUtils.getConsole());
         } else {
             Player player = (Player) sender;
-            return getOrCreatePlayer(player);
+            return getOrCreatePlayer(player).map(s -> s);
         }
     }
 
@@ -117,7 +117,7 @@ public class UserManager implements IUserManager<CommandSource, Player> {
 
         StreamlineVelocity.getInstance().getProxy().getAllServers().forEach(a -> {
             a.getPlayersConnected().forEach(b -> {
-                CosmicPlayer player = getOrCreatePlayer(b);
+                CosmicPlayer player = getOrCreatePlayer(b).orElse(null);
                 if (player == null) return;
                 if (player.isOnline() && player.getServerName().equals(server)) r.add(player);
             });
@@ -195,7 +195,9 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         ConcurrentSkipListMap<String, CosmicPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
+            CosmicPlayer cosmicPlayer = getOrCreatePlayer(player).orElse(null);
+            if (cosmicPlayer == null) continue;
+            r.put(player.getUniqueId().toString(), cosmicPlayer);
         }
 
         return r;

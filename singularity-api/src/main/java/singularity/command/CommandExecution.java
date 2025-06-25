@@ -36,7 +36,7 @@ public class CommandExecution {
                     String name = split[1];
                     return UserUtils.getOrCreateSenderByName(name);
                 } else if (classifier.equals("u")) {
-                    return Optional.of(UserUtils.getOrCreateSender(split[1]));
+                    return UserUtils.getOrCreateSender(split[1]);
                 } else {
                     return UserUtils.getOrCreateSenderByName(split[1]);
                 }

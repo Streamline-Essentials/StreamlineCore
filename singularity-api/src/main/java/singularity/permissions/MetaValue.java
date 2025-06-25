@@ -6,6 +6,8 @@ import lombok.Setter;
 import singularity.data.players.CosmicPlayer;
 import singularity.utils.UserUtils;
 
+import java.util.Optional;
+
 @Getter @Setter
 public class MetaValue implements Identified {
     private String identifier;
@@ -23,7 +25,7 @@ public class MetaValue implements Identified {
         this.priority = priority;
     }
 
-    public CosmicPlayer getOn() {
+    public Optional<CosmicPlayer> getOn() {
         return UserUtils.getOrCreatePlayer(identifier);
     }
 }

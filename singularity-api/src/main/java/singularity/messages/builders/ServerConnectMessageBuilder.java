@@ -43,7 +43,11 @@ public class ServerConnectMessageBuilder {
 
         String uuid = messageIn.getString("user_uuid");
 
-        CosmicPlayer player = ModuleUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer player = ModuleUtils.getOrCreatePlayer(uuid).orElse(null);
+        if (player == null) {
+            MessageUtils.logWarning("Failed to find player with UUID '" + uuid + "' for ServerConnectMessageBuilder.");
+            return;
+        }
 
         Singularity.getInstance().getUserManager().connect(player, messageIn.getString("identifier"));
     }

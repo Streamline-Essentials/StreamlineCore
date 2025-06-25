@@ -8,7 +8,7 @@ import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.SLAPI;
 import net.streamline.api.permissions.LuckPermsHandler;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 import singularity.configs.given.GivenConfigs;
@@ -25,6 +25,7 @@ import singularity.utils.UserUtils;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -37,17 +38,17 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     }
 
     @Override
-    public CosmicPlayer getOrCreatePlayer(ProxiedPlayer player) {
+    public Optional<CosmicPlayer> getOrCreatePlayer(ProxiedPlayer player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
     @Override
-    public CosmicSender getOrCreateSender(CommandSender sender) {
+    public Optional<CosmicSender> getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
-            return UserUtils.getConsole();
+            return Optional.ofNullable(UserUtils.getConsole());
         } else {
             ProxiedPlayer player = (ProxiedPlayer) sender;
-            return getOrCreatePlayer(player);
+            return getOrCreatePlayer(player).map(s -> s);
         }
     }
 
@@ -60,7 +61,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     public String getUsername(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
         else {
-            ProxiedPlayer player = Streamline.getPlayer(uuid);
+            ProxiedPlayer player = StreamlineBungee.getPlayer(uuid);
             if (player == null) return null;
             return getUsername(player);
         }
@@ -97,11 +98,11 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         CommandSender source;
         if (user instanceof CosmicPlayer) {
             CosmicPlayer player = (CosmicPlayer) user;
-            source = Streamline.getPlayer(player.getUuid());
+            source = StreamlineBungee.getPlayer(player.getUuid());
         }
         else {
-            source = Streamline.getInstance().getProxy().getConsole();
-            Streamline.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
+            source = StreamlineBungee.getInstance().getProxy().getConsole();
+            StreamlineBungee.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
             return true;
         }
         CosmicPlayer player = (CosmicPlayer) user;
@@ -114,7 +115,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
                 return false;
             }
         }
-        Streamline.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
+        StreamlineBungee.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
         if (bypass && !already) {
             if (LuckPermsHandler.hasLuckPerms()) {
                 LuckPermsHandler.removePermission(player.getUuid(), "*");
@@ -129,9 +130,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     public ConcurrentSkipListSet<CosmicPlayer> getUsersOn(String server) {
         ConcurrentSkipListSet<CosmicPlayer> r = new ConcurrentSkipListSet<>();
 
-        Streamline.getInstance().getProxy().getServers().values().forEach(a -> {
+        StreamlineBungee.getInstance().getProxy().getServers().values().forEach(a -> {
             a.getPlayers().forEach(b -> {
-                CosmicPlayer player = getOrCreatePlayer(b);
+                CosmicPlayer player = getOrCreatePlayer(b).orElse(null);
                 if (player == null) return;
                 if (player.isOnline() && player.getServerName().equals(server)) r.add(player);
             });
@@ -144,9 +145,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     public void connect(CosmicPlayer user, String server) {
         if (! user.isOnline()) return;
 
-        ProxiedPlayer player = Streamline.getPlayer(user.getUuid());
+        ProxiedPlayer player = StreamlineBungee.getPlayer(user.getUuid());
         if (player == null) return;
-        ServerInfo serverInfo = Streamline.getInstance().getProxy().getServerInfo(server);
+        ServerInfo serverInfo = StreamlineBungee.getInstance().getProxy().getServerInfo(server);
 
         if (serverInfo == null) {
             MessageUtils.logWarning("Tried to send a user with uuid of '" + user.getUuid() + "' to server '" + server + "', but it does not exist!");
@@ -159,7 +160,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     @Override
     public void sendUserResourcePack(CosmicPlayer user, CosmicResourcePack pack) {
         if (! user.isOnline()) return;
-        ProxiedPlayer p = Streamline.getPlayer(user.getUuid());
+        ProxiedPlayer p = StreamlineBungee.getPlayer(user.getUuid());
         if (p == null) return;
 
         SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, true, user, pack));
@@ -167,7 +168,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
 
     @Override
     public String parsePlayerIP(String uuid) {
-        ProxiedPlayer player = Streamline.getPlayer(uuid);
+        ProxiedPlayer player = StreamlineBungee.getPlayer(uuid);
         if (player == null) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
 
         InetSocketAddress address = (InetSocketAddress) player.getSocketAddress();
@@ -181,21 +182,21 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
 
     @Override
     public double getPlayerPing(String uuid) {
-        ProxiedPlayer player = Streamline.getPlayer(uuid);
+        ProxiedPlayer player = StreamlineBungee.getPlayer(uuid);
         if (player == null) return 0d;
         return player.getPing();
     }
 
     @Override
     public void kick(CosmicPlayer user, String message) {
-        ProxiedPlayer player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
+        ProxiedPlayer player = StreamlineBungee.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.disconnect(Messenger.getInstance().codedText(message));
     }
 
     @Override
     public ProxiedPlayer getPlayer(String uuid) {
-        return Streamline.getPlayer(uuid);
+        return StreamlineBungee.getPlayer(uuid);
     }
 
     @Override
@@ -204,7 +205,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
 
         for (ProxiedPlayer player : BasePlugin.onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
+                CosmicPlayer cosmicPlayer = getOrCreatePlayer(player).orElse(null);
+                if (cosmicPlayer == null) continue;
+                r.put(player.getUniqueId().toString(), cosmicPlayer);
             }
         }
 
@@ -241,13 +244,13 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     @Override
     public void teleport(CosmicPlayer player, CosmicLocation location) {
         if (! player.isOnline()) return;
-        ProxiedPlayer p = Streamline.getPlayer(player.getUuid());
+        ProxiedPlayer p = StreamlineBungee.getPlayer(player.getUuid());
         if (p == null) return;
 
         CosmicServer server = location.getServer();
         String serverName = server.getIdentifier();
 
-        ServerInfo info = Streamline.getInstance().getProxy().getServerInfo(serverName);
+        ServerInfo info = StreamlineBungee.getInstance().getProxy().getServerInfo(serverName);
         if (info == null) return;
 
         p.connect(info, ServerConnectEvent.Reason.PLUGIN);

@@ -5,13 +5,14 @@ import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
 import singularity.objects.CosmicResourcePack;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public interface IUserManager<C, P extends C> {
-    CosmicPlayer getOrCreatePlayer(P player);
+    Optional<CosmicPlayer> getOrCreatePlayer(P player);
 
-    CosmicSender getOrCreateSender(C sender);
+    Optional<CosmicSender> getOrCreateSender(C sender);
 
     String getUsername(String uuid);
 

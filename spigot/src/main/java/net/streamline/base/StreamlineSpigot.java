@@ -7,7 +7,7 @@ import net.streamline.platform.BasePlugin;
 import net.streamline.platform.commands.StreamlineSpigotCommand;
 import singularity.modules.ModuleManager;
 
-public class Streamline extends BasePlugin {
+public class StreamlineSpigot extends BasePlugin {
     @Getter @Setter
     private static StreamlineSpigotCommand streamlineSpigotCommand;
 
@@ -20,10 +20,12 @@ public class Streamline extends BasePlugin {
             e.printStackTrace();
         }
 
-        Metrics metrics = new Metrics(this, 16972);
+        Metrics metrics = new Metrics(this, 26273);
         metrics.addCustomChart(new Metrics.SimplePie("plugin_version", () -> getDescription().getVersion()));
         metrics.addCustomChart(new Metrics.SimplePie("modules_loaded_count", () -> String.valueOf(ModuleManager.getLoadedModules().size())));
         metrics.addCustomChart(new Metrics.SimplePie("modules_enabled_count", () -> String.valueOf(ModuleManager.getEnabledModules().size())));
+        metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_loaded", () -> ModuleManager.getLoadedModules().size()));
+        metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_enabled", () -> ModuleManager.getEnabledModules().size()));
 
         streamlineSpigotCommand = new StreamlineSpigotCommand();
     }

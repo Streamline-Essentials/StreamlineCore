@@ -3,7 +3,7 @@ package net.streamline.platform.savables;
 import host.plas.bou.commands.Sender;
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import singularity.interfaces.audiences.IConsoleHolder;
@@ -47,7 +47,7 @@ public class ConsoleHolder implements IConsoleHolder<CommandSender> {
 
             @Override
             public void sendLogMessage(String message) {
-                Streamline.getInstance().logInfo(message);
+                StreamlineSpigot.getInstance().logInfo(message);
             }
 
             @Override

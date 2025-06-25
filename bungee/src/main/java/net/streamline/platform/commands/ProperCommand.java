@@ -4,7 +4,7 @@ import lombok.Getter;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import singularity.command.CosmicCommand;
 import singularity.data.console.CosmicSender;
 import singularity.interfaces.IProperCommand;
@@ -26,7 +26,11 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Command execution failed: Sender is not a CosmicSender.");
+            return;
+        }
 
         parent.baseRun(s, args);
     }
@@ -36,7 +40,11 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Tab completion failed: Sender is not a CosmicSender.");
+            return new ArrayList<>();
+        }
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 
@@ -44,10 +52,10 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
     }
 
     public void register() {
-        Streamline.getInstance().getProxy().getPluginManager().registerCommand(Streamline.getInstance(), this);
+        StreamlineBungee.getInstance().getProxy().getPluginManager().registerCommand(StreamlineBungee.getInstance(), this);
     }
 
     public void unregister() {
-        Streamline.getInstance().getProxy().getPluginManager().unregisterCommand(this);
+        StreamlineBungee.getInstance().getProxy().getPluginManager().unregisterCommand(this);
     }
 }
