@@ -26,7 +26,7 @@ import singularity.modules.ModuleManager;
 import singularity.modules.ModuleUtils;
 import singularity.objects.CosmicFavicon;
 import singularity.objects.PingedResponse;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineBungee;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
 import net.streamline.platform.savables.UserManager;
@@ -131,7 +131,7 @@ public class PlatformListener implements Listener {
         CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
-        Streamline.getInstance().fireEvent(chatEvent, true);
+        StreamlineBungee.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
             return;

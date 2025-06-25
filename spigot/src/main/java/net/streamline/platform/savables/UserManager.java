@@ -2,7 +2,7 @@ package net.streamline.platform.savables;
 
 import lombok.Getter;
 import net.streamline.api.permissions.LuckPermsHandler;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
@@ -58,7 +58,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     public String getUsername(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
         else {
-            Player player = Streamline.getPlayer(uuid);
+            Player player = StreamlineSpigot.getPlayer(uuid);
             if (player == null) return null;
             return getUsername(player);
         }
@@ -94,7 +94,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     public boolean runAs(CosmicSender player, boolean bypass, String command) {
         CommandSender source;
         if (! player.isConsole()) {
-            source = Streamline.getPlayer(player.getUuid());
+            source = StreamlineSpigot.getPlayer(player.getUuid());
         }
         else {
             source = Bukkit.getConsoleSender();
@@ -141,7 +141,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     @Override
     public void sendUserResourcePack(CosmicPlayer user, CosmicResourcePack pack) {
         if (! user.isOnline()) return;
-        Player p = Streamline.getPlayer(user.getUuid());
+        Player p = StreamlineSpigot.getPlayer(user.getUuid());
         if (p == null) return;
 
 //        p.setResourcePack(pack.getUrl(), pack.getHash(), pack.getPrompt(), pack.isForce());
@@ -150,7 +150,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
 
     @Override
     public String parsePlayerIP(String uuid) {
-        Player player = Streamline.getPlayer(uuid);
+        Player player = StreamlineSpigot.getPlayer(uuid);
         if (player == null) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
 
         InetSocketAddress address = player.getAddress();
@@ -164,21 +164,21 @@ public class UserManager implements IUserManager<CommandSender, Player> {
 
     @Override
     public double getPlayerPing(String uuid) {
-        Player player = Streamline.getPlayer(uuid);
+        Player player = StreamlineSpigot.getPlayer(uuid);
         if (player == null) return 0d;
         return player.getPing();
     }
 
     @Override
     public void kick(CosmicPlayer user, String message) {
-        Player player = Streamline.getInstance().getProxy().getPlayer(user.getUuid());
+        Player player = StreamlineSpigot.getInstance().getProxy().getPlayer(user.getUuid());
         if (player == null) return;
         player.kickPlayer(Messenger.getInstance().codedString(message));
     }
 
     @Override
     public Player getPlayer(String uuid) {
-        return Streamline.getPlayer(uuid);
+        return StreamlineSpigot.getPlayer(uuid);
     }
 
     @Override
@@ -213,7 +213,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     @Override
     public void teleport(CosmicPlayer player, CosmicLocation location) {
         if (! player.isOnline()) return;
-        Player p = Streamline.getPlayer(player.getUuid());
+        Player p = StreamlineSpigot.getPlayer(player.getUuid());
         if (p == null) return;
 
         WorldPosition pos = location.getPosition();

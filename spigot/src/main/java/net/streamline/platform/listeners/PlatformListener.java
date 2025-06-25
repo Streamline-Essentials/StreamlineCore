@@ -7,7 +7,7 @@ import host.plas.bou.utils.ClassHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.base.TenSecondTimer;
 import net.streamline.platform.Messenger;
 import net.streamline.platform.events.ProperEvent;
@@ -158,7 +158,7 @@ public class PlatformListener implements Listener {
         CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
 
         CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
-        Streamline.getInstance().fireEvent(chatEvent, true);
+        StreamlineSpigot.getInstance().fireEvent(chatEvent, true);
         if (chatEvent.isCanceled()) {
             event.setCancelled(true);
             return;
@@ -235,8 +235,8 @@ public class PlatformListener implements Listener {
         try {
             response = new PingedResponse(protocol, players, event.getMotd());
         } catch (Throwable e) {
-            Streamline.getInstance().logWarning("Failed to create PingedResponse: " + e.getMessage());
-            Streamline.getInstance().logWarning(e.getStackTrace());
+            StreamlineSpigot.getInstance().logWarning("Failed to create PingedResponse: " + e.getMessage());
+            StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
             return;
         }
 

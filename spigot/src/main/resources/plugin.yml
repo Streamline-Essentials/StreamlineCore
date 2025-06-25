@@ -1,6 +1,6 @@
 name: '${name}'
 version: '${version}'
-main: 'net.streamline.base.Streamline'
+main: 'net.streamline.base.StreamlineSpigot'
 
 authors: [ Drak ]
 website: https://github.com/Streamline-Essentials

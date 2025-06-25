@@ -1,7 +1,7 @@
 package net.streamline.platform.commands;
 
 import lombok.Getter;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -64,7 +64,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     public void register() {
         try {
-            Streamline.registerCommands(this);
+            StreamlineSpigot.registerCommands(this);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -72,7 +72,7 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     public void unregister() {
         try {
-            Streamline.unregisterCommands(getParent().getBase());
+            StreamlineSpigot.unregisterCommands(getParent().getBase());
         } catch(Exception e) {
             e.printStackTrace();
         }

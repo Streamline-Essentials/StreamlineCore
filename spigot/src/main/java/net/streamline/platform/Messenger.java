@@ -9,7 +9,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.streamline.api.SLAPI;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
-import net.streamline.base.Streamline;
+import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -146,7 +146,7 @@ public class Messenger implements IMessenger {
 
     @Override
     public void sendTitle(CosmicSender player, CosmicTitle title) {
-        Player p = Streamline.getPlayer(player.getUuid());
+        Player p = StreamlineSpigot.getPlayer(player.getUuid());
         if (p == null) {
             MessageUtils.logInfo("Could not send a title to a player because player is null!");
             return;
