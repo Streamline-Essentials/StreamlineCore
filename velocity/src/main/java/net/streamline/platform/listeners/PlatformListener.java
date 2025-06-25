@@ -54,7 +54,9 @@ public class PlatformListener {
 
         String uuid = p.getUniqueId().toString();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid);
+        CosmicPlayer streamPlayer = UserUtils.getOrGetPlayer(uuid).orElse(null);
+        if (streamPlayer == null) return;
+        streamPlayer.waitUntilFullyLoaded();
 
         streamPlayer.setCurrentName(p.getUsername());
         p.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
@@ -84,7 +86,11 @@ public class PlatformListener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getUsername(), UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
         streamPlayer.setCurrentName(player.getUsername());
@@ -98,7 +104,11 @@ public class PlatformListener {
     public void onLeave(DisconnectEvent event) {
         Player player = event.getPlayer();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         LogoutEvent logoutEvent = new LogoutEvent(streamPlayer);
         ModuleUtils.fireEvent(logoutEvent);
@@ -111,7 +121,11 @@ public class PlatformListener {
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         streamPlayer.setServerName(event.getServer().getServerInfo().getName());
     }
@@ -120,7 +134,11 @@ public class PlatformListener {
     public void onChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         CosmicChatEvent chatEvent = new CosmicChatEvent(streamPlayer, event.getMessage());
         ModuleManager.fireEvent(chatEvent);
@@ -142,7 +160,11 @@ public class PlatformListener {
         if (! (event.getTarget() instanceof Player)) return;
         Player player = (Player) event.getTarget();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         try {
             ProxiedMessage messageIn = new ProxiedMessage(streamPlayer, false, event.getData(), tag);
@@ -260,7 +282,11 @@ public class PlatformListener {
             toName = "none";
         }
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getUniqueId().toString() + " (" + player.getUsername() + ")");
+            return;
+        }
 
         KickedFromServerEvent kickedFromServerEvent = new KickedFromServerEvent(streamPlayer, fromName, kickedReason, toName).fire();
 

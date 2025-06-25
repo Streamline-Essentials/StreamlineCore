@@ -219,11 +219,11 @@ public class ModuleUtils {
         return UserUtils.userExists(uuid);
     }
 
-    public static CosmicPlayer getOrCreatePlayer(String uuid) {
+    public static Optional<CosmicPlayer> getOrCreatePlayer(String uuid) {
         return UserUtils.getOrCreatePlayer(uuid);
     }
 
-    public static CosmicSender getOrCreateSender(String uuid) {
+    public static Optional<CosmicSender> getOrCreateSender(String uuid) {
         return UserUtils.getOrCreateSender(uuid);
     }
 

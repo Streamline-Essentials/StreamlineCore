@@ -224,7 +224,9 @@ public abstract class BasePlugin implements ISingularityExtension {
         ConcurrentSkipListSet<CosmicPlayer> players = new ConcurrentSkipListSet<>();
 
         for (Player player : onlinePlayers()) {
-            players.add(getUserManager().getOrCreatePlayer(player));
+            CosmicPlayer cosmicPlayer = getUserManager().getOrCreatePlayer(player).orElse(null);
+            if (cosmicPlayer == null) continue;
+            players.add(cosmicPlayer);
         }
 
         return players;
@@ -351,6 +353,11 @@ public abstract class BasePlugin implements ISingularityExtension {
         } catch (Exception e) {
             handleMisSync(event, async);
         }
+    }
+
+    @Override
+    public boolean isOfflineMode() {
+        return ! getInstance().getProxy().getConfiguration().isOnlineMode();
     }
 
     @Override

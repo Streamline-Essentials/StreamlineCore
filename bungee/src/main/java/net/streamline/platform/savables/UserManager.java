@@ -25,6 +25,7 @@ import singularity.utils.UserUtils;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -37,17 +38,17 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     }
 
     @Override
-    public CosmicPlayer getOrCreatePlayer(ProxiedPlayer player) {
+    public Optional<CosmicPlayer> getOrCreatePlayer(ProxiedPlayer player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
     @Override
-    public CosmicSender getOrCreateSender(CommandSender sender) {
+    public Optional<CosmicSender> getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
-            return UserUtils.getConsole();
+            return Optional.ofNullable(UserUtils.getConsole());
         } else {
             ProxiedPlayer player = (ProxiedPlayer) sender;
-            return getOrCreatePlayer(player);
+            return getOrCreatePlayer(player).map(s -> s);
         }
     }
 
@@ -131,7 +132,7 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
 
         StreamlineBungee.getInstance().getProxy().getServers().values().forEach(a -> {
             a.getPlayers().forEach(b -> {
-                CosmicPlayer player = getOrCreatePlayer(b);
+                CosmicPlayer player = getOrCreatePlayer(b).orElse(null);
                 if (player == null) return;
                 if (player.isOnline() && player.getServerName().equals(server)) r.add(player);
             });
@@ -204,7 +205,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
 
         for (ProxiedPlayer player : BasePlugin.onlinePlayers()) {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) {
-                r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
+                CosmicPlayer cosmicPlayer = getOrCreatePlayer(player).orElse(null);
+                if (cosmicPlayer == null) continue;
+                r.put(player.getUniqueId().toString(), cosmicPlayer);
             }
         }
 

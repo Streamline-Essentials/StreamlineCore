@@ -196,13 +196,21 @@ public class MessageUtils {
     }
 
     public static void sendMessage(String to, String message) {
-        CosmicSender user = UserUtils.getOrCreateSender(to);
+        CosmicSender user = UserUtils.getOrCreateSender(to).orElse(null);
+        if (user == null) {
+            logWarning("Tried to send message to " + to + " but they are null.");
+            return;
+        }
 
         Singularity.getInstance().getMessenger().sendMessage(user, message);
     }
 
     public static void sendMessage(@Nullable String to, String otherUUID, String message) {
-        CosmicSender user = UserUtils.getOrCreateSender(to);
+        CosmicSender user = UserUtils.getOrCreateSender(to).orElse(null);
+        if (user == null) {
+            logWarning("Tried to send message to " + to + " but they are null.");
+            return;
+        }
 
         Singularity.getInstance().getMessenger().sendMessage(user, replaceAllPlayerBungee(otherUUID, message));
     }
@@ -225,7 +233,11 @@ public class MessageUtils {
     }
 
     public static String replaceAllPlayerBungee(String to, String of) {
-        CosmicSender user = UserUtils.getOrCreateSender(to);
+        CosmicSender user = UserUtils.getOrCreateSender(to).orElse(null);
+        if (user == null) {
+            logWarning("Tried to replace placeholders for " + to + " but they are null.");
+            return of;
+        }
 
         return replaceAllPlayerBungee(user, of);
     }

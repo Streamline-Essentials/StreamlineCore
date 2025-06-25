@@ -312,4 +312,8 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     public static void sendConsoleMessage(String message) {
         getInstance().getConsoleHolder().sendConsoleMessage(message);
     }
+
+    public static boolean isOfflineMode() {
+        return getInstance().getPlatform().isOfflineMode();
+    }
 }
