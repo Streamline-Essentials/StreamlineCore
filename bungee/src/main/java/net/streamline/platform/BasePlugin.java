@@ -184,7 +184,9 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         ConcurrentSkipListSet<CosmicPlayer> players = new ConcurrentSkipListSet<>();
 
         for (ProxiedPlayer player : onlinePlayers()) {
-            players.add(getUserManager().getOrCreatePlayer(player));
+            CosmicPlayer cosmicPlayer = getUserManager().getOrCreatePlayer(player).orElse(null);
+            if (cosmicPlayer == null) continue;
+            players.add(cosmicPlayer);
         }
 
         return players;
@@ -210,6 +212,11 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 //        r.add(UserUtils.getConsole().latestName);
 
         return r;
+    }
+
+    @Override
+    public boolean isOfflineMode() {
+        return ! getInstance().getProxy().getConfig().isOnlineMode();
     }
 
     @Override
@@ -324,7 +331,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     public void sendResourcePack(CosmicResourcePack resourcePack, ProxiedPlayer player) {
         if (player == null) return;
-        CosmicPlayer streamPlayer = getUserManager().getOrCreatePlayer(player);
+        CosmicPlayer streamPlayer = getUserManager().getOrCreatePlayer(player).orElse(null);
         if (streamPlayer == null) return;
 
         ResourcePackMessageBuilder.build(streamPlayer, true, streamPlayer, resourcePack).send();

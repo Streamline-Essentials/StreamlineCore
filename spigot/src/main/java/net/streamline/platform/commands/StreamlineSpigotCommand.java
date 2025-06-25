@@ -34,7 +34,7 @@ public class StreamlineSpigotCommand extends SimplifiedCommand {
 
         String[] newArgs = StringUtils.argsMinus(ctx.getArgsAsStringArray(), 0);
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender()).orElse(null);
         if (s == null) {
             ctx.sendMessage("&cCould not find your user...");
             return true;
@@ -58,7 +58,7 @@ public class StreamlineSpigotCommand extends SimplifiedCommand {
 
         String[] newArgs = StringUtils.argsMinus(ctx.getArgsAsStringArray(), 0);
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(ctx.getCommandSender()).orElse(null);
         if (s == null) return null;
 
         return streamlineCommand.baseTabComplete(s, newArgs);

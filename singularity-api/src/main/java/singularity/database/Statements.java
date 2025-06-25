@@ -154,6 +154,13 @@ public class Statements {
         CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
         CLEAR_UPDATE("DELETE FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
         CLEAR_TP_TICKET("DELETE FROM `%table_prefix%tp_tickets` WHERE Uuid = ?;"),
+        DROP_PLAYER(
+                "DELETE FROM `%table_prefix%players` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_meta` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_location` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_permissions` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%uuid_info` WHERE Uuid = ?;;"
+        ),
         ;
 
         private final String statement;
@@ -313,6 +320,13 @@ public class Statements {
         CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
         CLEAR_UPDATE("DELETE FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
         CLEAR_TP_TICKET("DELETE FROM `%table_prefix%tp_tickets` WHERE Uuid = ?;"),
+        DROP_PLAYER(
+                "DELETE FROM `%table_prefix%players` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_meta` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_location` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%player_permissions` WHERE Uuid = ?;;" +
+                        "DELETE FROM `%table_prefix%uuid_info` WHERE Uuid = ?;;"
+        ),
         ;
 
         private final String statement;
@@ -351,6 +365,7 @@ public class Statements {
         CHECK_UPDATE,
         CLEAR_UPDATE,
         CLEAR_TP_TICKET,
+        DROP_PLAYER,
         ;
     }
 

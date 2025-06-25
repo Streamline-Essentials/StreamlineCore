@@ -5,7 +5,7 @@ import lombok.Setter;
 import singularity.data.players.CosmicPlayer;
 
 @Getter @Setter
-public class UserNameUpdateEvent extends StreamSenderEvent {
+public class UserNameUpdateEvent extends CosmicSenderEvent {
     private String changeTo;
     private final String changeFrom;
 

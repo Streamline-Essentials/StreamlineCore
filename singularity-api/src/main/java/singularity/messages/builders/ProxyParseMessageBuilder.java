@@ -48,7 +48,11 @@ public class ProxyParseMessageBuilder {
         String key = in.getString(ReturnableMessage.getKey());
 
 //        MessageUtils.logInfo("ProxiedMessage in > uuid = '" + uuid + "', parse = '" + parse + "', key = '" + key + "'.");
-        CosmicSender sender = UserUtils.getOrCreateSender(uuid);
+        CosmicSender sender = UserUtils.getOrCreateSender(uuid).orElse(null);
+        if (sender == null) {
+            MessageUtils.logWarning("Could not find CosmicSender for UUID '" + uuid + "'.");
+            return;
+        }
 
         String parsed = ModuleUtils.replacePlaceholders(sender, parse);
 

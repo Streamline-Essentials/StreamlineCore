@@ -7,10 +7,10 @@ import singularity.data.players.CosmicPlayer;
 import singularity.events.CosmicEvent;
 
 @Getter @Setter
-public class StreamSenderEvent extends CosmicEvent {
+public class CosmicSenderEvent extends CosmicEvent {
     private CosmicSender sender;
 
-    public StreamSenderEvent(CosmicSender sender) {
+    public CosmicSenderEvent(CosmicSender sender) {
         this.sender = sender;
     }
 

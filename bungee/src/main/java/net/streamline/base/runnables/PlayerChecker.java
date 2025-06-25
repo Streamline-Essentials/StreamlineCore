@@ -17,7 +17,8 @@ public class PlayerChecker extends BaseRunnable {
         StreamlineBungee.getPlayersByUUID().forEach((uuid, player) -> {
             if (UserUtils.isLoaded(player.getUniqueId().toString())) return;
 
-            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+            if (streamPlayer == null) return;
 
             streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
             streamPlayer.setCurrentName(player.getName());

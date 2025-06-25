@@ -41,7 +41,11 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         if (args == null) args = new String[] { "" };
         if (args.length < 1) args = new String[] { "" };
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Cannot tab complete for command '" + label + "' as the sender is not a CosmicSender.");
+            return new ArrayList<>();
+        }
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
 
@@ -80,7 +84,11 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Cannot execute command '" + commandLabel + "' as the sender is not a CosmicSender.");
+            return false;
+        }
 
         CommandResult<?> result = parent.baseRun(s, args);
 

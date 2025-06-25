@@ -188,7 +188,10 @@ public class Messenger implements IMessenger {
     }
 
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender);
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+        if (s == null) {
+            return of; // If we can't get the sender, just return the original string.
+        }
 
         return MessageUtils.replaceAllPlayerBungee(s, of);
     }

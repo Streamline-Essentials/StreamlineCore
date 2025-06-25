@@ -31,7 +31,11 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
 
     @Override
     public void execute(Invocation invocation) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Command execution failed: Sender is null.");
+            return;
+        }
 
         parent.baseRun(s, invocation.arguments());
     }
@@ -40,7 +44,11 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
         String[] args = invocation.arguments();
         if (args.length < 1) args = new String[] { "" };
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source());
+        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
+        if (s == null) {
+            MessageUtils.logWarning("Command suggestion failed: Sender is null.");
+            return CompletableFuture.completedFuture(new ArrayList<>());
+        }
 
         ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, invocation.arguments());
 

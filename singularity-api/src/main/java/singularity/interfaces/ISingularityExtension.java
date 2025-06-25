@@ -64,4 +64,6 @@ public interface ISingularityExtension {
     ClassLoader getMainClassLoader();
 
     String getName();
+
+    boolean isOfflineMode();
 }

@@ -29,7 +29,11 @@ public class TenSecondTimer implements Runnable {
     public void run() {
         if (! checkPlayer()) return;
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
+        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+        if (streamPlayer == null) {
+            task.cancel();
+            return;
+        }
 
         CosmicServer cosmicServer = streamPlayer.getServer();
         Location location = player.getLocation();

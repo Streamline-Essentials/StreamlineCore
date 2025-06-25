@@ -23,6 +23,7 @@ import singularity.utils.UserUtils;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -35,17 +36,17 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     }
 
     @Override
-    public CosmicPlayer getOrCreatePlayer(Player player) {
+    public Optional<CosmicPlayer> getOrCreatePlayer(Player player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
     @Override
-    public CosmicSender getOrCreateSender(CommandSender sender) {
+    public Optional<CosmicSender> getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
-            return UserUtils.getConsole();
+            return Optional.ofNullable(UserUtils.getConsole());
         } else {
             Player player = (Player) sender;
-            return getOrCreatePlayer(player);
+            return getOrCreatePlayer(player).map(s -> s);
         }
     }
 
@@ -126,7 +127,8 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         ConcurrentSkipListSet<CosmicPlayer> r = new ConcurrentSkipListSet<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            CosmicPlayer p = getOrCreatePlayer(player);
+            CosmicPlayer p = getOrCreatePlayer(player).orElse(null);
+            if (p == null) continue;
             if (p.isOnline() && p.getServerName().equals(server)) r.add(p);
         }
 
@@ -186,7 +188,9 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         ConcurrentSkipListMap<String, CosmicPlayer> r = new ConcurrentSkipListMap<>();
 
         for (Player player : BasePlugin.onlinePlayers()) {
-            r.put(player.getUniqueId().toString(), getOrCreatePlayer(player));
+            CosmicPlayer cosmicPlayer = getOrCreatePlayer(player).orElse(null);
+            if (cosmicPlayer == null) continue;
+            r.put(player.getUniqueId().toString(), cosmicPlayer);
         }
 
         return r;
