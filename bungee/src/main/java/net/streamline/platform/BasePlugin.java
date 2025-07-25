@@ -353,7 +353,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     @Override
     public Logger getLoggerLogger() {
-        return getLogger();
+        return getProxy().getLogger();
     }
 
     @Override
