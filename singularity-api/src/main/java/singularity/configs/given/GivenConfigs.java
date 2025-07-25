@@ -8,6 +8,7 @@ import singularity.data.console.CosmicSender;
 import singularity.database.ConnectorSet;
 import singularity.database.CoreDBOperator;
 import singularity.database.servers.SavedServer;
+import singularity.redis.RedisClient;
 import singularity.utils.UserUtils;
 
 import java.io.File;
@@ -23,6 +24,8 @@ public class GivenConfigs {
     private static DatabaseConfigHandler databaseConfig;
     @Getter @Setter
     private static ServerConfigHandler serverConfig;
+    @Getter @Setter
+    private static RedisConfigHandler redisConfig;
 
     @Getter @Setter
     private static File punishmentFolder;
@@ -30,12 +33,16 @@ public class GivenConfigs {
     @Getter @Setter
     private static CoreDBOperator mainDatabase;
 
+    @Getter @Setter
+    private static RedisClient redisClient;
+
     public static void init() {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
         setDatabaseConfig(new DatabaseConfigHandler());
         setServerConfig(new ServerConfigHandler());
+        setRedisConfig(new RedisConfigHandler());
 
         try {
             ConnectorSet connectorSet = getDatabaseConfig().getConnectorSet();
@@ -43,6 +50,12 @@ public class GivenConfigs {
             setMainDatabase(operator);
 
             ensureServer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            setRedisClient(new RedisClient());
         } catch (Exception e) {
             e.printStackTrace();
         }

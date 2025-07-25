@@ -2,19 +2,14 @@ package singularity.logging;
 
 import singularity.events.server.ServerLogTextEvent;
 
-import java.io.ByteArrayOutputStream;
 import java.util.logging.LogRecord;
 import java.util.logging.StreamHandler;
 import java.util.logging.Level;
 
 public class CosmicLogHandler extends StreamHandler {
-    private final ByteArrayOutputStream baos;
-
     public CosmicLogHandler() {
         // Set output to System.out by default
         super.setOutputStream(System.out);
-
-        this.baos = new ByteArrayOutputStream();
     }
 
     @Override
@@ -44,18 +39,5 @@ public class CosmicLogHandler extends StreamHandler {
         if (event.isCancelled()) {
             return;
         }
-
-        // Capture the log message
-        String formattedMessage = getFormatter().format(record);
-        baos.write(formattedMessage.getBytes(), 0, formattedMessage.length());
-
-        // Pass to parent handler for actual logging
-        super.publish(record);
-        super.flush(); // Ensure immediate output
-    }
-
-    // Method to get captured logs
-    public String getCapturedLogs() {
-        return baos.toString();
     }
 }
