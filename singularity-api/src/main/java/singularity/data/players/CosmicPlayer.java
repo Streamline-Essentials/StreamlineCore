@@ -21,14 +21,18 @@ public class CosmicPlayer extends CosmicSender {
     @Setter
     private CosmicLocation location;
 
-    public CosmicPlayer(String uuid) {
-        super(uuid);
+    public CosmicPlayer(String uuid, boolean temporary) {
+        super(uuid, temporary);
 
         setServerName("");
 
         this.currentIp = "";
 
         this.location = new CosmicLocation(this);
+    }
+
+    public CosmicPlayer(String uuid) {
+        this(uuid, false);
     }
 
     public CosmicLocation getLocation() {
@@ -159,9 +163,11 @@ public class CosmicPlayer extends CosmicSender {
     @Override
     public void reload() {
         CompletableFuture.runAsync(() -> {
-            Optional<CosmicPlayer> optional = Singularity.getMainDatabase().loadPlayer(getUuid()).join();
+            Optional<CosmicSender> optional = Singularity.getMainDatabase().loadPlayer(getUuid()).join();
             if (optional.isEmpty()) return;
-            CosmicPlayer streamPlayer = optional.get();
+            CosmicSender sender = optional.get();
+            if (! (sender instanceof CosmicPlayer)) return;
+            CosmicPlayer streamPlayer = (CosmicPlayer) sender;
 
             setFirstJoinMillis(streamPlayer.getFirstJoinDate().getTime());
             setLastJoinMillis(streamPlayer.getLastJoinDate().getTime());

@@ -55,10 +55,10 @@ players:
     equation: "2500 + (2500 * (%streamline_user_level% - 1))"
   # Settings for tags.
   # Tags are a list of Strings ("this" and "this also" are Strings) that can be
-  # used when running scripts, events, or other features; as a way to distinguish
+  # used when running scripts, events, or other features, as a way to distinguish
   # between certain players. (Like that of actual Minecraft tags that Mojang
   # introduced in 1.13.) --> (Link below for the Minecraft version -- NOT Streamline!)
-  # https://www.digminecraft.com/game_commands/tag_command.php#:~:text=You%20can%20add%2C%20list%20and,and%20manage%20tags%20for%20players.
+  # https://www.digminecraft.com/game_commands/tag_command.php
   tags:
     # The default tags a user will receive when their profile is first created.
     default: []

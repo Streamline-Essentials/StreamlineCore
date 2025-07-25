@@ -126,4 +126,8 @@ public abstract class Loader<L extends Loadable<L>> {
     public void unload(L loadable) {
         unload(loadable.getIdentifier());
     }
+
+    public boolean isLoaded(L loadable) {
+        return isLoaded(loadable.getIdentifier());
+    }
 }

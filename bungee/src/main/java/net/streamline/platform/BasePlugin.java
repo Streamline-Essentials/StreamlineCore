@@ -41,6 +41,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 public abstract class BasePlugin extends Plugin implements ISingularityExtension {
     @Getter
@@ -120,8 +121,6 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     @Override
     public void onEnable() {
-        getLogger().addHandler(new CosmicLogHandler());
-
         userManager = new UserManager();
         messenger = new Messenger();
         consoleHolder = new ConsoleHolder();
@@ -155,6 +154,8 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
+
+        getProxy().unregisterChannel(SLAPI.getApiChannel());
 
         this.disable();
         fireStopEvent();
@@ -348,5 +349,15 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
             map.put(player.getUniqueId().toString(), player);
         }
         return map;
+    }
+
+    @Override
+    public Logger getLoggerLogger() {
+        return getLogger();
+    }
+
+    @Override
+    public org.slf4j.Logger getSLFLogger() {
+        return null;
     }
 }

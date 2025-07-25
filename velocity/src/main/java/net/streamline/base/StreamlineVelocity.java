@@ -12,24 +12,23 @@ import singularity.modules.ModuleManager;
 import java.io.File;
 import java.nio.file.Path;
 
-@Plugin(
-        id = "streamlinecore",
-        name = "${name}",
-        version = "${version}",
-        dependencies = {
-                @Dependency(id = "luckperms"),
-                @Dependency(id = "geyser-velocity", optional = true)
-        }
-)
+//@Plugin(
+//        id = "streamlinecore",
+//        name = "StreamlineCore",
+//        dependencies = {
+//                @Dependency(id = "luckperms"),
+//                @Dependency(id = "geyser-velocity", optional = true)
+//        }
+//)
 public class StreamlineVelocity extends BasePlugin {
     @Inject
     public StreamlineVelocity(ProxyServer server,
                               Logger logger,
                               Metrics.Factory metricsFactory) {
-        super(server, logger, getStreamlineFolder(), metricsFactory);
+        super(server, logger, getOwnFolder(), metricsFactory);
     }
 
-    public static File getStreamlineFolder() {
+    public static File getOwnFolder() {
         return new File(getPluginsDirectory(), "StreamlineCore");
     }
 

@@ -102,7 +102,7 @@ public class PingedResponse {
     }
 
     public PingedResponse(Protocol version, Players players, String description, String favicon) throws IOException {
-        this( version, players, description, favicon == null ? null : CosmicFavicon.createFromURL(favicon));
+        this(version, players, description, favicon == null ? null : CosmicFavicon.createFromURL(favicon));
     }
 
     public PingedResponse(Protocol version, Players players, String description, CosmicFavicon favicon)

@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 public abstract class BasePlugin extends BetterPlugin implements ISingularityExtension {
     @Getter
@@ -89,6 +90,9 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     @Getter @Setter
     private static TaskScheduler scheduler;
+
+    @Getter @Setter
+    private static PlatformListener.ProxyMessagingListener proxyMessagingListener;
 
     @Override
     public void onBaseConstruct() {
@@ -156,8 +160,10 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
         TaskManager.init();
 
+        proxyMessagingListener = new PlatformListener.ProxyMessagingListener();
+
         getProxy().getMessenger().registerOutgoingPluginChannel(this, SLAPI.getApiChannel());
-        getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), new PlatformListener.ProxyMessagingListener());
+        getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), proxyMessagingListener);
 
         playerChecker = new PlayerChecker();
         PlayerTeleporter.init();
@@ -172,6 +178,10 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
+
+        getProxy().getMessenger().unregisterOutgoingPluginChannel(this, SLAPI.getApiChannel());
+        getProxy().getMessenger().unregisterIncomingPluginChannel(this, SLAPI.getApiChannel());
+//        getProxy().getMessenger().unregisterIncomingPluginChannel(this, SLAPI.getApiChannel(), proxyMessagingListener);
 
         this.disable();
         fireStopEvent();
@@ -514,5 +524,15 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     public static Command getBukkitCommand(String name) {
         return commandMap.getCommand(name);
+    }
+
+    @Override
+    public Logger getLoggerLogger() {
+        return getLogger();
+    }
+
+    @Override
+    public org.slf4j.Logger getSLFLogger() {
+        return null;
     }
 }

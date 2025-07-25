@@ -165,6 +165,15 @@ public class UserUtils {
         return Optional.of(sender);
     }
 
+    public static Optional<CosmicPlayer> getPlayer(String uuid) {
+        Optional<CosmicSender> optional = getSender(uuid);
+        if (optional.isPresent()) {
+            if (optional.get() instanceof CosmicPlayer) return optional.map(s -> (CosmicPlayer) s);
+        }
+
+        return Optional.empty();
+    }
+
     public static CosmicPlayer loadPlayer(CosmicPlayer player) {
         return (CosmicPlayer) loadSender(player);
     }
@@ -174,21 +183,15 @@ public class UserUtils {
     }
 
     public static CosmicSender createSender() {
-        CosmicSender console = new CosmicSender();
-        ModuleUtils.fireEvent(new CreateSenderEvent(console));
-        return console;
+        return new CosmicSender();
     }
 
     public static CosmicSender createSender(String uuid) {
-        CosmicSender sender = new CosmicSender(uuid);
-        ModuleUtils.fireEvent(new CreateSenderEvent(sender));
-        return sender;
+        return new CosmicSender(uuid);
     }
 
     public static CosmicPlayer createPlayer(String uuid) {
-        CosmicPlayer player = new CosmicPlayer(uuid);
-        ModuleUtils.fireEvent(new CreateSenderEvent(player));
-        return player;
+        return new CosmicPlayer(uuid);
     }
 
     public static Optional<CosmicSender> getOrCreateSender(String uuid) {
@@ -198,12 +201,12 @@ public class UserUtils {
         if (isConsole(uuid)) return Optional.ofNullable(getConsole());
         if (! UuidUtils.isValidPlayerUUID(uuid)) return Optional.empty();
 
-        CosmicSender sender = createSender(uuid);
-        sender.load();
+        CosmicPlayer player = createPlayer(uuid);
+        player.load();
 
-        sender.augment(Singularity.getMainDatabase().loadPlayer(uuid), false);
+        player.augment(Singularity.getMainDatabase().loadPlayer(uuid), false);
 
-        return Optional.of(sender);
+        return Optional.of(player);
     }
 
     public static Optional<CosmicPlayer> getOrCreatePlayer(String uuid) {
@@ -229,6 +232,10 @@ public class UserUtils {
         return new CosmicSender(uuid, true);
     }
 
+    public static CosmicPlayer createTemporaryPlayer(String uuid) {
+        return new CosmicPlayer(uuid, true);
+    }
+
     public static Optional<CosmicSender> getOrGetSender(String uuid) {
         if (uuid == null || uuid.isEmpty()) return Optional.empty();
 
@@ -239,21 +246,18 @@ public class UserUtils {
 
         if (! UuidUtils.isValidPlayerUUID(uuid)) return Optional.empty();
 
-        CosmicSender sender = createTemporarySender(uuid);
-        sender.load();
+        CosmicPlayer player = createTemporaryPlayer(uuid);
+        player.load();
 
-        sender.augment(Singularity.getMainDatabase().loadPlayer(uuid), true);
+        player.augment(Singularity.getMainDatabase().loadPlayer(uuid), true);
 
-        return Optional.of(sender);
+        return Optional.of(player);
     }
 
     public static Optional<CosmicPlayer> getOrGetPlayer(String uuid) {
         Optional<CosmicSender> optional = getOrGetSender(uuid);
-        if (optional.isEmpty()) return Optional.empty();
-
-        CosmicSender sender = optional.get();
-        if (sender instanceof CosmicPlayer) {
-            return Optional.of((CosmicPlayer) sender);
+        if (optional.isPresent()) {
+            if (optional.get() instanceof CosmicPlayer) return optional.map(s -> (CosmicPlayer) s);
         }
 
         return Optional.empty();

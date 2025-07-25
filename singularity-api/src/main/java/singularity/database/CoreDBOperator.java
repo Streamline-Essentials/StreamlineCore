@@ -34,7 +34,7 @@ import singularity.utils.UserUtils;
 
 public class CoreDBOperator extends DBOperator {
     @Getter @Setter
-    private static AsyncCache<String, Optional<CosmicPlayer>> loadingPlayers = Caffeine.newBuilder()
+    private static AsyncCache<String, Optional<CosmicSender>> loadingPlayers = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofSeconds(10))
             .buildAsync();
             ;
@@ -362,10 +362,10 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
-    public CompletableFuture<Optional<CosmicPlayer>> loadPlayer(String uuid) {
-        CompletableFuture<Optional<CosmicPlayer>> future = getLoadingPlayers().getIfPresent(uuid);
+    public CompletableFuture<Optional<CosmicSender>> loadPlayer(String uuid) {
+        CompletableFuture<Optional<CosmicSender>> future = getLoadingPlayers().getIfPresent(uuid);
         if (future == null || future.isDone()) {
-            CompletableFuture<Optional<CosmicPlayer>> loading = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Optional<CosmicSender>> loading = CompletableFuture.supplyAsync(() -> {
                 ensureUsable();
 
                 if (! exists(uuid).join()) {
