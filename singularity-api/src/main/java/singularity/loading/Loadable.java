@@ -1,6 +1,9 @@
 package singularity.loading;
 
 import gg.drak.thebase.objects.Identifiable;
+import singularity.data.console.CosmicSender;
+import singularity.data.players.CosmicPlayer;
+import singularity.utils.UserUtils;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -29,7 +32,10 @@ public interface Loadable<L> extends Identifiable {
 
     boolean isLoaded();
 
-    void saveAndUnload(boolean async);
+    default void saveAndUnload(boolean async) {
+        save(async);
+        unload();
+    }
 
     default void saveAndUnload() {
         saveAndUnload(true);
@@ -59,5 +65,21 @@ public interface Loadable<L> extends Identifiable {
 
     default <T extends Loadable<L>> void onceFullyLoadedTyped(Consumer<T> consumer) {
         consumer.accept(waitUntilFullyLoadedTyped());
+    }
+
+    default Optional<CosmicSender> asSender() {
+        return UserUtils.getOrGetSender(getIdentifier());
+    }
+
+    default Optional<CosmicSender> asSenderOrCreate() {
+        return UserUtils.getOrCreateSender(getIdentifier());
+    }
+
+    default Optional<CosmicPlayer> asPlayer() {
+        return UserUtils.getOrGetPlayer(getIdentifier());
+    }
+
+    default Optional<CosmicPlayer> asPlayerOrCreate() {
+        return UserUtils.getOrCreatePlayer(getIdentifier());
     }
 }

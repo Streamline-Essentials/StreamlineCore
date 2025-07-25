@@ -122,3 +122,4 @@ run/
 /api/target/
 /backend-api/target/
 /.fastRequest/
+/deploy/

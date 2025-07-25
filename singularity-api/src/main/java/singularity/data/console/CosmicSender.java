@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Getter
-public class CosmicSender implements Loadable<CosmicPlayer> {
+public class CosmicSender implements Loadable<CosmicSender> {
     public String getIdentifier() {
         return getUuid();
     }
@@ -91,6 +91,9 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
         this(
                 GivenConfigs.getMainConfig().getConsoleDiscriminator()
         );
+
+        this.setCurrentName(GivenConfigs.getMainConfig().getConsoleName());
+        this.augment(Singularity.getMainDatabase().loadPlayer(getIdentifier()), false);
     }
 
     public CosmicSender setCurrentName(String currentName) {
@@ -143,7 +146,7 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
     }
 
     @Override
-    public CosmicPlayer augment(CompletableFuture<Optional<CosmicPlayer>> future, boolean isGet) {
+    public CosmicSender augment(CompletableFuture<Optional<CosmicSender>> future, boolean isGet) {
         fullyLoaded = false;
 
         future.whenComplete((optional, error) -> {
@@ -154,7 +157,7 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
             }
 
             if (optional.isPresent()) {
-                CosmicPlayer sender = optional.get();
+                CosmicSender sender = optional.get();
 
                 setUuid(sender.getUuid());
                 setFirstJoinMillis(sender.getFirstJoinMillis());
@@ -166,7 +169,7 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
                 setMeta(sender.getMeta());
                 setPermissions(sender.getPermissions());
 
-                augmentMore(sender);
+                if (this instanceof CosmicPlayer && sender instanceof CosmicPlayer) augmentMore((CosmicPlayer) sender);
 
                 setCurrentNameAsProper(); // might need to be forced... need to check this...
             } else {
@@ -188,7 +191,7 @@ public class CosmicSender implements Loadable<CosmicPlayer> {
             fullyLoaded = true;
         });
 
-        return (CosmicPlayer) this;
+        return this;
     }
 
     public void augmentMore(CosmicPlayer sender) {

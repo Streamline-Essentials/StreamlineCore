@@ -411,4 +411,14 @@ public abstract class BasePlugin implements ISingularityExtension {
         }
         return map;
     }
+
+    @Override
+    public java.util.logging.Logger getLoggerLogger() {
+        return null;
+    }
+
+    @Override
+    public org.slf4j.Logger getSLFLogger() {
+        return getLogger();
+    }
 }
