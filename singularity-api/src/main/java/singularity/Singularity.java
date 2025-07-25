@@ -1,9 +1,13 @@
 package singularity;
 
+import ch.qos.logback.classic.LoggerContext;
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.SingleSet;
 import gg.drak.thebase.objects.handling.derived.PluginEventable;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
 import singularity.data.runners.PlayerSaver;
@@ -11,11 +15,16 @@ import singularity.data.update.defaults.DefaultUpdaters;
 import singularity.data.uuid.UuidInfo;
 import singularity.data.uuid.UuidManager;
 import singularity.database.CoreDBOperator;
+import singularity.database.servers.SavedServer;
+import singularity.events.server.ServerLogTextEvent;
 import singularity.interfaces.*;
 import singularity.interfaces.audiences.IPlayerInterface;
 import singularity.interfaces.audiences.IConsoleHolder;
 import singularity.interfaces.audiences.real.RealSender;
 import singularity.interfaces.audiences.real.RealPlayer;
+import singularity.logging.CosmicLogHandler;
+import singularity.logging.CosmicLogbackAppender;
+import singularity.logging.LogCollector;
 import singularity.messages.ProxyMessenger;
 import singularity.messages.proxied.ProxiedMessageManager;
 import singularity.modules.CosmicModule;
@@ -25,9 +34,7 @@ import singularity.scheduler.ModuleTaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -36,6 +43,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 public class Singularity<C, P extends C, S extends ISingularityExtension, U extends IUserManager<C, P>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
@@ -122,8 +130,6 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     }
 
     @Getter
-    private static File userFolder;
-    @Getter
     private static File moduleFolder;
     @Getter
     private static File moduleSaveFolder;
@@ -183,22 +189,25 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         super(identifier);
         instance = this;
 
+        // Field Stuff
         this.platform = platform;
         this.userManager = userManager;
         this.messenger = messenger;
         this.consoleHolder = consoleHolder;
         this.playerInterface = playerInterface;
 
+        // Console Stuff
+        setupLogger();
+
+        // Set up the api channel.
         setApiChannel(apiChannel);
 
 //        setProxiedServer(platform.getServerType().equals(IStreamline.ServerType.BACKEND));
         setProxy(platform.getServerType().equals(ISingularityExtension.ServerType.PROXY));
 
-        userFolder = new File(getDataFolder(), "users" + File.separator);
         moduleFolder = new File(getDataFolder(), "modules" + File.separator);
         moduleSaveFolder = new File(getDataFolder(), "module-resources" + File.separator);
         mainCommandsFolder = new File(getDataFolder(), getCommandsFolderChild());
-        userFolder.mkdirs();
         moduleFolder.mkdirs();
         moduleSaveFolder.mkdirs();
         mainCommandsFolder.mkdirs();
@@ -253,6 +262,8 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
         playerSaver = new PlayerSaver();
 
+        LogCollector.init();
+
         setReady(true);
     }
 
@@ -260,12 +271,46 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         this(identifier, platform, userManager, messenger, consoleHolder, playerInterface, null, apiChannel);
     }
 
+    public void setupLogger() {
+        if (getPlatform().hasLoggerLogger()) {
+            java.util.logging.Logger rootLogger = getPlatform().getLoggerLogger();
+            while (rootLogger.getParent() != null) {
+                rootLogger = rootLogger.getParent();
+            }
+            // Remove existing handlers to avoid duplicates (optional)
+//            for (java.util.logging.Handler handler : rootLogger.getHandlers()) {
+//                rootLogger.removeHandler(handler);
+//            }
+            // Add the custom handler
+            CosmicLogHandler handler = new CosmicLogHandler();
+            rootLogger.addHandler(handler);
+        }
+        if (getPlatform().hasSLFLogger()) {
+            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+
+            // Remove existing appenders
+            rootLogger.detachAndStopAllAppenders();
+
+            // Add custom appender
+            CosmicLogbackAppender appender = new CosmicLogbackAppender();
+            appender.setContext(loggerContext);
+            appender.setName("CosmicLogbackAppender");
+            appender.start();
+            rootLogger.addAppender(appender);
+        }
+    }
+
     public static String getServerUuid() {
-        return GivenConfigs.getMainConfig().getOrCreateUuid();
+        return GivenConfigs.getServerConfig().getServerUuid();
     }
 
     public static String getServerName() {
-        return GivenConfigs.getMainConfig().getServerName();
+        return GivenConfigs.getServerConfig().getServerName();
+    }
+
+    public static SavedServer getServer() {
+        return GivenConfigs.getServerConfig().getServer();
     }
 
     public ConcurrentSkipListMap<String, File> getFiles(File folder, Predicate<File> filePredicate) {

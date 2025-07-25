@@ -78,7 +78,7 @@ public class GivenConfigs {
     }
 
     public static String getServerName() {
-        return getServerConfig().getName();
+        return getServerConfig().getServerName();
     }
 
     public static void setServer(SavedServer server) {

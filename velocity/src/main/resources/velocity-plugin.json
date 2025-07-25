@@ -1,0 +1,24 @@
+{
+  "id": "streamlinecore",
+  "name": "${name}",
+  "version": "${version}",
+  "authors": [
+    "Drak"
+  ],
+  "author": "Drak",
+  "dependencies": [
+    {
+      "id": "luckperms",
+      "optional": false
+    },
+    {
+      "id": "geyser-velocity",
+      "optional": true
+    },
+    {
+      "id": "floodgate",
+      "optional": true
+    }
+  ],
+  "main": "net.streamline.base.StreamlineVelocity"
+}

@@ -42,9 +42,6 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugPrefix();
 
 //        getHexPolicies();
-
-        getOrCreateUuid();
-        getServerName();
     }
 
     // CONSOLE
@@ -219,17 +216,5 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("debug.console.debug.prefix", "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r");
-    }
-
-    public String getOrCreateUuid() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("server.uuid", UUID.randomUUID().toString());
-    }
-
-    public String getServerName() {
-        reloadResource();
-
-        return getResource().getOrSetDefault("server.name", getOrCreateUuid());
     }
 }

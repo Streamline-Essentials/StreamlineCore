@@ -1,13 +1,13 @@
 dependencies {
     // Platform dependencies.
     // Spigot (commented out: uncomment if needed)
-//    compileOnly "org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"
+//    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"))
 
     // Paper (commented out: uncomment if needed)
-     compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+    annotationProcessor(compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"))
 
     // Use Spigot API for version 1.16.5
-//    compileOnly "org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"
+//    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"))
 
     // Defaults.
     compileOnly(files(FILES))
@@ -16,8 +16,10 @@ dependencies {
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
-    implementation shadow("com.github.hamza-cskn.obliviate-invs:core:4.1.12")
-    compileOnly("com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT")
+
+    // BOU
+    implementation(shadow("com.github.hamza-cskn.obliviate-invs:core:4.1.12"))
+    annotationProcessor(compileOnly("com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT"))
 
     // Streamline API.
     compileOnly project(path: ":StreamlineCore-API")
@@ -26,6 +28,7 @@ dependencies {
     implementation(project(path: ':StreamlineCore-BAPI', configuration: 'shadow')) {
         // Correct way to exclude dependency
         exclude group: "com.github.server-utilities", module: "TheBase"
+        exclude group: "gg.drak.thebase"
     }
 
     compileOnly project(path: ":StreamlineCore-Singularity")

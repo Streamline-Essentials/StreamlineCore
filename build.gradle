@@ -5,22 +5,46 @@ buildscript {
         }
     }
     dependencies {
-        classpath("gradle.plugin.com.github.johnrengelman:shadow:7.1.2")
+        classpath("com.gradleup.shadow:shadow-gradle-plugin:8.3.6") // for shadowing
         classpath("io.freefair.gradle:lombok-plugin:8.6")
     }
 }
 
 allprojects {
-    version = rootProject.properties["version"]
-    group = rootProject.properties["group"]
-}
-
-subprojects {
     apply plugin: "java"
-    apply plugin: "com.github.johnrengelman.shadow"
+    apply plugin: "com.gradleup.shadow"
     apply plugin: "io.freefair.lombok"
     apply plugin: "maven-publish"
 
+    version = rootProject.properties["version"]
+    group = rootProject.properties["group"]
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    artifacts {
+        archives shadowJar
+    }
+
+    repositories {
+        // Maven Defaults
+        mavenCentral()
+        mavenLocal()
+        maven { url "https://mvnrepository.com/artifact" }
+
+        // JitPack
+        maven { url "https://jitpack.io" }
+
+        // Local libs folder as a flat directory repository
+        flatDir {
+            dirs "${rootDir}/libs"
+        }
+    }
+}
+
+subprojects {
     apply from: rootDir.toString() + "/dependencies.gradle"
 
     ext {
@@ -33,9 +57,6 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_11
 
     repositories {
-        mavenCentral()
-        mavenLocal()
-
         // Spigot / Bukkit
         maven {
             url "https://hub.spigotmc.org/nexus/content/repositories/snapshots"
@@ -55,9 +76,6 @@ subprojects {
         maven { url "https://maven.fabricmc.net" }
         maven { url "https://libraries.minecraft.net" }
 
-        // JitPack
-        maven { url "https://jitpack.io" }
-        maven { url "https://mvnrepository.com/artifact" }
         // OpenCollab
         maven {
             name "opencollabRepositoryMavenSnapshots"
@@ -70,11 +88,6 @@ subprojects {
 
         // PlaceholderAPI
         maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi" }
-    }
-
-    java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 
     processResources {
@@ -92,7 +105,12 @@ subprojects {
             expand (
                     "name": rootProject.name.toString(),
                     "version": rootProject.version.toString(),
-                    "main": project.ext.pluginMain.toString(),
+            )
+        }
+        filesMatching("**/velocity-plugin.json") {
+            expand (
+                    "name": rootProject.name.toString(),
+                    "version": rootProject.version.toString(),
             )
         }
         filesMatching("**/streamline.properties") {
@@ -122,10 +140,6 @@ subprojects {
         archiveFileName = project.name + "-" + project.version + ".jar"
 
 //        minimize()
-    }
-
-    artifacts {
-        archives shadowJar
     }
 
     tasks.register('deploy', Copy) {
@@ -167,6 +181,35 @@ subprojects {
         }
     }
 }
+
+//tasks.register("clearDeploys", Delete) {
+//    // Define the deployment directory
+//    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
+//
+//    deployDir.mkdirs()
+//    File[] files = deployDir.listFiles()
+//    if (files != null) {
+//        files.each { file ->
+//            if (file.isFile()) {
+//                file.delete()
+//            }
+//        }
+//    }
+//}
+
+//clean.finalizedBy(clearDeploys)
+//tasks.named('clearDeploys').configure {
+//    dependsOn 'clean'
+//}
+
+//clearDeploys.finalizedBy(build)
+//tasks.named("build") {
+//    doFirst {
+//        tasks.named('clean') {
+//            it.
+//        }
+//    }
+//}
 
 wrapper {
     gradleVersion = "8.9"
