@@ -7,6 +7,7 @@ import singularity.objects.CosmicResourcePack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Logger;
 
 public interface ISingularityExtension {
     enum PlatformType {
@@ -66,4 +67,16 @@ public interface ISingularityExtension {
     String getName();
 
     boolean isOfflineMode();
+
+    Logger getLoggerLogger();
+
+    default boolean hasLoggerLogger() {
+        return getLoggerLogger() != null;
+    }
+
+    org.slf4j.Logger getSLFLogger();
+
+    default boolean hasSLFLogger() {
+        return getSLFLogger() != null;
+    }
 }

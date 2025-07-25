@@ -2,18 +2,15 @@ package singularity.events.server;
 
 import lombok.Getter;
 import singularity.events.CosmicEvent;
-
-import java.util.logging.LogRecord;
+import singularity.logging.LogIntent;
 
 @Getter
 public class ServerLogTextEvent extends CosmicEvent {
-    final LogRecord record;
+    private final String message;
+    private final LogIntent intent;
 
-    public ServerLogTextEvent(LogRecord record) {
-        this.record = record;
-    }
-
-    public String getMessage() {
-        return getRecord().getMessage();
+    public ServerLogTextEvent(String message, LogIntent intent) {
+        this.message = message;
+        this.intent = intent;
     }
 }

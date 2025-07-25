@@ -220,7 +220,7 @@ public class PlatformListener {
             if (ping.getFavicon().isEmpty()) {
                 response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()));
             } else {
-                response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().toString());
+                response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().get().getBase64Url());
             }
         } catch (Throwable e) {
             MessageUtils.logWarning("Failed to get favicon from ping: " + e.getMessage());
