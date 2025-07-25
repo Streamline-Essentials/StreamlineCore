@@ -6,6 +6,8 @@ import singularity.logging.LogCollector;
 public class LogPopTimer extends AsyncTask {
     public LogPopTimer() {
         super(LogPopTimer::runTask, 0, 20 * 5); // Runs every 5 seconds
+        queue();
+        start();
     }
 
     public static void runTask(AsyncTask task) {

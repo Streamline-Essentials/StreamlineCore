@@ -274,13 +274,7 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     public void setupLogger() {
         if (getPlatform().hasLoggerLogger()) {
             java.util.logging.Logger rootLogger = getPlatform().getLoggerLogger();
-            while (rootLogger.getParent() != null) {
-                rootLogger = rootLogger.getParent();
-            }
-            // Remove existing handlers to avoid duplicates (optional)
-//            for (java.util.logging.Handler handler : rootLogger.getHandlers()) {
-//                rootLogger.removeHandler(handler);
-//            }
+
             // Add the custom handler
             CosmicLogHandler handler = new CosmicLogHandler();
             rootLogger.addHandler(handler);

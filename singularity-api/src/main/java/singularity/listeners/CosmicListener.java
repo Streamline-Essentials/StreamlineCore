@@ -6,6 +6,6 @@ import singularity.Singularity;
 
 public class CosmicListener implements BaseEventListener {
     public CosmicListener() {
-        BaseEventHandler.bake(this, Singularity.getBaseModule());
+        BaseEventHandler.bake(this, Singularity.getInstance());
     }
 }

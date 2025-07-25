@@ -1,0 +1,13 @@
+# Redis Configuration.
+# Host - Hostname of the Redis server.
+host: localhost
+# Port - Port number of the Redis server.
+port: 6379
+# Username - Redis username.
+username: default
+# Password - Redis password.
+password: password
+# Whether to use Redis or not.
+# true = use Redis.
+# false = do not use Redis.
+enabled: false

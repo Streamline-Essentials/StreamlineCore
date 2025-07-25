@@ -9,15 +9,22 @@ import singularity.listeners.CosmicListener;
 import singularity.logging.timers.LogPopTimer;
 import singularity.utils.MessageUtils;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LogCollector extends CosmicListener {
     @Getter @Setter
-    private static ConcurrentLinkedQueue<ServerLogTextEvent> logQueue = new ConcurrentLinkedQueue<>();
+    private static ConcurrentSkipListMap<Integer, ServerLogTextEvent> logQueue = new ConcurrentSkipListMap<>();
+
+    @Getter @Setter
+    private static AtomicInteger idCounter = new AtomicInteger(0);
+
+    public static int getNextId() {
+        return idCounter.getAndIncrement();
+    }
 
     public static void addLog(ServerLogTextEvent event) {
-        logQueue.add(event);
+        getLogQueue().put(getNextId(), event);
     }
 
     /**
@@ -25,17 +32,16 @@ public class LogCollector extends CosmicListener {
      * @return A map of log entries where the key is the log ID and the value is the log message.
      */
     public static ConcurrentSkipListMap<Integer, ServerLogTextEvent> getLogs() {
-        ConcurrentSkipListMap<Integer, ServerLogTextEvent> logs = new ConcurrentSkipListMap<>();
-        int id = 0;
+        ConcurrentSkipListMap<Integer, ServerLogTextEvent> logs = new ConcurrentSkipListMap<>(getLogQueue());
 
-        while (! logQueue.isEmpty()) {
-            ServerLogTextEvent event = logQueue.poll();
-            if (event != null) {
-                logs.put(id++, event);
-            }
-        }
+        resetQueue();
 
         return logs;
+    }
+
+    public static void resetQueue() {
+        clearLogs();
+        setIdCounter(new AtomicInteger(0));
     }
 
     public static void clearLogs() {
