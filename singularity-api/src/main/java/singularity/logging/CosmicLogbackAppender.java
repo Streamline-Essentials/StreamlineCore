@@ -5,11 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import singularity.events.server.ServerLogTextEvent;
 
-import java.io.ByteArrayOutputStream;
-
 public class CosmicLogbackAppender extends AppenderBase<ILoggingEvent> {
-    private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
     @Override
     protected void append(ILoggingEvent eventObject) {
         Level level = eventObject.getLevel();
@@ -37,16 +33,5 @@ public class CosmicLogbackAppender extends AppenderBase<ILoggingEvent> {
         if (event.isCancelled()) {
             return;
         }
-
-        // Capture the log message
-        String message = eventObject.getFormattedMessage() + System.lineSeparator();
-        baos.write(message.getBytes(), 0, message.length());
-
-        // Optionally forward to console
-        System.out.print(message);
-    }
-
-    public String getCapturedLogs() {
-        return baos.toString();
     }
 }

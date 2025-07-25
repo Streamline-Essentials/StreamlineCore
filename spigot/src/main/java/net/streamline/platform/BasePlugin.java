@@ -528,7 +528,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     @Override
     public Logger getLoggerLogger() {
-        return getLogger();
+        return Bukkit.getLogger();
     }
 
     @Override
