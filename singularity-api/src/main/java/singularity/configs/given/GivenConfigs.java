@@ -33,9 +33,6 @@ public class GivenConfigs {
     @Getter @Setter
     private static CoreDBOperator mainDatabase;
 
-    @Getter @Setter
-    private static RedisClient redisClient;
-
     public static void init() {
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
@@ -50,12 +47,6 @@ public class GivenConfigs {
             setMainDatabase(operator);
 
             ensureServer();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            setRedisClient(new RedisClient());
         } catch (Exception e) {
             e.printStackTrace();
         }
