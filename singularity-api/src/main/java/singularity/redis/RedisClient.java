@@ -75,10 +75,6 @@ public class RedisClient {
         });
     }
 
-    public static RedisClient getInstance() {
-        return GivenConfigs.getRedisClient();
-    }
-
     public static void sendMessage(RedisMessage message) {
         withJedis(j -> j.publish(message.getChannel(), message.getMessage()));
     }
