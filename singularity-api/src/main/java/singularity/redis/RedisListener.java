@@ -7,7 +7,7 @@ import redis.clients.jedis.JedisPubSub;
 import singularity.utils.MessageUtils;
 
 @Getter @Setter
-public abstract class RedisListener extends JedisPubSub implements Identifiable {
+public class RedisListener extends JedisPubSub implements Identifiable {
     private String identifier;
 
     public RedisListener(String identifier) {
@@ -39,5 +39,7 @@ public abstract class RedisListener extends JedisPubSub implements Identifiable 
         load();
     }
 
-    abstract String[] getChannelsArray();
+    public String[] getChannelsArray() {
+        return new String[] {};
+    }
 }
