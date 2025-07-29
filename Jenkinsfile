@@ -3,8 +3,6 @@ pipeline {
     tools {
         // Specify the Gradle version configured in Jenkins
         gradle 'Gradle'
-        // Specify the JDK version configured in Jenkins
-        jdk 'Java 21'
     }
     stages {
         stage('Checkout') {
@@ -14,8 +12,9 @@ pipeline {
             }
         }
         stage('Build') {
-            withGradle {
-                sh './gradlew build'
+            steps {
+                // Run Gradle build
+                sh 'gradle clean build'
             }
         }
         stage('Publish Artifacts') {
