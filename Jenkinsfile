@@ -16,7 +16,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Run Gradle build
-                sh './gradlew clean build'
+                sh 'gradle clean build'
             }
         }
         stage('Publish Artifacts') {
