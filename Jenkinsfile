@@ -14,7 +14,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Run Gradle build
-                sh 'gradle clean build'
+                sh 'gradle StreamlineCore-BAPI:build'
             }
         }
         stage('Publish Artifacts') {
