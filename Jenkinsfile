@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     tools {
-        gradle 'Gradle' // Gradle tool configured in Jenkins
         jfrog 'jfrog-cli' // JFrog CLI tool, ensure it's configured in Jenkins
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone') {
             steps {
                 // Checkout code from SCM (Git assumed)
                 checkout scm
@@ -16,22 +15,37 @@ pipeline {
 
         stage('Build') {
             steps {
-                // Chmod all files in the workspace to ensure they are executable
-                sh 'find . -type f -exec chmod +x {} \\;'
-                // Use Gradle wrapper for consistency
-                sh './gradlew build'
+//                 // Chmod all files in the workspace to ensure they are executable
+//                 sh 'find . -type f -exec chmod +x {} \\;'
+//
+//                 // Use Gradle wrapper for consistency
+//                 sh './gradlew build'
+                // Configure Gradle project's repositories
+                jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
+
+                // Install and publish project
+                jf 'gradle clean build artifactoryPublish'
+
+                // Find all .jar files in and only in any "build/libs" directory
+                // and move them to the 'deploy' directory
+                sh '''
+                    mkdir -p deploy
+                    find . -type f -name "*.jar" -path "*/build/libs/*" -exec cp {} deploy/ \\;
+                '''
             }
         }
 
-        stage('Publish Artifacts') {
+        stage('Publish to Jenkins') {
             steps {
                 // Publish artifacts to Jenkins
                 archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true
             }
         }
 
-        stage('Artifactory Publish') {
+        stage('Publish to Artifactory') {
             steps {
+                // Upload all files in the 'deploy' directory to the 'gradle-release' Artifactory repository.
+                jf 'rt u deploy/ gradle-release/'
                 jf 'rt build-publish'
             }
         }
