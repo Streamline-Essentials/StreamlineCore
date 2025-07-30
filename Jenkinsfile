@@ -39,7 +39,7 @@ pipeline {
         stage('Publish to Jenkins') {
             steps {
                 // Publish artifacts to Jenkins
-                archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true, includePatterns: '*.jar', excludePatterns: '**javadoc**, **sources**, **all**, ${NAME}-${VERSION}.jar',
+                archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true, includePatterns: '*.jar', excludePatterns: '**javadoc**, **sources**, **all**, ${NAME}-${VERSION}.jar'
             }
         }
 
