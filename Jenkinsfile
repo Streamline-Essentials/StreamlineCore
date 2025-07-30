@@ -48,14 +48,7 @@ pipeline {
 
         stage('Publish to Artifactory') {
             steps {
-//                 if (IS_SNAPSHOT == 'true') {
-//                     jf 'rt u deploy/* gradle-release/${NAME}/${FINAL_VERSION}/ --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
-//                     jf 'rt build-publish'
-//                 } else {
-//                     jf 'rt u deploy/* gradle-release/${NAME}/${FINAL_VERSION}/ --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
-//                     jf 'rt build-publish'
-//                 }
-                jf 'rt u deploy/* gradle-release/deployed --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
+                jf 'rt u deploy/* gradle-release/deployed'
                 jf 'rt build-publish'
             }
         }
