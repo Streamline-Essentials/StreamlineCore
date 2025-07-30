@@ -15,16 +15,14 @@ pipeline {
 
         stage('Build') {
             steps {
-//                 // Chmod all files in the workspace to ensure they are executable
-//                 sh 'find . -type f -exec chmod +x {} \\;'
-//
-//                 // Use Gradle wrapper for consistency
-//                 sh './gradlew build'
+                // Chmod all files in the workspace to ensure they are executable
+                sh 'find . -type f -exec chmod +x {} \\;'
+
                 // Configure Gradle project's repositories
                 jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
 
                 // Install and publish project
-                jf 'gradle clean build artifactoryPublish'
+                jf './gradlew clean build artifactoryPublish'
 
                 // Find all .jar files in and only in any "build/libs" directory
                 // and move them to the 'deploy' directory

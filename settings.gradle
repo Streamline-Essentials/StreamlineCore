@@ -17,12 +17,12 @@ findProject(':sapi').name = rootProject.name + '-Singularity'
 findProject(':api').name = rootProject.name + '-API'
 findProject(':bapi').name = rootProject.name + '-BAPI'
 
-if (!System.env.JITPACK) {
+if (! isCI()) {
     findProject(':bungee').name = rootProject.name + '-Bungee'
     findProject(':spigot').name = rootProject.name + '-Spigot'
     findProject(':velocity').name = rootProject.name + '-Velocity'
 }
 
 static def isCI() {
-    return System.getenv("JENKINS") || System.getenv("JITPACK")
+    return System.getenv("JENKINS") != null || System.getenv("JITPACK") != null
 }
