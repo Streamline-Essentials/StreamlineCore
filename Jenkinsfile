@@ -32,9 +32,7 @@ pipeline {
 
         stage('Artifactory Publish') {
             steps {
-                steps {
-                    jf 'rt build-publish'
-                }
+                jf 'rt build-publish'
             }
         }
     }
