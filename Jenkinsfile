@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     tools {
+        gradle 'Gradle' // Ensure Gradle is installed and configured in Jenkins
         jfrog 'jfrog-cli' // JFrog CLI tool, ensure it's configured in Jenkins
     }
 
