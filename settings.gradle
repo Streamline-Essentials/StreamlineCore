@@ -4,7 +4,7 @@ include ':singularity-api'
 include ':api'
 include ':backend-api'
 
-if (!System.env.JITPACK) {
+if (! isCI()) {
     include ':bungee'
     include ':spigot'
     include ':velocity'
@@ -21,4 +21,8 @@ if (!System.env.JITPACK) {
     findProject(':bungee').name = rootProject.name + '-Bungee'
     findProject(':spigot').name = rootProject.name + '-Spigot'
     findProject(':velocity').name = rootProject.name + '-Velocity'
+}
+
+static def isCI() {
+    return System.getenv("JENKINS") || System.getenv("JITPACK")
 }
