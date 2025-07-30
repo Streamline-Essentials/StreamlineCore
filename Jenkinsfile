@@ -22,7 +22,7 @@ pipeline {
                 jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
 
                 // Install and publish project
-                jf './gradlew clean build artifactoryPublish'
+                jf 'gradle clean build artifactoryPublish'
 
                 // Find all .jar files in and only in any "build/libs" directory
                 // and move them to the 'deploy' directory
