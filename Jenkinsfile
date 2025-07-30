@@ -2,8 +2,11 @@ pipeline {
     agent any
 
     environment {
-        VERSION = '3.5.5.0' // Set the version of the plugin
+        VERSION = '3.5.5.0-SNAPSHOT' // Set the version of the plugin
         NAME = 'StreamlineCore' // Set the name of the plugin
+        COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim() // Get the current commit hash
+        IS_SNAPSHOT = VERSION.endsWith('-SNAPSHOT') ? 'true' : 'false' // Check if the version is a snapshot
+        FINAL_VERSION = IS_SNAPSHOT == 'true' ? "master-SNAPSHOT": VERSION // Final version without snapshot
     }
 
     tools {
@@ -45,8 +48,14 @@ pipeline {
 
         stage('Publish to Artifactory') {
             steps {
-                // Upload all files in the 'deploy' directory to the 'gradle-release' Artifactory repository.
-                jf 'rt u deploy/* gradle-release/'
+//                 if (IS_SNAPSHOT == 'true') {
+//                     jf 'rt u deploy/* gradle-release/${NAME}/${FINAL_VERSION}/ --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
+//                     jf 'rt build-publish'
+//                 } else {
+//                     jf 'rt u deploy/* gradle-release/${NAME}/${FINAL_VERSION}/ --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
+//                     jf 'rt build-publish'
+//                 }
+                jf 'rt u deploy/* gradle-release/deployed --flat=true --props "version=${FINAL_VERSION};name=${NAME}"'
                 jf 'rt build-publish'
             }
         }
