@@ -19,6 +19,9 @@ pipeline {
                 // Chmod all files in the workspace to ensure they are executable
                 sh 'find . -type f -exec chmod +x {} \\;'
 
+                // Install gradle dependencies
+                jf 'gradle dependencies --refresh-dependencies'
+
                 // Configure Gradle project's repositories
                 jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
 
