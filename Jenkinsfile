@@ -1,3 +1,27 @@
+def isSnapshot() {
+    if (env.VERSION.endsWith('-SNAPSHOT')) {
+        return true
+    } else {
+        return false
+    }
+}
+
+def getIsSnapshotString() {
+    if (isSnapshot()) {
+        return 'true'
+    } else {
+        return 'false'
+    }
+}
+
+def getFinalVersionString() {
+    if (isSnapshot()) {
+        return "master-SNAPSHOT"
+    } else {
+        return env.VERSION
+    }
+}
+
 pipeline {
     agent any
 
@@ -7,30 +31,6 @@ pipeline {
         COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim() // Get the current commit hash
         IS_SNAPSHOT = getIsSnapshotString() // Check if the version is a snapshot
         FINAL_VERSION = getFinalVersionString() // Final version without snapshot
-    }
-
-    functions {
-        isSnapshot() {
-            if (VERSION.endsWith('-SNAPSHOT')) {
-                return true
-            } else {
-                return false
-            }
-        }
-        getIsSnapshotString() {
-            if (isSnapshot()) {
-                return 'true'
-            } else {
-                return 'false'
-            }
-        }
-        getFinalVersionString() {
-            if (isSnapshot()) {
-                return "master-SNAPSHOT"
-            } else {
-                return VERSION
-            }
-        }
     }
 
     tools {
