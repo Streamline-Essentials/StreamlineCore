@@ -19,14 +19,14 @@ pipeline {
                 // Chmod all files in the workspace to ensure they are executable
                 sh 'find . -type f -exec chmod +x {} \\;'
 
-                // Install gradle dependencies
-                jf 'gradle dependencies --refresh-dependencies'
-
                 // Configure Gradle project's repositories
                 jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
 
                 // Install and publish project
-                jf 'gradle clean build artifactoryPublish'
+                jf 'gradle clean artifactoryPublish'
+
+                // Build
+                sh 'gradle build'
 
                 // Find all .jar files in and only in any "build/libs" directory
                 // and move them to the 'deploy' directory
