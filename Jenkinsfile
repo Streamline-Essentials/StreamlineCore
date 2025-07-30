@@ -1,27 +1,3 @@
-// def isSnapshot() {
-//     if (env.VERSION.endsWith('-SNAPSHOT')) {
-//         return true
-//     } else {
-//         return false
-//     }
-// }
-//
-// def getIsSnapshotString() {
-//     if (isSnapshot()) {
-//         return 'true'
-//     } else {
-//         return 'false'
-//     }
-// }
-//
-// def getFinalVersionString() {
-//     if (isSnapshot()) {
-//         return "master-SNAPSHOT"
-//     } else {
-//         return env.VERSION
-//     }
-// }
-
 pipeline {
     agent any
 
@@ -29,8 +5,8 @@ pipeline {
         VERSION = '3.5.5.0-SNAPSHOT' // Set the version of the plugin
         NAME = 'StreamlineCore' // Set the name of the plugin
         COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim() // Get the current commit hash
-//         IS_SNAPSHOT = getIsSnapshotString() // Check if the version is a snapshot
-//         FINAL_VERSION = getFinalVersionString() // Final version without snapshot
+        IS_SNAPSHOT = getIsSnapshotString(version: VERSION) // Check if the version is a snapshot
+        FINAL_VERSION = getFinalVersionString(check: VERSION) // Final version without snapshot
     }
 
     tools {
@@ -96,5 +72,25 @@ pipeline {
         failure {
             echo 'Build or tests failed! Check logs and artifacts for details.'
         }
+    }
+}
+
+def isSnapshot(version) {
+    release version.endsWith('-SNAPSHOT')
+}
+
+def getIsSnapshotString(version) {
+    if (isSnapshot(version)) {
+        return 'true'
+    } else {
+        return 'false'
+    }
+}
+
+def getFinalVersionString(check) {
+    if (isSnapshot(check)) {
+        return "master-SNAPSHOT"
+    } else {
+        return check
     }
 }
