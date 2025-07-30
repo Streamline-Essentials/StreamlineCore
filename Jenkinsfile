@@ -42,6 +42,8 @@ pipeline {
 
         stage('Build') {
             steps {
+                // Chmod all files in the workspace to ensure they are executable
+                sh 'find . -type f -exec chmod +x {} \\;'
                 // Use Gradle wrapper for consistency
                 sh './gradlew StreamlineCore-BAPI:build'
             }
