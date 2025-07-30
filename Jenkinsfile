@@ -76,7 +76,7 @@ pipeline {
 }
 
 def isSnapshot(version) {
-    release version.endsWith('-SNAPSHOT')
+    return version.endsWith('-SNAPSHOT')
 }
 
 def getIsSnapshotString(version) {
