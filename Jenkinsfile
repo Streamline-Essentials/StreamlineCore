@@ -48,7 +48,7 @@ pipeline {
 
         stage('Publish to Artifactory') {
             steps {
-                jf 'rt u deploy/* gradle-release/deployed'
+                jf 'rt u deploy/* gradle-release'
                 jf 'rt build-publish'
             }
         }
