@@ -6,90 +6,83 @@ pipeline {
     }
 
     tools {
-        // Specify the Gradle version configured in Jenkins
-        gradle 'Gradle'
+        gradle 'Gradle' // Ensure 'Gradle' is configured in Jenkins Global Tool Configuration
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Checkout code from SCM (e.g., Git)
+                // Checkout code from SCM (Git assumed)
                 checkout scm
             }
         }
 
-        stage ('Artifactory Configuration') {
+        stage('Artifactory Configuration') {
             steps {
                 rtServer (
-                    id: "artifactory-server",
-                    url: "https://repo.drak.gg/artifactory",
-                    credentialsId: "jfrog-creds",
+                    id: 'artifactory-server',
+                    url: 'https://repo.drak.gg/artifactory',
+                    credentialsId: 'jfrog-creds'
                 )
 
                 rtGradleDeployer (
-                    id: "GRADLE_DEPLOYER",
-                    serverId: "artifactory-server",
-                    repo: "gradle-release",
-                    excludePatterns: ["*.war"],
+                    id: 'GRADLE_DEPLOYER',
+                    serverId: 'artifactory-server',
+                    repo: 'gradle-release',
+                    excludePatterns: ['*.war']
                 )
 
                 rtGradleResolver (
-                    id: "GRADLE_RESOLVER",
-                    serverId: "artifactory-server",
-                    repo: "gradle-release-local",
+                    id: 'GRADLE_RESOLVER',
+                    serverId: 'artifactory-server',
+                    repo: 'gradle-release-local'
                 )
             }
         }
 
         stage('Build') {
             steps {
-                // Run Gradle build
-                sh 'gradle StreamlineCore-BAPI:build'
+                // Use Gradle wrapper for consistency
+                sh './gradlew StreamlineCore-BAPI:build'
             }
         }
 
         stage('Publish Artifacts') {
             when {
-                or {
-                    branch 'main'
-                    branch 'master'
-                }
+                branch pattern: 'main|master', comparator: 'REGEXP'
             }
-
             steps {
                 // Archive build artifacts
-                archiveArtifacts artifacts: 'deploy/*.jar', allowEmptyArchive: true
+                archiveArtifacts artifacts: '**/deploy/*.jar', allowEmptyArchive: true
             }
         }
 
-        stage ('Config Build Info') {
+        stage('Config Build Info') {
             steps {
                 rtBuildInfo (
                     captureEnv: true,
-                    includeEnvPatterns: ["*"],
-                    excludeEnvPatterns: ["DONT_COLLECT*"]
+                    includeEnvPatterns: ['*'],
+                    excludeEnvPatterns: ['DONT_COLLECT'] // Exact match for DONT_COLLECT
                 )
             }
         }
 
-        stage ('Exec Gradle') {
+        stage('Exec Gradle') {
             steps {
                 rtGradleRun (
-                    usesPlugin: true, // Artifactory plugin already defined in build script
-                    useWrapper: true,
-                    tool: "Gradle", // Tool name from Jenkins configuration
-//                     rootDir: "gradle-examples/gradle-example-publish/",
+                    usesPlugin: true, // Artifactory plugin defined in build.gradle
+                    useWrapper: true, // Use Gradle wrapper
                     tasks: 'clean artifactoryPublish',
-                    deployerId: "GRADLE_DEPLOYER",
-                    resolverId: "GRADLE_RESOLVER"
+                    deployerId: 'GRADLE_DEPLOYER',
+                    resolverId: 'GRADLE_RESOLVER'
                 )
             }
         }
 
-        stage ('Publish build info') {
+        stage('Publish Build Info') {
             steps {
                 rtPublishBuildInfo (
-                    serverId: "artifactory-server"
+                    serverId: 'artifactory-server'
                 )
             }
         }
@@ -97,18 +90,14 @@ pipeline {
 
     post {
         always {
-            // Clean workspace after build
-            cleanWs()
+            // Clean workspace, but preserve artifacts/logs on failure for debugging
+            cleanWs cleanWhenFailure: false
         }
-
         success {
-            // Notify on success
             echo 'Build and tests completed successfully!'
         }
-
         failure {
-            // Notify on failure
-            echo 'Build or tests failed!'
+            echo 'Build or tests failed! Check logs and artifacts for details.'
         }
     }
 }
