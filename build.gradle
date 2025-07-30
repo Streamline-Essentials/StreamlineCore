@@ -183,34 +183,32 @@ subprojects {
     }
 }
 
-//tasks.register("clearDeploys", Delete) {
-//    // Define the deployment directory
-//    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
-//
-//    deployDir.mkdirs()
-//    File[] files = deployDir.listFiles()
-//    if (files != null) {
-//        files.each { file ->
-//            if (file.isFile()) {
-//                file.delete()
-//            }
-//        }
-//    }
-//}
+tasks.register("clearDeploys", Delete) {
+    // Define the deployment directory
+    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
 
-//clean.finalizedBy(clearDeploys)
-//tasks.named('clearDeploys').configure {
-//    dependsOn 'clean'
-//}
+    deployDir.mkdirs()
+    File[] files = deployDir.listFiles()
+    if (files != null) {
+        files.each { file ->
+            if (file.isFile()) {
+                file.delete()
+            }
+        }
+    }
+}
 
-//clearDeploys.finalizedBy(build)
-//tasks.named("build") {
-//    doFirst {
-//        tasks.named('clean') {
-//            it.
-//        }
-//    }
-//}
+clean.finalizedBy(clearDeploys)
+tasks.named('clearDeploys').configure {
+    dependsOn 'clean'
+}
+
+clearDeploys.finalizedBy(build)
+tasks.named("build").configure {
+    doFirst {
+        tasks.named('clean')
+    }
+}
 
 wrapper {
     gradleVersion = "8.9"

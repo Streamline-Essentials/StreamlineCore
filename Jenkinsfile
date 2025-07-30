@@ -19,9 +19,6 @@ pipeline {
                 // Chmod all files in the workspace to ensure they are executable
                 sh 'find . -type f -exec chmod +x {} \\;'
 
-                // Install and publish project
-                jf 'gradle clean build artifactoryPublish'
-
                 // Build
                 sh 'gradle build'
 
