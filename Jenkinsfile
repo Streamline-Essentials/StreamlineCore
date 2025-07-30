@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        VERSION = '3.5.5.0-SNAPSHOT' // Set the version of the plugin
+        VERSION = '2.5.5.0' // Set the version of the plugin
         NAME = 'StreamlineCore' // Set the name of the plugin
         COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim() // Get the current commit hash
         IS_SNAPSHOT = getIsSnapshotString(VERSION) // Check if the version is a snapshot
@@ -42,7 +42,7 @@ pipeline {
         stage('Publish to Jenkins') {
             steps {
                 // Publish artifacts to Jenkins
-                archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true, excludes: '**javadoc**, **sources**, **all**, ${NAME}-${VERSION}.jar'
+                archiveArtifacts artifacts: '**/build/libs/*-' + VERSION + '.jar', allowEmptyArchive: true, excludes: NAME + '-' + VERSION + '.jar'
             }
         }
 
