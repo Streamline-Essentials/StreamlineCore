@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        DONT_COLLECT = 'FOO'
+    }
+
     tools {
         // Specify the Gradle version configured in Jenkins
         gradle 'Gradle'
@@ -14,24 +18,24 @@ pipeline {
             }
         }
 
-        stage ('Artifactory configuration') {
+        stage ('Artifactory Configuration') {
             steps {
                 rtServer (
-                    id: "ARTIFACTORY_SERVER",
+                    id: "artifactory-server",
                     url: "https://repo.drak.gg/artifactory",
-                    credentialsId: "artifactory-credentials",
+                    credentialsId: "jfrog-creds",
                 )
 
                 rtGradleDeployer (
                     id: "GRADLE_DEPLOYER",
-                    serverId: "ARTIFACTORY_SERVER",
+                    serverId: "artifactory-server",
                     repo: "gradle-release",
                     excludePatterns: ["*.war"],
                 )
 
                 rtGradleResolver (
                     id: "GRADLE_RESOLVER",
-                    serverId: "ARTIFACTORY_SERVER",
+                    serverId: "artifactory-server",
                     repo: "gradle-release-local",
                 )
             }
@@ -85,7 +89,7 @@ pipeline {
         stage ('Publish build info') {
             steps {
                 rtPublishBuildInfo (
-                    serverId: "ARTIFACTORY_SERVER"
+                    serverId: "artifactory-server"
                 )
             }
         }
