@@ -46,7 +46,7 @@ pipeline {
         stage('Publish to Artifactory') {
             steps {
                 // Upload all files in the 'deploy' directory to the 'gradle-release' Artifactory repository.
-                jf 'rt u deploy/* gradle-release/deploy/.'
+                jf 'rt u deploy/* gradle-release/'
                 jf 'rt build-publish'
             }
         }
