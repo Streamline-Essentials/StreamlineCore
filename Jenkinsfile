@@ -19,11 +19,8 @@ pipeline {
                 // Chmod all files in the workspace to ensure they are executable
                 sh 'find . -type f -exec chmod +x {} \\;'
 
-                // Configure Gradle project's repositories
-                jf 'gradle-config --repo-resolve libs-release --repo-deploy libs-release-local'
-
                 // Install and publish project
-                jf 'gradle clean artifactoryPublish'
+                jf 'gradle clean build artifactoryPublish'
 
                 // Build
                 sh 'gradle build'
