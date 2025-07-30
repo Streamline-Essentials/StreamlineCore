@@ -5,8 +5,32 @@ pipeline {
         VERSION = '3.5.5.0-SNAPSHOT' // Set the version of the plugin
         NAME = 'StreamlineCore' // Set the name of the plugin
         COMMIT_HASH = sh(script: 'git rev-parse HEAD', returnStdout: true).trim() // Get the current commit hash
-        IS_SNAPSHOT = VERSION.endsWith('-SNAPSHOT') ? 'true' : 'false' // Check if the version is a snapshot
-        FINAL_VERSION = IS_SNAPSHOT == 'true' ? "master-SNAPSHOT": VERSION // Final version without snapshot
+        IS_SNAPSHOT = getIsSnapshotString() // Check if the version is a snapshot
+        FINAL_VERSION = getFinalVersionString() // Final version without snapshot
+    }
+
+    functions {
+        isSnapshot() {
+            if (VERSION.endsWith('-SNAPSHOT')) {
+                return true
+            } else {
+                return false
+            }
+        }
+        getIsSnapshotString() {
+            if (isSnapshot()) {
+                return 'true'
+            } else {
+                return 'false'
+            }
+        }
+        getFinalVersionString() {
+            if (isSnapshot()) {
+                return "master-SNAPSHOT"
+            } else {
+                return VERSION
+            }
+        }
     }
 
     tools {
