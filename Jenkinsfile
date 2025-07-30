@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        VERSION = '3.5.5.0' // Set the version of the plugin
-        NAME = 'StreamlineCore' // Set the name of the plugin
+        VERSION = '3.5.5.0', // Set the version of the plugin
+        NAME = 'StreamlineCore', // Set the name of the plugin
     }
 
     tools {
-        gradle 'Gradle' // Ensure Gradle is installed and configured in Jenkins
+        gradle 'Gradle', // Ensure Gradle is installed and configured in Jenkins
         jfrog 'jfrog-cli' // JFrog CLI tool, ensure it's configured in Jenkins
     }
 
@@ -40,10 +40,10 @@ pipeline {
             steps {
                 // Publish artifacts to Jenkins
                 archiveArtifacts {
-                    artifacts: '*/build/libs/*.jar',
+                    artifacts: '**/build/libs/*.jar',
                     allowEmptyArchive: true,
                     includePatterns: '*.jar',
-                    excludePatterns: '*javadoc**, *sources*, *all*, ${NAME}-${VERSION}.jar',
+                    excludePatterns: '**javadoc**, **sources**, **all**, ${NAME}-${VERSION}.jar',
                 }
             }
         }
