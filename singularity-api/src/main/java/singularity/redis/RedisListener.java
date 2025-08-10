@@ -42,4 +42,8 @@ public class RedisListener extends JedisPubSub implements Identifiable {
     public String[] getChannelsArray() {
         return new String[] {};
     }
+
+    public static boolean isConnected() {
+        return RedisClient.isConnected();
+    }
 }
