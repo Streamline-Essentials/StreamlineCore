@@ -3,20 +3,11 @@ buildscript {
         maven {
             url = uri("https://plugins.gradle.org/m2/")
         }
-        maven {
-            url 'https://repo.drak.gg/artifactory/gradle-release'
-            credentials {
-                username = "${System.getenv("REPO_USERNAME") ?: "defaultUser"}"
-                password = "${System.getenv("REPO_PASSWORD") ?: "defaultPassword"}"
-            }
-        }
     }
 
     dependencies {
         classpath("com.gradleup.shadow:shadow-gradle-plugin:8.3.6") // for shadowing
         classpath("io.freefair.gradle:lombok-plugin:8.6")
-        //Check for the latest version here: http://plugins.gradle.org/plugin/com.jfrog.artifactory
-        classpath("org.jfrog.buildinfo:build-info-extractor-gradle:4.+")
     }
 }
 
@@ -25,7 +16,6 @@ allprojects {
     apply plugin: "com.gradleup.shadow"
     apply plugin: "io.freefair.lombok"
     apply plugin: "maven-publish"
-    apply plugin: "com.jfrog.artifactory"
 
     version = rootProject.properties["version"]
     group = rootProject.properties["group"]
@@ -193,52 +183,30 @@ subprojects {
     }
 }
 
-//tasks.register("clearDeploys", Delete) {
-//    // Define the deployment directory
-//    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
-//
-//    deployDir.mkdirs()
-//    File[] files = deployDir.listFiles()
-//    if (files != null) {
-//        files.each { file ->
-//            if (file.isFile()) {
-//                file.delete()
-//            }
-//        }
-//    }
-//}
+tasks.register("clearDeploys", Delete) {
+    // Define the deployment directory
+    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
 
-//clean.finalizedBy(clearDeploys)
-//tasks.named('clearDeploys').configure {
-//    dependsOn 'clean'
-//}
-
-//clearDeploys.finalizedBy(build)
-//tasks.named("build") {
-//    doFirst {
-//        tasks.named('clean') {
-//            it.
-//        }
-//    }
-//}
-
-artifactory {
-    contextUrl = "https://repo.drak.gg/artifactory"   //The base Artifactory URL if not overridden by the publisher/resolver
-    publish {
-        repository {
-            repoKey = 'gradle-release-local'
-            username = "${System.getenv("REPO_USERNAME") ?: "defaultUser"}"
-            password = "${System.getenv("REPO_PASSWORD") ?: "defaultPassword"}"
-            maven = true
+    deployDir.mkdirs()
+    File[] files = deployDir.listFiles()
+    if (files != null) {
+        files.each { file ->
+            if (file.isFile()) {
+                file.delete()
+            }
         }
     }
-    resolve {
-        repository {
-            repoKey = 'gradle-release'
-            username = "${System.getenv("REPO_USERNAME") ?: "defaultUser"}"
-            password = "${System.getenv("REPO_PASSWORD") ?: "defaultPassword"}"
-            maven = true
-        }
+}
+
+clean.finalizedBy(clearDeploys)
+tasks.named('clearDeploys').configure {
+    dependsOn 'clean'
+}
+
+clearDeploys.finalizedBy(build)
+tasks.named("build").configure {
+    doFirst {
+        tasks.named('clean')
     }
 }
 
