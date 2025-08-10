@@ -199,6 +199,7 @@ public class UserUtils {
         if (optional.isPresent()) return optional;
 
         if (isConsole(uuid)) return Optional.ofNullable(getConsole());
+
         if (! UuidUtils.isValidPlayerUUID(uuid)) return Optional.empty();
 
         CosmicPlayer player = createPlayer(uuid);
@@ -212,7 +213,9 @@ public class UserUtils {
     public static Optional<CosmicPlayer> getOrCreatePlayer(String uuid) {
         Optional<CosmicSender> sender = getOrCreateSender(uuid);
         if (sender.isPresent()) {
-            if (sender.get() instanceof CosmicPlayer) return sender.map(s -> (CosmicPlayer) s);
+            if (sender.get() instanceof CosmicPlayer) {
+                return sender.map(s -> (CosmicPlayer) s);
+            }
         }
 
         Optional<CosmicPlayer> optional = getOrGetPlayer(uuid);

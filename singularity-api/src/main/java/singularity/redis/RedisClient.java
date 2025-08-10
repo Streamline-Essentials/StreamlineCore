@@ -8,12 +8,19 @@ import singularity.configs.given.RedisConfigHandler;
 import singularity.utils.MessageUtils;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class RedisClient {
     public static RedisConfigHandler getConfig() {
         return GivenConfigs.getRedisConfig();
     }
+
+    @Getter @Setter
+    private static AtomicBoolean connectedAtomic = new AtomicBoolean(false);
+
+    @Getter @Setter
+    private static TPTicketListener tpTicketListener;
 
     @Getter @Setter
     private static Jedis jedisClient;
@@ -38,6 +45,14 @@ public class RedisClient {
         return getConfig().isEnabled();
     }
 
+    public static boolean isConnected() {
+        return connectedAtomic.get();
+    }
+
+    public static void setConnected(boolean connected) {
+        connectedAtomic.set(connected);
+    }
+
     public static Jedis getJedis() {
         if (! isEnabled()) return null;
 
@@ -50,6 +65,8 @@ public class RedisClient {
         if (auth != null) {
             if (auth.equals("OK")) {
                 MessageUtils.logInfo("Redis authenticated successfully.");
+                setConnected(true);
+                tpTicketListener = new TPTicketListener();
             } else {
                 MessageUtils.logInfo("Redis authentication failed: " + auth);
             }
