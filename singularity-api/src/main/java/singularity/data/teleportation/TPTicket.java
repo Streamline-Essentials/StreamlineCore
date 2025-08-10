@@ -9,8 +9,11 @@ import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
+import singularity.redis.RedisClient;
+import singularity.redis.RedisMessage;
 
 import java.util.Date;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter @Setter
 public class TPTicket implements Identifiable {
@@ -49,10 +52,70 @@ public class TPTicket implements Identifiable {
     }
 
     public void clear() {
-        Singularity.getMainDatabase().clearTPTicketAsync(getIdentifier());
+        if (! isUseRedis()) {
+            Singularity.getMainDatabase().clearTPTicketAsync(getIdentifier());
+        } else {
+            removeTicket(this);
+        }
     }
 
     public CosmicLocation toLocation() {
         return new CosmicLocation(getTargetServer(), getTargetWorld(), getTargetLocation(), getTargetRotation());
+    }
+
+    public static boolean isUseRedis() {
+        return RedisClient.isConnected();
+    }
+
+    public static TPTicket fromRedisMessage(RedisMessage redisMessage) {
+        String content = redisMessage.getMessage();
+        String[] parts = content.split(";");
+
+        String identifier = parts[0];
+        CosmicServer server = new CosmicServer(parts[1]);
+
+        String worldName = parts[2];
+        PlayerWorld targetWorld = new PlayerWorld(worldName);
+
+        double x = Double.parseDouble(parts[3]);
+        double y = Double.parseDouble(parts[4]);
+        double z = Double.parseDouble(parts[5]);
+        WorldPosition position = new WorldPosition(x, y, z);
+
+        float yaw = Float.parseFloat(parts[6]);
+        float pitch = Float.parseFloat(parts[7]);
+        PlayerRotation rotation = new PlayerRotation(yaw, pitch);
+
+        return new TPTicket(identifier, server, targetWorld, position, rotation);
+    }
+
+    public static RedisMessage toRedisMessage(TPTicket tpTicket) {
+        String content = String.join(";",
+                tpTicket.getIdentifier(),
+                tpTicket.getTargetServer().getIdentifier(),
+                tpTicket.getTargetWorld().getIdentifier(),
+                String.valueOf(tpTicket.getTargetLocation().getX()),
+                String.valueOf(tpTicket.getTargetLocation().getY()),
+                String.valueOf(tpTicket.getTargetLocation().getZ()),
+                String.valueOf(tpTicket.getTargetRotation().getYaw()),
+                String.valueOf(tpTicket.getTargetRotation().getPitch())
+        ) + ";";
+
+        return new RedisMessage("tp-ticket:put", content);
+    }
+
+    @Getter @Setter
+    private static ConcurrentSkipListSet<TPTicket> tickets = new ConcurrentSkipListSet<>();
+
+    public static void addTicket(TPTicket ticket) {
+        if (ticket != null) {
+            getTickets().add(ticket);
+        }
+    }
+
+    public static void removeTicket(TPTicket ticket) {
+        if (ticket != null) {
+            getTickets().removeIf(t -> t.getIdentifier().equalsIgnoreCase(ticket.getIdentifier()));
+        }
     }
 }

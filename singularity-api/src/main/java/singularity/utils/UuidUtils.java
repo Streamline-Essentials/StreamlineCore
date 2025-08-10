@@ -97,10 +97,11 @@ public class UuidUtils {
 
         if (isOfflineMode()) return true;
 
-        String name = UUIDFetcher.getName(UUID.fromString(uuid));
         try {
+            String name = UUIDFetcher.getName(UUID.fromString(uuid));
             return name != null;
         } catch (Throwable e) {
+            MessageUtils.logInfo("Failed to validate player UUID: " + uuid);
             return false; // If the player is not found or has no valid profile
         }
     }

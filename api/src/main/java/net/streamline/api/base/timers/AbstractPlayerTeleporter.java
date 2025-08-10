@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
+import singularity.redis.RedisClient;
 import singularity.utils.MessageUtils;
 
 import java.util.concurrent.CompletableFuture;
@@ -102,23 +103,35 @@ public abstract class AbstractPlayerTeleporter extends Thread {
     private static AtomicReference<CompletableFuture<ConcurrentSkipListSet<TPTicket>>> atomicTicketsPending = new AtomicReference<>(null);
 
     public CompletableFuture<ConcurrentSkipListSet<TPTicket>> getTicketsPending() {
-        if (GivenConfigs.getMainDatabase() == null) {
-            return CompletableFuture.completedFuture(new ConcurrentSkipListSet<>());
-        }
+        if (! isUseRedis()) {
+            if (GivenConfigs.getMainDatabase() == null) {
+                return CompletableFuture.completedFuture(new ConcurrentSkipListSet<>());
+            }
 
-        if (getAtomicTicketsPending().get() == null) {
-            getAtomicTicketsPending().set(GivenConfigs.getMainDatabase().pullAllTPTickets());
-        }
+            if (getAtomicTicketsPending().get() == null) {
+                getAtomicTicketsPending().set(GivenConfigs.getMainDatabase().pullAllTPTickets());
+            }
 
-        return getAtomicTicketsPending().get();
+            return getAtomicTicketsPending().get();
+        } else {
+            return CompletableFuture.completedFuture(TPTicket.getTickets());
+        }
     }
 
     public void unpendTickets() {
-        getAtomicTicketsPending().set(null);
+        if (! isUseRedis()) {
+            getAtomicTicketsPending().set(null);
+        } else {
+            TPTicket.getTickets().clear();
+        }
     }
 
     public boolean areTicketsPending() {
-        return getAtomicTicketsPending().get() != null;
+        if (! isUseRedis()) {
+            return getAtomicTicketsPending().get() != null;
+        } else {
+            return ! TPTicket.getTickets().isEmpty();
+        }
     }
 
     /**
@@ -146,5 +159,14 @@ public abstract class AbstractPlayerTeleporter extends Thread {
             ticket.clear();
             MessageUtils.logInfo("Cleared teleportation ticket for player " + ticket.getIdentifier() + ". [" + instance + "]");
         }
+    }
+
+    /**
+     * Check if Redis is being used for teleportation.
+     *
+     * @return true if Redis is connected, false otherwise.
+     */
+    public static boolean isUseRedis() {
+        return RedisClient.isConnected();
     }
 }
