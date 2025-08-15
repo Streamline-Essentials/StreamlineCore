@@ -1,33 +1,26 @@
 package singularity.redis;
 
-import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
-
-import java.util.Arrays;
+import singularity.utils.MessageUtils;
 
 public class TPTicketListener extends RedisListener {
     public TPTicketListener() {
-        super("main-tpticket-listener");
+        super("main-tpticket-listener", TPTicket.REDIS_CHANNEL);
+
+        MessageUtils.logInfo("Loading &cTPTicket Redis Listener&r...");
     }
 
     @Override
-    public String[] getChannelsArray() {
-        return new String[]{ "tp-ticket:put" };
-    }
+    public void onMessage(RedisMessage message) {
+        try {
+            MessageUtils.logDebug("&cTPTicketListener&f: Received message on channel &d" + message.getChannel() + "&f: &d" + message.getMessage());
 
-    @Override
-    public void onMessage(String channel, String message) {
-        if (Arrays.stream(getChannelsArray()).noneMatch(channel::equals)) {
-            return; // Ignore messages not on the subscribed channels
+            TPTicket tpTicket = TPTicket.fromRedisMessage(message);
+            tpTicket.onFromRedis();
+        } catch (Throwable e) {
+            MessageUtils.logWarning("&cTPTicketListener: &fError processing message: &d" + message.getMessage());
+            MessageUtils.logWarning("&cTPTicketListener: &fError: " + e.getMessage());
+            e.printStackTrace();
         }
-
-        RedisMessage redisMessage = new RedisMessage(channel, message);
-
-        TPTicket tpTicket = TPTicket.fromRedisMessage(redisMessage);
-
-        String server = GivenConfigs.getServerName();
-        if (! tpTicket.getTargetServer().getIdentifier().equals(server)) return;
-
-        TPTicket.addTicket(tpTicket);
     }
 }

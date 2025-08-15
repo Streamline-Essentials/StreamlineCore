@@ -2,6 +2,9 @@ package singularity.interfaces;
 
 import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.PlayerWorld;
+import singularity.data.players.location.WorldPosition;
 import singularity.events.CosmicEvent;
 import singularity.objects.CosmicResourcePack;
 import org.jetbrains.annotations.NotNull;
@@ -78,5 +81,9 @@ public interface ISingularityExtension {
 
     default boolean hasSLFLogger() {
         return getSLFLogger() != null;
+    }
+
+    default void teleportBackend(CosmicPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
+        // do nothing by default
     }
 }
