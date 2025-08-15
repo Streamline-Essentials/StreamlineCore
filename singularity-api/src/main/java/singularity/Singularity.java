@@ -233,6 +233,8 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         moduleScheduler = new ModuleTaskManager();
 
         CompletableFuture.runAsync(() -> {
+            GivenConfigs.waitUntilDatabaseReady();
+
             try {
                 getMainDatabase().ensureUsable();
             } catch (Exception e) {
@@ -245,6 +247,8 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            UserUtils.loadConsole(); // Load the console user // done with database.
         });
 
 //        baseModule = new BaseModule();
@@ -253,8 +257,6 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         ProxiedMessageManager.init();
 
         setCommandRunner(new CommandRunner());
-
-        UserUtils.loadConsole();
 
         MessageUtils.init();
 
@@ -296,11 +298,11 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     }
 
     public static String getServerUuid() {
-        return GivenConfigs.getServerConfig().getServerUuid();
+        return GivenConfigs.getServer().getUuid();
     }
 
     public static String getServerName() {
-        return GivenConfigs.getServerConfig().getServerName();
+        return GivenConfigs.getServer().getName();
     }
 
     public static SavedServer getServer() {

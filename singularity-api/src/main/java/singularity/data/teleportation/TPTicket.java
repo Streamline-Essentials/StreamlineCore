@@ -1,22 +1,30 @@
 package singularity.data.teleportation;
 
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
+import singularity.configs.given.GivenConfigs;
+import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
-import singularity.redis.RedisClient;
+import singularity.modules.ModuleUtils;
+import singularity.redis.OwnRedisClient;
 import singularity.redis.RedisMessage;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter @Setter
 public class TPTicket implements Identifiable {
+    public static final String REDIS_CHANNEL = "tp-ticket:put";
+
     private String identifier;
     private CosmicServer targetServer;
     private PlayerWorld targetWorld;
@@ -48,14 +56,13 @@ public class TPTicket implements Identifiable {
     }
 
     public void post() {
-        Singularity.getMainDatabase().postTPTicketAsync(this);
-    }
-
-    public void clear() {
         if (! isUseRedis()) {
-            Singularity.getMainDatabase().clearTPTicketAsync(getIdentifier());
+            Singularity.getMainDatabase().postTPTicketAsync(this);
         } else {
-            removeTicket(this);
+            RedisMessage redisMessage = toRedisMessage(this);
+            redisMessage.send();
+
+            onFromRedis();
         }
     }
 
@@ -63,8 +70,69 @@ public class TPTicket implements Identifiable {
         return new CosmicLocation(getTargetServer(), getTargetWorld(), getTargetLocation(), getTargetRotation());
     }
 
+    public void clear() {
+        Singularity.getMainDatabase().clearTPTicketAsync(this.getIdentifier());
+
+        unpend(this);
+    }
+
+    public void onFromRedis() {
+        CosmicServer server = this.getTargetServer();
+        String uuid = this.getIdentifier();
+        CosmicPlayer player = UserUtils.getPlayer(uuid).orElse(null);
+        if (Singularity.isProxy()) {
+            if (player == null) {
+                MessageUtils.logWarning("Player with UUID " + uuid + " not found for teleportation ticket.");
+                return;
+            }
+
+            if (! player.getServer().equals(server)) {
+                ModuleUtils.connect(player, server.getIdentifier());
+            }
+
+            clear();
+        } else {
+            if (! server.equals(getOwnServer())) {
+                MessageUtils.logDebug("&cTPTicket on Redis&f: &dTPTicket &ffor &d" + uuid + " &fis not for this server, clearing it.");
+                return;
+            }
+
+            if (player == null) {
+                pend(this);
+            } else {
+                Singularity.getInstance().getUserManager().teleport(player, this.toLocation());
+
+                clear();
+            }
+        }
+    }
+
+    public static CosmicServer getOwnServer() {
+        return GivenConfigs.getServer().getCosmicServer();
+    }
+
     public static boolean isUseRedis() {
-        return RedisClient.isConnected();
+        return OwnRedisClient.isConnected();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (! (obj instanceof TPTicket)) return false;
+        TPTicket other = (TPTicket) obj;
+        return this.getCreateDate().equals(other.getCreateDate());
+    }
+
+    public static long getOldMillis() {
+        return 7 * 1000; // 7 seconds
+    }
+
+    public Date getOldDate() {
+        return new Date(getCreateDate().getTime() + getOldMillis());
+    }
+
+    public boolean isOld() {
+        Date now = new Date();
+        return now.after(getOldDate());
     }
 
     public static TPTicket fromRedisMessage(RedisMessage redisMessage) {
@@ -72,7 +140,8 @@ public class TPTicket implements Identifiable {
         String[] parts = content.split(";");
 
         String identifier = parts[0];
-        CosmicServer server = new CosmicServer(parts[1]);
+        String serverIdentifier = parts[1];
+        CosmicServer server = new CosmicServer(serverIdentifier);
 
         String worldName = parts[2];
         PlayerWorld targetWorld = new PlayerWorld(worldName);
@@ -101,21 +170,29 @@ public class TPTicket implements Identifiable {
                 String.valueOf(tpTicket.getTargetRotation().getPitch())
         ) + ";";
 
-        return new RedisMessage("tp-ticket:put", content);
+        return new RedisMessage(REDIS_CHANNEL, content);
     }
 
     @Getter @Setter
-    private static ConcurrentSkipListSet<TPTicket> tickets = new ConcurrentSkipListSet<>();
+    private static ConcurrentSkipListSet<TPTicket> pendingTickets = new ConcurrentSkipListSet<>();
 
-    public static void addTicket(TPTicket ticket) {
-        if (ticket != null) {
-            getTickets().add(ticket);
-        }
+    public static void pend(TPTicket ticket) {
+        if (ticket == null) return;
+        pendingTickets.add(ticket);
     }
 
-    public static void removeTicket(TPTicket ticket) {
-        if (ticket != null) {
-            getTickets().removeIf(t -> t.getIdentifier().equalsIgnoreCase(ticket.getIdentifier()));
-        }
+    public static void unpend(TPTicket ticket) {
+        if (ticket == null) return;
+        getPendingTickets().removeIf(t -> t.equals(ticket));
+    }
+
+    public static TPTicket get(Date createDate) {
+        return getPendingTickets().stream().filter(t -> t.getCreateDate().equals(createDate))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static boolean isPending(TPTicket ticket) {
+        return getPendingTickets().stream().anyMatch(t -> t.equals(ticket));
     }
 }

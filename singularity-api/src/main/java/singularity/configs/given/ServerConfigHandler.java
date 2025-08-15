@@ -17,67 +17,58 @@ public class ServerConfigHandler extends SimpleConfiguration {
 
     @Override
     public void init() {
-        getServerUuid();
-        getServerName();
+        getUuid();
+        getName();
     }
 
-    public static String getRandomUUID() {
-        return UUID.randomUUID().toString();
-    }
-
-    public String getServerName() {
+    public String getName() {
         reloadResource();
 
-        return getOrSetDefault("server.name", getServerUuid());
+        return getOrSetDefault("server.name", getUuid());
     }
 
-    public String getServerUuidFromConfig() {
+    public String getUuid() {
         reloadResource();
 
-        return getOrSetDefault("server.uuid", getRandomUUID());
-    }
+        String uuid = getOrSetDefault("server.uuid", UuidUtils.randomStringUuid());
+        if (! isProperUuid(uuid)) {
+            uuid = getProperUuid(uuid);
+            write("server.uuid", uuid);
+        }
 
-    public String getServerUuid() {
-        String uuid = getServerUuidFromConfig();
-        uuid = ensureProperUUID(uuid);
         return uuid;
     }
 
-    public String ensureProperUUID(String uuid) {
-        return ensureProperUUID(uuid, true);
+    public boolean isProperUuid(String uuid) {
+        return ! uuid.equals("00000000-0000-0000-0000-000000000000") && ! uuid.isBlank() && UuidUtils.isUuid(uuid);
     }
 
-    public String ensureProperUUID(String uuid, boolean set) {
-        if (uuid.equals("00000000-0000-0000-0000-000000000000") || uuid.isBlank() || ! UuidUtils.isUuid(uuid)) {
-            uuid = getRandomUUID();
+    public String getProperUuid(String uuid) {
+        if (! isProperUuid(uuid)) {
+            uuid = UuidUtils.randomStringUuid();
         }
-
-        if (set) setServerUuid(uuid);
 
         return uuid;
     }
 
     public SavedServer getServer() {
-        return new SavedServer(getServerUuid(), getServerName(), Singularity.getInstance().getPlatform().getServerType());
+        return new SavedServer(getUuid(), getName(), Singularity.getInstance().getPlatform().getServerType());
     }
 
-    public void setServer(SavedServer server) {
-        write("server.uuid", server.getIdentifier());
-        setServerName(server.getName());
-    }
-
-    public void setServerName(String name) {
+    public void writeName(String name) {
         write("server.name", name);
     }
 
-    public void setServerUuid(String uuid) {
-        setServerUuid(uuid, false);
+    public void writeUuid(String uuid) {
+        if (! isProperUuid(uuid)) {
+            uuid = getProperUuid(uuid);
+        }
+
+        write("server.uuid", uuid);
     }
 
-    public void setServerUuid(String uuid, boolean isEnsureProper) {
-        if (! isEnsureProper) {
-            uuid = ensureProperUUID(uuid, false);
-        }
-        write("server.uuid", uuid);
+    public void writeServer(SavedServer server) {
+        writeName(server.getName());
+        writeUuid(server.getUuid());
     }
 }

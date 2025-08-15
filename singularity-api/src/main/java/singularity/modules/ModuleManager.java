@@ -89,18 +89,24 @@ public class ModuleManager {
                     "&eare installable content &b(&7you can create your own&5!&b)%newline%" +
                     "&ethat either expand upon the core plugin or add%newline%" +
                     "&ecompletely new content to your server&b(&es&b)&7.%newline%" +
-                    "&eInstall them by placing them in your server&7'&es%newline%" +
+                    "&eInstall them by placing them in your servers&7'%newline%" +
                     "&7\"&bplugins -> StreamlineCore -> modules&7\" &efolder&7.%newline%" +
-                    " &eYou can check them out and download them from our%newline%" +
-                    " &ewiki&7, &eour &9&lDiscord &eor on the &cSpigotMC%newline%" +
-                    "&epages for each&7. &eThank you&7!%newline%" +
+                    "&eYou can check them out and download them from our%newline%" +
+                    "&c&lModule Public Download Stash&e. Thanks! And enjoy!%newline%" +
+                    "&r%newline%" +
+                    "&a&m&l                                                 %newline%" +
+                    "&r%newline%" +
+                    "&fUse the following to download &6Modules &ddirectly &c->%newline%" +
+                    "&6Modules &c&lPublic Download Stash&7: &bhttps://storage.drak.gg/share/75RJ__vUBVQrC_PRfuHeTg%newline%" +
+                    "&r%newline%" +
+                    "&a&m&l                                                 %newline%" +
+                    "&r%newline%" +
+                    "&6Streamline &b&lWiki&7: &bhttps://wiki.drak.gg/streamline%newline%" +
+                    "&6Streamline &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
+                    "&6Drak&7'&6s &c&lSocials &6Page&7: &bhttps://drak.gg/socials%newline%" +
+                    "&r%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&cDisable &ethis message in the &bmain-config.yml%newline%" +
-                    "&a&m&l                                                 %newline%" +
-                    "&6Streamline &b&lWiki&7: &bhttps://wiki.plas.host/streamline/modules.html%newline%" +
-                    "&6Streamline &9&lDiscord&7: &bhttps://dsc.gg/streamline%newline%" +
-                    "&6Drak&7'&6s &c&lSpigotMC &6Page&7: &bhttps://www.spigotmc.org/resources/authors/393831%newline%" +
-                    "&6Drak&7'&6s &c&lModrinth &6Page&7: &bhttps://modrinth.com/user/MrDrak%newline%" +
                     "&a&m&l                                                 "
             ;
 

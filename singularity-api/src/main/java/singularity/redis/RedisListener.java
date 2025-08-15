@@ -1,21 +1,15 @@
 package singularity.redis;
 
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
-import redis.clients.jedis.JedisPubSub;
-import singularity.utils.MessageUtils;
 
 @Getter @Setter
-public class RedisListener extends JedisPubSub implements Identifiable {
-    private String identifier;
+public class RedisListener extends AbstractRedisListener implements Identifiable {
 
-    public RedisListener(String identifier) {
-        this.identifier = identifier;
-
-        registerAndLoad();
-
-        MessageUtils.logInfo("&cRedisListener &fregistered: &d" + identifier);
+    public RedisListener(String identifier, String... channels) {
+        super(identifier, channels);
     }
 
     public void load() {
@@ -30,20 +24,8 @@ public class RedisListener extends JedisPubSub implements Identifiable {
         return RedisHandler.isLoaded(this);
     }
 
-    public void register() {
-        RedisClient.withJedis(j -> j.subscribe(this, getChannelsArray()));
-    }
-
     public void registerAndLoad() {
-        register();
+        AsyncUtils.executeAsync(this::register);
         load();
-    }
-
-    public String[] getChannelsArray() {
-        return new String[] {};
-    }
-
-    public static boolean isConnected() {
-        return RedisClient.isConnected();
     }
 }

@@ -42,7 +42,7 @@ public class SetServerCommand extends CosmicCommand {
             return;
         }
 
-        GivenConfigs.setServerName(input);
+        GivenConfigs.writeServerName(input);
 
         context.sendMessage(this.messageResultSet.replace("%this_input%", input));
     }

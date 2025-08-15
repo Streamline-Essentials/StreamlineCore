@@ -34,7 +34,6 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
         getStage().set(TeleportStage.TELEPORTATION);
         tickets.forEach(this::processTicket);
 
-        unpendTickets();
         getStage().set(TeleportStage.READY);
     }
 
@@ -48,7 +47,7 @@ public class PlayerTeleporter extends AbstractPlayerTeleporter {
             if (isOnCorrectServer(ticket)) {
                 Player player = Bukkit.getPlayer(UUID.fromString(ticket.getIdentifier()));
                 if (player == null) {
-                    clearTicket(ticket, 2);
+//                    clearTicket(ticket, 2); // Don't clear. We want to wait for them to connect to the server.
                     return;
                 }
 
