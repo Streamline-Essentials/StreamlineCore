@@ -40,6 +40,7 @@ public class TPTicketFlusher extends BaseRunnable {
             if (p == null || ! p.isOnline()) return;
 
             Singularity.getInstance().getUserManager().teleport(p, ticket.toLocation());
+            ticket.clear();
         });
     }
 
