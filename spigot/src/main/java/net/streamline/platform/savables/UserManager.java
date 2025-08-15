@@ -1,5 +1,6 @@
 package net.streamline.platform.savables;
 
+import host.plas.bou.scheduling.TaskManager;
 import lombok.Getter;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.base.StreamlineSpigot;
@@ -233,6 +234,6 @@ public class UserManager implements IUserManager<CommandSender, Player> {
 
         Location loc = new Location(world, x, y, z, yaw, pitch);
 
-        p.teleport(loc);
+        TaskManager.teleport(p, loc);
     }
 }

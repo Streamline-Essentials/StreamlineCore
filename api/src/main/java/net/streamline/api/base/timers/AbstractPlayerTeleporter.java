@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
-import singularity.redis.RedisClient;
+import singularity.redis.OwnRedisClient;
 import singularity.utils.MessageUtils;
 
 import java.util.concurrent.CompletableFuture;
@@ -114,7 +114,7 @@ public abstract class AbstractPlayerTeleporter extends Thread {
 
             return getAtomicTicketsPending().get();
         } else {
-            return CompletableFuture.completedFuture(TPTicket.getTickets());
+            return CompletableFuture.completedFuture(new ConcurrentSkipListSet<>());
         }
     }
 
@@ -122,7 +122,7 @@ public abstract class AbstractPlayerTeleporter extends Thread {
         if (! isUseRedis()) {
             getAtomicTicketsPending().set(null);
         } else {
-            TPTicket.getTickets().clear();
+            // do nothing for Redis
         }
     }
 
@@ -130,7 +130,7 @@ public abstract class AbstractPlayerTeleporter extends Thread {
         if (! isUseRedis()) {
             return getAtomicTicketsPending().get() != null;
         } else {
-            return ! TPTicket.getTickets().isEmpty();
+            return false;
         }
     }
 
@@ -167,6 +167,6 @@ public abstract class AbstractPlayerTeleporter extends Thread {
      * @return true if Redis is connected, false otherwise.
      */
     public static boolean isUseRedis() {
-        return RedisClient.isConnected();
+        return OwnRedisClient.isConnected();
     }
 }

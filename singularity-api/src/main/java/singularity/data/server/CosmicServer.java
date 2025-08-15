@@ -16,4 +16,14 @@ public class CosmicServer implements Identifiable {
     public String toString() {
         return getIdentifier();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CosmicServer) {
+            CosmicServer other = (CosmicServer) obj;
+            return this.getIdentifier().equals(other.getIdentifier());
+        } else {
+            return super.equals(obj);
+        }
+    }
 }
