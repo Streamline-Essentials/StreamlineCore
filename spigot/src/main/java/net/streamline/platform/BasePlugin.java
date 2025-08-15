@@ -17,7 +17,9 @@ import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
+import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.event.Event;
@@ -29,6 +31,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
+import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.PlayerWorld;
+import singularity.data.players.location.WorldPosition;
 import singularity.data.uuid.UuidInfo;
 import singularity.data.uuid.UuidManager;
 import singularity.events.CosmicEvent;
@@ -534,5 +539,23 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     @Override
     public org.slf4j.Logger getSLFLogger() {
         return null;
+    }
+
+    @Override
+    public void teleportBackend(CosmicPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
+        Player bukkitPlayer = getPlayer(player.getUuid());
+        if (bukkitPlayer == null) return;
+
+        Optional.ofNullable(Bukkit.getWorld(world.getIdentifier())).ifPresent(w -> {
+            Location location = new Location(
+                    w,
+                    position.getX(),
+                    position.getY(),
+                    position.getZ(),
+                    rotation != null ? rotation.getYaw() : 0,
+                    rotation != null ? rotation.getPitch() : 0
+            );
+            host.plas.bou.scheduling.TaskManager.teleport(bukkitPlayer, location);
+        });
     }
 }

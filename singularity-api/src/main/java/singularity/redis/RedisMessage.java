@@ -14,6 +14,6 @@ public class RedisMessage {
     }
 
     public void send() {
-        RedisClient.sendMessage(this);
+        OwnRedisClient.sendMessage(this);
     }
 }

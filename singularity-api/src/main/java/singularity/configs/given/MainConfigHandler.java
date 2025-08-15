@@ -10,7 +10,6 @@ import java.util.UUID;
 public class MainConfigHandler extends SimpleConfiguration {
     public MainConfigHandler() {
         super("main-config.yml", Singularity.getInstance().getDataFolder(), true);
-        init();
     }
 
     public void init() {

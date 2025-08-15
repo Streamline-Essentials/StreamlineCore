@@ -8,6 +8,14 @@ import singularity.data.players.CosmicPlayer;
 import java.util.UUID;
 
 public class UuidUtils {
+    public static UUID randomUuid() {
+        return UUID.randomUUID();
+    }
+
+    public static String randomStringUuid() {
+        return randomUuid().toString();
+    }
+
     public static boolean isUuid(String thing) {
         try {
             UUID.fromString(thing);

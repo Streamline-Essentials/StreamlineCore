@@ -1,5 +1,6 @@
 package singularity.configs.given;
 
+import gg.drak.thebase.async.AsyncUtils;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
@@ -8,10 +9,11 @@ import singularity.data.console.CosmicSender;
 import singularity.database.ConnectorSet;
 import singularity.database.CoreDBOperator;
 import singularity.database.servers.SavedServer;
-import singularity.redis.RedisClient;
+import singularity.redis.OwnRedisClient;
 import singularity.utils.UserUtils;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GivenConfigs {
     @Getter @Setter
@@ -33,7 +35,15 @@ public class GivenConfigs {
     @Getter @Setter
     private static CoreDBOperator mainDatabase;
 
+    @Getter @Setter
+    private static AtomicBoolean databaseReadyAtomic;
+
+    @Getter @Setter
+    private static AtomicBoolean redisReadyAtomic;
+
     public static void init() {
+        setDatabaseReadyAtomic(new AtomicBoolean(false));
+
         setMainConfig(new MainConfigHandler());
         setMainMessages(new MainMessagesHandler());
         setWhitelistConfig(new WhitelistConfig());
@@ -41,14 +51,76 @@ public class GivenConfigs {
         setServerConfig(new ServerConfigHandler());
         setRedisConfig(new RedisConfigHandler());
 
-        try {
-            ConnectorSet connectorSet = getDatabaseConfig().getConnectorSet();
-            CoreDBOperator operator = new CoreDBOperator(connectorSet);
-            setMainDatabase(operator);
+        // Initialize main database asynchronously.
+        AsyncUtils.executeAsync(() -> {
+            try {
+                ConnectorSet connectorSet = getDatabaseConfig().getConnectorSet();
+                CoreDBOperator operator = new CoreDBOperator(connectorSet);
+                setMainDatabase(operator);
 
-            ensureServer();
-        } catch (Exception e) {
-            e.printStackTrace();
+                ensureServer();
+
+                setDatabaseReady(true);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
+
+        // Initialize Redis client asynchronously.
+        AsyncUtils.executeAsync(() -> {
+            try {
+                OwnRedisClient.init();
+
+                setRedisReady(true);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public static boolean isDatabaseReady() {
+        return getDatabaseReadyAtomic() != null && getDatabaseReadyAtomic().get();
+    }
+
+    public static boolean isRedisReady() {
+        return getRedisReadyAtomic() != null && getRedisReadyAtomic().get();
+    }
+
+    public static void setDatabaseReady(boolean ready) {
+        if (getDatabaseReadyAtomic() == null) {
+            setDatabaseReadyAtomic(new AtomicBoolean(ready));
+        } else {
+            getDatabaseReadyAtomic().set(ready);
+        }
+    }
+
+    public static void setRedisReady(boolean ready) {
+        if (getRedisReadyAtomic() == null) {
+            setRedisReadyAtomic(new AtomicBoolean(ready));
+        } else {
+            getRedisReadyAtomic().set(ready);
+        }
+    }
+
+    public static void waitUntilDatabaseReady() {
+        while (! isDatabaseReady()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break; // Exit if interrupted
+            }
+        }
+    }
+
+    public static void waitUntilRedisReady() {
+        while (! isRedisReady()) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break; // Exit if interrupted
+            }
         }
     }
 
@@ -82,14 +154,14 @@ public class GivenConfigs {
     }
 
     public static String getServerName() {
-        return getServerConfig().getServerName();
+        return getServerConfig().getName();
     }
 
-    public static void setServer(SavedServer server) {
-        getServerConfig().setServer(server);
+    public static void writeServer(SavedServer server) {
+        getServerConfig().writeServer(server);
     }
 
-    public static void setServerName(String name) {
-        getServerConfig().setServerName(name);
+    public static void writeServerName(String name) {
+        getServerConfig().writeName(name);
     }
 }

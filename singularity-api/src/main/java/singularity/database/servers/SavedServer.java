@@ -4,6 +4,7 @@ import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
+import singularity.data.server.CosmicServer;
 import singularity.interfaces.ISingularityExtension;
 
 @Getter @Setter
@@ -30,5 +31,9 @@ public class SavedServer implements Identifiable {
     public void push() {
         // Push to database.
         Singularity.getMainDatabase().putServerAsync(this);
+    }
+
+    public CosmicServer getCosmicServer() {
+        return new CosmicServer(getName());
     }
 }
