@@ -70,6 +70,10 @@ public class UuidUtils {
         return Singularity.isOfflineMode();
     }
 
+    public static boolean isNoInternet() {
+        return GivenConfigs.getMainConfig().isNoInternet();
+    }
+
     public static boolean isValidPlayer(CosmicSender sender) {
         if (sender == null) return false;
         if (sender.getIdentifier() == null || sender.getCurrentName() == null || sender.getCurrentName().isBlank()) return false;
@@ -89,28 +93,21 @@ public class UuidUtils {
         if (playerName == null) return false;
         if (playerName.isBlank()) return false;
 
+        if (isNoInternet()) return true;
         if (isOfflineMode()) return true;
 
         UUID uuid = UUIDFetcher.getUUID(playerName);
-        try {
-            return uuid != null;
-        } catch (Throwable e) {
-            return false; // If the player is not found or has no valid profile
-        }
+        return uuid != null;
     }
 
     public static boolean isValidPlayerUUID(String uuid) {
         if (uuid == null) return false;
         if (uuid.isBlank()) return false;
 
+        if (isNoInternet()) return true;
         if (isOfflineMode()) return true;
 
-        try {
-            String name = UUIDFetcher.getName(UUID.fromString(uuid));
-            return name != null;
-        } catch (Throwable e) {
-            MessageUtils.logInfo("Failed to validate player UUID: " + uuid);
-            return false; // If the player is not found or has no valid profile
-        }
+        String name = UUIDFetcher.getName(uuid);
+        return name != null;
     }
 }

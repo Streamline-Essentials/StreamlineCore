@@ -82,3 +82,16 @@ debug:
     debug:
       full-disable: true
       prefix: "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r"
+
+# If this server has no internet access.
+no-internet: false
+
+# Settings for spoofing IP addresses.
+ips:
+  # If you want to spoof IP addresses for players.
+  # Notes:
+  # - Does not actually change their IP address.
+  # - Just changes the IP in the database.
+  spoof: true
+  # The IP address to spoof player IPs to.
+  spoofed: "0.0.0.0"

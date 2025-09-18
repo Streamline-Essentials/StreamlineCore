@@ -28,8 +28,6 @@ public class OwnRedisClient {
 
     @Getter @Setter
     private static TPTicketListener tpTicketListener;
-    @Getter @Setter
-    private static TPTicketFlusher tpTicketFlusher;
 
     @Getter @Setter
     private static RedisClient redisClient;
@@ -103,8 +101,6 @@ public class OwnRedisClient {
         if (isConnected()) {
             tpTicketListener = new TPTicketListener();
             tpTicketListener.registerAndLoad();
-
-            tpTicketFlusher = new TPTicketFlusher();
         } else {
             MessageUtils.logInfo("&cRedis &fis not connected. Disabling Redis features...");
         }
@@ -156,7 +152,7 @@ public class OwnRedisClient {
     public static void sendMessage(RedisMessage message) {
         withRedis(commands -> {
             commands.publish(message.getChannel(), message.getMessage());
-            MessageUtils.logInfo("Sent Redis message on channel: " + message.getChannel() + " with content: " + message.getMessage());
+            MessageUtils.logDebug("Sent Redis message on channel: " + message.getChannel() + " with content: " + message.getMessage());
         });
     }
 }

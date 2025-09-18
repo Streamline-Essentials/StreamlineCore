@@ -1,5 +1,6 @@
 package net.streamline.platform.commands;
 
+import host.plas.bou.utils.SenderUtils;
 import lombok.Getter;
 import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.savables.UserManager;
@@ -38,32 +39,44 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args == null) args = new String[] { "" };
-        if (args.length < 1) args = new String[] { "" };
+        try {
+            if (args == null) args = new String[]{""};
+            if (args.length < 1) args = new String[]{""};
 
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
-        if (s == null) {
-            MessageUtils.logWarning("Cannot tab complete for command '" + label + "' as the sender is not a CosmicSender.");
+            CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+            if (s == null) {
+                MessageUtils.logWarning("Cannot tab complete for command '" + label + "' as the sender is not a CosmicSender.");
+                return new ArrayList<>();
+            }
+
+            ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
+
+            return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
+        } catch (Throwable e) {
+            MessageUtils.logWarning("An error occurred while tab completing command '" + label + "': " + e.getMessage());
+            e.printStackTrace();
             return new ArrayList<>();
         }
-
-        ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, args);
-
-        return r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1]));
     }
 
     @Override
     public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String @NotNull [] args) throws IllegalArgumentException {
-        List<String> completions = onTabComplete(sender, this, alias, args);
-        if (completions == null) {
+        try {
+            List<String> completions = onTabComplete(sender, this, alias, args);
+            if (completions == null) {
+                return new ArrayList<>();
+            }
+
+            return completions.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        } catch (Throwable e) {
+            MessageUtils.logWarning("An error occurred while tab completing command '" + alias + "': " + e.getMessage());
+            e.printStackTrace();
             return new ArrayList<>();
         }
-
-        return completions.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(s -> ! s.isEmpty())
-                .collect(Collectors.toList());
     }
 
     public void register() {
@@ -84,18 +97,26 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
 
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
-        if (s == null) {
-            MessageUtils.logWarning("Cannot execute command '" + commandLabel + "' as the sender is not a CosmicSender.");
+        try {
+            CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
+            if (s == null) {
+                MessageUtils.logWarning("Cannot execute command '" + commandLabel + "' as the sender is not a CosmicSender.");
+                return false;
+            }
+
+            CommandResult<?> result = parent.baseRun(s, args);
+
+            if (result == null) return false;
+            if (result == CosmicCommand.notSet()) return true;
+            if (result == CosmicCommand.error()) return false;
+            if (result == CosmicCommand.failure()) return false;
+            return result == CosmicCommand.success();
+        } catch (Throwable e) {
+            SenderUtils.getSender(sender).sendMessage("&cAn error occurred while executing the command &7'&e" + commandLabel + "&7'&8. &cPlease tell an admin to check the console.");
+
+            MessageUtils.logWarning("An error occurred while executing command '" + commandLabel + "': " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
-
-        CommandResult<?> result = parent.baseRun(s, args);
-
-        if (result == null) return false;
-        if (result == CosmicCommand.notSet()) return true;
-        if (result == CosmicCommand.error()) return false;
-        if (result == CosmicCommand.failure()) return false;
-        return result == CosmicCommand.success();
     }
 }

@@ -19,6 +19,8 @@ public class ServerConfigHandler extends SimpleConfiguration {
     public void init() {
         getUuid();
         getName();
+
+        isAutoCorrect();
     }
 
     public String getName() {
@@ -70,5 +72,11 @@ public class ServerConfigHandler extends SimpleConfiguration {
     public void writeServer(SavedServer server) {
         writeName(server.getName());
         writeUuid(server.getUuid());
+    }
+
+    public boolean isAutoCorrect() {
+        reloadResource();
+
+        return getOrSetDefault("server.auto-correct", true);
     }
 }

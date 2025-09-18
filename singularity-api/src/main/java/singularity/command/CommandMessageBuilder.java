@@ -25,11 +25,11 @@ public class CommandMessageBuilder {
     public static void handle(ProxiedMessage in) {
         if (! in.getSubChannel().equals(getSubChannel())) return;
 
-        MessageUtils.logDebug("Handling command message: " + in);
-
         String server = in.getString("server");
         String command = in.getString("command");
         String as = in.getString("as");
+
+        MessageUtils.logDebug("Handling command message: " + command);
 
         if (server == null || command == null || as == null) {
             MessageUtils.logWarning("Received a command message with null values: " + in);
@@ -37,6 +37,6 @@ public class CommandMessageBuilder {
         }
 
         CommandExecution execution = new CommandExecution(as, command);
-        execution.execute(server);
+        execution.executeMayFail();
     }
 }

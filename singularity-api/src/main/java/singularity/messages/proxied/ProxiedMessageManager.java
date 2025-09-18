@@ -95,6 +95,10 @@ public class ProxiedMessageManager {
                 ServerConnectMessageBuilder.handle(proxiedMessage);
                 return;
             }
+            if (proxiedMessage.getSubChannel().equals(ServerNameMessageBuilder.getSubChannel())) {
+                ServerNameMessageBuilder.handle(proxiedMessage);
+                return;
+            }
         }
     }
 

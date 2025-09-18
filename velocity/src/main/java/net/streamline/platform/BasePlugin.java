@@ -16,7 +16,6 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.base.runnables.PlayerChecker;
-import net.streamline.base.runnables.PlayerTeleporter;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.listeners.PlatformListener;
@@ -27,6 +26,7 @@ import net.streamline.platform.savables.UserManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import singularity.Singularity;
 import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.uuid.UuidInfo;
@@ -182,14 +182,14 @@ public abstract class BasePlugin implements ISingularityExtension {
         getProxy().getChannelRegistrar().register(MinecraftChannelIdentifier.from(SLAPI.getApiChannel()));
 
         playerChecker = new PlayerChecker();
-        PlayerTeleporter.init();
 
         this.enable();
     }
 
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
-        PlayerTeleporter.stopInstance();
+        Singularity.getTpTicketFlusher().cancel();
+        Singularity.getTpTicketPuller().cancel();
 
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);

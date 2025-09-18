@@ -8,3 +8,5 @@ server:
   # The server's UUID (for the database).
   # DO NOT CHANGE this unless you know what you're doing.
   uuid: "00000000-0000-0000-0000-000000000000"
+  # Automatically correct the server's name upon player join?
+  auto-correct: true
