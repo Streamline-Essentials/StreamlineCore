@@ -40,6 +40,11 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugDisabled();
         debugConsoleDebugPrefix();
 
+        isNoInternet();
+
+        isSpoofIPs();
+        getSpoofedIP();
+
 //        getHexPolicies();
     }
 
@@ -215,5 +220,23 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("debug.console.debug.prefix", "&f[&3StreamlineCore&f] &f[&cDEBUG&f] &r");
+    }
+
+    public boolean isNoInternet() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("no-internet", false);
+    }
+
+    public boolean isSpoofIPs() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("ips.spoof", true);
+    }
+
+    public String getSpoofedIP() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("ips.spoofed", "0.0.0.0");
     }
 }

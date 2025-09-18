@@ -3,15 +3,13 @@ package singularity.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.io.StringReader;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -81,7 +79,9 @@ public class UUIDFetcher {
                     return null; // If the response is not OK, return null.
                 }
 
-                JsonElement parsed = JsonParser.parseString(response.body());
+                StringReader stringReader = new StringReader(response.body());
+                JsonReader jsonReader = new JsonReader(stringReader);
+                JsonElement parsed = JsonParser.parseReader(jsonReader);
                 if (parsed == null || !parsed.isJsonObject()) {
                     MessageUtils.logInfo("Failed to parse JSON response for UUID: " + uuid);
                     return null;

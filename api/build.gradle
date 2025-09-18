@@ -19,6 +19,9 @@ dependencies {
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
+    // The Base
+    compileOnly('com.github.Server-Utilities:TheBase:master-SNAPSHOT')
+
     // Files.
 //    implementation(shadow(files(FILES)));
 }

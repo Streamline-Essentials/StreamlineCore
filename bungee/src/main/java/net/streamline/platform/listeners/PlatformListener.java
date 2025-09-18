@@ -1,5 +1,6 @@
 package net.streamline.platform.listeners;
 
+import gg.drak.thebase.async.AsyncUtils;
 import net.md_5.bungee.api.Favicon;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
@@ -20,6 +21,7 @@ import singularity.data.players.CosmicPlayer;
 import singularity.data.uuid.UuidManager;
 import singularity.events.server.*;
 import singularity.events.server.ping.PingReceivedEvent;
+import singularity.messages.builders.ServerNameMessageBuilder;
 import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleManager;
@@ -101,7 +103,15 @@ public class PlatformListener implements Listener {
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
         streamPlayer.setCurrentName(player.getName());
         Server server = player.getServer();
-        if (server != null) streamPlayer.setServerName(server.getInfo().getName());
+        if (server != null) {
+            String serverName = server.getInfo().getName();
+
+            streamPlayer.setServerName(serverName);
+
+            if (GivenConfigs.getServerConfig().isAutoCorrect()) {
+                AsyncUtils.runAsync(() -> ServerNameMessageBuilder.build(streamPlayer, serverName).send(), 20); // After 20 ticks (1 second)
+            }
+        }
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
@@ -134,7 +144,12 @@ public class PlatformListener implements Listener {
             return;
         }
 
-        streamPlayer.setServerName(event.getServer().getInfo().getName());
+        String serverName = event.getServer().getInfo().getName();
+        streamPlayer.setServerName(serverName);
+
+        if (GivenConfigs.getServerConfig().isAutoCorrect()) {
+            AsyncUtils.runAsync(() -> ServerNameMessageBuilder.build(streamPlayer, serverName).send(), 20); // After 20 ticks (1 second)
+        }
     }
 
     @EventHandler

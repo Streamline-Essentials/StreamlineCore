@@ -4,6 +4,7 @@ import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import lombok.Getter;
 import net.streamline.base.StreamlineVelocity;
+import net.streamline.platform.Messenger;
 import net.streamline.platform.savables.UserManager;
 import singularity.command.CosmicCommand;
 import singularity.data.console.CosmicSender;
@@ -31,28 +32,40 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
 
     @Override
     public void execute(Invocation invocation) {
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
-        if (s == null) {
-            MessageUtils.logWarning("Command execution failed: Sender is null.");
-            return;
-        }
+        try {
+            CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
+            if (s == null) {
+                MessageUtils.logWarning("Command execution failed: Sender is null.");
+                return;
+            }
 
-        parent.baseRun(s, invocation.arguments());
+            parent.baseRun(s, invocation.arguments());
+        } catch (Throwable e) {
+            Messenger.getInstance().sendMessage(invocation.source(), "&cAn error occurred while executing the command &7'&e" + invocation.alias() + "&7'&8. &cPlease tell an admin to check the console.");
+            MessageUtils.logWarning("An error occurred while executing command '" + base + "': " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
     public CompletableFuture<List<String>> suggestAsync(Invocation invocation) {
-        String[] args = invocation.arguments();
-        if (args.length < 1) args = new String[] { "" };
-        CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
-        if (s == null) {
-            MessageUtils.logWarning("Command suggestion failed: Sender is null.");
+        try {
+            String[] args = invocation.arguments();
+            if (args.length < 1) args = new String[]{""};
+            CosmicSender s = UserManager.getInstance().getOrCreateSender(invocation.source()).orElse(null);
+            if (s == null) {
+                MessageUtils.logWarning("Command suggestion failed: Sender is null.");
+                return CompletableFuture.completedFuture(new ArrayList<>());
+            }
+
+            ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, invocation.arguments());
+
+            return CompletableFuture.completedFuture(r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1])));
+        } catch (Throwable e) {
+            MessageUtils.logWarning("An error occurred while suggesting command '" + base + "': " + e.getMessage());
+            e.printStackTrace();
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
-
-        ConcurrentSkipListSet<String> r = parent.baseTabComplete(s, invocation.arguments());
-
-        return CompletableFuture.completedFuture(r == null ? new ArrayList<>() : new ArrayList<>(MessageUtils.getCompletion(r, args[args.length - 1])));
     }
 
     @Override

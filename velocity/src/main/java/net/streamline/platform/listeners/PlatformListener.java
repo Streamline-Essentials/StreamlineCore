@@ -15,6 +15,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
+import gg.drak.thebase.async.AsyncUtils;
 import net.streamline.api.SLAPI;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
@@ -28,6 +29,7 @@ import singularity.data.players.CosmicPlayer;
 import singularity.data.uuid.UuidManager;
 import singularity.events.server.*;
 import singularity.events.server.ping.PingReceivedEvent;
+import singularity.messages.builders.ServerNameMessageBuilder;
 import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleManager;
@@ -94,7 +96,15 @@ public class PlatformListener {
 
         streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player.getUniqueId().toString()));
         streamPlayer.setCurrentName(player.getUsername());
-        player.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
+        player.getCurrentServer().ifPresent(serverConnection -> {
+            String serverName = serverConnection.getServerInfo().getName();
+
+            streamPlayer.setServerName(serverName);
+
+            if (GivenConfigs.getServerConfig().isAutoCorrect()) {
+                AsyncUtils.runAsync(() -> ServerNameMessageBuilder.build(streamPlayer, serverName).send(), 20); // After 20 ticks (1 second)
+            }
+        });
 
         LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginCompletedEvent);
@@ -127,7 +137,12 @@ public class PlatformListener {
             return;
         }
 
-        streamPlayer.setServerName(event.getServer().getServerInfo().getName());
+        String serverName = event.getServer().getServerInfo().getName();
+        streamPlayer.setServerName(serverName);
+
+        if (GivenConfigs.getServerConfig().isAutoCorrect()) {
+            AsyncUtils.runAsync(() -> ServerNameMessageBuilder.build(streamPlayer, serverName).send(), 20); // After 20 ticks (1 second)
+        }
     }
 
     @Subscribe
