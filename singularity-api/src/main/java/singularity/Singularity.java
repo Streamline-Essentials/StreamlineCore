@@ -1,13 +1,11 @@
 package singularity;
 
 import ch.qos.logback.classic.LoggerContext;
-import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.SingleSet;
 import gg.drak.thebase.objects.handling.derived.PluginEventable;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
 import singularity.data.runners.PlayerSaver;
@@ -16,7 +14,6 @@ import singularity.data.uuid.UuidInfo;
 import singularity.data.uuid.UuidManager;
 import singularity.database.CoreDBOperator;
 import singularity.database.servers.SavedServer;
-import singularity.events.server.ServerLogTextEvent;
 import singularity.interfaces.*;
 import singularity.interfaces.audiences.IPlayerInterface;
 import singularity.interfaces.audiences.IConsoleHolder;
@@ -29,8 +26,10 @@ import singularity.messages.ProxyMessenger;
 import singularity.messages.proxied.ProxiedMessageManager;
 import singularity.modules.CosmicModule;
 import singularity.modules.ModuleUtils;
+import singularity.timers.TPTicketFlusher;
 import singularity.scheduler.BaseRunnable;
 import singularity.scheduler.ModuleTaskManager;
+import singularity.timers.TPTicketPuller;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
@@ -43,7 +42,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 public class Singularity<C, P extends C, S extends ISingularityExtension, U extends IUserManager<C, P>, M extends IMessenger> extends PluginEventable {
     public static class CommandRunner extends BaseRunnable {
@@ -169,6 +167,11 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     private static boolean proxy;
 
     @Getter @Setter
+    private static TPTicketFlusher tpTicketFlusher;
+    @Getter @Setter
+    private static TPTicketPuller tpTicketPuller;
+
+    @Getter @Setter
     private static boolean ready = false;
 
     public static CoreDBOperator getMainDatabase() {
@@ -265,6 +268,9 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         playerSaver = new PlayerSaver();
 
         LogCollector.init();
+
+        tpTicketFlusher = new TPTicketFlusher();
+        tpTicketPuller = new TPTicketPuller();
 
         setReady(true);
     }

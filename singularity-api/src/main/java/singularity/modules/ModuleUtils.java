@@ -5,6 +5,7 @@ import singularity.Singularity;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
+import singularity.data.server.CosmicServer;
 import singularity.interfaces.ISingularityExtension;
 import singularity.interfaces.audiences.real.RealSender;
 import singularity.interfaces.audiences.real.RealPlayer;
@@ -332,6 +333,10 @@ public class ModuleUtils {
         Singularity.getInstance().getUserManager().connect(player, server);
     }
 
+    public static void connect(CosmicSender user, CosmicServer server) {
+        connect(user, server.getIdentifier());
+    }
+
     public static boolean isGeyserPlayer(CosmicPlayer user) {
         return UserUtils.isGeyserPlayer(user);
     }
@@ -388,11 +393,21 @@ public class ModuleUtils {
         Singularity.getInstance().getUserManager().kick(user, "&cConnection Closed by Server");
     }
 
+    /**
+     * @deprecated Use {@link UserUtils#teleport(CosmicSender, CosmicPlayer)} instead.
+     * @param player The player to teleport.
+     * @param target The target player to teleport to.
+     */
+    @Deprecated(since = "2.5.5.0")
     public static void teleport(CosmicPlayer player, CosmicPlayer target) {
         UserUtils.teleport(player, target);
     }
 
-    public static void teleport(CosmicPlayer player, CosmicLocation location) {
+    public static void teleport(CosmicSender player, CosmicPlayer target) {
+        UserUtils.teleport(player, target);
+    }
+
+    public static void teleport(CosmicSender player, CosmicLocation location) {
         UserUtils.teleport(player, location);
     }
 

@@ -12,8 +12,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.base.runnables.PlayerChecker;
-import net.streamline.base.runnables.PlayerTeleporter;
-import singularity.logging.CosmicLogHandler;
+import singularity.Singularity;
 import singularity.messages.builders.ResourcePackMessageBuilder;
 import singularity.objects.CosmicResourcePack;
 import singularity.utils.StorageUtils;
@@ -135,7 +134,6 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         getProxy().registerChannel(SLAPI.getApiChannel());
 
         playerChecker = new PlayerChecker();
-        PlayerTeleporter.init();
 
         this.enable();
         fireStartEvent();
@@ -150,7 +148,8 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
 
     @Override
     public void onDisable() {
-        PlayerTeleporter.stopInstance();
+        Singularity.getTpTicketFlusher().cancel();
+        Singularity.getTpTicketPuller().cancel();
 
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);

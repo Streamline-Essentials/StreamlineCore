@@ -121,11 +121,19 @@ public class CosmicFavicon {
         return new CosmicFavicon( encoded, image );
     }
 
-    public static CosmicFavicon createFromURL(URL url) throws IOException {
-        return create(ImageIO.read(url));
+    public static CosmicFavicon createFromURL(URL url) {
+        try {
+            return create(ImageIO.read(url));
+        } catch (Throwable e) {
+            return null;
+        }
     }
 
-    public static CosmicFavicon createFromURL(String url) throws IOException {
-        return createFromURL(URI.create(url).toURL());
+    public static CosmicFavicon createFromURL(String url) {
+        try {
+            return createFromURL(URI.create(url).toURL());
+        } catch (Throwable e) {
+            return null;
+        }
     }
 }

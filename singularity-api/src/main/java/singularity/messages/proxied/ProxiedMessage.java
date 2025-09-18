@@ -41,6 +41,15 @@ public class ProxiedMessage implements Comparable<ProxiedMessage> {
         return getString(getSubChannelKey());
     }
 
+    public String getLiteralAsString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(getSubChannel()).append("->");
+        getLiteralContents().forEach((key, value) -> {
+            builder.append(getJustifiedContent(key, value));
+        });
+        return builder.toString();
+    }
+
     private final CosmicPlayer carrier;
     private final boolean proxyOriginated;
     private final String mainChannel;

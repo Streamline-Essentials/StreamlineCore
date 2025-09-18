@@ -10,6 +10,9 @@ dependencies {
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
+    // The Base
+    implementation(shadow('com.github.Server-Utilities:TheBase:master-SNAPSHOT'))
+
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
     compileOnly project(path: ':StreamlineCore-Singularity')

@@ -55,13 +55,17 @@ public class CommandExecution {
         } else {
             if (
                     serverInput.equals("HERE") ||
-                    (Singularity.isProxy() && (serverInput.equals("PROXY") || serverInput.equals("--null")))
+                            (Singularity.isProxy() && (serverInput.equals("PROXY") || serverInput.equals("--null")) || serverInput.equals(GivenConfigs.getServerName()))
             ) {
                 executeHere();
             } else {
                 executeServer(serverInput);
             }
         }
+    }
+
+    public void executeMayFail() {
+        executeHere();
     }
 
     public void executeHere() {
