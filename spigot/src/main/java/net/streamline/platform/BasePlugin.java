@@ -10,7 +10,6 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.apib.SLAPIB;
 import net.streamline.base.runnables.PlayerChecker;
-import net.streamline.base.runnables.PlayerTeleporter;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.listeners.PlatformListener;
@@ -19,11 +18,11 @@ import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import org.bukkit.Location;
 import org.bukkit.Server;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
+import singularity.Singularity;
 import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
 import net.streamline.platform.savables.UserManager;
@@ -171,7 +170,6 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         getProxy().getMessenger().registerIncomingPluginChannel(this, SLAPI.getApiChannel(), proxyMessagingListener);
 
         playerChecker = new PlayerChecker();
-        PlayerTeleporter.init();
 
         this.enable();
         registerListener(new PlatformListener());
@@ -179,7 +177,8 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     @Override
     public void onBaseDisable() {
-        PlayerTeleporter.stopInstance();
+        Singularity.getTpTicketFlusher().cancel();
+        Singularity.getTpTicketPuller().cancel();
 
         UserUtils.syncAllUsers();
         UuidManager.getUuids().forEach(UuidInfo::save);
@@ -438,7 +437,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         try {
             // Register all the commands into the map
             for (final ProperCommand command : commands) {
-                commandMap.register(command.getLabel(), command.getParent().getBase(), command);
+                commandMap.register(command.getParent().getBase(), command.getLabel(), command);
 
                 try {
                     commandMap.register("streamlinecore", command);
@@ -479,7 +478,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
                     // Unregister the command
                     final Field knownCommandsField = commandMap.getClass().getDeclaredField("knownCommands");
                     knownCommandsField.setAccessible(true);
-                    @SuppressWarnings("unchecked") final Map<String, Command> knownCommands = (java.util.Map<String, Command>) knownCommandsField.get(commandMap);
+                    @SuppressWarnings("unchecked") final Map<String, Command> knownCommands = (Map<String, Command>) knownCommandsField.get(commandMap);
 
                     // Remove the command and its aliases
                     knownCommands.remove(com.getName());

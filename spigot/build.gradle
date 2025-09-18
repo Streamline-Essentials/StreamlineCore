@@ -27,7 +27,7 @@ dependencies {
     // Streamline BAPI with exclusion for a specific dependency
     implementation(project(path: ':StreamlineCore-BAPI', configuration: 'shadow')) {
         // Correct way to exclude dependency
-        exclude group: "com.github.server-utilities", module: "TheBase"
+        exclude group: "com.github.Server-Utilities", module: "TheBase"
         exclude group: "gg.drak.thebase"
     }
 

@@ -1,5 +1,6 @@
 package singularity.objects;
 
+import gg.drak.thebase.lib.leonhard.storage.shaded.jetbrains.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -73,7 +74,7 @@ public class PingedResponse {
 
     @Getter @Setter
     private String description;
-    @Getter @Setter
+    @Getter @Setter @Nullable
     private CosmicFavicon favicon;
 
     @Data

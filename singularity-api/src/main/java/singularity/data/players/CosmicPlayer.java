@@ -1,8 +1,8 @@
 package singularity.data.players;
 
-import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
+import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.events.SaveSenderEvent;
 import singularity.data.players.location.CosmicLocation;
@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class CosmicPlayer extends CosmicSender {
-    @Getter
     private String currentIp;
     @Setter
     private CosmicLocation location;
@@ -46,12 +45,24 @@ public class CosmicPlayer extends CosmicSender {
     public CosmicSender setCurrentIp(String currentIP) {
         String processed = currentIP;
 
-        if (processed == null || processed.isBlank() || processed.isEmpty()) {
-            processed = Singularity.getInstance().getUserManager().parsePlayerIP(getUuid());
+        if (! GivenConfigs.getMainConfig().isSpoofIPs()) {
+            if (processed == null || processed.isBlank() || processed.isEmpty()) {
+                processed = Singularity.getInstance().getUserManager().parsePlayerIP(getUuid());
+            }
+        } else {
+            processed = GivenConfigs.getMainConfig().getSpoofedIP();
         }
 
         this.currentIp = processed;
         return this;
+    }
+
+    public String getCurrentIp() {
+        if (! GivenConfigs.getMainConfig().isSpoofIPs()) {
+            return this.currentIp;
+        } else {
+            return GivenConfigs.getMainConfig().getSpoofedIP();
+        }
     }
 
     @Override

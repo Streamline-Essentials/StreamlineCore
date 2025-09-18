@@ -443,6 +443,12 @@ public class UserUtils {
         teleport(sender, target.getLocation());
     }
 
+    /**
+     * Teleports a sender to a location, using TPTickets.
+     * Should only be called to use a TPTicket for posting, not for direct teleportation.
+     * @param sender the sender to teleport
+     * @param location the location to teleport to
+     */
     public static void teleport(CosmicSender sender, CosmicLocation location) {
         if (sender.isConsole()) {
             MessageUtils.logWarning("Console attempted to teleport to " + location.asString());

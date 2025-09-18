@@ -390,10 +390,32 @@ public class CosmicSender implements Loadable<CosmicSender> {
     }
 
     public void teleport(CosmicPlayer player) {
-        UserUtils.teleport(this, player);
+        ModuleUtils.teleport(this, player);
     }
 
     public void teleport(CosmicLocation location) {
-        UserUtils.teleport(this, location);
+        ModuleUtils.teleport(this, location);
+    }
+
+    public void connect(CosmicServer server) {
+        if (server == null) {
+            MessageUtils.logWarning("Cannot connect to null server for player " + getUuid() + ".");
+            return;
+        }
+
+        ModuleUtils.connect(this, server);
+    }
+
+    public void connect(CosmicSender other) {
+        connect(other.getServer());
+    }
+
+    public void connect(String serverName) {
+        if (serverName == null || serverName.isEmpty()) {
+            MessageUtils.logWarning("Cannot connect to null server for player " + getUuid() + ".");
+            return;
+        }
+
+        ModuleUtils.connect(this, serverName);
     }
 }
