@@ -11,9 +11,9 @@ buildscript {
     }
 }
 
-plugins {
-    id "maven-publish"
-}
+//plugins {
+//    id "maven-publish"
+//}
 
 allprojects {
     apply plugin: "java"
@@ -191,8 +191,8 @@ subprojects {
                 url = "https://repo.codemc.io/repository/streamline-essentials/" //
 
                 //
-                def mavenUsername = System.getenv("JENKINS_USERNAME")
-                def mavenPassword = System.getenv("JENKINS_PASSWORD")
+                def mavenUsername = System.getenv("JENKINS_NEXUS_USERNAME")
+                def mavenPassword = System.getenv("JENKINS_NEXUS_PASSWORD")
 
                 if (mavenUsername != null && mavenPassword != null) {
                     credentials {
@@ -244,121 +244,121 @@ wrapper {
     distributionType = Wrapper.DistributionType.ALL
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = project.group
-            artifactId = "StreamlineCore"
-            version = project.version
-
-            from components.java
-        }
-//        deployFiles(MavenPublication) {
+//publishing {
+//    publications {
+//        mavenJava(MavenPublication) {
 //            groupId = project.group
-//            artifactId = "StreamlineCore-Singularity"
+//            artifactId = "StreamlineCore"
 //            version = project.version
 //
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-Singularity-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
+//            from components.java
+//        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-Singularity"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-Singularity-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-API"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-API-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-BAPI"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-BAPI-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-Bungee"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-Bungee-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-Spigot"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-Spigot-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+////        deployFiles(MavenPublication) {
+////            groupId = project.group
+////            artifactId = "StreamlineCore-Velocity"
+////            version = project.version
+////
+////            // Include all .jar files from the deploy directory
+////            fileTree("$rootDir/deploy").matching {
+////                include 'StreamlineCore-Velocity-*.jar'
+////            }.each { File jarFile ->
+////                artifact(jarFile) {
+////                    classifier = jarFile.nameWithoutExtension
+////                    extension = 'jar'
+////                }
+////            }
+////        }
+//    }
+//
+//    repositories {
+//        maven {
+//            url = "https://repo.codemc.io/repository/streamline-essentials/" //
+//
+//            //
+//            def mavenUsername = System.getenv("JENKINS_NEXUS_USERNAME")
+//            def mavenPassword = System.getenv("JENKINS_NEXUS_PASSWORD")
+//
+//            if (mavenUsername != null && mavenPassword != null) {
+//                credentials {
+//                    username = mavenUsername
+//                    password = mavenPassword
 //                }
 //            }
 //        }
-//        deployFiles(MavenPublication) {
-//            groupId = project.group
-//            artifactId = "StreamlineCore-API"
-//            version = project.version
-//
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-API-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
-//                }
-//            }
-//        }
-//        deployFiles(MavenPublication) {
-//            groupId = project.group
-//            artifactId = "StreamlineCore-BAPI"
-//            version = project.version
-//
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-BAPI-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
-//                }
-//            }
-//        }
-//        deployFiles(MavenPublication) {
-//            groupId = project.group
-//            artifactId = "StreamlineCore-Bungee"
-//            version = project.version
-//
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-Bungee-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
-//                }
-//            }
-//        }
-//        deployFiles(MavenPublication) {
-//            groupId = project.group
-//            artifactId = "StreamlineCore-Spigot"
-//            version = project.version
-//
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-Spigot-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
-//                }
-//            }
-//        }
-//        deployFiles(MavenPublication) {
-//            groupId = project.group
-//            artifactId = "StreamlineCore-Velocity"
-//            version = project.version
-//
-//            // Include all .jar files from the deploy directory
-//            fileTree("$rootDir/deploy").matching {
-//                include 'StreamlineCore-Velocity-*.jar'
-//            }.each { File jarFile ->
-//                artifact(jarFile) {
-//                    classifier = jarFile.nameWithoutExtension
-//                    extension = 'jar'
-//                }
-//            }
-//        }
-    }
-
-    repositories {
-        maven {
-            url = "https://repo.codemc.io/repository/streamline-essentials/" //
-
-            //
-            def mavenUsername = System.getenv("JENKINS_USERNAME")
-            def mavenPassword = System.getenv("JENKINS_PASSWORD")
-
-            if (mavenUsername != null && mavenPassword != null) {
-                credentials {
-                    username = mavenUsername
-                    password = mavenPassword
-                }
-            }
-        }
-    }
-}
+//    }
+//}
