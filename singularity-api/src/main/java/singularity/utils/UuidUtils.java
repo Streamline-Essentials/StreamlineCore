@@ -4,7 +4,10 @@ import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
+import singularity.holders.HoldersHolder;
+import singularity.holders.builtin.CosmicGeyserHolder;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class UuidUtils {
@@ -85,6 +88,8 @@ public class UuidUtils {
 
         if (isOfflineMode()) return true;
 
+        if (isBedrockUUID(player.getUuid())) return true;
+
         String name = UUIDFetcher.getName(player.getIdentifier());
         return name != null && ! name.isBlank() && name.equals(player.getCurrentName());
     }
@@ -95,6 +100,8 @@ public class UuidUtils {
 
         if (isNoInternet()) return true;
         if (isOfflineMode()) return true;
+
+        if (isBedrockName(playerName)) return true;
 
         UUID uuid = UUIDFetcher.getUUID(playerName);
         return uuid != null;
@@ -107,7 +114,33 @@ public class UuidUtils {
         if (isNoInternet()) return true;
         if (isOfflineMode()) return true;
 
+        if (isBedrockUUID(uuid)) return true;
+
         String name = UUIDFetcher.getName(uuid);
         return name != null;
+    }
+
+    public static Optional<CosmicGeyserHolder> getGeyserHolder() {
+        return Optional.ofNullable(HoldersHolder.getGeyserHolder());
+    }
+
+    public static boolean isBedrockUUID(String uuid) {
+        return getGeyserHolder().map(h -> h.isBedrockUUID(uuid)).orElse(false);
+    }
+
+    public static boolean isBedrockName(String name) {
+        return getGeyserHolder().map(h -> h.isBedrockName(name)).orElse(false);
+    }
+
+    public static String getBedrockPrefix() {
+        return getGeyserHolder().map(CosmicGeyserHolder::getBedrockPrefix).orElse(null);
+    }
+
+    public static String getUsernameFromBedrockUUID(String uuid) {
+        return getGeyserHolder().map(h -> h.getUsernameFromBedrockUUID(uuid)).orElse(null);
+    }
+
+    public static String getBedrockUUIDFromUsername(String name) {
+        return getGeyserHolder().map(h -> h.getBedrockUUIDFromUsername(name)).orElse(null);
     }
 }
