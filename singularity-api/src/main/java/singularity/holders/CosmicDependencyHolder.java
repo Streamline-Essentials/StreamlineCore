@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 @Setter
 @Getter
-public abstract class CosmicDependencyHolder<T> {
+public abstract class CosmicDependencyHolder<T> implements CosmicHolder {
     private ConcurrentSkipListMap<Integer, String> keysToTry;
     private T api;
     private String identifier;

@@ -8,6 +8,7 @@ import net.streamline.api.base.commands.GivenCommands;
 import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.UserEnsureTimer;
 import net.streamline.api.base.timers.UserSyncTimer;
+import net.streamline.api.holders.HolderCompat;
 import net.streamline.api.permissions.MetaGrabberImpl;
 import singularity.Singularity;
 import singularity.interfaces.IMessenger;
@@ -61,6 +62,8 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
         oneSecondTimer = new OneSecondTimer();
         userSyncTimer = new UserSyncTimer();
         userEnsureTimer = new UserEnsureTimer();
+
+        HolderCompat.init();
     }
 
     public static void onEnable() {
