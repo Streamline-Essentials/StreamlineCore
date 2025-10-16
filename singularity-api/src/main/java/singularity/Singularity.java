@@ -280,26 +280,30 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     }
 
     public void setupLogger() {
-        if (getPlatform().hasLoggerLogger()) {
-            java.util.logging.Logger rootLogger = getPlatform().getLoggerLogger();
+        try {
+            if (getPlatform().hasLoggerLogger()) {
+                java.util.logging.Logger rootLogger = getPlatform().getLoggerLogger();
 
-            // Add the custom handler
-            CosmicLogHandler handler = new CosmicLogHandler();
-            rootLogger.addHandler(handler);
-        }
-        if (getPlatform().hasSLFLogger()) {
-            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+                // Add the custom handler
+                CosmicLogHandler handler = new CosmicLogHandler();
+                rootLogger.addHandler(handler);
+            }
+            if (getPlatform().hasSLFLogger()) {
+                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
 
-            // Remove existing appenders
-            rootLogger.detachAndStopAllAppenders();
+                // Remove existing appenders
+                rootLogger.detachAndStopAllAppenders();
 
-            // Add custom appender
-            CosmicLogbackAppender appender = new CosmicLogbackAppender();
-            appender.setContext(loggerContext);
-            appender.setName("CosmicLogbackAppender");
-            appender.start();
-            rootLogger.addAppender(appender);
+                // Add custom appender
+                CosmicLogbackAppender appender = new CosmicLogbackAppender();
+                appender.setContext(loggerContext);
+                appender.setName("CosmicLogbackAppender");
+                appender.start();
+                rootLogger.addAppender(appender);
+            }
+        } catch (Exception e) {
+            // nothing
         }
     }
 
