@@ -13,20 +13,14 @@ public class StreamlineBungee extends BasePlugin {
 
     @Override
     public void enable() {
-        try {
-            ModuleManager.registerExternalModules();
-            ModuleManager.startModules();
-//            setServerPusher(new ServerPusher());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         Metrics metrics = new Metrics(this, 26272);
         metrics.addCustomChart(new Metrics.SimplePie("plugin_version", () -> getDescription().getVersion()));
         metrics.addCustomChart(new Metrics.SimplePie("modules_loaded_count", () -> String.valueOf(ModuleManager.getLoadedModules().size())));
         metrics.addCustomChart(new Metrics.SimplePie("modules_enabled_count", () -> String.valueOf(ModuleManager.getEnabledModules().size())));
         metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_loaded", () -> ModuleManager.getLoadedModules().size()));
         metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_enabled", () -> ModuleManager.getEnabledModules().size()));
+
+        setPlatformAsEnabled();
     }
 
     @Override

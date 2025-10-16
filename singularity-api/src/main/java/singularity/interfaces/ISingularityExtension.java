@@ -1,5 +1,6 @@
 package singularity.interfaces;
 
+import singularity.Singularity;
 import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.PlayerRotation;
@@ -85,5 +86,9 @@ public interface ISingularityExtension {
 
     default void teleportBackend(CosmicPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
         // do nothing by default
+    }
+
+    default void setPlatformAsEnabled() {
+        Singularity.platformEnabled(true);
     }
 }

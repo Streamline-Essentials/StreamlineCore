@@ -13,13 +13,6 @@ public class StreamlineSpigot extends BasePlugin {
 
     @Override
     public void enable() {
-        try {
-            ModuleManager.registerExternalModules();
-            ModuleManager.startModules();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         Metrics metrics = new Metrics(this, 26273);
         metrics.addCustomChart(new Metrics.SimplePie("plugin_version", () -> getDescription().getVersion()));
         metrics.addCustomChart(new Metrics.SimplePie("modules_loaded_count", () -> String.valueOf(ModuleManager.getLoadedModules().size())));
@@ -28,6 +21,8 @@ public class StreamlineSpigot extends BasePlugin {
         metrics.addCustomChart(new Metrics.SingleLineChart("total_modules_enabled", () -> ModuleManager.getEnabledModules().size()));
 
         streamlineSpigotCommand = new StreamlineSpigotCommand();
+
+        setPlatformAsEnabled();
     }
 
     @Override
