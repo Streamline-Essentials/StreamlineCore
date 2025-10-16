@@ -26,6 +26,7 @@ import singularity.logging.LogCollector;
 import singularity.messages.ProxyMessenger;
 import singularity.messages.proxied.ProxiedMessageManager;
 import singularity.modules.CosmicModule;
+import singularity.modules.ModuleManager;
 import singularity.modules.ModuleUtils;
 import singularity.timers.TPTicketFlusher;
 import singularity.scheduler.BaseRunnable;
@@ -38,7 +39,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -192,11 +192,14 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
     @Getter @Setter
     private static AtomicBoolean databaseReady;
+    @Getter @Setter
+    private static AtomicBoolean platformEnabled;
 
     public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter, String apiChannel) {
         super(identifier);
         instance = this;
         databaseReady = new AtomicBoolean(false);
+        platformEnabled = new AtomicBoolean(false);
 
         // Field Stuff
         this.platform = platform;
@@ -251,8 +254,17 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         this(identifier, platform, userManager, messenger, consoleHolder, playerInterface, null, apiChannel);
     }
 
+    public static boolean isPlatformEnabled() {
+        return platformEnabled != null && platformEnabled.get();
+    }
+
+    public static void platformEnabled(boolean platformEnabled) {
+        if (Singularity.platformEnabled == null) Singularity.platformEnabled = new AtomicBoolean(false);
+        Singularity.platformEnabled.set(platformEnabled);
+    }
+
     public void initDatabase() {
-        GivenConfigs.waitUntilDatabaseReady();
+        GivenConfigs.awaitDatabaseReady();
 
         try {
             getMainDatabase().ensureUsable();
@@ -273,7 +285,7 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     }
 
     public void initModules(Supplier<CosmicModule> baseModuleGetter) {
-        waitUntilDatabaseReady(); // Ensure database is ready before loading modules.
+        awaitDatabaseReady(); // Ensure database is ready before loading modules.
 
         moduleScheduler = new ModuleTaskManager(); // Init scheduler first.
 
@@ -293,6 +305,25 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
 //        baseModule = new BaseModule();
 //        ModuleManager.registerModule(getBaseModule());
+
+
+        try {
+            awaitPlatformEnabled();
+
+            ModuleManager.registerExternalModules();
+            ModuleManager.startModules();
+//            setServerPusher(new ServerPusher());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void awaitPlatformEnabled() {
+        if (isPlatformEnabled()) return;
+
+        while (! isPlatformEnabled()) {
+            Thread.onSpinWait();
+        }
     }
 
     public void setupLogger() {
@@ -334,7 +365,7 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     /**
      * Blocks the thread calling this method until the database is ready.
      */
-    public static void waitUntilDatabaseReady() {
+    public static void awaitDatabaseReady() {
         if (isDatabaseReady()) return;
 
         // Spin wait until the database is ready.
