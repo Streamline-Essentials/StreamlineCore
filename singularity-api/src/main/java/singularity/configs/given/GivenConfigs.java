@@ -102,7 +102,7 @@ public class GivenConfigs {
         }
     }
 
-    public static void waitUntilDatabaseReady() {
+    public static void awaitDatabaseReady() {
         while (! isDatabaseReady()) {
             Thread.onSpinWait();
         }
