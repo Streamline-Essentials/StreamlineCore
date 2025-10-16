@@ -18,6 +18,8 @@ public class GivenCommands {
     private static SetServerCommand setServerCommand;
     @Getter @Setter
     private static SyncCommand syncCommand;
+    @Getter @Setter
+    private static DebugCommand debugCommand;
 
     public static void init() {
         setModulesCommand(new ModulesCommand());
@@ -27,6 +29,7 @@ public class GivenCommands {
         setReloadCommand(new ReloadCommand());
         setSetServerCommand(new SetServerCommand());
         setSyncCommand(new SyncCommand());
+        setDebugCommand(new DebugCommand());
 
         getModulesCommand().register();
         getParseCommand().register();
@@ -35,5 +38,6 @@ public class GivenCommands {
         getReloadCommand().register();
         getSetServerCommand().register();
         getSyncCommand().register();
+        getDebugCommand().register();
     }
 }

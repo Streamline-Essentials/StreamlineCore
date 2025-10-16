@@ -35,6 +35,10 @@ public class UuidUtils {
             if (isConsole(name)) {
                 return getConsoleUUID();
             } else {
+                if (isBedrockName(name)) {
+                    return getBedrockUUIDFromUsername(name);
+                }
+
                 UUID uuid = UUIDFetcher.getUUID(name);
                 if (uuid == null) {
                     return null;
@@ -47,6 +51,10 @@ public class UuidUtils {
 
     public static String toName(String uuid) {
         if (isUuid(uuid)) {
+            if (isBedrockUUID(uuid)) {
+                return getUsernameFromBedrockUUID(uuid);
+            }
+
             return UUIDFetcher.getName(uuid);
         } else {
             if (isConsole(uuid)) {
