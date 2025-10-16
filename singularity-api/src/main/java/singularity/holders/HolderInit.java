@@ -14,6 +14,8 @@ public abstract class HolderInit<T extends CosmicHolder> implements Identifiable
         this.identifier = identifier;
         this.enabled = false;
 
+        load();
+
         tryEnable(instantiator);
     }
 
