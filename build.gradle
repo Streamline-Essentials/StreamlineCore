@@ -91,6 +91,7 @@ subprojects {
         // CodeMC
         maven { url "https://repo.codemc.io/repository/maven-releases/" }
         maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
+        maven { url "https://repo.codemc.io/repository/streamline-essentials/" }
     }
 
     processResources {
@@ -187,9 +188,8 @@ subprojects {
 
         repositories {
             maven {
-                url = "https://repo.codemc.io/repository/streamline-essentials/" //
+                url = "https://repo.codemc.io/repository/streamline-essentials/"
 
-                //
                 def mavenUsername = System.getenv("JENKINS_NEXUS_USERNAME")
                 def mavenPassword = System.getenv("JENKINS_NEXUS_PASSWORD")
 

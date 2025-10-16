@@ -104,12 +104,7 @@ public class GivenConfigs {
 
     public static void waitUntilDatabaseReady() {
         while (! isDatabaseReady()) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break; // Exit if interrupted
-            }
+            Thread.onSpinWait();
         }
     }
 
