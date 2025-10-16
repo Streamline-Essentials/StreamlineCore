@@ -1,6 +1,7 @@
 package singularity;
 
 import ch.qos.logback.classic.LoggerContext;
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.SingleSet;
 import gg.drak.thebase.objects.handling.derived.PluginEventable;
 import lombok.Getter;
@@ -40,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -188,9 +190,13 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     @Getter @Setter
     private static PlayerSaver playerSaver;
 
+    @Getter @Setter
+    private static AtomicBoolean databaseReady;
+
     public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter, String apiChannel) {
         super(identifier);
         instance = this;
+        databaseReady = new AtomicBoolean(false);
 
         // Field Stuff
         this.platform = platform;
@@ -219,43 +225,9 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
         GivenConfigs.init();
 
         // Must go here.
-        if (baseModuleGetter != null) setBaseModule(baseModuleGetter.get());
+        AsyncUtils.executeAsync(this::initDatabase);
 
-        getFiles(getModuleFolder(), file -> {
-            if (file.isDirectory()) return true;
-            return ! file.getName().endsWith(".jar");
-        }).forEach((s, file) -> {
-            try {
-                Files.move(file.toPath(), Path.of(file.toPath().toString()
-                        .replace(getModuleFolder().toPath().toString(), getModuleSaveFolder().toPath().toString())));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
-        moduleScheduler = new ModuleTaskManager();
-
-        CompletableFuture.runAsync(() -> {
-            GivenConfigs.waitUntilDatabaseReady();
-
-            try {
-                getMainDatabase().ensureUsable();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                ConcurrentSkipListSet<UuidInfo> uuidInfos = getMainDatabase().pullAllUuidInfo().join();
-                UuidManager.registerAll(uuidInfos);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            UserUtils.loadConsole(); // Load the console user // done with database.
-        });
-
-//        baseModule = new BaseModule();
-//        ModuleManager.registerModule(getBaseModule());
+        AsyncUtils.executeAsync(() -> initModules(baseModuleGetter));
 
         ProxiedMessageManager.init();
 
@@ -277,6 +249,50 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
 
     public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, String apiChannel) {
         this(identifier, platform, userManager, messenger, consoleHolder, playerInterface, null, apiChannel);
+    }
+
+    public void initDatabase() {
+        GivenConfigs.waitUntilDatabaseReady();
+
+        try {
+            getMainDatabase().ensureUsable();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            ConcurrentSkipListSet<UuidInfo> uuidInfos = getMainDatabase().pullAllUuidInfo().join();
+            UuidManager.registerAll(uuidInfos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        UserUtils.loadConsole(); // Load the console user // done with database.
+
+        databaseReady.set(true);
+    }
+
+    public void initModules(Supplier<CosmicModule> baseModuleGetter) {
+        waitUntilDatabaseReady(); // Ensure database is ready before loading modules.
+
+        moduleScheduler = new ModuleTaskManager(); // Init scheduler first.
+
+        if (baseModuleGetter != null) setBaseModule(baseModuleGetter.get());
+
+        getFiles(getModuleFolder(), file -> {
+            if (file.isDirectory()) return true;
+            return ! file.getName().endsWith(".jar");
+        }).forEach((s, file) -> {
+            try {
+                Files.move(file.toPath(), Path.of(file.toPath().toString()
+                        .replace(getModuleFolder().toPath().toString(), getModuleSaveFolder().toPath().toString())));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+//        baseModule = new BaseModule();
+//        ModuleManager.registerModule(getBaseModule());
     }
 
     public void setupLogger() {
@@ -304,6 +320,26 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
             }
         } catch (Exception e) {
             // nothing
+        }
+    }
+
+    /**
+     * Checks if the database is ready to be used.
+     * @return true if the database is ready, false otherwise.
+     */
+    public static boolean isDatabaseReady() {
+        return databaseReady.get();
+    }
+
+    /**
+     * Blocks the thread calling this method until the database is ready.
+     */
+    public static void waitUntilDatabaseReady() {
+        if (isDatabaseReady()) return;
+
+        // Spin wait until the database is ready.
+        while (! isDatabaseReady()) {
+            Thread.onSpinWait();
         }
     }
 
