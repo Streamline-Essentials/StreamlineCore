@@ -29,11 +29,10 @@ dependencies {
         // Correct way to exclude dependency
         exclude group: "com.github.Server-Utilities", module: "TheBase"
         exclude group: "gg.drak.thebase"
+        exclude group: "gg.drak", module: "TheBase"
     }
 
     compileOnly project(path: ":StreamlineCore-Singularity")
-
-    implementation(shadow('io.lettuce:lettuce-core:6.8.0.RELEASE'))
 }
 
 compileJava {
