@@ -15,9 +15,6 @@ dependencies {
 
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
-    compileOnly project(path: ':StreamlineCore-Singularity')
-
-    implementation(shadow('io.lettuce:lettuce-core:6.8.0.RELEASE'))
 }
 
 compileJava {
