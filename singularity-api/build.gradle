@@ -26,6 +26,9 @@ dependencies {
     // JetBrains.
     annotationProcessor(shadow(implementation('org.jetbrains:annotations:20.1.0')))
 
+    // Redis (Lettuce).
+    implementation(shadow('io.lettuce:lettuce-core:6.8.0.RELEASE'))
+
     // Files.
 //    implementation(shadow(files(FILES)));
 }
