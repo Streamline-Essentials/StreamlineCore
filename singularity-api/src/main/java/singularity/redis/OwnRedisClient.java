@@ -77,10 +77,14 @@ public class OwnRedisClient {
         if (isUserValid()) {
             builder = builder.withAuthentication(getUsername(), getPassword());
         } else {
-            builder = builder.withPassword(getPassword());
+            builder = builder.withPassword(getPasswordChars());
         }
 
         return RedisClient.create(builder.build());
+    }
+
+    public static CharSequence getPasswordChars() {
+        return getPassword();
     }
 
     public static void testConnection() {
