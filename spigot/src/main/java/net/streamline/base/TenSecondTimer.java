@@ -1,6 +1,6 @@
 package net.streamline.base;
 
-import host.plas.bou.libs.universalScheduler.scheduling.tasks.MyScheduledTask;
+import host.plas.bou.scheduling.BaseRunnable;
 import lombok.Getter;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
@@ -16,13 +16,12 @@ import org.bukkit.entity.Player;
 import singularity.utils.UserUtils;
 
 @Getter
-public class TenSecondTimer implements Runnable {
+public class TenSecondTimer extends BaseRunnable {
     final Player player;
-    final MyScheduledTask task;
 
     public TenSecondTimer(Player player) {
+        super(20 * 10, 20 * 10); // Initial delay and period of 10 seconds (20 ticks = 1 second)
         this.player = player;
-        this.task = StreamlineSpigot.getScheduler().runTaskTimerAsynchronously(this, 20 * 2, 20 * 2);
     }
 
     @Override
@@ -31,7 +30,7 @@ public class TenSecondTimer implements Runnable {
 
         CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
         if (streamPlayer == null) {
-            task.cancel();
+            cancel();
             return;
         }
 
@@ -53,11 +52,11 @@ public class TenSecondTimer implements Runnable {
 
     public boolean checkPlayer() {
         if (player == null) {
-            task.cancel();
+            cancel();
             return false;
         }
         if (! player.isOnline()) {
-            task.cancel();
+            cancel();
             return false;
         }
         return true;

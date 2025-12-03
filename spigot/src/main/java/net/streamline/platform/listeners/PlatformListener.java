@@ -1,5 +1,6 @@
 package net.streamline.platform.listeners;
 
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.events.BaseEventHandler;
 import gg.drak.thebase.events.BaseEventListener;
 import gg.drak.thebase.events.processing.BaseProcessor;
@@ -36,6 +37,7 @@ import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.teleportation.TPTicket;
 import singularity.data.uuid.UuidManager;
 import singularity.events.player.location.PlayerMovementEvent;
 import singularity.events.server.*;
@@ -144,6 +146,10 @@ public class PlatformListener implements Listener {
         setJoined(true);
 
         new TenSecondTimer(player);
+
+        TPTicket.getPendingTickets().stream()
+                .filter(ticket -> ticket.getIdentifier().equalsIgnoreCase(player.getUniqueId().toString()))
+                .forEach(ticket -> ticket.teleportWithDelayAndClear(0L));
     }
 
     @EventHandler

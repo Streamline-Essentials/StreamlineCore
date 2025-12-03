@@ -1,5 +1,7 @@
 package net.streamline.platform.commands;
 
+import host.plas.bou.commands.BuildableCommand;
+import host.plas.bou.commands.CommandBuilder;
 import host.plas.bou.utils.SenderUtils;
 import lombok.Getter;
 import net.streamline.base.StreamlineSpigot;
@@ -23,12 +25,19 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
 @Getter
-public class ProperCommand extends BukkitCommand implements TabExecutor, IProperCommand {
+public class ProperCommand extends BuildableCommand implements TabExecutor, IProperCommand {
     private final CosmicCommand parent;
 
     public ProperCommand(CosmicCommand parent) {
-        super(parent.getBase(), "Not defined.", "Not defined.", List.of(parent.getAliases()));
+        super(builder(parent));
         this.parent = parent;
+    }
+
+    public static CommandBuilder builder(CosmicCommand parent) {
+        return new CommandBuilder(parent.getBase(), StreamlineSpigot.getInstance())
+                .setDescription("Not defined.")
+                .setUsage("Not defined.")
+                .setAliases(parent.getAliases());
     }
 
     @Override
@@ -79,20 +88,22 @@ public class ProperCommand extends BukkitCommand implements TabExecutor, IProper
         }
     }
 
-    public void register() {
-        try {
-            StreamlineSpigot.registerCommands(this);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void registerThis() {
+//        try {
+//            StreamlineSpigot.registerCommands(this);
+//        } catch(Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
-    public void unregister() {
-        try {
-            StreamlineSpigot.unregisterCommands(getParent().getBase());
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void unregisterThis() {
+//        try {
+//            StreamlineSpigot.unregisterCommands(getParent().getBase());
+//        } catch(Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     @Override
