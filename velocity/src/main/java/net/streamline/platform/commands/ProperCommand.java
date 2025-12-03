@@ -73,11 +73,13 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
         return invocation.source().hasPermission(permission);
     }
 
-    public void register() {
+    @Override
+    public void registerThis() {
         StreamlineVelocity.getInstance().getProxy().getCommandManager().register(getMeta(), this);
     }
 
-    public void unregister() {
+    @Override
+    public void unregisterThis() {
         StreamlineVelocity.getInstance().getProxy().getCommandManager().unregister(getMeta());
     }
 

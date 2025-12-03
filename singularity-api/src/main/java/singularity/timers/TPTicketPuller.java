@@ -2,6 +2,7 @@ package singularity.timers;
 
 import lombok.Getter;
 import lombok.Setter;
+import singularity.Singularity;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.teleportation.TPTicket;
 import singularity.redis.OwnRedisClient;
@@ -26,6 +27,11 @@ public class TPTicketPuller extends BaseRunnable {
         if (isUseRedis()) {
             running.set(false);
             return; // No need to pull if using Redis
+        }
+
+        if (! Singularity.isDatabaseReady()) {
+            running.set(false);
+            return;
         }
 
         if (running.get()) return;

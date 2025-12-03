@@ -19,7 +19,7 @@ dependencies {
 
     // BOU
     implementation(shadow("com.github.hamza-cskn.obliviate-invs:core:4.1.12"))
-    annotationProcessor(compileOnly("com.github.Streamline-Essentials:BukkitOfUtils:master-SNAPSHOT"))
+    annotationProcessor(compileOnly("gg.drak:BukkitOfUtils:1.16.1"))
 
     // Streamline API.
     compileOnly project(path: ":StreamlineCore-API")

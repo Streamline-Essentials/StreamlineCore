@@ -37,43 +37,48 @@ public class TPTicketFlusher extends BaseRunnable {
         }
 
         pending.forEach(ticket -> {
-            CosmicServer targetServer = ticket.getTargetServer();
+            try {
+                CosmicServer targetServer = ticket.getTargetServer();
 
-            if (Singularity.isProxy()) {
-                CosmicPlayer p = UserUtils.getPlayer(ticket.getIdentifier()).orElse(null);
-                if (p == null || ! p.isOnline()) {
-                    MessageUtils.logDebug("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fcould not find player, clearing it.");
-                    ticket.clear();
-                    return;
-                }
+                if (Singularity.isProxy()) {
+                    CosmicPlayer p = UserUtils.getPlayer(ticket.getIdentifier()).orElse(null);
+                    if (p == null || !p.isOnline()) {
+                        MessageUtils.logDebug("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fcould not find player, clearing it.");
+                        ticket.clear();
+                        return;
+                    }
 
-                if (p.getServer().equals(targetServer)) {
+                    if (p.getServer().equals(targetServer)) {
+                        ticket.unpend();
+                        return;
+                    }
+
+                    p.connect(targetServer.getIdentifier());
                     ticket.unpend();
                     return;
                 }
 
-                ModuleUtils.connect(p, targetServer.getIdentifier());
-                ticket.unpend();
-                return;
-            }
+                if (!targetServer.equals(getOwnServer())) {
+                    MessageUtils.logDebug("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fis not for this server, clearing it.");
+                    ticket.unpend();
+                    return;
+                }
 
-            if (! targetServer.equals(getOwnServer())) {
-                MessageUtils.logDebug("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fis not for this server, clearing it.");
-                ticket.unpend();
-                return;
-            }
+                if (ticket.isOld()) {
+                    MessageUtils.logWarning("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fis too old, clearing it.");
+                    ticket.clear();
+                    return;
+                }
 
-            if (ticket.isOld()) {
-                MessageUtils.logWarning("&cTPTicketFlusher&f: &dTPTicket &ffor &d" + ticket.getIdentifier() + " &fis too old, clearing it.");
+                CosmicPlayer p = UserUtils.getPlayer(ticket.getIdentifier()).orElse(null);
+                if (p == null || !p.isOnline()) return;
+
+                Singularity.getInstance().getUserManager().teleport(p, ticket.toLocation());
                 ticket.clear();
-                return;
+            } catch (Throwable e) {
+                MessageUtils.logWarning("&cTPTicketFlusher&f: An error occurred while processing &dTPTicket &ffor &d" + ticket.getIdentifier() + "&f: " + e.getMessage());
+                e.printStackTrace();
             }
-
-            CosmicPlayer p = UserUtils.getPlayer(ticket.getIdentifier()).orElse(null);
-            if (p == null || ! p.isOnline()) return;
-
-            Singularity.getInstance().getUserManager().teleport(p, ticket.toLocation());
-            ticket.clear();
         });
 
         running.set(false);
