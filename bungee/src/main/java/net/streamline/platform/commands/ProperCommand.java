@@ -65,11 +65,13 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
         }
     }
 
-    public void register() {
+    @Override
+    public void registerThis() {
         StreamlineBungee.getInstance().getProxy().getPluginManager().registerCommand(StreamlineBungee.getInstance(), this);
     }
 
-    public void unregister() {
+    @Override
+    public void unregisterThis() {
         StreamlineBungee.getInstance().getProxy().getPluginManager().unregisterCommand(this);
     }
 }

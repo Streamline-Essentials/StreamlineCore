@@ -1,5 +1,6 @@
 package singularity.data.teleportation;
 
+import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.Identifiable;
 import lombok.Getter;
 import lombok.Setter;
@@ -113,7 +114,7 @@ public class TPTicket implements Identifiable {
                 return;
             }
 
-            if (player == null) {
+            if (player == null || ! player.isOnline()) {
                 pend(this);
             } else {
                 Singularity.getInstance().getUserManager().teleport(player, toLocation());
@@ -153,6 +154,18 @@ public class TPTicket implements Identifiable {
     public boolean isOld() {
         Date now = new Date();
         return now.after(getOldDate());
+    }
+
+    public void teleportPlayerIfOnline() {
+        UserUtils.getPlayer(getIdentifier()).ifPresent(player -> {
+            Singularity.getInstance().getUserManager().teleport(player, toLocation());
+        });
+    }
+
+    public void teleportWithDelayAndClear(long delayTicks) {
+        AsyncUtils.runAsync(this::teleportPlayerIfOnline, delayTicks);
+
+        clear();
     }
 
     public static TPTicket fromRedisMessage(RedisMessage redisMessage) {
@@ -202,7 +215,7 @@ public class TPTicket implements Identifiable {
             unpend(ticket); // Remove existing ticket if already pending
         }
 
-        pendingTickets.add(ticket);
+        getPendingTickets().add(ticket);
     }
 
     public static void unpend(TPTicket ticket) {
