@@ -201,4 +201,22 @@ public abstract class CosmicCommand implements Comparable<CosmicCommand> {
     public static CommandResult.NotSet notSet() {
         return CommandResult.NotSet.get();
     }
+
+    /**
+     * Get a message with another sender's placeholders replaced.
+     * @param type The type of sender relation. If FROM_IS_SENDER, 'from' is the sender and 'to' is the other. If TO_IS_SENDER, 'to' is the sender and 'from' is the other.
+     * @param from The person the action is from. (Not the sender unless type is FROM_IS_SENDER.)
+     * @param to The person the action is to. (Not the sender unless type is TO_IS_SENDER.)
+     * @param message The message to replace.
+     * @return The message with placeholders replaced.
+     */
+    public String getWithOther(SenderWithOther type, CosmicSender from, CosmicSender to, String message) {
+        message = message
+                .replace("%this_from%", from.getCurrentName())
+                .replace("%this_to%", to.getCurrentName());
+        CosmicSender sendTo = (type == SenderWithOther.FROM_IS_SENDER) ? from : to;
+        CosmicSender other = (type == SenderWithOther.FROM_IS_SENDER) ? to : from;
+
+        return getWithOther(sendTo, message, other);
+    }
 }
