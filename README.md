@@ -7,7 +7,8 @@ MUST HAVE:
 ![Discord](https://github.com/Streamline-Essentials/StreamlineWiki/blob/main/website/images/Main.png?raw=true)
 Please join the Streamline Hub Discord in order to get updates and for me to fully assist you with bugs, questions, or suggestions.
 
-Discord: [**click here**](https://dsc.gg/streamline)
+Discord: [**click here**](https://dsc.gg/streamline)</br>
+Dev Builds: [**click here**](https://ci.codemc.io/job/Streamline-Essentials/job/StreamlineCore/)
 
 # Introduction to Streamline
 

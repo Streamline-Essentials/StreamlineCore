@@ -1,7 +1,7 @@
 package singularity.interfaces;
 
 public interface IProperCommand {
-    void register();
+    void registerThis();
 
-    void unregister();
+    void unregisterThis();
 }

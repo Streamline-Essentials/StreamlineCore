@@ -25,7 +25,7 @@ public class CommandHandler {
         }
 
         IProperCommand properCommand = Singularity.getInstance().getPlatform().createCommand(command);
-        properCommand.register();
+        properCommand.registerThis();
         getProperlyRegisteredCommands().put(command.getIdentifier(), properCommand);
         getLoadedStreamlineCommands().put(command.getBase(), command);
     }
@@ -33,7 +33,7 @@ public class CommandHandler {
     private static void unregisterCommandRaw(String identifier) {
         IProperCommand c = getProperlyRegisteredCommands().get(identifier);
         if (c == null) return;
-        c.unregister();
+        c.unregisterThis();
         getProperlyRegisteredCommands().remove(identifier);
         getLoadedStreamlineCommands().remove(identifier);
     }
@@ -82,7 +82,7 @@ public class CommandHandler {
 
     public static void flushProperCommands() {
         getProperlyRegisteredCommands().forEach((s, iProperCommand) -> {
-            iProperCommand.unregister();
+            iProperCommand.unregisterThis();
         });
     }
 
