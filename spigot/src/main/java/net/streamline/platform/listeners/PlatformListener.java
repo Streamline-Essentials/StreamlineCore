@@ -113,43 +113,47 @@ public class PlatformListener implements Listener {
 
         UuidManager.cachePlayer(player.getUniqueId().toString(), player.getName(), UserManager.getInstance().parsePlayerIP(player));
 
-        CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
-        if (streamPlayer == null) {
-            MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getName() + " (" + player.getUniqueId() + ")");
-            return;
-        }
+        AsyncUtils.executeAsync(() -> {
+            CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(player.getUniqueId().toString()).orElse(null);
+            if (streamPlayer == null) {
+                MessageUtils.logWarning("Failed to create CosmicPlayer for " + player.getName() + " (" + player.getUniqueId() + ")");
+                return;
+            }
 
-        streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
-        streamPlayer.setCurrentName(player.getName());
+            streamPlayer.waitUntilFullyLoaded();
 
-        CosmicLocation location = streamPlayer.getLocation();
+            streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
+            streamPlayer.setCurrentName(player.getName());
 
-        Location loc = player.getLocation();
-        World w = loc.getWorld();
-        if (w != null) {
-            PlayerWorld world = new PlayerWorld(w.getName());
-            WorldPosition position = new WorldPosition(loc.getX(), loc.getY(), loc.getZ());
-            PlayerRotation rotation = new PlayerRotation(loc.getYaw(), loc.getPitch());
+            CosmicLocation location = streamPlayer.getLocation();
 
-            CosmicLocation newLocation = new CosmicLocation(location.getServer(), world, position, rotation);
+            Location loc = player.getLocation();
+            World w = loc.getWorld();
+            if (w != null) {
+                PlayerWorld world = new PlayerWorld(w.getName());
+                WorldPosition position = new WorldPosition(loc.getX(), loc.getY(), loc.getZ());
+                PlayerRotation rotation = new PlayerRotation(loc.getYaw(), loc.getPitch());
+
+                CosmicLocation newLocation = new CosmicLocation(location.getServer(), world, position, rotation);
 
 //            PlayerMovementEvent e = new PlayerMovementEvent(streamPlayer, newLocation).fire();
 //            e.completeMovement();
 
-            streamPlayer.setLocation(newLocation);
-            streamPlayer.save();
-        }
+                streamPlayer.setLocation(newLocation);
+                streamPlayer.save();
+            }
 
-        LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
-        ModuleUtils.fireEvent(loginCompletedEvent);
+            LoginCompletedEvent loginCompletedEvent = new LoginCompletedEvent(streamPlayer);
+            ModuleUtils.fireEvent(loginCompletedEvent);
 
-        setJoined(true);
+            setJoined(true);
 
-        new TenSecondTimer(player);
+            new TenSecondTimer(player);
 
-        TPTicket.getPendingTickets().stream()
-                .filter(ticket -> ticket.getIdentifier().equalsIgnoreCase(player.getUniqueId().toString()))
-                .forEach(ticket -> ticket.teleportWithDelayAndClear(0L));
+            TPTicket.getPendingTickets().stream()
+                    .filter(ticket -> ticket.getIdentifier().equalsIgnoreCase(player.getUniqueId().toString()))
+                    .forEach(ticket -> ticket.teleportWithDelayAndClear(0L));
+        });
     }
 
     @EventHandler
