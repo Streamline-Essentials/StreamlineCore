@@ -112,7 +112,7 @@ public class StreamlineExpansion extends RATExpansion {
                 (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getPlayDaysAsString()) : s.string()).register();
         new IdentifiedUserReplaceable(this, "user_ip",
                 (s, user) -> user instanceof CosmicPlayer ? String.valueOf(((CosmicPlayer) user).getCurrentIp()) : s.string()).register();
-        new IdentifiedUserReplaceable(this, "user_server", (s, user) -> String.valueOf(user.getServerName())).register();
+        new IdentifiedUserReplaceable(this, "user_server", (s, user) -> user.getServerName()).register();
         new IdentifiedUserReplaceable(this, "user_tags", (s, user) -> user.getMeta().getTagsAsString()).register();
 
         new IdentifiedUserReplaceable(this, "user_location_server", (s, user) -> user.getServerName()).register();

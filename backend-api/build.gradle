@@ -11,7 +11,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // The Base
-    compileOnly('com.github.Server-Utilities:TheBase:master-SNAPSHOT')
+    compileOnly("gg.drak:TheBase:1.0.0")
 
     // Inventories.
     implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')

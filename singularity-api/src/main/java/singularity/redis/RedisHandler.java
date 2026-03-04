@@ -8,15 +8,15 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class RedisHandler {
     @Getter @Setter
-    private static ConcurrentSkipListSet<RedisListener> listeners = new ConcurrentSkipListSet<>();
+    private static ConcurrentSkipListSet<AbstractRedisListener> listeners = new ConcurrentSkipListSet<>();
 
-    public static void load(RedisListener listener) {
+    public static void load(AbstractRedisListener listener) {
         unload(listener);
 
         listeners.add(listener);
     }
 
-    public static void unload(RedisListener listener) {
+    public static void unload(AbstractRedisListener listener) {
         unload(listener.getIdentifier());
     }
 
@@ -24,7 +24,7 @@ public class RedisHandler {
         listeners.removeIf(listener -> listener.getIdentifier().equals(identifier));
     }
 
-    public static Optional<RedisListener> get(String identifier) {
+    public static Optional<AbstractRedisListener> get(String identifier) {
         return listeners.stream()
                 .filter(listener -> listener.getIdentifier().equals(identifier))
                 .findFirst();
@@ -35,11 +35,11 @@ public class RedisHandler {
                 .anyMatch(listener -> listener.getIdentifier().equals(identifier));
     }
 
-    public static boolean isLoaded(RedisListener listener) {
+    public static boolean isLoaded(AbstractRedisListener listener) {
         return isLoaded(listener.getIdentifier());
     }
 
-    public static RedisListener getOrNull(String identifier) {
+    public static AbstractRedisListener getOrNull(String identifier) {
         return get(identifier).orElse(null);
     }
 }

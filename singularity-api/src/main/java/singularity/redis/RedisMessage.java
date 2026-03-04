@@ -16,4 +16,16 @@ public class RedisMessage {
     public void send() {
         OwnRedisClient.sendMessage(this);
     }
+
+    public String asString() {
+        return getChannel() + ":" + getMessage();
+    }
+
+    public String wrappedChannel() {
+        return OwnRedisClient.wrapKey(getChannel());
+    }
+
+    public String wrap() {
+        return OwnRedisClient.wrapKey(asString());
+    }
 }
