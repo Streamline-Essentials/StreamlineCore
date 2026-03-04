@@ -12,8 +12,8 @@ ext {
             "ch.qos.logback:logback-classic:1.5.6",
     ]
     ANNO = [
+            "gg.drak:TheBase:1.0.0",
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "com.github.Server-Utilities:TheBase:master-SNAPSHOT",
             "org.pf4j:pf4j:3.10.0",
             'io.lettuce:lettuce-core:6.8.0.RELEASE',
     ]
@@ -27,5 +27,47 @@ ext {
     ]
     FILES = [
 //            rootProject.rootDir.getPath().toString() + "/impl/sqlite-jdbc.jar" // not needed
+    ]
+    
+    // Minecraft versions for multi-version support (1.16.5 to latest)
+    MINECRAFT_VERSIONS = [
+            "1.16.5",
+            "1.17.1",
+            "1.18.2",
+            "1.19.2",
+            "1.19.4",
+            "1.20.1",
+            "1.20.4",
+            "1.21.4",
+            "1.22.1"
+    ]
+    
+    // Architectury API versions mapped to Minecraft versions
+    ARCHITECTURY_API = [
+            "1.16.5": "1.32.65",
+            "1.17.1": "2.91.142",
+            "1.18.2": "3.11.52",
+            "1.19.2": "4.9.90",
+            "1.19.4": "6.2.43",
+            "1.20.1": "7.1.79",
+            "1.20.4": "9.1.13",
+            "1.21.4": "10.3.1",
+            "1.22.1": "11.0.1"
+    ]
+    
+    // Fabric Loader versions
+    FABRIC_LOADER = "0.16.0"
+    
+    // Forge versions mapped to Minecraft versions
+    FORGE_VERSION = [
+            "1.16.5": "36.2.39",
+            "1.17.1": "37.1.1",
+            "1.18.2": "40.2.20",
+            "1.19.2": "43.3.8",
+            "1.19.4": "45.2.8",
+            "1.20.1": "47.2.0",
+            "1.20.4": "49.0.36",
+            "1.21.4": "50.0.0",
+            "1.22.1": "51.0.0"
     ]
 }

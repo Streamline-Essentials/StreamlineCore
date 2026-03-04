@@ -13,7 +13,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // The Base
-    implementation(shadow('com.github.Server-Utilities:TheBase:master-SNAPSHOT'))
+    implementation(shadow('gg.drak:TheBase:1.0.0'))
 
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')

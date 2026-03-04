@@ -1,10 +1,15 @@
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 dependencies {
     // Platform dependencies.
     // Spigot (commented out: uncomment if needed)
 //    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"))
 
     // Paper (commented out: uncomment if needed)
-    annotationProcessor(compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"))
+    annotationProcessor(compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT"))
 
     // Use Spigot API for version 1.16.5
 //    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"))

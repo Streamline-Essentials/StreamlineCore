@@ -17,6 +17,9 @@ public class RedisConfigHandler extends SimpleConfiguration {
         getPort();
         getUsername();
         getPassword();
+        getPrefix();
+
+        isEnabled();
     }
 
     // DATABASE
@@ -43,6 +46,12 @@ public class RedisConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("password", "password");
+    }
+
+    public String getPrefix() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("prefix", "STREAMLINE:INSTANCE:");
     }
 
     public boolean isEnabled() {

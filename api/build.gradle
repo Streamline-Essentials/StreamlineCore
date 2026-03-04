@@ -20,7 +20,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // The Base
-    compileOnly('com.github.Server-Utilities:TheBase:master-SNAPSHOT')
+    compileOnly("gg.drak:TheBase:1.0.0")
 
     // Files.
 //    implementation(shadow(files(FILES)));
