@@ -19,7 +19,6 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // BOU
-    implementation(shadow("com.github.hamza-cskn.obliviate-invs:core:4.1.12"))
     annotationProcessor(compileOnly("gg.drak:BukkitOfUtils:1.18.0"))
 
     // Streamline API.
