@@ -47,19 +47,32 @@ allprojects {
     }
 
     repositories {
-        // Maven Defaults
-        mavenCentral()
-        mavenLocal()
-        maven { url "https://mvnrepository.com/artifact" }
+        // Spigot / Bukkit
+        maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url "https://oss.sonatype.org/content/repositories/central" }
+        // Paper / Velocity
+        maven {
+            name = 'papermc'
+            url = 'https://repo.papermc.io/repository/maven-public/'
+        }
+
+        // OpenCollab
+        maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+        maven { url 'https://repo.opencollab.dev/maven-releases/'}
+
+        // PlaceholderAPI
+        maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi" }
+
+        // CodeMC
+        maven { url "https://repo.codemc.io/repository/maven-releases/" }
+        maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
 
         // Streamline Essentials repository
         maven {
             name = "streamline-essentials"
             url = "https://repo.codemc.org/repository/streamline-essentials/"
         }
-
-        // JitPack
-        maven { url "https://jitpack.io" }
 
         // Local libs folder as a flat directory repository
         flatDir {
@@ -80,61 +93,6 @@ subprojects {
     java {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    repositories {
-        // Spigot / Bukkit
-        maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots" }
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        maven { url "https://oss.sonatype.org/content/repositories/central" }
-        // Paper / Velocity
-        maven {
-            name = 'papermc'
-            url = 'https://repo.papermc.io/repository/maven-public/'
-        }
-        // Fabric
-        maven { url "https://maven.fabricmc.net" }
-        maven { url "https://libraries.minecraft.net" }
-        // Architectury
-        maven {
-            name = "Architectury"
-            url = "https://maven.architectury.dev"
-        }
-        // Forge
-        maven {
-            name = "Forge"
-            url = "https://maven.minecraftforge.net"
-        }
-        maven {
-            name = "ParchmentMC"
-            url = "https://maven.parchmentmc.org"
-        }
-
-        // OpenCollab
-        maven {
-            name "opencollabRepositoryMavenSnapshots"
-            url "https://repo.opencollab.dev/maven-snapshots"
-        }
-        maven {
-            name "opencollabRepositoryMavenReleases"
-            url "https://repo.opencollab.dev/maven-releases"
-        }
-
-        // PlaceholderAPI
-        maven { url "https://repo.extendedclip.com/content/repositories/placeholderapi" }
-
-        // CodeMC
-        maven { url "https://repo.codemc.io/repository/maven-releases/" }
-        maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
-
-        // Streamline Essentials repository
-        maven {
-            name = "streamline-essentials"
-            url = "https://repo.codemc.org/repository/streamline-essentials/"
-        }
-
-        // JitPack
-        maven { url "https://jitpack.io" }
     }
 
     processResources {

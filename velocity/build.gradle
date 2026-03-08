@@ -1,11 +1,3 @@
-repositories {
-    // Streamline Essentials repository
-    maven {
-        name = "streamline-essentials"
-        url = "https://repo.codemc.org/repository/streamline-essentials/"
-    }
-}
-
 dependencies {
     // Platform
     annotationProcessor(compileOnly('com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'))
