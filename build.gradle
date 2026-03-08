@@ -71,7 +71,7 @@ allprojects {
         // Streamline Essentials repository
         maven {
             name = "streamline-essentials"
-            url = "https://repo.codemc.org/repository/streamline-essentials/"
+            url = "https://repo.codemc.io/repository/streamline-essentials/"
         }
 
         // Local libs folder as a flat directory repository
