@@ -1,3 +1,11 @@
+repositories {
+    // Streamline Essentials repository
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.org/repository/streamline-essentials/"
+    }
+}
+
 dependencies {
     // Platform Backend.
     compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
@@ -5,13 +13,14 @@ dependencies {
     // Defaults.
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
+    annotationProcessor(THE_BASE)
     compileOnly(COMP_ONLY)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
     // The Base
-    compileOnly("gg.drak:TheBase:1.0.0")
+    compileOnly("gg.drak:BukkitOfUtils:1.18.0")
 
     // Inventories.
     implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')

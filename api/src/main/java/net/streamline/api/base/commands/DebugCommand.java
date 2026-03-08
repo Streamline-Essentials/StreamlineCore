@@ -4,6 +4,9 @@ import singularity.command.CosmicCommand;
 import singularity.command.context.CommandContext;
 import singularity.command.result.CommandResult;
 import singularity.holders.HoldersHolder;
+import singularity.redis.OwnRedisClient;
+import singularity.redis.RedisMessage;
+import singularity.utils.MessageUtils;
 import singularity.utils.UUIDFetcher;
 import singularity.utils.UserUtils;
 import singularity.utils.UuidUtils;
@@ -116,10 +119,79 @@ public class DebugCommand extends CosmicCommand {
                     ctx.sendMessage("&aThe player name for UUID &b" + playerUuid + " &ais &b" + name + "&a.");
                 }
                 break;
+            case "redis":
+                if (! ctx.isArgUsable(2)) {
+                    ctx.sendMessage("&cUsage: /sldebug redis <send> <channel:message>");
+                    return;
+                }
+
+                String subAction = ctx.getStringArg(1).toLowerCase();
+                switch (subAction) {
+                    case "send":
+                        String channelAndMessage = ctx.getStringArg(2);
+                        int colonIndex = channelAndMessage.indexOf(':');
+                        if (colonIndex == -1) {
+                            ctx.sendMessage("&cUsage: /sldebug redis send <channel:message>");
+                            return;
+                        }
+
+                        String channel = channelAndMessage.substring(0, colonIndex);
+                        String message = channelAndMessage.substring(colonIndex + 1);
+
+                        if (! OwnRedisClient.isEnabled()) {
+                            ctx.sendMessage("&cRedis is not enabled! Cannot send message.");
+                            return;
+                        }
+                        if (! OwnRedisClient.isConnected()) {
+                            ctx.sendMessage("&cRedis is not connected! Cannot send message.");
+                            return;
+                        }
+
+                        RedisMessage redisMessage = new RedisMessage(channel, message);
+                        redisMessage.send();
+
+                        ctx.sendMessage("&eSent message to &c&lRedis &echannel &7'&b" + channel + "&7' &ewith content &7'&b" + message +
+                                "&7' &7(&eWrapped&7: &b" + redisMessage.wrap() + "&7)");
+                        break;
+                    case "send-raw":
+                        String channelAndMessageRaw = ctx.getStringArg(2);
+                        int colonIndexRaw = channelAndMessageRaw.indexOf(':');
+                        if (colonIndexRaw == -1) {
+                            ctx.sendMessage("&cUsage: /sldebug redis send <channel:message>");
+                            return;
+                        }
+
+                        String channelRaw = channelAndMessageRaw.substring(0, colonIndexRaw);
+                        String messageRaw = channelAndMessageRaw.substring(colonIndexRaw + 1);
+
+                        if (! OwnRedisClient.isEnabled()) {
+                            ctx.sendMessage("&cRedis is not enabled! Cannot send message.");
+                            return;
+                        }
+                        if (! OwnRedisClient.isConnected()) {
+                            ctx.sendMessage("&cRedis is not connected! Cannot send message.");
+                            return;
+                        }
+
+                        RedisMessage redisMessageRaw = new RedisMessage(channelRaw, messageRaw);
+                        OwnRedisClient.withRedis(commands -> {
+                            commands.publish(redisMessageRaw.getChannel(), redisMessageRaw.getMessage());
+                            MessageUtils.logDebug("Sent Redis message on channel: " + redisMessageRaw.getChannel() + " with content: " + redisMessageRaw.getMessage());
+                        });
+
+                        ctx.sendMessage("&eSent message to &c&lRedis &echannel &7'&b" + channelRaw + "&7' &ewith content &7'&b" + messageRaw +
+                                "&7' &7(&eWrapped&7: &b<NOT WRAPPED>&7)");
+                        break;
+                    default:
+                        ctx.sendMessage("&cUnknown action: " + subAction);
+                        return;
+                }
+                return;
             default:
                 ctx.sendMessage("&cUnknown action: " + action);
                 return;
         }
+        return;
     }
 
     @Override
@@ -129,6 +201,7 @@ public class DebugCommand extends CosmicCommand {
                 add("geyser");
                 add("uuid");
                 add("name");
+                add("redis");
             }};
         }
 
@@ -145,6 +218,21 @@ public class DebugCommand extends CosmicCommand {
             }
             if (ctx.getStringArg(0).equalsIgnoreCase("name")) {
                 return UserUtils.getOnlinePlayerUuids();
+            }
+            if (ctx.getStringArg(0).equalsIgnoreCase("redis")) {
+                return new ConcurrentSkipListSet<>() {{
+                    add("send");
+                    add("send-raw");
+                }};
+            }
+        }
+
+        if (ctx.getArgCount() == 3) {
+            if (ctx.getStringArg(0).equalsIgnoreCase("geyser") && ctx.getStringArg(1).equalsIgnoreCase("uuid")) {
+                return UserUtils.getOnlinePlayerUuids();
+            }
+            if (ctx.getStringArg(0).equalsIgnoreCase("geyser") && ctx.getStringArg(1).equalsIgnoreCase("name")) {
+                return UserUtils.getOnlinePlayerNames();
             }
         }
 
