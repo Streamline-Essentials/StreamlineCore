@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 /**
  * Represents a configurable hex color placeholder pattern.
- * Allows supporting multiple common formats like <#rrggbb>, &#rrggbb, {#rrggbb}, etc.
  */
 @Getter
 public class HexPolicy implements Comparable<HexPolicy> {
@@ -21,8 +20,8 @@ public class HexPolicy implements Comparable<HexPolicy> {
     /**
      * Creates a new hex policy.
      *
-     * @param starter opening part (e.g. "<#", "&#", "{#")
-     * @param ender   closing part (usually ">" or "}")
+     * @param starter opening part
+     * @param ender   closing part
      */
     public HexPolicy(@NotNull String starter, @NotNull String ender) {
         this.starter = Objects.requireNonNull(starter, "starter cannot be null");
@@ -38,7 +37,7 @@ public class HexPolicy implements Comparable<HexPolicy> {
     }
 
     /**
-     * Default constructor – supports the popular MiniMessage / Adventure format <#rrggbb>
+     * Default constructor – supports the popular MiniMessage / Adventure format
      */
     public HexPolicy() {
         this("<#", ">");
@@ -46,7 +45,6 @@ public class HexPolicy implements Comparable<HexPolicy> {
 
     /**
      * Returns the full placeholder string for a given 6-digit hex code.
-     * Example: for hex = "ff55aa" → returns "<#ff55aa>" (with default policy)
      */
     public String getResult(String hex) {
         if (hex == null || hex.length() != 6) {
@@ -119,7 +117,4 @@ public class HexPolicy implements Comparable<HexPolicy> {
     public static HexPolicy angleBracketsNoHash() {
         return new HexPolicy("<", ">");
     }
-
-    // Legacy BungeeCord style (§x§r§r§g§g§b§b) – special case, not using starter/ender
-    // Usually handled separately in parsers
 }
