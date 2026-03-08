@@ -26,10 +26,14 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Messenger implements IMessenger {
     @Getter
     private static Messenger instance;
+
+    private static final Pattern HEX_PATTERN = Pattern.compile("(?i)(#[0-9a-f]{6})");
 
     public Messenger() {
         instance = this;
@@ -162,9 +166,7 @@ public class Messenger implements IMessenger {
 
     @Override
     public String codedString(String from) {
-//        return ModuleUtils.newLined(from.replace("&", "§"));
-
-        return ModuleUtils.newLined(from); // issues. ^^^
+        return ModuleUtils.newLined(from);
     }
 
     public String stripColor(String string){
@@ -182,21 +184,23 @@ public class Messenger implements IMessenger {
     }
 
     public Component codedText(String from) {
-        String raw = codedString(from); // Assuming codedString is another method you've implemented
+        String raw = codedString(from);
+        String legacy = MessageUtils.codedString(raw);
 
-        String legacy = MessageUtils.codedString(raw); // Replace this with your actual legacy converter
+        Matcher matcher = HEX_PATTERN.matcher(legacy);
+        StringBuffer buffer = new StringBuffer();
+
+        while (matcher.find()) {
+            String hex = matcher.group(1);
+            TextColor color = TextColor.fromCSSHexString(hex);
+            String replacement = LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", color));
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(buffer);
+
+        legacy = buffer.toString();
 
         List<Component> componentsList = new ArrayList<>();
-
-        // Handle hex codes
-        for (HexPolicy policy : TextManager.getHexPolicies()) {
-            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
-                String original = hexCode;
-                if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
-                legacy = legacy.replace(policy.getResult(original),
-                        LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.fromCSSHexString(hexCode))));
-            }
-        }
 
         List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 
@@ -212,14 +216,12 @@ public class Messenger implements IMessenger {
                 Component jsonComponent = JSONComponentSerializer.json().deserialize(jsonStr);
                 componentsList.add(jsonComponent);
             } catch (Exception e) {
-                // Handle exception
                 e.printStackTrace();
             }
 
-            lastEnd = index + jsonStr.length() + 7; // 7 is the length of "!!json:"
+            lastEnd = index + jsonStr.length() + 7;
         }
 
-        // Append any remaining text after the last JSON block
         if (lastEnd < legacy.length()) {
             Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(legacy.substring(lastEnd));
             componentsList.add(remainingComponent);
@@ -231,7 +233,7 @@ public class Messenger implements IMessenger {
     public String replaceAllPlayerBungee(CommandSource sender, String of) {
         CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
         if (s == null) {
-            return of; // If sender is null, return the original string
+            return of;
         }
 
         return MessageUtils.replaceAllPlayerBungee(s, of);

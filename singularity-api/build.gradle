@@ -3,6 +3,13 @@ repositories {
     // OpenCollab
     maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url 'https://repo.opencollab.dev/maven-releases/'}
+
+    // Streamline Essentials repository
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.org/repository/streamline-essentials/"
+    }
+
     // JitPack
     maven { url 'https://jitpack.io' }
     maven { url 'https://mvnrepository.com/artifact' }
@@ -12,12 +19,13 @@ dependencies {
     // Defaults.
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
+    annotationProcessor(THE_BASE)
     implementation(IMPL)
     compileOnly(COMP_ONLY)
     shadow(SHADOW)
 
     // The Base
-    compileOnly("gg.drak:TheBase:1.0.0")
+    compileOnly(THE_BASE)
 
     // Google IO.
     shadow(implementation('com.google.guava:guava:30.1-jre'))

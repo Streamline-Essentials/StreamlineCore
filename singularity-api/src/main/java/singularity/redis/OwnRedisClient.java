@@ -59,6 +59,10 @@ public class OwnRedisClient {
         return connectedAtomic.get();
     }
 
+    public static boolean isEnabledAndConnected() {
+        return isEnabled() && isConnected();
+    }
+
     public static void setConnected(boolean connected) {
         connectedAtomic.set(connected);
     }
@@ -169,7 +173,7 @@ public class OwnRedisClient {
      * @return The key wrapped with the prefix if a prefix is set, or the original key if no prefix is set.
      */
     public static String wrapKey(String key) {
-        return getPrefix() + ":" + key;
+        return getPrefix() + key;
     }
 
     /**

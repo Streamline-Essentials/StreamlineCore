@@ -52,6 +52,12 @@ allprojects {
         mavenLocal()
         maven { url "https://mvnrepository.com/artifact" }
 
+        // Streamline Essentials repository
+        maven {
+            name = "streamline-essentials"
+            url = "https://repo.codemc.org/repository/streamline-essentials/"
+        }
+
         // JitPack
         maven { url "https://jitpack.io" }
 
@@ -71,8 +77,10 @@ subprojects {
                 properties["plugin.main"]
     }
 
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 
     repositories {
         // Spigot / Bukkit
@@ -118,7 +126,12 @@ subprojects {
         // CodeMC
         maven { url "https://repo.codemc.io/repository/maven-releases/" }
         maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
-        maven { url "https://repo.codemc.io/repository/streamline-essentials/" }
+
+        // Streamline Essentials repository
+        maven {
+            name = "streamline-essentials"
+            url = "https://repo.codemc.org/repository/streamline-essentials/"
+        }
 
         // JitPack
         maven { url "https://jitpack.io" }
@@ -281,6 +294,6 @@ tasks.named("publish").configure {
 }
 
 wrapper {
-    gradleVersion = "8.13"
+    gradleVersion = "9.3.1"
     distributionType = Wrapper.DistributionType.ALL
 }
