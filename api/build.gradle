@@ -3,6 +3,13 @@ repositories {
     // OpenCollab
     maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url 'https://repo.opencollab.dev/maven-releases/'}
+
+    // Streamline Essentials repository
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.org/repository/streamline-essentials/"
+    }
+
     // JitPack
     maven { url 'https://jitpack.io' }
     maven { url 'https://mvnrepository.com/artifact' }
@@ -12,6 +19,7 @@ dependencies {
     // Defaults.
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
+    annotationProcessor(THE_BASE)
     implementation(IMPL)
     compileOnly(COMP_ONLY)
     implementation project(path: ':StreamlineCore-Singularity', configuration: 'shadow')
@@ -20,7 +28,7 @@ dependencies {
     compileOnly(OTHER_PLUGINS)
 
     // The Base
-    compileOnly('com.github.Server-Utilities:TheBase:master-SNAPSHOT')
+    compileOnly(THE_BASE)
 
     // Files.
 //    implementation(shadow(files(FILES)));

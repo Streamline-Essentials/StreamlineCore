@@ -1,5 +1,7 @@
 package singularity.redis;
 
+import gg.drak.thebase.async.AsyncUtils;
+import gg.drak.thebase.objects.Identifiable;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -16,7 +18,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 
 @Getter @Setter
-public abstract class AbstractRedisListener implements RedisPubSubListener<String, String> {
+public abstract class AbstractRedisListener implements RedisPubSubListener<String, String>, Identifiable {
     private String identifier;
     private String[] channels;
 
@@ -103,5 +105,22 @@ public abstract class AbstractRedisListener implements RedisPubSubListener<Strin
 
     public boolean isConnected() {
         return getConnection().isOpen();
+    }
+
+    public void load() {
+        RedisHandler.load(this);
+    }
+
+    public void unload() {
+        RedisHandler.unload(this);
+    }
+
+    public boolean isLoaded() {
+        return RedisHandler.isLoaded(this);
+    }
+
+    public void registerAndLoad() {
+        AsyncUtils.executeAsync(this::register);
+        load();
     }
 }

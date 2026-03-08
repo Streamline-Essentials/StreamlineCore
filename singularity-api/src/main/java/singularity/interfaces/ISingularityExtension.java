@@ -18,6 +18,8 @@ public interface ISingularityExtension {
         BUNGEE,
         SPIGOT,
         VELOCITY,
+        FABRIC,
+        FORGE,
         ;
     }
     enum ServerType {

@@ -2,7 +2,6 @@ package singularity.redis;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -48,12 +47,20 @@ public class OwnRedisClient {
         return getConfig().getPassword();
     }
 
+    public static String getPrefix() {
+        return getConfig().getPrefix();
+    }
+
     public static boolean isEnabled() {
         return getConfig().isEnabled();
     }
 
     public static boolean isConnected() {
         return connectedAtomic.get();
+    }
+
+    public static boolean isEnabledAndConnected() {
+        return isEnabled() && isConnected();
     }
 
     public static void setConnected(boolean connected) {
@@ -155,8 +162,28 @@ public class OwnRedisClient {
 
     public static void sendMessage(RedisMessage message) {
         withRedis(commands -> {
-            commands.publish(message.getChannel(), message.getMessage());
-            MessageUtils.logDebug("Sent Redis message on channel: " + message.getChannel() + " with content: " + message.getMessage());
+            commands.publish(message.wrappedChannel(), message.getMessage());
+            MessageUtils.logDebug("Sent Redis message on channel: " + message.wrappedChannel() + " with content: " + message.getMessage());
         });
+    }
+
+    /**
+     * Wraps the given key with the configured prefix, if a prefix is set. If no prefix is set, it returns the key unchanged.
+     * @param key The key to wrap with the prefix.
+     * @return The key wrapped with the prefix if a prefix is set, or the original key if no prefix is set.
+     */
+    public static String wrapKey(String key) {
+        return getPrefix() + key;
+    }
+
+    /**
+     * Checks if the given key starts with the configured prefix. If no prefix is set, it returns true for all keys.
+     * @param key The key to check.
+     * @return True if the key starts with the prefix or if no prefix is set, false otherwise.
+     */
+    public static boolean hasPrefix(String key) {
+        if (getPrefix() == null) return true;
+
+        return key.startsWith(getPrefix());
     }
 }
