@@ -4,6 +4,9 @@ repositories {
         name = "streamline-essentials"
         url = "https://repo.codemc.org/repository/streamline-essentials/"
     }
+
+    // JitPack
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
