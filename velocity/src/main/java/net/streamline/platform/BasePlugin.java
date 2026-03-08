@@ -105,6 +105,8 @@ public abstract class BasePlugin implements ISingularityExtension {
                 if (f.getName().equals("StreamlineCore-Spigot")) return true;
                 if (f.getName().equals("StreamlineCore-Bungee")) return true;
                 if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("StreamlineCore-Fabric")) return true;
+                if (f.getName().equals("StreamlineCore-Forge")) return true;
                 if (f.getName().equals("streamlinecore")) return true;
                 return false;
             });
@@ -133,6 +135,8 @@ public abstract class BasePlugin implements ISingularityExtension {
                 if (f.getName().equals("StreamlineCore-Spigot")) return true;
                 if (f.getName().equals("StreamlineCore-Bungee")) return true;
                 if (f.getName().equals("StreamlineCore-Velocity")) return true;
+                if (f.getName().equals("StreamlineCore-Fabric")) return true;
+                if (f.getName().equals("StreamlineCore-Forge")) return true;
                 if (f.getName().equals("streamlinecore")) return true;
                 return false;
             });

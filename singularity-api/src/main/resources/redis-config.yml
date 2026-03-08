@@ -7,6 +7,8 @@ port: 6379
 username: default
 # Password - Redis password.
 password: password
+# Prefix - Prefix to use for all Redis keys.
+prefix: "STREAMLINE:INSTANCE:"
 # Whether to use Redis or not.
 # true = use Redis.
 # false = do not use Redis.

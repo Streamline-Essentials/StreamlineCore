@@ -458,4 +458,24 @@ public class UserUtils {
         TPTicket ticket = new TPTicket(sender.getIdentifier(), location);
         ticket.post();
     }
+
+    public static ConcurrentSkipListSet<String> getOnlinePlayerNames() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getOnlinePlayers().forEach((s, user) -> {
+            r.add(user.getCurrentName());
+        });
+
+        return r;
+    }
+
+    public static ConcurrentSkipListSet<String> getOnlinePlayerUuids() {
+        ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
+
+        getOnlinePlayers().forEach((s, user) -> {
+            r.add(user.getUuid());
+        });
+
+        return r;
+    }
 }
