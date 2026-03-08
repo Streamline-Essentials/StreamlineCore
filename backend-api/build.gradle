@@ -25,9 +25,6 @@ dependencies {
     // The Base
     compileOnly("gg.drak:BukkitOfUtils:1.18.0")
 
-    // Inventories.
-    implementation shadow('com.github.hamza-cskn.obliviate-invs:core:4.1.12')
-
     // Streamline API.
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 

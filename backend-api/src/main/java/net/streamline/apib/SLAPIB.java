@@ -3,7 +3,6 @@ package net.streamline.apib;
 import host.plas.bou.utils.UuidUtils;
 import lombok.Getter;
 import lombok.Setter;
-import mc.obliviate.inventory.InventoryAPI;
 import net.streamline.api.SLAPI;
 import net.streamline.apib.depends.PAPIDepend;
 import org.bukkit.Bukkit;
@@ -31,7 +30,6 @@ public class SLAPIB {
         instance = this;
         setPlugin(plugin);
         setSlapi(slapi);
-        new InventoryAPI(plugin).init();
 
         setPapiDepend(new PAPIDepend());
     }
