@@ -252,6 +252,6 @@ tasks.named("publish").configure {
 }
 
 wrapper {
-    gradleVersion = "9.3.1"
+    gradleVersion = "8.9"
     distributionType = Wrapper.DistributionType.ALL
 }
