@@ -26,8 +26,6 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Messenger implements IMessenger {
     @Getter
@@ -164,7 +162,7 @@ public class Messenger implements IMessenger {
 
     @Override
     public String codedString(String from) {
-        //        return ModuleUtils.newLined(from.replace("&", "§"));
+//        return ModuleUtils.newLined(from.replace("&", "§"));
 
         return ModuleUtils.newLined(from); // issues. ^^^
     }
@@ -184,80 +182,50 @@ public class Messenger implements IMessenger {
     }
 
     public Component codedText(String from) {
-        if (from == null || from.isEmpty()) return Component.empty();
+        String raw = codedString(from); // Assuming codedString is another method you've implemented
 
-        String processed = codedString(from);
+        String legacy = MessageUtils.codedString(raw); // Replace this with your actual legacy converter
 
-        // First pass: convert custom hex policies / placeholders → <#rrggbb> format
-        String withHex = processed;
+        List<Component> componentsList = new ArrayList<>();
+
+        // Handle hex codes
         for (HexPolicy policy : TextManager.getHexPolicies()) {
-            Pattern pattern = policy.getPattern(); // assuming HexPolicy has getPattern() → Pattern
-            Matcher matcher = pattern.matcher(withHex);
-
-            StringBuffer sb = new StringBuffer();
-            while (matcher.find()) {
-                String hex = matcher.group("hex"); // assume group named "hex" or adjust
-                if (hex == null) hex = matcher.group(1);
-
-                String adventureHex = "<#" + hex.toLowerCase() + ">";
-                matcher.appendReplacement(sb, Matcher.quoteReplacement(adventureHex));
+            for (String hexCode : TextManager.extractHexCodes(legacy, policy)) {
+                String original = hexCode;
+                if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
+                legacy = legacy.replace(policy.getResult(original),
+                        LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.fromCSSHexString(hexCode))));
             }
-            matcher.appendTail(sb);
-            withHex = sb.toString();
         }
 
-        // Now parse with Adventure's modern legacy serializer (supports &#rrggbb and <#rrggbb>)
-        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                .character('&')
-                .hexColors()
-                .extractUrls()
-                .build();
-
-        Component mainComponent = serializer.deserialize(withHex);
-
-        // Handle !!json: parts (your original JSON logic preserved)
-        List<Component> parts = new ArrayList<>();
-        String text = withHex; // use the pre-processed string with <#> tags
-
-        Pattern jsonPattern = Pattern.compile("!!json:(\\{.*?\\})");
-        Matcher jsonMatcher = jsonPattern.matcher(text);
+        List<String> jsonStrings = TextManager.extractJsonStrings(legacy, "!!json:");
 
         int lastEnd = 0;
 
-        while (jsonMatcher.find()) {
-            int start = jsonMatcher.start();
-            String before = text.substring(lastEnd, start);
+        for (String jsonStr : jsonStrings) {
+            int index = legacy.indexOf("!!json:" + jsonStr);
+            String before = legacy.substring(lastEnd, index);
+            Component beforeComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(before);
+            componentsList.add(beforeComponent);
 
-            // Parse text before JSON with legacy serializer (now supports hex)
-            if (!before.isEmpty()) {
-                parts.add(serializer.deserialize(before));
-            }
-
-            String jsonContent = jsonMatcher.group(1);
             try {
-                Component jsonComp = JSONComponentSerializer.json().deserialize(jsonContent);
-                parts.add(jsonComp);
+                Component jsonComponent = JSONComponentSerializer.json().deserialize(jsonStr);
+                componentsList.add(jsonComponent);
             } catch (Exception e) {
+                // Handle exception
                 e.printStackTrace();
-                parts.add(Component.text("[JSON ERROR]"));
             }
 
-            lastEnd = jsonMatcher.end();
+            lastEnd = index + jsonStr.length() + 7; // 7 is the length of "!!json:"
         }
 
-        // Remaining text after last JSON block
-        if (lastEnd < text.length()) {
-            String tail = text.substring(lastEnd);
-            if (!tail.isEmpty()) {
-                parts.add(serializer.deserialize(tail));
-            }
+        // Append any remaining text after the last JSON block
+        if (lastEnd < legacy.length()) {
+            Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(legacy.substring(lastEnd));
+            componentsList.add(remainingComponent);
         }
 
-        if (parts.isEmpty()) {
-            return mainComponent;
-        }
-
-        return Component.empty().children(parts);
+        return Component.empty().children(componentsList);
     }
 
     public String replaceAllPlayerBungee(CommandSource sender, String of) {
