@@ -236,4 +236,17 @@ public class UserManager implements IUserManager<CommandSender, Player> {
 
         TaskManager.teleport(p, loc);
     }
+
+    @Override
+    public void teleport(CosmicPlayer player, CosmicPlayer to) {
+        if (! player.isOnline()) return;
+        Player p = StreamlineSpigot.getPlayer(player.getUuid());
+        if (p == null) return;
+
+        if (! to.isOnline()) return;
+        Player toP = StreamlineSpigot.getPlayer(to.getUuid());
+        if (toP == null) return;
+
+        TaskManager.teleport(p, toP.getLocation());
+    }
 }
