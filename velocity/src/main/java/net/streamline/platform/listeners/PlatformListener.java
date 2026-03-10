@@ -56,21 +56,21 @@ public class PlatformListener {
 
         String uuid = p.getUniqueId().toString();
 
+        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
+        if (whitelistConfig.isEnabled()) {
+            WhitelistEntry entry = whitelistConfig.getEntry(uuid);
+            if (entry == null) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get())));
+                return;
+            }
+        }
+
         CosmicPlayer streamPlayer = UserUtils.getOrGetPlayer(uuid).orElse(null);
         if (streamPlayer == null) return;
         streamPlayer.waitUntilFullyLoaded();
 
         streamPlayer.setCurrentName(p.getUsername());
         p.getCurrentServer().ifPresent(serverConnection -> streamPlayer.setServerName(serverConnection.getServerInfo().getName()));
-
-        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
-        if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
-            if (entry == null) {
-                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get())));
-                return;
-            }
-        }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginReceivedEvent);

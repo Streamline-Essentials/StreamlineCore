@@ -50,15 +50,16 @@ public class PlatformListener implements Listener {
         if (connection == null) return;
 
         String name = connection.getName();
-        Optional<String> optional = UuidManager.getUuidFromName(name);
-        String uuid;
-        if (optional.isEmpty()) {
-            ProxiedPlayer proxiedPlayer = ProxyServer.getInstance().getPlayer(name);
-            if (proxiedPlayer == null) return;
+        String uuid = connection.getUniqueId().toString();
 
-            uuid = proxiedPlayer.getUniqueId().toString();
-        } else {
-            uuid = optional.get();
+        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
+        if (whitelistConfig.isEnabled()) {
+            WhitelistEntry entry = whitelistConfig.getEntry(uuid);
+            if (entry == null) {
+                event.setCancelReason(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
+                event.setCancelled(true);
+                return;
+            }
         }
 
         CosmicPlayer streamPlayer = UserUtils.getOrCreatePlayer(uuid).orElse(null);
@@ -66,16 +67,6 @@ public class PlatformListener implements Listener {
 
         streamPlayer.setCurrentName(name);
 //        streamPlayer.getLocation().setServerName(proxiedPlayer.getServer().getInfo().getName());
-
-        WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
-        if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
-            if (entry == null) {
-                event.setCancelReason(Messenger.getInstance().codedText(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
-                event.setCancelled(true);
-                return;
-            }
-        }
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         ModuleUtils.fireEvent(loginReceivedEvent);
