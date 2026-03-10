@@ -84,18 +84,17 @@ public class PlatformListener implements Listener {
     public void onPreJoin(AsyncPlayerPreLoginEvent event) {
         String uuid = event.getUniqueId().toString();
 
-        CosmicPlayer streamPlayer = UserUtils.getOrGetPlayer(uuid).orElse(null);
-        if (streamPlayer == null) return;
-        streamPlayer.waitUntilFullyLoaded();
-
         WhitelistConfig whitelistConfig = GivenConfigs.getWhitelistConfig();
         if (whitelistConfig.isEnabled()) {
-            WhitelistEntry entry = whitelistConfig.getEntry(streamPlayer.getUuid());
+            WhitelistEntry entry = whitelistConfig.getEntry(uuid);
             if (entry == null) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST, MessageUtils.codedString(MainMessagesHandler.MESSAGES.INVALID.WHITELIST_NOT.get()));
                 return;
             }
         }
+
+        CosmicPlayer streamPlayer = UserUtils.getOrGetPlayer(uuid).orElse(null);
+        if (streamPlayer == null) return;
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
         BaseEventHandler.fireEvent(loginReceivedEvent);
