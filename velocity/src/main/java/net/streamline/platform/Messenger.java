@@ -184,9 +184,14 @@ public class Messenger implements IMessenger {
     public Component codedText(String from) {
         String raw = codedString(from); // Assuming codedString is another method you've implemented
 
-        String legacy = MessageUtils.codedString(raw); // Replace this with your actual legacy converter
+        String legacy = MessageUtils.newLined(MessageUtils.formatted(raw)); // Replace this with your actual legacy converter
 
         List<Component> componentsList = new ArrayList<>();
+
+        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
+                .character('&')
+                .hexColors()
+                .build();
 
         // Handle hex codes
         for (HexPolicy policy : TextManager.getHexPolicies()) {
@@ -194,7 +199,7 @@ public class Messenger implements IMessenger {
                 String original = hexCode;
                 if (! hexCode.startsWith("#")) hexCode = "#" + hexCode;
                 legacy = legacy.replace(policy.getResult(original),
-                        LegacyComponentSerializer.legacyAmpersand().serialize(Component.text("", TextColor.fromCSSHexString(hexCode))));
+                        "&#" + hexCode.substring(1));
             }
         }
 
@@ -205,7 +210,7 @@ public class Messenger implements IMessenger {
         for (String jsonStr : jsonStrings) {
             int index = legacy.indexOf("!!json:" + jsonStr);
             String before = legacy.substring(lastEnd, index);
-            Component beforeComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(before);
+            Component beforeComponent = serializer.deserialize(before);
             componentsList.add(beforeComponent);
 
             try {
@@ -221,7 +226,7 @@ public class Messenger implements IMessenger {
 
         // Append any remaining text after the last JSON block
         if (lastEnd < legacy.length()) {
-            Component remainingComponent = LegacyComponentSerializer.legacyAmpersand().deserialize(legacy.substring(lastEnd));
+            Component remainingComponent = serializer.deserialize(legacy.substring(lastEnd));
             componentsList.add(remainingComponent);
         }
 
