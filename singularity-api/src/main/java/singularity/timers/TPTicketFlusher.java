@@ -73,7 +73,7 @@ public class TPTicketFlusher extends BaseRunnable {
                 CosmicPlayer p = UserUtils.getPlayer(ticket.getIdentifier()).orElse(null);
                 if (p == null || !p.isOnline()) return;
 
-                Singularity.getInstance().getUserManager().teleport(p, ticket.toLocation());
+                ticket.teleportWithDelayAndClear(20);
                 ticket.clear();
             } catch (Throwable e) {
                 MessageUtils.logWarning("&cTPTicketFlusher&f: An error occurred while processing &dTPTicket &ffor &d" + ticket.getIdentifier() + "&f: " + e.getMessage());
