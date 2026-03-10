@@ -37,6 +37,7 @@ import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.server.CosmicServer;
 import singularity.data.teleportation.TPTicket;
 import singularity.data.uuid.UuidManager;
 import singularity.events.player.location.PlayerMovementEvent;
@@ -119,12 +120,10 @@ public class PlatformListener implements Listener {
                 return;
             }
 
-            streamPlayer.waitUntilFullyLoaded();
-
             streamPlayer.setCurrentIp(UserManager.getInstance().parsePlayerIP(player));
             streamPlayer.setCurrentName(player.getName());
 
-            CosmicLocation location = streamPlayer.getLocation();
+            CosmicServer server = SLAPI.getServer().getCosmicServer();
 
             Location loc = player.getLocation();
             World w = loc.getWorld();
@@ -133,7 +132,7 @@ public class PlatformListener implements Listener {
                 WorldPosition position = new WorldPosition(loc.getX(), loc.getY(), loc.getZ());
                 PlayerRotation rotation = new PlayerRotation(loc.getYaw(), loc.getPitch());
 
-                CosmicLocation newLocation = new CosmicLocation(location.getServer(), world, position, rotation);
+                CosmicLocation newLocation = new CosmicLocation(server, world, position, rotation);
 
 //            PlayerMovementEvent e = new PlayerMovementEvent(streamPlayer, newLocation).fire();
 //            e.completeMovement();
@@ -149,9 +148,11 @@ public class PlatformListener implements Listener {
 
             new TenSecondTimer(player);
 
-            TPTicket.getPendingTickets().stream()
-                    .filter(ticket -> ticket.getIdentifier().equalsIgnoreCase(player.getUniqueId().toString()))
-                    .forEach(ticket -> ticket.teleportWithDelayAndClear(0L));
+            TPTicket ticket = TPTicket.get(player.getUniqueId().toString());
+            if (ticket != null) {
+                ticket.teleportWithDelayAndClear(20);
+                ticket.clear();
+            }
         });
     }
 

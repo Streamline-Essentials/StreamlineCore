@@ -142,13 +142,9 @@ public class TPTicket implements Identifiable {
 
             if (player == null || ! player.isOnline()) {
                 pend(this);
+//                MessageUtils.logInfo("Player with UUID " + getIdentifier() + " is not online, pending teleportation ticket.");
             } else {
-                getToPlayer().ifPresentOrElse(
-                        to -> Singularity.getInstance().getUserManager().teleport(player, to),
-                        () -> Singularity.getInstance().getUserManager().teleport(player, toLocation())
-                );
-
-                clear();
+                teleportWithDelayAndClear(0);
             }
         }
     }
@@ -187,14 +183,22 @@ public class TPTicket implements Identifiable {
 
     public void teleportPlayerIfOnline() {
         UserUtils.getPlayer(getIdentifier()).ifPresent(player -> {
-            Singularity.getInstance().getUserManager().teleport(player, toLocation());
+            getToPlayer().ifPresentOrElse(
+                    to -> Singularity.getInstance().getUserManager().teleport(player, to),
+                    () -> Singularity.getInstance().getUserManager().teleport(player, toLocation())
+            );
+
+//            MessageUtils.logInfo("Teleported player " + player.getCurrentName() + " using TPTicket.");
         });
     }
 
-    public void teleportWithDelayAndClear(long delayTicks) {
-        AsyncUtils.runAsync(this::teleportPlayerIfOnline, delayTicks);
-
+    public void teleportPlayerIfOnlineThenClear() {
+        teleportPlayerIfOnline();
         clear();
+    }
+
+    public void teleportWithDelayAndClear(long delayTicks) {
+        AsyncUtils.runAsync(this::teleportPlayerIfOnlineThenClear, delayTicks);
     }
 
     public static TPTicket fromRedisMessage(RedisMessage redisMessage) {
@@ -286,6 +290,8 @@ public class TPTicket implements Identifiable {
     }
 
     public static void unpend(TPTicket ticket) {
+//        MessageUtils.logDebug("Unpending a TPTicket");
+
         if (ticket == null) return;
         getPendingTickets().removeIf(t -> t.equals(ticket));
     }
