@@ -536,22 +536,4 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     public org.slf4j.Logger getSLFLogger() {
         return null;
     }
-
-    @Override
-    public void teleportBackend(CosmicPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
-        Player bukkitPlayer = getPlayer(player.getUuid());
-        if (bukkitPlayer == null) return;
-
-        Optional.ofNullable(Bukkit.getWorld(world.getIdentifier())).ifPresent(w -> {
-            Location location = new Location(
-                    w,
-                    position.getX(),
-                    position.getY(),
-                    position.getZ(),
-                    rotation != null ? rotation.getYaw() : 0,
-                    rotation != null ? rotation.getPitch() : 0
-            );
-            host.plas.bou.scheduling.TaskManager.teleport(bukkitPlayer, location);
-        });
-    }
 }

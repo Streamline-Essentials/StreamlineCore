@@ -4,6 +4,7 @@ import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
 import singularity.objects.CosmicResourcePack;
+import singularity.utils.UserUtils;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -43,4 +44,22 @@ public interface IUserManager<C, P extends C> {
     ConcurrentSkipListMap<String, CosmicPlayer> ensurePlayers();
 
     void teleport(CosmicPlayer player, CosmicLocation location);
+
+    default void teleport(CosmicPlayer player, CosmicSender to) {
+        if (! player.isOnline()) return;
+        if (to.isConsole()) return;
+
+        CosmicPlayer toPlayer = UserUtils.getOrCreatePlayer(to.getUuid()).orElse(null);
+        if (toPlayer == null) return;
+
+        if (! toPlayer.isOnline()) {
+            teleport(player, toPlayer.getLocation());
+        } else {
+            teleport(player, toPlayer);
+        }
+    }
+
+    default void teleport(CosmicPlayer player, CosmicPlayer to) {
+        teleport(player, to.getLocation());
+    }
 }

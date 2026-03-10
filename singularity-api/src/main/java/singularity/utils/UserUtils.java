@@ -439,8 +439,20 @@ public class UserUtils {
         });
     }
 
+    /**
+     * Teleports a sender to another sender, using TPTickets.
+     * Should only be called to use a TPTicket for posting, not for direct teleportation.
+     * @param sender the sender to teleport
+     * @param target the player to teleport to
+     */
     public static void teleport(CosmicSender sender, CosmicPlayer target) {
-        teleport(sender, target.getLocation());
+        if (sender.isConsole()) {
+            MessageUtils.logWarning("Console attempted to teleport to " + target.getCurrentName());
+            return;
+        }
+
+        TPTicket ticket = new TPTicket(sender.getIdentifier(), target);
+        ticket.post();
     }
 
     /**

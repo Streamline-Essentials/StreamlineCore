@@ -86,10 +86,6 @@ public interface ISingularityExtension {
         return getSLFLogger() != null;
     }
 
-    default void teleportBackend(CosmicPlayer player, PlayerWorld world, WorldPosition position, PlayerRotation rotation) {
-        // do nothing by default
-    }
-
     default void setPlatformAsEnabled() {
         Singularity.platformEnabled(true);
     }
