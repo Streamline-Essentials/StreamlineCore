@@ -93,16 +93,11 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     private static PlayerChecker playerChecker;
 
     @Getter @Setter
-    private static TaskScheduler scheduler;
-
-    @Getter @Setter
     private static PlatformListener.ProxyMessagingListener proxyMessagingListener;
 
     @Override
     public void onBaseConstruct() {
         instance = this;
-
-        scheduler = UniversalScheduler.getScheduler(this);
 
         setupProperties();
 
