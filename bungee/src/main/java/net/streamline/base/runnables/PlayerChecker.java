@@ -7,11 +7,37 @@ import singularity.data.players.CosmicPlayer;
 import singularity.scheduler.BaseRunnable;
 import singularity.utils.UserUtils;
 
+/**
+ * A high-frequency periodic task that runs every server tick to ensure that
+ * every online BungeeCord player has a fully initialised {@link CosmicPlayer}
+ * record in memory. Players that are already loaded are skipped to keep
+ * overhead minimal.
+ *
+ * <p>For each unloaded player the task:
+ * <ol>
+ *   <li>Gets or creates the corresponding {@link CosmicPlayer}.</li>
+ *   <li>Updates the player's current IP, name, and connected server name.</li>
+ *   <li>Calls {@code ensureLoaded()} to finish any deferred initialisation.</li>
+ * </ol>
+ */
 public class PlayerChecker extends BaseRunnable {
+
+    /**
+     * Constructs a new {@code PlayerChecker} that starts immediately with no
+     * initial delay and repeats every tick (period {@code 1}).
+     */
     public PlayerChecker() {
         super(0, 1);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Iterates over all online BungeeCord players. Players whose Streamline
+     * record is already loaded are skipped. For the rest, a {@link CosmicPlayer}
+     * is created (or retrieved), its connection properties are updated, and
+     * {@code ensureLoaded()} is called to complete initialisation.
+     */
     @Override
     public void run() {
         StreamlineBungee.getPlayersByUUID().forEach((uuid, player) -> {

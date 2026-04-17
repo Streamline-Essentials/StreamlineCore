@@ -48,47 +48,128 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Abstract Velocity platform implementation of {@link ISingularityExtension}.
+ *
+ * <p>Manages the full lifecycle of the StreamlineCore Velocity plugin: dependency injection,
+ * proxy event subscriptions, {@link SLAPI} initialisation, player tracking, resource-pack
+ * delivery, command registration, and cross-platform event firing.
+ *
+ * <p>Subclasses must implement {@link #enable()}, {@link #disable()}, and {@link #load()}.
+ */
 public abstract class BasePlugin implements ISingularityExtension {
+    /**
+     * Always {@link PlatformType#VELOCITY}; identifies this implementation as a Velocity proxy.
+     */
     @Getter
     private final PlatformType platformType = PlatformType.VELOCITY;
+
+    /**
+     * Always {@link ServerType#PROXY}; indicates this is a proxy-side installation.
+     */
     @Getter
     private final ServerType serverType = ServerType.PROXY;
 
+    /**
+     * The plugin name as read from {@code streamline.properties} at startup.
+     */
     @Getter
     private String name;
+
+    /**
+     * The plugin version as read from {@code streamline.properties} at startup.
+     */
     @Getter
     private String version;
+
+    /**
+     * The singleton {@code BasePlugin} instance set during {@link #onLoad()}.
+     */
     @Getter
     private static BasePlugin instance;
+
+    /**
+     * The {@link SLAPI} instance that wires together the UserManager, Messenger,
+     * ConsoleHolder, and PlayerInterface for this platform.
+     */
     @Getter
     private SLAPI<CommandSource, Player, BasePlugin, UserManager, Messenger> slapi;
 
+    /**
+     * The Velocity-specific {@link UserManager} for player/sender resolution and management.
+     */
     @Getter
     private UserManager userManager;
+
+    /**
+     * The Velocity-specific {@link Messenger} for cross-platform text dispatch.
+     */
     @Getter
     private Messenger messenger;
+
+    /**
+     * The {@link ConsoleHolder} wrapping the Velocity console command source.
+     */
     @Getter
     private ConsoleHolder consoleHolder;
+
+    /**
+     * The {@link PlayerInterface} providing player lookup and action wrappers.
+     */
     @Getter
     private PlayerInterface playerInterface;
 
+    /**
+     * The active resource pack to be sent to players, or {@code null} if none is configured.
+     */
     @Getter @Setter
     private CosmicResourcePack resourcePack;
 
+    /**
+     * The Velocity {@link ProxyServer} instance injected at construction.
+     */
     @Getter
     private final ProxyServer proxy;
+
+    /**
+     * The SLF4J logger provided by Velocity.
+     */
     @Getter
     private final Logger logger;
+
+    /**
+     * The plugin's data directory as a {@link Path} (mirrors {@link #dataFolder}).
+     */
     @Getter
     private final Path dataDirectory;
+
+    /**
+     * The plugin's data directory as a {@link File}.
+     */
     @Getter
     private final File dataFolder;
+
+    /**
+     * The bStats {@link Metrics.Factory} used to create and register metrics charts.
+     */
     @Getter
     private final Metrics.Factory metricsFactory;
 
+    /**
+     * The periodic task that ensures all online players have an initialised {@link CosmicPlayer}.
+     */
     @Getter @Setter
     private static PlayerChecker playerChecker;
 
+    /**
+     * Constructs the plugin, resolves and renames any legacy data folders, and triggers
+     * {@link #onLoad()}.
+     *
+     * @param server         the Velocity {@link ProxyServer} instance
+     * @param logger         the SLF4J logger provided by Velocity
+     * @param dataFolder     the plugin data directory
+     * @param metricsFactory the bStats factory used to create metric instances
+     */
     public BasePlugin(ProxyServer server, Logger logger, File dataFolder, Metrics.Factory metricsFactory) {
         this.proxy = server;
         this.logger = logger;
@@ -121,6 +202,10 @@ public abstract class BasePlugin implements ISingularityExtension {
         onLoad();
     }
 
+    /**
+     * Called by the constructor immediately after field initialisation. Registers the singleton
+     * instance, reads properties, renames any legacy data folders, and delegates to {@link #load()}.
+     */
     public void onLoad() {
         instance = this;
 
@@ -151,6 +236,10 @@ public abstract class BasePlugin implements ISingularityExtension {
         this.load();
     }
 
+    /**
+     * Reads {@code name} and {@code version} from the bundled {@code streamline.properties}
+     * resource and populates the corresponding fields.
+     */
     public void setupProperties() {
         ConcurrentSkipListMap<String, String> properties = StorageUtils.readProperties();
         if (properties.isEmpty()) return;
@@ -168,6 +257,14 @@ public abstract class BasePlugin implements ISingularityExtension {
         }
     }
 
+    /**
+     * Handles the Velocity {@link ProxyInitializeEvent}: initialises all platform components
+     * ({@link UserManager}, {@link Messenger}, {@link ConsoleHolder}, {@link PlayerInterface},
+     * {@link SLAPI}), registers the plugin-messaging channel, starts the {@link TaskManager},
+     * and starts the {@link PlayerChecker} task before calling {@link #enable()}.
+     *
+     * @param event the proxy initialisation event
+     */
     @Subscribe
     public void onEnable(ProxyInitializeEvent event) {
         userManager = new UserManager();
@@ -190,6 +287,13 @@ public abstract class BasePlugin implements ISingularityExtension {
         this.enable();
     }
 
+    /**
+     * Handles the Velocity {@link ProxyShutdownEvent}: cancels TP ticket tasks, syncs all users,
+     * saves UUID information, unregisters the plugin-messaging channel, calls {@link #disable()},
+     * fires the {@link singularity.events.server.ServerStopEvent}, and stops the task manager.
+     *
+     * @param event the proxy shutdown event
+     */
     @Subscribe
     public void onDisable(ProxyShutdownEvent event) {
         Singularity.getTpTicketFlusher().cancel();
@@ -206,6 +310,10 @@ public abstract class BasePlugin implements ISingularityExtension {
         TaskManager.stop();
     }
 
+    /**
+     * Fires a {@link singularity.events.server.ServerStopEvent} and, if the event is not
+     * cancelled and is marked sendable, broadcasts its message to the console.
+     */
     public void fireStopEvent() {
         ServerStopEvent e = new ServerStopEvent().fire();
         if (e.isCancelled()) return;
@@ -213,12 +321,30 @@ public abstract class BasePlugin implements ISingularityExtension {
         SLAPI.sendConsoleMessage(e.getMessage());
     }
 
+    /**
+     * Called after all platform components are initialised. Subclasses should perform
+     * plugin-specific startup logic here.
+     */
     abstract public void enable();
 
+    /**
+     * Called when the proxy shuts down. Subclasses should perform plugin-specific
+     * cleanup and teardown here.
+     */
     abstract public void disable();
 
+    /**
+     * Called before {@link #enable()} during the load phase. Subclasses may perform
+     * pre-initialisation work here.
+     */
     abstract public void load();
 
+    /**
+     * Registers a Velocity event listener with the proxy event manager using this plugin
+     * as the owner.
+     *
+     * @param listener the listener object to register
+     */
     public static void registerListener(Object listener) {
         getInstance().getProxy().getEventManager().register(getInstance(), listener);
     }
@@ -264,15 +390,32 @@ public abstract class BasePlugin implements ISingularityExtension {
         return getInstance().getProxy().getConfiguration().getCompressionThreshold();
     }
 
+    /**
+     * Returns an unmodifiable snapshot of all currently connected players.
+     *
+     * @return a new {@link List} of all online {@link Player} instances
+     */
     public static List<Player> onlinePlayers() {
         return new ArrayList<>(getInstance().getProxy().getAllPlayers());
     }
 
+    /**
+     * Returns all players currently connected to the named backend server.
+     *
+     * @param serverName the name of the registered backend server
+     * @return a list of connected players, or an empty list if the server is not found
+     */
     public static List<Player> playersOnServer(String serverName) {
         Optional<RegisteredServer> serverOpt = getInstance().getProxy().getServer(serverName);
         return serverOpt.map(registeredServer -> new ArrayList<>(registeredServer.getPlayersConnected())).orElseGet(ArrayList::new);
     }
 
+    /**
+     * Finds an online player by their UUID string.
+     *
+     * @param uuid the UUID string to search for
+     * @return the matching {@link Player}, or {@code null} if no online player has that UUID
+     */
     public static Player getPlayer(String uuid) {
         for (Player player : onlinePlayers()) {
             if (player.getUniqueId().toString().equals(uuid)) return player;
@@ -281,25 +424,57 @@ public abstract class BasePlugin implements ISingularityExtension {
         return null;
     }
 
+    /**
+     * Looks up an online player by exact username via the Velocity proxy.
+     *
+     * @param name the player's username
+     * @return an {@link Optional} containing the player, or empty if not found
+     */
     public static Optional<Player> getPlayerByName(String name) {
         return getInstance().getProxy().getPlayer(name);
     }
 
+    /**
+     * Returns the online player whose username exactly matches the given name, or {@code null}.
+     *
+     * @param name the exact username to match (not null)
+     * @return the matching {@link Player}, or {@code null} if not online
+     */
     public static @Nullable Player getPlayerExact(@NotNull String name) {
         if (getPlayerByName(name).isEmpty()) return null;
         return getPlayerByName(name).get();
     }
 
+    /**
+     * Returns a list containing the online player whose username exactly matches the given name.
+     *
+     * @param name the username to match (not null)
+     * @return a singleton list with the player, or an empty list if not found
+     */
     public static @NotNull List<Player> matchPlayer(@NotNull String name) {
         Player player = getPlayerExact(name);
         if (player == null) return new ArrayList<>();
         return List.of(player);
     }
 
+    /**
+     * Finds an online player by their {@link UUID}.
+     *
+     * @param id the UUID to search for (not null)
+     * @return the matching {@link Player}, or {@code null} if not online
+     */
     public static @Nullable Player getPlayer(@NotNull UUID id) {
         return getPlayer(id.toString());
     }
 
+    /**
+     * Resolves the online player associated with the given {@link CommandSource}.
+     *
+     * <p>Looks up the player by the username derived from the source via {@link UserManager}.
+     *
+     * @param sender the command source to resolve
+     * @return the associated {@link Player}, or {@code null} if the source is not a player
+     */
     public static Player getPlayer(CommandSource sender) {
         Optional<Player> player = getInstance().getProxy().getPlayer(getInstance().getUserManager().getUsername(sender));
         return player.orElse(null);
@@ -391,6 +566,15 @@ public abstract class BasePlugin implements ISingularityExtension {
         sendResourcePack(resourcePack, p);
     }
 
+    /**
+     * Sends a resource pack offer to the specified Velocity {@link Player}.
+     *
+     * <p>Builds the Velocity {@link ResourcePackInfo} from the {@link CosmicResourcePack} fields
+     * and calls {@link Player#sendResourcePackOffer(ResourcePackInfo)}.
+     *
+     * @param resourcePack the resource pack descriptor; must not be {@code null}
+     * @param player       the target player; if {@code null}, this method is a no-op
+     */
     public void sendResourcePack(CosmicResourcePack resourcePack, Player player) {
         if (player == null) return;
         try {
@@ -408,6 +592,11 @@ public abstract class BasePlugin implements ISingularityExtension {
         return getProxy().getClass().getClassLoader();
     }
 
+    /**
+     * Returns a sorted map of all currently connected players keyed by their UUID string.
+     *
+     * @return a {@link ConcurrentSkipListMap} mapping UUID strings to their {@link Player} instances
+     */
     public static ConcurrentSkipListMap<String, Player> getPlayersByUUID() {
         ConcurrentSkipListMap<String, Player> map = new ConcurrentSkipListMap<>();
         for (Player player : getInstance().getProxy().getAllPlayers()) {

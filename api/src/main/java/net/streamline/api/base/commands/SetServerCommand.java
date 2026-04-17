@@ -7,10 +7,34 @@ import singularity.configs.given.MainMessagesHandler;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Command that persists a new identifier for the current server.
+ *
+ * <p>Usage: {@code /setserveridentifier <name>}. The supplied identifier is
+ * written to the Streamline configuration via
+ * {@link singularity.configs.given.GivenConfigs#writeServerName(String)} so
+ * that it is used as the server name in cross-server messaging and placeholder
+ * resolution. Registered under the aliases {@code setidentifier} and
+ * {@code setserver}.</p>
+ */
 public class SetServerCommand extends CosmicCommand {
+
+    /**
+     * Configurable feedback message sent to the sender when the identifier is
+     * saved successfully. Supports the {@code %this_input%} token.
+     */
     private final String messageResultSet;
+
+    /**
+     * Configurable error message sent to the sender when the supplied identifier
+     * is blank or otherwise invalid.
+     */
     private final String messageResultInvalid;
 
+    /**
+     * Registers the set-server command with the {@code streamline-base} module and
+     * loads both response message templates from the command resource file.
+     */
     public SetServerCommand() {
         super(
                 "streamline-base",
@@ -25,6 +49,15 @@ public class SetServerCommand extends CosmicCommand {
                 "&cInvalid input. Please provide a valid identifier.&8!");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Validates that exactly one non-blank argument was supplied, then
+     * persists the identifier by delegating to
+     * {@link singularity.configs.given.GivenConfigs#writeServerName(String)}.</p>
+     *
+     * @param context the command context carrying the sender and parsed arguments
+     */
     @Override
     public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 1) {
@@ -47,6 +80,15 @@ public class SetServerCommand extends CosmicCommand {
         context.sendMessage(this.messageResultSet.replace("%this_input%", input));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Offers the literal placeholder hint {@code <server-name>} when the
+     * sender has not yet typed any argument.</p>
+     *
+     * @param context the command context carrying the sender and current argument list
+     * @return a set containing {@code <server-name>} for argument 1, or an empty set otherwise
+     */
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         ConcurrentSkipListSet<String> completions = new ConcurrentSkipListSet<>();

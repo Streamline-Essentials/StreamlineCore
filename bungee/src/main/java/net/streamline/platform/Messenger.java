@@ -26,14 +26,36 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * BungeeCord implementation of {@link IMessenger} that formats and delivers
+ * messages to {@link CommandSender}s and {@link singularity.data.console.CosmicSender}s.
+ *
+ * <p>Handles colour codes (including hex), JSON component embedding via the
+ * {@code !!json:} prefix, and optional PlaceholderAPI-style replacements when
+ * the {@link net.streamline.api.SLAPI} is fully initialised.
+ */
 public class Messenger implements IMessenger {
+
+    /** The singleton instance of this messenger, set during construction. */
     @Getter
     private static Messenger instance;
 
+    /**
+     * Constructs the {@code Messenger} and registers it as the singleton instance.
+     */
     public Messenger() {
         instance = this;
     }
 
+    /**
+     * Sends a formatted message to the given BungeeCord {@link CommandSender}.
+     *
+     * <p>Applies colour codes and placeholder replacements (when SLAPI is ready)
+     * before delivery. Does nothing if {@code to} is {@code null}.
+     *
+     * @param to      the recipient; {@code null} is silently ignored
+     * @param message the raw message string, supporting {@code &}-colour codes
+     */
     public void sendMessage(@Nullable CommandSender to, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
@@ -43,6 +65,14 @@ public class Messenger implements IMessenger {
         }
     }
 
+    /**
+     * Sends a formatted message to {@code to} with placeholders resolved for
+     * the player identified by {@code otherUUID}.
+     *
+     * @param to        the recipient; {@code null} is silently ignored
+     * @param otherUUID the UUID string of the player whose context is used for placeholder replacement
+     * @param message   the raw message string
+     */
     public void sendMessage(@Nullable CommandSender to, String otherUUID, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
@@ -52,6 +82,14 @@ public class Messenger implements IMessenger {
         }
     }
 
+    /**
+     * Sends a formatted message to {@code to} with placeholders resolved in the
+     * context of {@code other}.
+     *
+     * @param to      the recipient; {@code null} is silently ignored
+     * @param other   the {@link CosmicSender} whose context is used for placeholder replacement
+     * @param message the raw message string
+     */
     public void sendMessage(@Nullable CommandSender to, CosmicSender other, String message) {
         if (to == null) return;
         if (! SLAPI.isReady()) {
@@ -61,24 +99,55 @@ public class Messenger implements IMessenger {
         }
     }
 
+    /**
+     * Sends a formatted message to a {@link CosmicSender}, routing to the
+     * corresponding BungeeCord player or console sender.
+     *
+     * @param to      the cross-platform recipient; {@code null} is silently ignored
+     * @param message the raw message string
+     */
     public void sendMessage(@Nullable CosmicSender to, String message) {
         if (to == null) return;
         if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), message);
         else sendMessage(ProxyServer.getInstance().getConsole(), message);
     }
 
+    /**
+     * Sends a formatted message to a {@link CosmicSender} with placeholders
+     * resolved for the player identified by {@code otherUUID}.
+     *
+     * @param to        the cross-platform recipient; {@code null} is silently ignored
+     * @param otherUUID the UUID string of the context player for placeholder replacement
+     * @param message   the raw message string
+     */
     public void sendMessage(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
         if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
+    /**
+     * Sends a formatted message to a {@link CosmicSender} with placeholders
+     * resolved in the context of {@code other}.
+     *
+     * @param to      the cross-platform recipient; {@code null} is silently ignored
+     * @param other   the {@link CosmicSender} context for placeholder replacement; {@code null} is silently ignored
+     * @param message the raw message string
+     */
     public void sendMessage(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
         if (to instanceof CosmicPlayer) sendMessage(StreamlineBungee.getPlayer(to.getUuid()), other, message);
         else sendMessage(ProxyServer.getInstance().getConsole(), other, message);
     }
 
+    /**
+     * Sends a message to a BungeeCord {@link CommandSender} as a raw
+     * {@link net.md_5.bungee.api.chat.BaseComponent} array without additional
+     * colour processing beyond placeholder replacement.
+     *
+     * @param to      the recipient; {@code null} is silently ignored
+     * @param message the raw message string
+     */
     public void sendMessageRaw(CommandSender to, String message) {
         if (to == null) return;
 
@@ -92,6 +161,14 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
+    /**
+     * Sends a raw component message to a {@link CommandSender} with placeholders
+     * resolved for the player identified by {@code otherUUID}.
+     *
+     * @param to        the recipient; {@code null} is silently ignored
+     * @param otherUUID the UUID string of the context player for placeholder replacement
+     * @param message   the raw message string
+     */
     public void sendMessageRaw(CommandSender to, String otherUUID, String message) {
         if (to == null) return;
 
@@ -105,6 +182,14 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
+    /**
+     * Sends a raw component message to a {@link CommandSender} with placeholders
+     * resolved in the context of {@code other}.
+     *
+     * @param to      the recipient; {@code null} is silently ignored
+     * @param other   the {@link CosmicSender} context for placeholder replacement
+     * @param message the raw message string
+     */
     public void sendMessageRaw(CommandSender to, CosmicSender other, String message) {
         if (to == null) return;
 
@@ -118,24 +203,57 @@ public class Messenger implements IMessenger {
         to.sendMessage(component);
     }
 
+    /**
+     * Sends a raw component message to a {@link CosmicSender}, routing to the
+     * corresponding BungeeCord player or console sender.
+     *
+     * @param to      the cross-platform recipient; {@code null} is silently ignored
+     * @param message the raw message string
+     */
     public void sendMessageRaw(@Nullable CosmicSender to, String message) {
         if (to == null) return;
         if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), message);
     }
 
+    /**
+     * Sends a raw component message to a {@link CosmicSender} with placeholders
+     * resolved for the player identified by {@code otherUUID}.
+     *
+     * @param to        the cross-platform recipient; {@code null} is silently ignored
+     * @param otherUUID the UUID string of the context player
+     * @param message   the raw message string
+     */
     public void sendMessageRaw(@Nullable CosmicSender to, String otherUUID, String message) {
         if (to == null) return;
         if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), otherUUID, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), otherUUID, message);
     }
 
+    /**
+     * Sends a raw component message to a {@link CosmicSender} with placeholders
+     * resolved in the context of {@code other}.
+     *
+     * @param to      the cross-platform recipient; {@code null} is silently ignored
+     * @param other   the context {@link CosmicSender}; {@code null} is silently ignored
+     * @param message the raw message string
+     */
     public void sendMessageRaw(@Nullable CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
         if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), other, message);
     }
 
+    /**
+     * Sends a title and subtitle to the given player using the BungeeCord title API.
+     *
+     * <p>Logs an info message and returns without action if the underlying
+     * {@link ProxiedPlayer} cannot be resolved.
+     *
+     * @param player the cross-platform player to receive the title
+     * @param title  the {@link CosmicTitle} containing main text, subtitle,
+     *               fade-in, stay, and fade-out durations (in ticks)
+     */
     public void sendTitle(CosmicSender player, CosmicTitle title) {
         ProxiedPlayer p = StreamlineBungee.getPlayer(player.getUuid());
         if (p == null) {
@@ -152,15 +270,38 @@ public class Messenger implements IMessenger {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Translates {@code &}-prefixed colour codes and normalises newline
+     * characters via {@link singularity.modules.ModuleUtils#newLined}.
+     */
     @Override
     public String codedString(String from) {
         return ChatColor.translateAlternateColorCodes('&', ModuleUtils.newLined(from));
     }
 
+    /**
+     * Strips all BungeeCord colour codes and hex colour tags from the given string.
+     *
+     * @param string the string to strip
+     * @return the colour-stripped string
+     */
     public String stripColor(String string){
         return ChatColor.stripColor(string).replaceAll("([<][#][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][1-9a-f][>])+", "");
     }
 
+    /**
+     * Converts a raw string (with {@code &}-colour codes, hex codes, and optional
+     * {@code !!json:} segments) into a BungeeCord {@link net.md_5.bungee.api.chat.BaseComponent}
+     * array suitable for sending to players.
+     *
+     * <p>Processing order: hex code expansion, {@link #codedString} colour translation,
+     * legacy PlaceholderAPI-style processing, then JSON block extraction and parsing.
+     *
+     * @param from the raw input string
+     * @return the resulting component array; never {@code null}
+     */
     public BaseComponent[] codedText(String from) {
         String raw = from;
 
@@ -211,6 +352,17 @@ public class Messenger implements IMessenger {
         return componentsList.toArray(new BaseComponent[0]);
     }
 
+    /**
+     * Resolves the {@link CosmicSender} for the given BungeeCord
+     * {@link CommandSender} and applies all registered player placeholder
+     * replacements to the string {@code of}.
+     *
+     * <p>Returns {@code of} unchanged if the sender cannot be resolved.
+     *
+     * @param sender the BungeeCord command sender
+     * @param of     the string in which to apply replacements
+     * @return the string with all applicable placeholders replaced
+     */
     public String replaceAllPlayerBungee(CommandSender sender, String of) {
         CosmicSender s = UserManager.getInstance().getOrCreateSender(sender).orElse(null);
         if (s == null) {

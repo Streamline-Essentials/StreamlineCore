@@ -42,36 +42,72 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Logger;
 
+/**
+ * Abstract base class for the BungeeCord platform plugin.
+ *
+ * <p>Implements {@link ISingularityExtension} to integrate with the Streamline
+ * abstraction layer. Manages the lifecycle of {@link SLAPI}, {@link UserManager},
+ * {@link Messenger}, {@link ConsoleHolder}, and {@link PlayerInterface}.
+ * Subclasses must implement {@link #enable()}, {@link #disable()}, and
+ * {@link #load()} to provide platform-specific startup behaviour.
+ */
 public abstract class BasePlugin extends Plugin implements ISingularityExtension {
+
+    /** The platform type constant for BungeeCord. */
     @Getter
     private final PlatformType platformType = PlatformType.BUNGEE;
+
+    /** The server type constant identifying this as a proxy server. */
     @Getter
     private final ServerType serverType = ServerType.PROXY;
 
+    /** The plugin name resolved from {@code streamline.properties}. */
     @Getter
     private String name;
+
+    /** The plugin version resolved from {@code streamline.properties}. */
     @Getter
     private String version;
+
+    /** The singleton instance of the currently running {@code BasePlugin}. */
     @Getter
     private static BasePlugin instance;
+
+    /** The Streamline API instance bound to this platform plugin. */
     @Getter
     private SLAPI<CommandSender, ProxiedPlayer, BasePlugin, UserManager, Messenger> slapi;
 
+    /** The user-manager responsible for player and sender lifecycle. */
     @Getter
     private UserManager userManager;
+
+    /** The platform messenger used to send formatted messages. */
     @Getter
     private Messenger messenger;
+
+    /** The holder providing access to the BungeeCord console sender. */
     @Getter
     private ConsoleHolder consoleHolder;
+
+    /** The interface for obtaining platform {@link ProxiedPlayer} instances. */
     @Getter
     private PlayerInterface playerInterface;
 
+    /** Periodic task that checks online player state. */
     @Getter @Setter
     private static PlayerChecker playerChecker;
 
+    /** The resource pack currently assigned to this proxy instance. */
     @Getter @Setter
     private CosmicResourcePack resourcePack;
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Stores the singleton instance, reads {@code streamline.properties},
+     * migrates any legacy plugin data-folder names to the canonical name, then
+     * delegates to {@link #load()}.
+     */
     @Override
     public void onLoad() {
         instance = this;
@@ -103,6 +139,10 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         this.load();
     }
 
+    /**
+     * Reads {@code streamline.properties} and populates {@link #name} and
+     * {@link #version} from the key-value pairs found there.
+     */
     public void setupProperties() {
         ConcurrentSkipListMap<String, String> properties = StorageUtils.readProperties();
         if (properties.isEmpty()) return;
@@ -120,6 +160,15 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Initialises core services ({@link UserManager}, {@link Messenger},
+     * {@link ConsoleHolder}, {@link PlayerInterface}), creates the {@link SLAPI}
+     * instance, registers the platform listener and plugin-messaging channel,
+     * starts the {@link singularity.scheduler.TaskManager}, and then calls
+     * {@link #enable()} followed by firing a {@link singularity.events.server.ServerStartEvent}.
+     */
     @Override
     public void onEnable() {
         userManager = new UserManager();
@@ -141,6 +190,10 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         fireStartEvent();
     }
 
+    /**
+     * Fires a {@link singularity.events.server.ServerStartEvent} and, if the event
+     * is not cancelled and is sendable, prints its message to the console.
+     */
     public void fireStartEvent() {
         ServerStartEvent e = new ServerStartEvent().fire();
         if (e.isCancelled()) return;
@@ -148,6 +201,14 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         SLAPI.sendConsoleMessage(e.getMessage());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Cancels teleport-ticket tasks, synchronises all users, saves UUID data,
+     * unregisters the plugin-messaging channel, calls {@link #disable()}, fires a
+     * {@link singularity.events.server.ServerStopEvent}, and stops the
+     * {@link singularity.scheduler.TaskManager}.
+     */
     @Override
     public void onDisable() {
         Singularity.getTpTicketFlusher().cancel();
@@ -164,6 +225,10 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         TaskManager.stop();
     }
 
+    /**
+     * Fires a {@link singularity.events.server.ServerStopEvent} and, if the event
+     * is not cancelled and is sendable, prints its message to the console.
+     */
     public void fireStopEvent() {
         ServerStopEvent e = new ServerStopEvent().fire();
         if (e.isCancelled()) return;
@@ -171,16 +236,36 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         SLAPI.sendConsoleMessage(e.getMessage());
     }
 
+    /**
+     * Called after core services are initialised; subclasses perform their
+     * platform-specific enable logic here.
+     */
     abstract public void enable();
 
+    /**
+     * Called before the plugin fully shuts down; subclasses perform their
+     * platform-specific cleanup here.
+     */
     abstract public void disable();
 
+    /**
+     * Called during the BungeeCord {@code onLoad} phase; subclasses perform
+     * early initialisation here before services are available.
+     */
     abstract public void load();
 
+    /**
+     * Registers a BungeeCord {@link Listener} against the proxy plugin manager.
+     *
+     * @param listener the listener to register
+     */
     public static void registerListener(Listener listener) {
         getInstance().getProxy().getPluginManager().registerListener(getInstance(), listener);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public @NotNull ConcurrentSkipListSet<CosmicPlayer> getOnlinePlayers() {
         ConcurrentSkipListSet<CosmicPlayer> players = new ConcurrentSkipListSet<>();
@@ -194,15 +279,27 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         return players;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProperCommand createCommand(CosmicCommand command) {
         return new ProperCommand(command);
     }
 
+    /**
+     * Returns the maximum number of players allowed on this BungeeCord proxy,
+     * as configured in {@code config.yml}.
+     *
+     * @return the configured player limit
+     */
     public int getMaxPlayers() {
         return getInstance().getProxy().getConfig().getPlayerLimit();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConcurrentSkipListSet<String> getOnlinePlayerNames() {
         ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
@@ -216,24 +313,48 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         return r;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isOfflineMode() {
         return ! getInstance().getProxy().getConfig().isOnlineMode();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public long getConnectionThrottle() {
         return getInstance().getProxy().getConfig().getThrottle();
     }
 
+    /**
+     * Returns a snapshot list of all currently online {@link ProxiedPlayer}s.
+     *
+     * @return a mutable list of online players
+     */
     public static List<ProxiedPlayer> onlinePlayers() {
         return new ArrayList<>(getInstance().getProxy().getPlayers());
     }
 
+    /**
+     * Returns a snapshot list of all {@link ProxiedPlayer}s connected to the
+     * named backend server.
+     *
+     * @param serverName the name of the backend server
+     * @return a mutable list of players on that server
+     */
     public static List<ProxiedPlayer> playersOnServer(String serverName) {
         return new ArrayList<>(getInstance().getProxy().getServerInfo(serverName).getPlayers());
     }
 
+    /**
+     * Looks up an online {@link ProxiedPlayer} by their UUID string.
+     *
+     * @param uuid the player's UUID as a string
+     * @return the matching player, or {@code null} if not found
+     */
     public static ProxiedPlayer getPlayer(String uuid) {
         for (ProxiedPlayer player : onlinePlayers()) {
             if (player.getUniqueId().toString().equals(uuid)) return player;
@@ -242,29 +363,57 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         return null;
     }
 
+    /**
+     * Looks up an online {@link ProxiedPlayer} by their username.
+     *
+     * @param name the player's username (case-insensitive on BungeeCord)
+     * @return an {@link Optional} containing the player, or empty if not found
+     */
     public static Optional<ProxiedPlayer> getPlayerByName(String name) {
         return Optional.ofNullable(getInstance().getProxy().getPlayer(name));
     }
 
+    /**
+     * Looks up an online {@link ProxiedPlayer} by exact username.
+     *
+     * @param name the player's exact username; must not be {@code null}
+     * @return the player, or {@code null} if not found
+     */
     public static @Nullable ProxiedPlayer getPlayerExact(@NotNull String name) {
         if (getPlayerByName(name).isEmpty()) return null;
         return getPlayerByName(name).get();
     }
 
+    /**
+     * Returns the {@link ProxiedPlayer} corresponding to the given
+     * {@link CommandSender}, looked up by sender name.
+     *
+     * @param sender the command sender whose player instance is required
+     * @return the matching {@link ProxiedPlayer}, or {@code null} if the sender is not a player
+     */
     public static ProxiedPlayer getPlayer(CommandSender sender) {
         return getInstance().getProxy().getPlayer(sender.getName());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean getOnlineMode() {
         return getInstance().getProxy().getConfig().isOnlineMode();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void shutdown() {
         getInstance().getProxy().stop();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int broadcast(@NotNull String message, @NotNull String permission) {
         int people = 0;
@@ -278,16 +427,25 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         return people;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean serverHasPlugin(String plugin) {
         return getInstance().getProxy().getPluginManager().getPlugin(plugin) != null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean equalsAnyServer(String servername) {
         return getServerNames().contains(servername);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void fireEvent(IProperEvent<?> event) {
         if (! (event.getEvent() instanceof Event)) return;
@@ -295,11 +453,19 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         getInstance().getProxy().getPluginManager().callEvent(e);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Always fires the event asynchronously on BungeeCord.
+     */
     @Override
     public void fireEvent(CosmicEvent event) {
         fireEvent(event, true);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void fireEvent(CosmicEvent event, boolean async) {
         try {
@@ -309,28 +475,47 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void handleMisSync(CosmicEvent event, boolean async) {
         BaseEventHandler.fireEvent(event);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConcurrentSkipListSet<String> getServerNames() {
         return new ConcurrentSkipListSet<>(getInstance().getProxy().getServers().keySet());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendResourcePack(CosmicResourcePack resourcePack, CosmicPlayer player) {
         ProxiedPlayer p = getPlayer(player.getUuid());
         sendResourcePack(resourcePack, p);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendResourcePack(CosmicResourcePack resourcePack, String uuid) {
         ProxiedPlayer p = getPlayer(uuid);
         sendResourcePack(resourcePack, p);
     }
 
+    /**
+     * Sends the specified resource pack to a {@link ProxiedPlayer} via the
+     * {@link singularity.messages.builders.ResourcePackMessageBuilder} pipeline.
+     *
+     * @param resourcePack the resource pack to send
+     * @param player       the target player; the method returns immediately if {@code null}
+     */
     public void sendResourcePack(CosmicResourcePack resourcePack, ProxiedPlayer player) {
         if (player == null) return;
         CosmicPlayer streamPlayer = getUserManager().getOrCreatePlayer(player).orElse(null);
@@ -339,11 +524,20 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         ResourcePackMessageBuilder.build(streamPlayer, true, streamPlayer, resourcePack).send();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ClassLoader getMainClassLoader() {
         return getProxy().getClass().getClassLoader();
     }
 
+    /**
+     * Returns a sorted map of UUID strings to {@link ProxiedPlayer} instances
+     * for all currently online players.
+     *
+     * @return a {@link ConcurrentSkipListMap} keyed by UUID string
+     */
     public static ConcurrentSkipListMap<String, ProxiedPlayer> getPlayersByUUID() {
         ConcurrentSkipListMap<String, ProxiedPlayer> map = new ConcurrentSkipListMap<>();
         for (ProxiedPlayer player : ProxyServer.getInstance().getPlayers()) {
@@ -352,11 +546,20 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
         return map;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Logger getLoggerLogger() {
         return getProxy().getLogger();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>BungeeCord does not expose an SLF4J logger; this implementation
+     * always returns {@code null}.
+     */
     @Override
     public org.slf4j.Logger getSLFLogger() {
         return null;

@@ -13,7 +13,25 @@ import singularity.utils.UserUtils;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Spigot implementation of {@link singularity.messages.ProxyMessenger} that
+ * sends outbound cross-server messages via the Bukkit plugin-messaging channel
+ * (BungeeCord {@code streamlinecore} channel).
+ *
+ * <p>If no carrier player or online player can be found to piggyback the
+ * message, the message is pended via
+ * {@link singularity.messages.proxied.ProxiedMessageManager#pendMessage(ProxiedMessage)}
+ * for a future retry.
+ */
 public class ProxyPluginMessenger implements ProxyMessenger {
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Selects a carrier {@link singularity.data.players.CosmicPlayer} (falling
+     * back to the first available online player when the message has no carrier),
+     * then sends the serialised message bytes through the plugin-messaging
+     * channel. Pends the message if no suitable carrier is available.
+     */
     @Override
     public void sendMessage(ProxiedMessage message) {
         if (StreamlineSpigot.getInstance().getProxy().getOnlinePlayers().isEmpty()) {
@@ -42,6 +60,13 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         player.sendPluginMessage(StreamlineSpigot.getInstance(), message.getMainChannel(), message.read());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Inbound message handling is delegated to
+     * {@link net.streamline.platform.listeners.PlatformListener.ProxyMessagingListener};
+     * this method is intentionally a no-op.
+     */
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
         // implemented else where.

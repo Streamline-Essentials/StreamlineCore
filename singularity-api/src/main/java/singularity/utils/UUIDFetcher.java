@@ -12,9 +12,27 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 
+/**
+ * Utility class for fetching Minecraft player UUIDs and usernames from the
+ * <a href="https://playerdb.co">playerdb.co</a> API.
+ *
+ * <p>All methods perform blocking HTTP requests and return {@code null} when the
+ * player cannot be found or any network error occurs.
+ */
 public class UUIDFetcher {
+    /** Base URL template for the playerdb.co Minecraft player API endpoint. */
     private static final String API_URL = "https://playerdb.co/api/player/minecraft/%s";
 
+    /**
+     * Looks up the {@link UUID} of a Minecraft player by their username.
+     *
+     * <p>The lookup is case-insensitive; the username is converted to lower-case
+     * before the request is sent to avoid API rejections.
+     *
+     * @param name the player's Minecraft username
+     * @return the player's {@link UUID}, or {@code null} if the player does not
+     *         exist or the request fails
+     */
     @Nullable
     public static UUID getUUID(@NotNull String name) {
         name = name.toLowerCase(); // Had some issues with upper-case letters in the username, so I added this to make sure that doesn't happen.
@@ -61,6 +79,16 @@ public class UUIDFetcher {
         return null;
     }
 
+    /**
+     * Looks up the current username of a Minecraft player by their UUID string.
+     *
+     * <p>The UUID is converted to lower-case before the request is sent to
+     * avoid API rejections caused by mixed-case input.
+     *
+     * @param uuid the player's UUID as a string
+     * @return the player's current username, or {@code null} if the player does
+     *         not exist or the request fails
+     */
     @Nullable
     public static String getName(@NotNull String uuid) {
         uuid = uuid.toLowerCase(); // Had some issues with upper-case letters in the username, so I added this to make sure that doesn't happen.
@@ -105,6 +133,15 @@ public class UUIDFetcher {
         return null;
     }
 
+    /**
+     * Looks up the current username of a Minecraft player by their {@link UUID}.
+     *
+     * <p>Convenience overload that delegates to {@link #getName(String)}.
+     *
+     * @param uuid the player's {@link UUID}
+     * @return the player's current username, or {@code null} if the player does
+     *         not exist or the request fails
+     */
     public static String getName(UUID uuid) {
         return getName(uuid.toString());
     }

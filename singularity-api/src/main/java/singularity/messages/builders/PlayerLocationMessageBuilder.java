@@ -12,10 +12,31 @@ import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleUtils;
 import singularity.utils.MessageUtils;
 
+/**
+ * Builds and handles {@link ProxiedMessage} payloads that synchronise a player's
+ * {@link CosmicLocation} across the proxy and backend servers.
+ *
+ * <p>The sub-channel identifier is {@value #subChannel}. Call {@link #build} on the
+ * originating side and {@link #handle} on the receiving side to keep player location
+ * data consistent across the network.</p>
+ */
 public class PlayerLocationMessageBuilder {
+
+    /**
+     * The plugin-messaging sub-channel name used to route location update messages.
+     */
     @Getter
     private static final String subChannel = "player-location";
 
+    /**
+     * Constructs a {@link ProxiedMessage} that encodes the given location for the
+     * specified user, using the supplied carrier player as the transport vehicle.
+     *
+     * @param carrier  the online {@link CosmicPlayer} used to send the plugin message
+     * @param location the {@link CosmicLocation} to encode
+     * @param user     the {@link CosmicPlayer} whose location is being reported
+     * @return a fully populated {@link ProxiedMessage} ready to be sent
+     */
     public static ProxiedMessage build(CosmicPlayer carrier, CosmicLocation location, CosmicPlayer user) {
         ProxiedMessage r = new ProxiedMessage(carrier, false);
 
@@ -32,6 +53,18 @@ public class PlayerLocationMessageBuilder {
         return r;
     }
 
+    /**
+     * Processes an incoming location update message and applies the encoded
+     * {@link CosmicLocation} to the referenced player.
+     *
+     * <p>On proxy-side environments the player's current server object is preferred
+     * as the location server; on backend environments the server name encoded in the
+     * message is used instead. The method logs a warning and returns early if the
+     * sub-channel does not match, the player cannot be resolved, or the location
+     * data is malformed.</p>
+     *
+     * @param in the incoming {@link ProxiedMessage} to process
+     */
     public static void handle(ProxiedMessage in) {
         if (! in.getSubChannel().equals(getSubChannel())) {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + PlayerLocationMessageBuilder.class.getSimpleName() + "'.");

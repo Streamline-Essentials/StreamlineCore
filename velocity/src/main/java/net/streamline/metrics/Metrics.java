@@ -53,6 +53,16 @@ import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import org.slf4j.Logger;
 
+/**
+ * bStats Metrics integration for Velocity plugins.
+ *
+ * <p>This class is the auto-generated bStats Metrics implementation for Velocity. It collects
+ * basic anonymous server statistics and submits them to <a href="https://bStats.org">bStats.org</a>.
+ * Operators can opt-out by editing {@code /plugins/bStats/config.txt}.
+ *
+ * <p><strong>Do not modify this class</strong> (except changing the package), as per the bStats
+ * licence conditions.
+ */
 public class Metrics {
 
   /** A factory to create new Metrics classes. */
@@ -176,6 +186,12 @@ public class Metrics {
             "pluginVersion", pluginContainer.getDescription().getVersion().orElse("unknown"));
   }
 
+  /**
+   * Core metrics submission engine shared across all bStats platform implementations.
+   *
+   * <p>Schedules periodic data collection and HTTPS submission to the bStats backend,
+   * manages custom chart registration, and enforces proper package relocation at startup.
+   */
   public static class MetricsBase {
 
     /** The version of the Metrics class. */
@@ -287,10 +303,18 @@ public class Metrics {
       }
     }
 
+    /**
+     * Registers an additional custom chart whose data will be included in each submission.
+     *
+     * @param chart the {@link CustomChart} to register
+     */
     public void addCustomChart(CustomChart chart) {
       this.customCharts.add(chart);
     }
 
+    /**
+     * Shuts down the background scheduler, stopping future metric submissions.
+     */
     public void shutdown() {
       scheduler.shutdown();
     }
@@ -424,6 +448,10 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays multiple bars, each with multiple segments represented
+   * as {@code int[]} arrays keyed by a label string.
+   */
   public static class AdvancedBarChart extends CustomChart {
 
     private final Callable<Map<String, int[]>> callable;
@@ -464,6 +492,9 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays a single-segment pie chart backed by a string value callable.
+   */
   public static class SimplePie extends CustomChart {
 
     private final Callable<String> callable;
@@ -490,6 +521,10 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays a two-level drilldown pie where each top-level slice
+   * expands into sub-slices represented as nested {@code Map&lt;String, Integer&gt;} values.
+   */
   public static class DrilldownPie extends CustomChart {
 
     private final Callable<Map<String, Map<String, Integer>>> callable;
@@ -534,6 +569,9 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays a single integer value over time as a line graph.
+   */
   public static class SingleLineChart extends CustomChart {
 
     private final Callable<Integer> callable;
@@ -560,6 +598,9 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays multiple named integer series over time as overlaid line graphs.
+   */
   public static class MultiLineChart extends CustomChart {
 
     private final Callable<Map<String, Integer>> callable;
@@ -600,6 +641,9 @@ public class Metrics {
     }
   }
 
+  /**
+   * A bStats chart that displays a multi-segment pie where each label maps to an integer count.
+   */
   public static class AdvancedPie extends CustomChart {
 
     private final Callable<Map<String, Integer>> callable;
@@ -640,10 +684,22 @@ public class Metrics {
     }
   }
 
+  /**
+   * Base class for all bStats custom charts.
+   *
+   * <p>Subclasses implement {@link #getChartData()} to supply chart-specific JSON data.
+   * The chart is identified by a unique {@code chartId} registered on the bStats dashboard.
+   */
   public abstract static class CustomChart {
 
     private final String chartId;
 
+    /**
+     * Constructs a custom chart with the given identifier.
+     *
+     * @param chartId the unique chart ID registered on the bStats dashboard; must not be null
+     * @throws IllegalArgumentException if {@code chartId} is {@code null}
+     */
     protected CustomChart(String chartId) {
       if (chartId == null) {
         throw new IllegalArgumentException("chartId must not be null");
@@ -651,6 +707,16 @@ public class Metrics {
       this.chartId = chartId;
     }
 
+    /**
+     * Builds the JSON payload for this chart to include in a metrics submission.
+     *
+     * <p>Returns {@code null} (and logs the error if enabled) if {@link #getChartData()}
+     * throws or returns {@code null}, indicating this chart should be skipped.
+     *
+     * @param errorLogger a consumer that receives error messages and their causes
+     * @param logErrors   whether to log errors that occur during data retrieval
+     * @return the chart's JSON object, or {@code null} if the chart should be omitted
+     */
     public JsonObjectBuilder.JsonObject getRequestJsonObject(
             BiConsumer<String, Throwable> errorLogger, boolean logErrors) {
       JsonObjectBuilder builder = new JsonObjectBuilder();
@@ -671,9 +737,20 @@ public class Metrics {
       return builder.build();
     }
 
+    /**
+     * Produces the chart-specific JSON data object for a single submission cycle.
+     *
+     * <p>Returning {@code null} signals that this chart should be skipped in the current cycle.
+     *
+     * @return the chart data as a {@link JsonObjectBuilder.JsonObject}, or {@code null} to skip
+     * @throws Exception if an error occurs while collecting chart data
+     */
     protected abstract JsonObjectBuilder.JsonObject getChartData() throws Exception;
   }
 
+  /**
+   * A bStats chart that displays a bar chart where each entry contains a single bar value.
+   */
   public static class SimpleBarChart extends CustomChart {
 
     private final Callable<Map<String, Integer>> callable;
@@ -716,6 +793,9 @@ public class Metrics {
 
     private boolean hasAtLeastOneField = false;
 
+    /**
+     * Creates a new empty JSON object builder, initialising the internal buffer with {@code '{'}.
+     */
     public JsonObjectBuilder() {
       builder.append("{");
     }
@@ -933,28 +1013,65 @@ public class Metrics {
 
     private boolean didExistBefore = true;
 
+    /**
+     * Creates or reads the bStats configuration from the given file.
+     *
+     * <p>If the file does not exist it is created with default values derived from
+     * {@code defaultEnabled}. The UUID is read from (or written to) the file on each
+     * construction.
+     *
+     * @param file           the configuration file to read from or write to
+     * @param defaultEnabled the default value for the {@code enabled} setting when
+     *                       creating a new configuration file
+     * @throws IOException if the configuration file cannot be read or written
+     */
     public MetricsConfig(File file, boolean defaultEnabled) throws IOException {
       this.file = file;
       this.defaultEnabled = defaultEnabled;
       setupConfig();
     }
 
+    /**
+     * Returns the server UUID stored in the configuration file.
+     *
+     * @return the server UUID string
+     */
     public String getServerUUID() {
       return serverUUID;
     }
 
+    /**
+     * Returns whether bStats data submission is enabled.
+     *
+     * @return {@code true} if metrics collection and submission is enabled
+     */
     public boolean isEnabled() {
       return enabled;
     }
 
+    /**
+     * Returns whether submission errors should be logged.
+     *
+     * @return {@code true} if errors during data submission should be logged
+     */
     public boolean isLogErrorsEnabled() {
       return logErrors;
     }
 
+    /**
+     * Returns whether the raw data sent to bStats should be logged.
+     *
+     * @return {@code true} if sent data payloads should be written to the log
+     */
     public boolean isLogSentDataEnabled() {
       return logSentData;
     }
 
+    /**
+     * Returns whether the HTTP response status text should be logged after each submission.
+     *
+     * @return {@code true} if the response status text should be logged
+     */
     public boolean isLogResponseStatusTextEnabled() {
       return logResponseStatusText;
     }

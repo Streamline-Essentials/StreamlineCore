@@ -32,17 +32,44 @@ import singularity.interfaces.ISingularityExtension;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
+/**
+ * Concrete {@link DBOperator} implementation that handles all StreamlineCore database
+ * operations, including player data persistence, UUID tracking, cross-server update
+ * signalling, server registry entries, and teleportation tickets.
+ *
+ * <p>All long-running I/O is performed asynchronously via {@link CompletableFuture}
+ * to avoid blocking the server thread. A short-lived Caffeine {@link AsyncCache} is
+ * used to deduplicate concurrent load requests for the same player UUID.</p>
+ */
 public class CoreDBOperator extends DBOperator {
+
+    /**
+     * A 10-second write-after-access Caffeine cache that prevents duplicate
+     * asynchronous load operations for the same player UUID from hitting the
+     * database simultaneously.
+     */
     @Getter @Setter
     private static AsyncCache<String, Optional<CosmicSender>> loadingPlayers = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofSeconds(10))
             .buildAsync();
             ;
 
+    /**
+     * Creates a new {@code CoreDBOperator} using the supplied connection configuration
+     * and registers it under the plugin label {@code "StreamlineCore"}.
+     *
+     * @param set the {@link ConnectorSet} describing the database connection
+     */
     public CoreDBOperator(ConnectorSet set) {
         super(set, "StreamlineCore");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes the {@code CREATE_DATABASE} statement for the current connector
+     * type. Does nothing if the statement is {@code null} or blank.</p>
+     */
     @Override
     public void ensureDatabase() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_DATABASE, this.getConnectorSet());
@@ -52,6 +79,12 @@ public class CoreDBOperator extends DBOperator {
         this.execute(s1, stmt -> {});
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes the {@code CREATE_TABLES} statement for the current connector
+     * type. Does nothing if the statement is {@code null} or blank.</p>
+     */
     @Override
     public void ensureTables() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_TABLES, this.getConnectorSet());
@@ -61,6 +94,14 @@ public class CoreDBOperator extends DBOperator {
         this.execute(s1, stmt -> {});
     }
 
+    /**
+     * Persists all sections of a {@link CosmicPlayer} (main data, meta, location,
+     * permissions) to the database and fires a {@link SavePlayerEvent}.
+     *
+     * @param player the player whose data should be saved
+     * @param async  if {@code true} the save is performed on a background thread;
+     *               if {@code false} the calling thread blocks until completion
+     */
     public void savePlayer(CosmicPlayer player, boolean async) {
         if (async) {
             CompletableFuture.runAsync(() -> {
@@ -75,10 +116,25 @@ public class CoreDBOperator extends DBOperator {
         }
     }
 
+    /**
+     * Asynchronously persists all sections of a {@link CosmicPlayer} to the database
+     * and fires a {@link SavePlayerEvent}. Equivalent to
+     * {@link #savePlayer(CosmicPlayer, boolean)} with {@code async = true}.
+     *
+     * @param player the player whose data should be saved
+     */
     public void savePlayer(CosmicPlayer player) {
         savePlayer(player, true);
     }
 
+    /**
+     * Checks whether the given player UUID has ever had their {@code ProxyTouched}
+     * flag set in the database.
+     *
+     * @param uuid the player UUID to check
+     * @return {@code true} if the player is recorded as proxy-touched (or the check
+     *         could not be executed); {@code false} if they are not
+     */
     public boolean isPlayerTouched(String uuid) {
         ensureUsable();
 
@@ -87,7 +143,7 @@ public class CoreDBOperator extends DBOperator {
         if (s1.isBlank() || s1.isEmpty()) return true;
 
         AtomicBoolean atomicBoolean = new AtomicBoolean(true);
-        
+
         this.executeQuery(s1, stmt -> {
             try {
                 stmt.setString(1, uuid);
@@ -98,17 +154,25 @@ public class CoreDBOperator extends DBOperator {
             try {
                 if (rs.next()) {
                     boolean isTouched = rs.getBoolean("ProxyTouched");
-                    
+
                     atomicBoolean.set(isTouched);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        
+
         return atomicBoolean.get();
     }
 
+    /**
+     * Writes main, meta, location, and permissions rows for a {@link CosmicPlayer}
+     * to the database and posts a cross-server player update signal.
+     *
+     * @param player the player to persist
+     * @return a {@link CompletableFuture} that resolves to {@code true} on success
+     *         or {@code false} if any statement was unavailable
+     */
     private CompletableFuture<Boolean> savePlayerAsync(CosmicPlayer player) {
         return CompletableFuture.supplyAsync(() -> {
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
@@ -224,6 +288,15 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Persists a {@link CosmicSender} (non-player) to the database and fires a
+     * {@link SaveSenderEvent}. If the sender is actually a {@link CosmicPlayer},
+     * this delegates to {@link #savePlayer(CosmicPlayer, boolean)}.
+     *
+     * @param sender the sender whose data should be saved
+     * @param async  if {@code true} the save runs on a background thread;
+     *               if {@code false} the calling thread blocks until completion
+     */
     public void saveSender(CosmicSender sender, boolean async) {
         if (sender instanceof CosmicPlayer) {
             savePlayer((CosmicPlayer) sender, async);
@@ -243,10 +316,26 @@ public class CoreDBOperator extends DBOperator {
         }
     }
 
+    /**
+     * Asynchronously persists a {@link CosmicSender} (non-player) to the database
+     * and fires a {@link SaveSenderEvent}. Equivalent to
+     * {@link #saveSender(CosmicSender, boolean)} with {@code async = true}.
+     *
+     * @param sender the sender whose data should be saved
+     */
     public void saveSender(CosmicSender sender) {
         saveSender(sender, true);
     }
 
+    /**
+     * Writes main, meta, location (zeroed-out), and permissions rows for a
+     * {@link CosmicSender} (console or non-player entity) to the database, then
+     * signals a cross-server update.
+     *
+     * @param sender the sender to persist
+     * @return a {@link CompletableFuture} resolving to {@code true} on success or
+     *         {@code false} if any statement was unavailable
+     */
     private CompletableFuture<Boolean> saveSenderAsync(CosmicSender sender) {
         return CompletableFuture.supplyAsync(() -> {
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
@@ -362,6 +451,17 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously loads a {@link CosmicPlayer} from the database by UUID,
+     * creating a new default record if no existing entry is found. Concurrent
+     * requests for the same UUID are deduplicated via the {@link #loadingPlayers}
+     * cache.
+     *
+     * @param uuid the player UUID to load
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the loaded (or newly created) player, or empty if the load statements
+     *         are unavailable
+     */
     public CompletableFuture<Optional<CosmicSender>> loadPlayer(String uuid) {
         CompletableFuture<Optional<CosmicSender>> future = getLoadingPlayers().getIfPresent(uuid);
         if (future == null || future.isDone()) {
@@ -483,6 +583,14 @@ public class CoreDBOperator extends DBOperator {
         return future;
     }
 
+    /**
+     * Asynchronously checks whether a player record with the given UUID already
+     * exists in the main player table.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to {@code true} if the player
+     *         exists, or {@code false} otherwise
+     */
     public CompletableFuture<Boolean> exists(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -511,6 +619,14 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously persists a {@link UuidInfo} record (UUID, usernames, IPs) to
+     * the database.
+     *
+     * @param uuidInfo the UUID info to save
+     * @return a {@link CompletableFuture} resolving to {@code true} on success or
+     *         {@code false} if the statement was unavailable
+     */
     public CompletableFuture<Boolean> saveUuidInfo(UuidInfo uuidInfo) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -538,6 +654,14 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously loads the {@link UuidInfo} record for the given UUID from the
+     * database.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the found record, or empty if no entry exists
+     */
     public CompletableFuture<Optional<UuidInfo>> loadUuidInfo(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -574,6 +698,12 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously loads every {@link UuidInfo} row from the database.
+     *
+     * @return a {@link CompletableFuture} resolving to a thread-safe set containing
+     *         all UUID info records; never {@code null} but may be empty
+     */
     public CompletableFuture<ConcurrentSkipListSet<UuidInfo>> pullAllUuidInfo() {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -606,10 +736,25 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that removes the pending update record
+     * for the given update type and resource identifier from the database.
+     *
+     * @param updateType the update type whose record should be cleared
+     * @param identifier the resource identifier to clear
+     */
     public void clearUpdateAsync(UpdateType<?> updateType, String identifier) {
         CompletableFuture.runAsync(() -> clearUpdate(updateType, identifier).join());
     }
 
+    /**
+     * Asynchronously removes the pending update record for the given update type and
+     * resource identifier from the database.
+     *
+     * @param updateType the update type whose record should be removed
+     * @param identifier the resource identifier to clear
+     * @return a {@link CompletableFuture} that completes when the deletion is done
+     */
     public CompletableFuture<Void> clearUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -627,10 +772,27 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that writes a new update record for the
+     * given update type and resource identifier, stamped with the current server UUID
+     * and timestamp.
+     *
+     * @param updateType the update type to post an update for
+     * @param identifier the resource identifier that changed
+     */
     public void postUpdateAsync(UpdateType<?> updateType, String identifier) {
         CompletableFuture.runAsync(() -> postUpdate(updateType, identifier).join());
     }
 
+    /**
+     * Asynchronously writes a new update record for the given update type and
+     * resource identifier, stamped with the current server UUID and the current
+     * system time.
+     *
+     * @param updateType the update type to post an update for
+     * @param identifier the resource identifier that changed
+     * @return a {@link CompletableFuture} that completes when the insert is done
+     */
     public CompletableFuture<Void> postUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -659,6 +821,15 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously queries the update table for the most recent record matching
+     * the given update type and resource identifier.
+     *
+     * @param updateType the update type to check
+     * @param identifier the resource identifier to look up
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the latest {@link UpdateInfo}, or empty if no record exists
+     */
     public CompletableFuture<Optional<UpdateInfo>> checkUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -698,10 +869,23 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that upserts a {@link SavedServer} row
+     * in the servers table.
+     *
+     * @param server the server to persist
+     */
     public void putServerAsync(SavedServer server) {
         CompletableFuture.runAsync(() -> putServer(server).join());
     }
 
+    /**
+     * Asynchronously upserts a {@link SavedServer} row (UUID, name, type) in the
+     * servers table.
+     *
+     * @param server the server to persist
+     * @return a {@link CompletableFuture} that completes when the upsert is done
+     */
     public CompletableFuture<Void> putServer(SavedServer server) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -725,6 +909,14 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously loads a {@link SavedServer} record from the database by its
+     * UUID string.
+     *
+     * @param uuid the server UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the server if found, or empty otherwise
+     */
     public CompletableFuture<Optional<SavedServer>> pullServer(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -764,10 +956,24 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that upserts a {@link TPTicket} row in
+     * the teleportation tickets table.
+     *
+     * @param ticket the teleportation ticket to persist
+     */
     public void postTPTicketAsync(TPTicket ticket) {
         CompletableFuture.runAsync(() -> postTPTicket(ticket).join());
     }
 
+    /**
+     * Asynchronously upserts a {@link TPTicket} (player UUID, target server, world,
+     * coordinates, rotation, and creation timestamp) in the teleportation tickets
+     * table.
+     *
+     * @param ticket the teleportation ticket to persist
+     * @return a {@link CompletableFuture} that completes when the upsert is done
+     */
     public CompletableFuture<Void> postTPTicket(TPTicket ticket) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -804,10 +1010,23 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that deletes the teleportation ticket
+     * for the given player UUID.
+     *
+     * @param uuid the player UUID whose ticket should be removed
+     */
     public void clearTPTicketAsync(String uuid) {
         CompletableFuture.runAsync(() -> clearTPTicket(uuid).join());
     }
 
+    /**
+     * Asynchronously deletes the teleportation ticket associated with the given
+     * player UUID from the database.
+     *
+     * @param uuid the player UUID whose ticket should be removed
+     * @return a {@link CompletableFuture} that completes when the deletion is done
+     */
     public CompletableFuture<Void> clearTPTicket(String uuid) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -825,6 +1044,14 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously retrieves the pending {@link TPTicket} for the given player
+     * UUID, if one exists.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the ticket, or empty if none is pending
+     */
     public CompletableFuture<Optional<TPTicket>> getTPTicket(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -875,6 +1102,13 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously loads every {@link TPTicket} row from the database.
+     * Logs the count of collected tickets at debug level when results are present.
+     *
+     * @return a {@link CompletableFuture} resolving to a thread-safe set containing
+     *         all pending teleportation tickets; never {@code null} but may be empty
+     */
     public CompletableFuture<ConcurrentSkipListSet<TPTicket>> pullAllTPTickets() {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -922,10 +1156,23 @@ public class CoreDBOperator extends DBOperator {
         });
     }
 
+    /**
+     * Asynchronously deletes all database rows associated with the given player UUID.
+     * Equivalent to {@link #delete(String, boolean)} with {@code async = true}.
+     *
+     * @param uuid the player UUID whose data should be removed
+     */
     public void delete(String uuid) {
         delete(uuid, true);
     }
 
+    /**
+     * Deletes all database rows associated with the given player UUID.
+     *
+     * @param uuid  the player UUID whose data should be removed
+     * @param async if {@code true} the deletion runs on a background thread;
+     *              if {@code false} the calling thread blocks until completion
+     */
     public void delete(String uuid, boolean async) {
         if (async) {
             CompletableFuture.runAsync(() -> deletePlayer(uuid).join());
@@ -934,6 +1181,16 @@ public class CoreDBOperator extends DBOperator {
         }
     }
 
+    /**
+     * Asynchronously removes all rows for the given player UUID from every player
+     * table (main, meta, location, permissions, and any others covered by the
+     * {@code DROP_PLAYER} statement).
+     *
+     * @param uuid the player UUID to delete
+     * @return a {@link CompletableFuture} resolving to {@code true} if the deletion
+     *         succeeded, or {@code false} if the statement was blank or no rows were
+     *         affected
+     */
     public CompletableFuture<Boolean> deletePlayer(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();

@@ -26,19 +26,53 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Velocity-specific implementation of {@link IUserManager} that bridges
+ * Velocity's {@link CommandSource}/{@link Player} types to the platform-agnostic
+ * {@link CosmicSender}/{@link CosmicPlayer} abstraction layer.
+ *
+ * <p>This class is a singleton; the active instance is accessible via
+ * {@link #getInstance()} after construction.</p>
+ */
 public class UserManager implements IUserManager<CommandSource, Player> {
+
+    /**
+     * The singleton instance of this {@code UserManager}, set during construction.
+     */
     @Getter
     private static UserManager instance;
 
+    /**
+     * Constructs a new {@code UserManager} and registers it as the singleton instance.
+     */
     public UserManager() {
         instance = this;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Delegates to {@link UserUtils#getOrCreatePlayer(String)} using the
+     * player's UUID string.</p>
+     *
+     * @param player the Velocity {@link Player} whose cosmic counterpart is needed
+     * @return an {@link Optional} containing the {@link CosmicPlayer}, or empty if creation fails
+     */
     @Override
     public Optional<CosmicPlayer> getOrCreatePlayer(Player player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns the console sender wrapper when {@code sender} is not a {@link Player};
+     * otherwise casts the source to a {@link Player} and delegates to
+     * {@link #getOrCreatePlayer(Player)}.</p>
+     *
+     * @param sender the Velocity {@link CommandSource} to resolve
+     * @return an {@link Optional} containing the corresponding {@link CosmicSender}, or empty
+     */
     @Override
     public Optional<CosmicSender> getOrCreateSender(CommandSource sender) {
         if (isConsole(sender)) {
@@ -49,11 +83,30 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         }
     }
 
+    /**
+     * Returns the display name for a given {@link CommandSource}.
+     *
+     * <p>If the source is the console, the configured console name is returned.
+     * Otherwise the player's username is returned.</p>
+     *
+     * @param sender the {@link CommandSource} whose name is requested
+     * @return the console name or the player's username
+     */
     public String getUsername(CommandSource sender) {
         if (isConsole(sender)) return GivenConfigs.getMainConfig().getConsoleName();
         else return ((Player) sender).getUsername();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns the configured console name when {@code uuid} matches the console
+     * discriminator. Otherwise looks up the online {@link Player} by UUID and
+     * returns their username, or {@code null} if the player is not online.</p>
+     *
+     * @param uuid the UUID string of the player, or the console discriminator
+     * @return the username, or {@code null} if no matching online player is found
+     */
     @Override
     public String getUsername(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
@@ -64,10 +117,26 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         }
     }
 
+    /**
+     * Determines whether a {@link CommandSource} represents the server console
+     * rather than a connected player.
+     *
+     * @param sender the {@link CommandSource} to test
+     * @return {@code true} if the source is not a {@link Player} instance
+     */
     public boolean isConsole(CommandSource sender) {
         return ! (sender instanceof Player);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The console UUID is always considered online. For players, the currently
+     * connected player list is iterated to check for a UUID match.</p>
+     *
+     * @param uuid the UUID string to check, or the console discriminator
+     * @return {@code true} if the entity represented by {@code uuid} is online
+     */
     @Override
     public boolean isOnline(String uuid) {
         if (UserUtils.isConsole(uuid)) return true;
@@ -78,6 +147,20 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes {@code command} on behalf of the given user. When {@code bypass}
+     * is {@code true} and the player does not already hold the {@code "*"} permission,
+     * that permission is temporarily granted via LuckPerms for the duration of the
+     * command execution and then revoked. If LuckPerms is unavailable and bypass is
+     * required, the method returns {@code false} without executing the command.</p>
+     *
+     * @param user    the {@link CosmicSender} that should run the command
+     * @param bypass  {@code true} to temporarily grant wildcard permissions
+     * @param command the command string to execute (without leading {@code /})
+     * @return {@code true} if the command was dispatched; {@code false} otherwise
+     */
     @Override
     public boolean runAs(CosmicSender user, boolean bypass, String command) {
         CommandSource source;
@@ -111,6 +194,15 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Iterates every registered backend server and collects players whose
+     * current server name matches {@code server}.</p>
+     *
+     * @param server the name of the backend server to query
+     * @return a {@link ConcurrentSkipListSet} of online {@link CosmicPlayer}s on that server
+     */
     @Override
     public ConcurrentSkipListSet<CosmicPlayer> getUsersOn(String server) {
         ConcurrentSkipListSet<CosmicPlayer> r = new ConcurrentSkipListSet<>();
@@ -126,6 +218,16 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return r;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Looks up the named server in the Velocity proxy and initiates a connection
+     * request. If the player is offline or the server does not exist, the method
+     * logs a warning and returns without taking action.</p>
+     *
+     * @param user   the {@link CosmicPlayer} to transfer
+     * @param server the name of the registered backend server to connect to
+     */
     @Override
     public void connect(CosmicPlayer user, String server) {
         if (! user.isOnline()) return;
@@ -142,6 +244,16 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         player.createConnectionRequest(serverOptional.get()).connect();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Delegates to {@link StreamlineVelocity#sendResourcePack(CosmicResourcePack, Player)}
+     * after verifying the player is online. Any exception thrown during the offer
+     * is printed to stderr but does not propagate.</p>
+     *
+     * @param player the {@link CosmicPlayer} to send the resource pack to
+     * @param pack   the {@link CosmicResourcePack} to offer
+     */
     @Override
     public void sendUserResourcePack(CosmicPlayer player, CosmicResourcePack pack) {
         if (! player.isOnline()) return;
@@ -157,6 +269,17 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Retrieves the player's remote {@link InetSocketAddress}, strips the
+     * port component, and returns only the host portion. Returns a configured
+     * null-placeholder string when the player is offline or the address is
+     * unavailable.</p>
+     *
+     * @param uuid the UUID string of the player whose IP address is requested
+     * @return the player's IP address string, or a null-placeholder if unavailable
+     */
     @Override
     public String parsePlayerIP(String uuid) {
         Player player = StreamlineVelocity.getPlayer(uuid);
@@ -171,6 +294,14 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return ipSt;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns {@code 0} if no online player matches {@code uuid}.</p>
+     *
+     * @param uuid the UUID string of the player
+     * @return the player's current ping in milliseconds, or {@code 0} if not found
+     */
     @Override
     public double getPlayerPing(String uuid) {
         Player player = StreamlineVelocity.getPlayer(uuid);
@@ -178,6 +309,15 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return player.getPing();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Disconnects the player from the proxy, displaying {@code message} as the
+     * kick reason after processing color codes via {@link Messenger}.</p>
+     *
+     * @param user    the {@link CosmicPlayer} to kick
+     * @param message the kick reason message, supporting color codes
+     */
     @Override
     public void kick(CosmicPlayer user, String message) {
         Optional<Player> playerOptional = StreamlineVelocity.getInstance().getProxy().getPlayer(user.getUuid());
@@ -185,11 +325,26 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         playerOptional.get().disconnect(Messenger.getInstance().codedText(message));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param uuid the UUID string of the player to retrieve
+     * @return the online {@link Player}, or {@code null} if not found
+     */
     @Override
     public Player getPlayer(String uuid) {
         return StreamlineVelocity.getPlayer(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Iterates all currently connected Velocity players and ensures each has a
+     * corresponding {@link CosmicPlayer} entry, building and returning a snapshot
+     * map of UUID → {@link CosmicPlayer}.</p>
+     *
+     * @return a {@link ConcurrentSkipListMap} mapping UUID strings to their {@link CosmicPlayer} instances
+     */
     @Override
     public ConcurrentSkipListMap<String, CosmicPlayer> ensurePlayers() {
         ConcurrentSkipListMap<String, CosmicPlayer> r = new ConcurrentSkipListMap<>();
@@ -203,6 +358,16 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return r;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the player's current {@link ServerConnection} via Velocity and
+     * returns the backend server name. Returns {@code null} at any point in the
+     * chain where data is unavailable.</p>
+     *
+     * @param uuid the UUID string of the player to query
+     * @return the name of the backend server the player is connected to, or {@code null}
+     */
     @Override
     public String getServerPlayerIsOn(String uuid) {
         Player player = getPlayer(uuid);
@@ -217,11 +382,29 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return info.getName();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Convenience overload that resolves the player's UUID and delegates to
+     * {@link #getServerPlayerIsOn(String)}.</p>
+     *
+     * @param player the Velocity {@link Player} to query
+     * @return the name of the backend server the player is on, or {@code null}
+     */
     @Override
     public String getServerPlayerIsOn(Player player) {
         return getServerPlayerIsOn(player.getUniqueId().toString());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns the Velocity username, which is used as the display name on
+     * proxy-level operations. Returns {@code null} if the player is not online.</p>
+     *
+     * @param uuid the UUID string of the player
+     * @return the player's username, or {@code null} if not found
+     */
     @Override
     public String getDisplayName(String uuid) {
         Player player = getPlayer(uuid);
@@ -230,6 +413,17 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         return player.getUsername();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>On a Velocity proxy, true coordinate-based teleportation is not available.
+     * This implementation transfers the player to the backend server specified in
+     * {@code location} by creating a Velocity connection request. The player's
+     * exact position within that server is not set here.</p>
+     *
+     * @param player   the {@link CosmicPlayer} to transfer
+     * @param location the {@link CosmicLocation} whose server the player will be sent to
+     */
     @Override
     public void teleport(CosmicPlayer player, CosmicLocation location) {
         if (! player.isOnline()) return;
