@@ -794,7 +794,7 @@ public class Metrics {
     private boolean hasAtLeastOneField = false;
 
     /**
-     * Creates a new empty JSON object builder, initialising the internal buffer with {@code '{'}.
+     * Creates a new empty JSON object builder, initialising the internal buffer with a {@code '&#123;'} character.
      */
     public JsonObjectBuilder() {
       builder.append("{");
