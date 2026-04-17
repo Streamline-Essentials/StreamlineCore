@@ -43,11 +43,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Central Velocity event listener for StreamlineCore.
+ *
+ * <p>Handles all proxy-level events — player pre-login, post-login, disconnect, server switch,
+ * chat, proxy ping, plugin messages, and kicked-from-server — and translates them into the
+ * corresponding cross-platform {@link singularity.events.CosmicEvent} hierarchy. Whitelist
+ * enforcement, UUID caching, {@link CosmicPlayer} lifecycle management, and bStats ping
+ * modification all take place here.
+ */
 public class PlatformListener {
+    /**
+     * Constructs a new {@code PlatformListener} and logs a confirmation message.
+     */
     public PlatformListener() {
         MessageUtils.logInfo("BaseListener registered!");
     }
 
+    /**
+     * Handles pre-login validation: enforces the whitelist, loads or creates the
+     * {@link CosmicPlayer}, and fires a {@link LoginReceivedEvent}.
+     *
+     * <p>If the whitelist is enabled and the player is not listed, or if a module cancels
+     * the {@link LoginReceivedEvent}, the connection is denied with the configured message.
+     *
+     * @param event the Velocity {@link PreLoginEvent}
+     */
     @Subscribe
     public void onPreJoin(PreLoginEvent event) {
         InboundConnection connection = event.getConnection();
@@ -82,6 +103,12 @@ public class PlatformListener {
         }
     }
 
+    /**
+     * Handles post-login setup: caches the player UUID, populates the {@link CosmicPlayer}
+     * with IP, name, and initial server, and fires a {@link LoginCompletedEvent}.
+     *
+     * @param event the Velocity {@link PostLoginEvent}
+     */
     @Subscribe
     public void onJoin(PostLoginEvent event) {
         Player player = event.getPlayer();
@@ -110,6 +137,12 @@ public class PlatformListener {
         ModuleUtils.fireEvent(loginCompletedEvent);
     }
 
+    /**
+     * Handles player disconnect: fires a {@link LogoutEvent}, saves the player's data,
+     * and unloads the {@link CosmicPlayer} from memory.
+     *
+     * @param event the Velocity {@link DisconnectEvent}
+     */
     @Subscribe
     public void onLeave(DisconnectEvent event) {
         Player player = event.getPlayer();
@@ -127,6 +160,12 @@ public class PlatformListener {
         UserUtils.unloadSender(streamPlayer);
     }
 
+    /**
+     * Handles server-switch events: updates the {@link CosmicPlayer}'s recorded server name
+     * and optionally triggers a server-name auto-correction message.
+     *
+     * @param event the Velocity {@link ServerConnectedEvent}
+     */
     @Subscribe
     public void onServerSwitch(ServerConnectedEvent event) {
         Player player = event.getPlayer();
@@ -145,6 +184,14 @@ public class PlatformListener {
         }
     }
 
+    /**
+     * Handles player chat messages: wraps the message in a {@link CosmicChatEvent} and fires it.
+     *
+     * <p>If the event is cancelled by a module the original chat event is denied;
+     * otherwise the (potentially modified) message is passed through.
+     *
+     * @param event the Velocity {@link PlayerChatEvent}
+     */
     @Subscribe
     public void onChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
@@ -164,11 +211,23 @@ public class PlatformListener {
         event.setResult(PlayerChatEvent.ChatResult.message(chatEvent.getMessage()));
     }
 
+    /**
+     * Relays a cross-platform {@link CosmicEvent} that was submitted through the Velocity
+     * event bus via a {@link ProperEvent} wrapper.
+     *
+     * @param event the {@link ProperEvent} carrying the {@link CosmicEvent} to fire
+     */
     @Subscribe
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getCosmicEvent());
     }
 
+    /**
+     * Handles incoming plugin messages on the StreamlineCore channel, building a
+     * {@link ProxiedMessage} and firing a {@link ProxyMessageInEvent} for registered handlers.
+     *
+     * @param event the Velocity {@link PluginMessageEvent}
+     */
     @Subscribe
     public void onPluginMessage(PluginMessageEvent event) {
         String tag = event.getIdentifier().getId();
@@ -191,6 +250,11 @@ public class PlatformListener {
         }
     }
 
+    /**
+     * Fires a cross-platform {@link ServerStartEvent} when the proxy finishes initialising.
+     *
+     * @param event the Velocity {@link ProxyInitializeEvent}
+     */
     @Subscribe
     public void onStart(ProxyInitializeEvent event) {
         ServerStartEvent e = new ServerStartEvent().fire();
@@ -199,6 +263,11 @@ public class PlatformListener {
         SLAPI.sendConsoleMessage(e.getMessage());
     }
 
+    /**
+     * Fires a cross-platform {@link singularity.events.server.ServerStopEvent} when the proxy begins shutdown.
+     *
+     * @param event the Velocity {@link ProxyShutdownEvent}
+     */
     @Subscribe
     public void onStop(ProxyShutdownEvent event) {
         ServerStopEvent e = new ServerStopEvent().fire();
@@ -207,6 +276,14 @@ public class PlatformListener {
         SLAPI.sendConsoleMessage(e.getMessage());
     }
 
+    /**
+     * Intercepts proxy ping requests and translates any modifications made by modules
+     * through a {@link PingReceivedEvent} back into the Velocity {@link ServerPing} response.
+     *
+     * <p>Handles protocol version, player sample list, MOTD, and favicon modifications.
+     *
+     * @param event the Velocity {@link ProxyPingEvent}
+     */
     @Subscribe
     public void onPing(ProxyPingEvent event) {
         ServerPing ping = event.getPing();
@@ -282,6 +359,12 @@ public class PlatformListener {
         event.setPing(builder.build());
     }
 
+    /**
+     * Handles server-kick events: fires a cross-platform {@link KickedFromServerEvent} and,
+     * if a redirect server is specified, redirects the player there instead of disconnecting.
+     *
+     * @param event the Velocity {@link com.velocitypowered.api.event.player.KickedFromServerEvent}
+     */
     @Subscribe
     public void onServerKick(com.velocitypowered.api.event.player.KickedFromServerEvent event) {
         Player player = event.getPlayer();

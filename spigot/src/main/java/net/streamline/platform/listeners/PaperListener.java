@@ -18,7 +18,21 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Bukkit event listener for Paper-specific events that are not available on
+ * plain Spigot servers.
+ *
+ * <p>Only registers itself when the runtime is detected as a Paper server
+ * (via {@link host.plas.bou.utils.ClassHelper#isPaper()}). The main event
+ * handled here is {@link com.destroystokyo.paper.event.server.PaperServerListPingEvent},
+ * which provides richer server-list metadata than the vanilla Spigot equivalent.
+ */
 public class PaperListener implements Listener {
+    /**
+     * Constructs and conditionally registers this listener. If the server is
+     * not running Paper, the listener is created but never registered with the
+     * Bukkit plugin manager, so no events will be dispatched to it.
+     */
     public PaperListener() {
         if (! ClassHelper.isPaper()) return;
 
@@ -26,6 +40,14 @@ public class PaperListener implements Listener {
         StreamlineSpigot.getInstance().logInfo("PaperListener registered.");
     }
 
+    /**
+     * Handles the Paper server-list ping event, firing a cross-platform
+     * {@link singularity.events.server.ping.PingReceivedEvent} and applying any
+     * modifications (MOTD, player sample, max players, server icon) back onto
+     * the Bukkit event before it is sent to the connecting client.
+     *
+     * @param event the Paper server-list ping event
+     */
     @EventHandler
     public void onPing(PaperServerListPingEvent event) {
         String hostName;

@@ -13,16 +13,52 @@ import singularity.utils.UserUtils;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Represents a deferred command execution that captures both the sender identity
+ * and the command string. Execution can be dispatched locally ({@link #executeHere}),
+ * routed to a specific server ({@link #executeServer}), or resolved automatically
+ * based on a server name ({@link #execute}).
+ *
+ * <p>The sender value supports several formats:</p>
+ * <ul>
+ *   <li>The console discriminator string → executes as console.</li>
+ *   <li>{@code @c} → executes as console.</li>
+ *   <li>{@code @n:&lt;name&gt;} → look up sender by name.</li>
+ *   <li>{@code @u:&lt;uuid&gt;} → look up sender by UUID.</li>
+ *   <li>{@code @&lt;name&gt;} → look up sender by name (shorthand).</li>
+ *   <li>Plain string → look up sender by name.</li>
+ * </ul>
+ */
 @Getter @Setter
 public class CommandExecution {
+
+    /**
+     * The encoded representation of the sender (console discriminator, player name, or
+     * {@code @}-prefixed reference).
+     */
     private String senderValue;
+
+    /** The command string to execute, without a leading slash. */
     private String command;
 
+    /**
+     * Creates a new {@code CommandExecution} with the given sender value and command.
+     *
+     * @param senderValue the encoded sender identifier
+     * @param command     the command string to execute
+     */
     public CommandExecution(String senderValue, String command) {
         setSenderValue(senderValue);
         setCommand(command);
     }
 
+    /**
+     * Resolves the {@link CosmicSender} from {@link #senderValue}.
+     * Returns an empty {@link Optional} if the sender value is {@code null} or cannot
+     * be resolved.
+     *
+     * @return an {@link Optional} containing the resolved sender, or empty if unresolvable
+     */
     public Optional<CosmicSender> getSender() {
         if (senderValue == null) return Optional.empty();
         if (senderValue.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return Optional.of(UserUtils.getConsole());
@@ -49,6 +85,14 @@ public class CommandExecution {
         return UserUtils.getOrCreateSenderByName(senderValue);
     }
 
+    /**
+     * Dispatches the command either locally or to a remote server depending on
+     * {@code serverInput}. The command runs locally when {@code serverInput} is
+     * {@code null}, {@code "HERE"}, {@code "PROXY"}, {@code "--null"}, or matches
+     * the current server name.
+     *
+     * @param serverInput the target server name, or one of the special tokens described above
+     */
     public void execute(String serverInput) {
         if (serverInput == null) {
             executeHere();
@@ -64,10 +108,19 @@ public class CommandExecution {
         }
     }
 
+    /**
+     * Executes the command locally without any server routing. Any failures are
+     * handled silently (errors are not propagated to the caller).
+     */
     public void executeMayFail() {
         executeHere();
     }
 
+    /**
+     * Resolves the sender and runs the command on the current server/proxy.
+     * If the sender resolves to console the command is dispatched via the console;
+     * otherwise it is dispatched via the sender's own {@code runCommand} method.
+     */
     public void executeHere() {
         Optional<CosmicSender> optional = getSender();
         if (optional.isEmpty()) return;
@@ -81,6 +134,14 @@ public class CommandExecution {
         }
     }
 
+    /**
+     * Routes the command to a specific server by finding a carrier player on that
+     * server and sending a {@link CommandMessageBuilder proxied command message}.
+     * On a proxy the first player on {@code server} is used as the carrier; on a
+     * backend server any online player is used instead.
+     *
+     * @param server the name of the target server to route the command to
+     */
     public void executeServer(String server) {
         CosmicPlayer player = null;
         if (Singularity.isProxy()) {

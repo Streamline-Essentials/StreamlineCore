@@ -5,10 +5,36 @@ import singularity.data.players.CosmicPlayer;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.utils.MessageUtils;
 
+/**
+ * Builds and reconstructs {@link ProxiedMessage} payloads that carry the full
+ * serialised state of a {@link CosmicPlayer} between proxy and backend servers.
+ *
+ * <p>Use {@link #build} to serialise a player's fields (identity, timestamps,
+ * metadata, location, and permissions) into a {@link ProxiedMessage}, and
+ * {@link #unbuild} to deserialise an incoming message back into a transient
+ * {@link CosmicPlayer} instance.</p>
+ *
+ * <p>The sub-channel identifier is {@value #subChannel}.</p>
+ */
 public class StreamPlayerMessageBuilder {
+
+    /**
+     * The plugin-messaging sub-channel name used to route player-sync messages.
+     */
     @Getter
     private static final String subChannel = "savable-player";
 
+    /**
+     * Serialises all relevant fields of {@code player} into a {@link ProxiedMessage}.
+     *
+     * <p>The following data is encoded: UUID, join/quit timestamps, current name,
+     * current IP, display-name metadata (nickname, prefix, suffix, tags), location
+     * (server, world, x, y, z, yaw, pitch), and the permission-bypass flag.</p>
+     *
+     * @param player           the {@link CosmicPlayer} to serialise
+     * @param isProxyOriginated {@code true} if this message originates from the proxy
+     * @return a fully populated {@link ProxiedMessage} ready to be sent
+     */
     public static ProxiedMessage build(CosmicPlayer player, boolean isProxyOriginated) {
         ProxiedMessage r = new ProxiedMessage(player, isProxyOriginated);
 
@@ -40,6 +66,17 @@ public class StreamPlayerMessageBuilder {
         return r;
     }
 
+    /**
+     * Deserialises an incoming {@link ProxiedMessage} and reconstructs a
+     * {@link CosmicPlayer} populated with the encoded data.
+     *
+     * <p>A warning is logged if the sub-channel does not match, but deserialisation
+     * continues regardless. The returned {@link CosmicPlayer} is a transient object
+     * and is not automatically registered with any user manager.</p>
+     *
+     * @param messageIn the incoming {@link ProxiedMessage} to deserialise
+     * @return a {@link CosmicPlayer} instance populated with the data from the message
+     */
     public static CosmicPlayer unbuild(ProxiedMessage messageIn) {
         if (! messageIn.getSubChannel().equals(getSubChannel())) {
             MessageUtils.logWarning("Data mis-match on ProxyMessageIn for '" + StreamPlayerMessageBuilder.class.getSimpleName() + "'. Continuing anyway...");

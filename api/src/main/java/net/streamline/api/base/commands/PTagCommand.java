@@ -13,11 +13,41 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Command for managing metadata tags on a {@link singularity.data.players.CosmicPlayer}.
+ *
+ * <p>Usage:
+ * <ul>
+ *   <li>{@code /ptag <player>} — list the player's current tags.</li>
+ *   <li>{@code /ptag <player> add <tag...>} — add one or more tags to the player.</li>
+ *   <li>{@code /ptag <player> remove <tag...>} — remove one or more tags from the player.</li>
+ * </ul>
+ * Registered under the alias {@code proxytag}.
+ */
 public class PTagCommand extends CosmicCommand {
+
+    /**
+     * Configurable message template displayed when listing a player's tags.
+     * Supports {@code %streamline_user_tags%} and {@code %this_other%}.
+     */
     private final String messageTagsGet;
+
+    /**
+     * Configurable message template displayed after adding a tag.
+     * Supports {@code %this_value%} and {@code %this_other%}.
+     */
     private final String messageTagsAdd;
+
+    /**
+     * Configurable message template displayed after removing a tag.
+     * Supports {@code %this_value%} and {@code %this_other%}.
+     */
     private final String messageTagsRemove;
 
+    /**
+     * Registers the ptag command with the {@code streamline-base} module and
+     * loads all response message templates from the command resource file.
+     */
     public PTagCommand() {
         super(
                 "streamline-base",
@@ -37,6 +67,16 @@ public class PTagCommand extends CosmicCommand {
                         "&a%this_value%");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the target player from argument 0.  With one argument the
+     * player's tag list is displayed.  With three or more arguments the second
+     * argument selects either {@code add} or {@code remove}, and all subsequent
+     * tokens are treated as individual tag values to apply.</p>
+     *
+     * @param context the command context carrying the sender and parsed arguments
+     */
     @Override
     public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 2) {
@@ -80,6 +120,19 @@ public class PTagCommand extends CosmicCommand {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Tab-completion progression:
+     * <ol>
+     *   <li>Argument 1 — online player names.</li>
+     *   <li>Argument 2 — action keywords: {@code add}, {@code remove}.</li>
+     * </ol>
+     * No completions are offered for tag values.
+     *
+     * @param context the command context carrying the sender and current argument list
+     * @return a sorted set of tab-completion candidates
+     */
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {

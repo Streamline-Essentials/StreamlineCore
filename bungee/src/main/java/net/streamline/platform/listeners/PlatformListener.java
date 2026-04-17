@@ -39,11 +39,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Central BungeeCord {@link Listener} for the StreamlineCore platform.
+ *
+ * <p>Handles proxy-level events (pre-login, post-login, disconnect, server switch,
+ * chat, plugin messages, server pings, and server kicks) and translates them into
+ * cross-platform {@link singularity.events.CosmicEvent} counterparts so that
+ * modules can react uniformly regardless of server software.
+ */
 public class PlatformListener implements Listener {
+
+    /**
+     * Constructs the listener and logs a confirmation message to the console.
+     */
     public PlatformListener() {
         MessageUtils.logInfo("BaseListener registered!");
     }
 
+    /**
+     * Handles the {@link PreLoginEvent} to enforce the whitelist and fire a
+     * {@link singularity.events.server.LoginReceivedEvent}.
+     *
+     * <p>If the whitelist is enabled and the connecting player is not on it,
+     * the event is cancelled with the configured message. Cancellation can also
+     * be triggered by modules via the {@code LoginReceivedEvent}.
+     *
+     * @param event the BungeeCord pre-login event
+     */
     @EventHandler
     public void onPreJoin(PreLoginEvent event) {
         PendingConnection connection = event.getConnection();
@@ -79,6 +101,12 @@ public class PlatformListener implements Listener {
         }
     }
 
+    /**
+     * Handles the {@link PostLoginEvent} to cache UUID information, populate
+     * player state, and fire a {@link singularity.events.server.LoginCompletedEvent}.
+     *
+     * @param event the BungeeCord post-login event
+     */
     @EventHandler
     public void onJoin(PostLoginEvent event) {
         ProxiedPlayer player = event.getPlayer();
@@ -108,6 +136,13 @@ public class PlatformListener implements Listener {
         ModuleUtils.fireEvent(loginCompletedEvent);
     }
 
+    /**
+     * Handles the {@link PlayerDisconnectEvent} to fire a
+     * {@link singularity.events.server.LogoutEvent}, persist the player's data,
+     * and unload the sender from memory.
+     *
+     * @param event the BungeeCord player disconnect event
+     */
     @EventHandler
     public void onLeave(PlayerDisconnectEvent event) {
         ProxiedPlayer player = event.getPlayer();
@@ -125,6 +160,13 @@ public class PlatformListener implements Listener {
         UserUtils.unloadSender(streamPlayer);
     }
 
+    /**
+     * Handles the {@link ServerConnectedEvent} to update the player's recorded
+     * server name and, when auto-correct is enabled, asynchronously broadcast
+     * the corrected server name.
+     *
+     * @param event the BungeeCord server connected event
+     */
     @EventHandler
     public void onServerSwitch(ServerConnectedEvent event) {
         ProxiedPlayer player = event.getPlayer();
@@ -143,6 +185,16 @@ public class PlatformListener implements Listener {
         }
     }
 
+    /**
+     * Handles the {@link ChatEvent} to propagate it as a cross-platform
+     * {@link singularity.events.server.CosmicChatEvent}.
+     *
+     * <p>If the {@code CosmicChatEvent} is cancelled the BungeeCord event is
+     * also cancelled; otherwise the (potentially modified) message is written
+     * back into the BungeeCord event.
+     *
+     * @param event the BungeeCord chat event
+     */
     @EventHandler
     public void onChat(ChatEvent event) {
         ProxiedPlayer player = (ProxiedPlayer) event.getSender();
@@ -162,11 +214,26 @@ public class PlatformListener implements Listener {
         event.setMessage(chatEvent.getMessage());
     }
 
+    /**
+     * Intercepts a {@link ProperEvent} fired through the BungeeCord plugin manager
+     * and delegates the wrapped {@link singularity.events.CosmicEvent} to
+     * {@link singularity.modules.ModuleManager}.
+     *
+     * @param event the BungeeCord-wrapped cross-platform event
+     */
     @EventHandler
     public void onProperEvent(ProperEvent event) {
         ModuleManager.fireEvent(event.getCosmicEvent());
     }
 
+    /**
+     * Handles incoming {@link PluginMessageEvent}s directed at a
+     * {@link ProxiedPlayer} and fires a
+     * {@link singularity.messages.events.ProxyMessageInEvent} for processing
+     * by the registered {@link singularity.messages.ProxyMessenger}.
+     *
+     * @param event the BungeeCord plugin-message event
+     */
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
         if (! (event.getReceiver() instanceof ProxiedPlayer)) return;
@@ -190,6 +257,13 @@ public class PlatformListener implements Listener {
         }
     }
 
+    /**
+     * Handles the {@link ProxyPingEvent} to allow modules to customise the
+     * server list ping response (protocol, player counts, MOTD, favicon) via
+     * a {@link singularity.events.server.ping.PingReceivedEvent}.
+     *
+     * @param event the BungeeCord proxy ping event
+     */
     @EventHandler
     public void onPing(ProxyPingEvent event) {
         ServerPing ping = event.getResponse();
@@ -262,6 +336,16 @@ public class PlatformListener implements Listener {
         event.setResponse(ping);
     }
 
+    /**
+     * Handles the {@link ServerKickEvent} to fire a cross-platform
+     * {@link singularity.events.server.KickedFromServerEvent}.
+     *
+     * <p>If a module provides a redirect server via the event, the player is
+     * silently transferred there instead of being disconnected. If the event
+     * is cancelled by a module the kick reason update is skipped.
+     *
+     * @param event the BungeeCord server-kick event
+     */
     @EventHandler
     public void onServerKick(ServerKickEvent event) {
         ProxiedPlayer player = event.getPlayer();

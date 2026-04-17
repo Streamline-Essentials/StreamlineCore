@@ -10,12 +10,48 @@ import singularity.utils.UserUtils;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Command for viewing and modifying a player's tracked play-time.
+ *
+ * <p>Usage:
+ * <ul>
+ *   <li>{@code /proxyplaytime <player>} — display the player's current play-time.</li>
+ *   <li>{@code /proxyplaytime <player> set <seconds>} — set play-time to the given value.</li>
+ *   <li>{@code /proxyplaytime <player> add <seconds>} — add seconds to play-time.</li>
+ *   <li>{@code /proxyplaytime <player> remove <seconds>} — subtract seconds from play-time.</li>
+ * </ul>
+ * Registered under the aliases {@code pplaytime}, {@code pplay}, and {@code proxyplay}.
+ */
 public class PlaytimeCommand extends CosmicCommand {
+
+    /**
+     * Configurable message template displayed when querying a player's play-time.
+     * Supports {@code %streamline_user_play_seconds%} and {@code %this_other%}.
+     */
     private final String messageGet;
+
+    /**
+     * Configurable message template displayed after setting a player's play-time.
+     * Supports {@code %this_value%} and {@code %this_other%}.
+     */
     private final String messageSet;
+
+    /**
+     * Configurable message template displayed after adding seconds to a player's play-time.
+     * Supports {@code %this_value%} and {@code %this_other%}.
+     */
     private final String messageAdd;
+
+    /**
+     * Configurable message template displayed after removing seconds from a player's play-time.
+     * Supports {@code %this_value%} and {@code %this_other%}.
+     */
     private final String messageRemove;
 
+    /**
+     * Registers the playtime command with the {@code streamline-base} module and
+     * loads all response message templates from the command resource file.
+     */
     public PlaytimeCommand() {
         super(
                 "streamline-base",
@@ -35,6 +71,17 @@ public class PlaytimeCommand extends CosmicCommand {
                 "&eRemoved &a%this_value% &dseconds &efrom &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&e&8'&es &cplaytime&8!");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the target {@link singularity.data.players.CosmicPlayer} from
+     * argument 0.  With only one argument the player's current play-time is
+     * displayed.  With three arguments the second selects the action
+     * ({@code set}, {@code add}, or {@code remove}) and the third provides the
+     * integer number of seconds to apply.</p>
+     *
+     * @param context the command context carrying the sender and parsed arguments
+     */
     @Override
     public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 1) {
@@ -84,6 +131,19 @@ public class PlaytimeCommand extends CosmicCommand {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Tab-completion progression:
+     * <ol>
+     *   <li>Argument 1 — online player names.</li>
+     *   <li>Argument 2 — action keywords: {@code set}, {@code add}, {@code remove}.</li>
+     *   <li>Argument 3 — integer placeholder via {@link #getIntegerArgument()}.</li>
+     * </ol>
+     *
+     * @param context the command context carrying the sender and current argument list
+     * @return a sorted set of tab-completion candidates
+     */
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {

@@ -12,7 +12,25 @@ import singularity.messages.proxied.ProxiedMessageManager;
 
 import java.util.UUID;
 
+/**
+ * Velocity implementation of {@link ProxyMessenger} that routes cross-server plugin messages
+ * through the Velocity proxy channel API.
+ *
+ * <p>Outbound messages are sent via the carrier player's currently connected backend server
+ * using a {@link MinecraftChannelIdentifier}. If the carrier player is not online the
+ * message is deferred via {@link ProxiedMessageManager#pendMessage(ProxiedMessage)}.
+ * Inbound message handling is implemented elsewhere via the {@link PlatformListener}.
+ */
 public class ProxyPluginMessenger implements ProxyMessenger {
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the carrier {@link Player} and forwards the message payload to the
+     * backend server via plugin-messaging. If no players are online or the carrier player
+     * is offline, the message is either dropped or pended for later delivery.
+     *
+     * @param message the {@link ProxiedMessage} to send; must have a non-null carrier
+     */
     @Override
     public void sendMessage(ProxiedMessage message) {
         if (StreamlineVelocity.getInstance().getOnlinePlayers().isEmpty()) return;
@@ -31,6 +49,14 @@ public class ProxyPluginMessenger implements ProxyMessenger {
         player.getCurrentServer().ifPresent(server -> server.sendPluginMessage(MinecraftChannelIdentifier.from(message.getMainChannel()), message.read()));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Inbound message processing is handled by {@link PlatformListener#onPluginMessage};
+     * this method is intentionally a no-op.
+     *
+     * @param event the inbound proxy message event (unused here)
+     */
     @Override
     public void receiveMessage(ProxyMessageInEvent event) {
         // implemented else where.

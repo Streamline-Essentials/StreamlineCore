@@ -10,7 +10,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+/**
+ * Utility class for reading classpath-based resource files.
+ *
+ * <p>Methods in this class load resources through {@link Singularity}'s class loader so
+ * that resources bundled inside the Singularity JAR are always accessible regardless of
+ * the active platform.
+ */
 public class StorageUtils {
+
+    /**
+     * Reads the {@code singularity.properties} resource file from the classpath and
+     * returns its key/value pairs as a sorted map.
+     *
+     * <p>Each line is expected to follow the format {@code key=value}; lines that do
+     * not contain exactly one {@code =} are silently skipped.
+     *
+     * @return a sorted map of property keys to their string values; empty if the file
+     *         cannot be found or read
+     */
     public static ConcurrentSkipListMap<String, String> readProperties() {
         ConcurrentSkipListMap<String, String> map = new ConcurrentSkipListMap<>();
 
@@ -27,6 +45,14 @@ public class StorageUtils {
         return map;
     }
 
+    /**
+     * Reads all lines from a named resource file on the classpath.
+     *
+     * @param name the classpath-relative name of the resource (e.g.,
+     *             {@code "singularity.properties"})
+     * @return a list of lines in the order they appear in the file; empty if the
+     *         resource is not found or an I/O error occurs
+     */
     public static List<String> getLinesFromResourceFile(String name) {
         List<String> lines = new ArrayList<>();
         try {

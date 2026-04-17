@@ -16,12 +16,43 @@ import singularity.utils.UserUtils;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * RAT placeholder expansion that exposes LuckPerms data for every
+ * {@link singularity.data.console.CosmicSender}.
+ *
+ * <p>The expansion is registered under the {@code luckperms} namespace and
+ * provides the following placeholders (all prefixed with
+ * {@code %streamline_luckperms_}):
+ * <ul>
+ *   <li>{@code prefix} — the player's effective LuckPerms prefix.</li>
+ *   <li>{@code suffix} — the player's effective LuckPerms suffix.</li>
+ *   <li>{@code primary_group} — the player's primary group name.</li>
+ *   <li>{@code highest_group} — the first inherited group in the contextual
+ *       inheritance chain.</li>
+ *   <li>{@code meta_<key>} — a specific meta value from the player's nodes or
+ *       their primary group's nodes.</li>
+ * </ul>
+ * Console senders return an empty string for all placeholders because they
+ * have no associated UUID.
+ */
 public class LuckpermsExpansion extends RATExpansion {
+
+    /**
+     * Constructs the expansion and logs its registration to the base module's
+     * logger.
+     */
     public LuckpermsExpansion() {
         super(new RATExpansionBuilder("luckperms"));
         BaseModule.getInstance().logInfo(getClass().getSimpleName() + " is registered!");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Registers all LuckPerms-backed {@link singularity.placeholders.replaceables.IdentifiedUserReplaceable}
+     * instances: {@code prefix}, {@code suffix}, {@code primary_group},
+     * {@code highest_group}, and the regex-based {@code meta_<key>} pattern.</p>
+     */
     @Override
     public void init() {
         new IdentifiedUserReplaceable(this, "prefix", (s, user) -> UserUtils.getPrefix(user)).register();
