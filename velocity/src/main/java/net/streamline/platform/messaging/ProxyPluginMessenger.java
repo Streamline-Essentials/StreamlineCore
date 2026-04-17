@@ -19,7 +19,7 @@ import java.util.UUID;
  * <p>Outbound messages are sent via the carrier player's currently connected backend server
  * using a {@link MinecraftChannelIdentifier}. If the carrier player is not online the
  * message is deferred via {@link ProxiedMessageManager#pendMessage(ProxiedMessage)}.
- * Inbound message handling is implemented elsewhere via the {@link PlatformListener}.
+ * Inbound message handling is implemented elsewhere via {@code PlatformListener}.
  */
 public class ProxyPluginMessenger implements ProxyMessenger {
     /**
@@ -52,7 +52,7 @@ public class ProxyPluginMessenger implements ProxyMessenger {
     /**
      * {@inheritDoc}
      *
-     * <p>Inbound message processing is handled by {@link PlatformListener#onPluginMessage};
+     * <p>Inbound message processing is handled by {@code PlatformListener#onPluginMessage};
      * this method is intentionally a no-op.
      *
      * @param event the inbound proxy message event (unused here)

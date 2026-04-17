@@ -212,10 +212,10 @@ public class PlatformListener {
     }
 
     /**
-     * Relays a cross-platform {@link CosmicEvent} that was submitted through the Velocity
-     * event bus via a {@link ProperEvent} wrapper.
+     * Relays a cross-platform {@code CosmicEvent} that was submitted through the Velocity
+     * event bus via a {@code ProperEvent} wrapper.
      *
-     * @param event the {@link ProperEvent} carrying the {@link CosmicEvent} to fire
+     * @param event the {@code ProperEvent} carrying the {@code CosmicEvent} to fire
      */
     @Subscribe
     public void onProperEvent(ProperEvent event) {
