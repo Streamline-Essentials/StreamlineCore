@@ -1,0 +1,83 @@
+apply plugin: 'net.neoforged.gradle.userdev'
+apply plugin: 'maven-publish'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir rootProject.file("neoforge/neoforge-common/src/main/java")
+        }
+    }
+}
+
+runs {
+    server {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
+        arguments '--nogui'
+    }
+}
+
+repositories {
+    maven { url "https://maven.neoforged.net/releases" }
+    maven { url "https://maven.neoforged.net/snapshots" }
+    maven { url "https://repo.codemc.io/repository/maven-releases/" }
+    maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.io/repository/streamline-essentials/"
+    }
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:26.1.0.0-alpha.15+pre-3"
+
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
+    compileOnly "net.luckperms:api:5.4"
+    implementation "gg.drak:TheBase:1.1.0"
+}
+
+compileJava { dependsOn(":StreamlineCore-API:jar") }
+delombok { dependsOn(":StreamlineCore-API:jar") }
+
+shadowJar { archiveClassifier = 'shadow' }
+
+deploy.configure { from jar.archiveFile }
+jar.finalizedBy(deploy)
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title"   : "streamlinecore",
+            "Specification-Vendor"  : "DrakDv",
+            "Specification-Version" : "1",
+            "Implementation-Title"  : project.name,
+            "Implementation-Version": project.jar.archiveVersion,
+            "Implementation-Vendor" : "DrakDv"
+        ])
+    }
+}
+
+processResources {
+    inputs.property("name", rootProject.name.toString())
+    inputs.property("version", rootProject.version.toString())
+    filesMatching("**/neoforge.mods.toml") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+    filesMatching("**/streamline.properties") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+}

@@ -1,0 +1,102 @@
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'com.gradleup.shadow'
+apply plugin: 'io.freefair.lombok'
+apply plugin: 'maven-publish'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+afterEvaluate {
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
+    }
+}
+
+configurations.all {
+    resolutionStrategy.force "com.github.ben-manes.caffeine:caffeine:2.9.3"
+}
+
+// forge-1165 uses its own sources (1.16.5-specific Forge event API differs from modern)
+
+minecraft {
+    mappings channel: 'official', version: '1.16.5'
+    runs {
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                streamlinecore { source sourceSets.main }
+            }
+        }
+    }
+}
+
+repositories {
+    maven { url "https://maven.minecraftforge.net" }
+    maven { url "https://repo.codemc.io/repository/maven-releases/" }
+    maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.io/repository/streamline-essentials/"
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.9'
+
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
+    compileOnly "net.luckperms:api:5.4"
+
+    implementation fg.deobf("gg.drak:TheBase:1.1.0")
+}
+
+compileJava { dependsOn(":StreamlineCore-API:jar") }
+delombok { dependsOn(":StreamlineCore-API:jar") }
+
+shadowJar {
+    relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
+    relocate("ch.qos.logback", "host.plas.bou.libs.logback")
+    archiveFileName = project.name + "-" + project.version + "-all.jar"
+    archiveClassifier = 'shadow'
+}
+
+deploy.configure { from jar.archiveFile }
+jar.finalizedBy(deploy)
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title"     : "streamlinecore",
+            "Specification-Vendor"    : "DrakDv",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : project.name,
+            "Implementation-Version"  : project.jar.archiveVersion,
+            "Implementation-Vendor"   : "DrakDv",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+processResources {
+    inputs.property("name", rootProject.name.toString())
+    inputs.property("version", rootProject.version.toString())
+    filesMatching("**/mods.toml") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+    filesMatching("**/streamline.properties") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+}

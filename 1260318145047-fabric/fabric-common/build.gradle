@@ -1,0 +1,3 @@
+// Source-only module — provides shared Java sources to version-specific Fabric subprojects.
+// Not compiled independently; sources are included via srcDirs in each fabric-XXXX subproject.
+configurations.all { resolutionStrategy.deactivateDependencyLocking() }

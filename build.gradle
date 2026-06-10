@@ -15,12 +15,22 @@ buildscript {
             name = "Forge"
             url = "https://maven.minecraftforge.net"
         }
+        maven {
+            name = "NeoForge"
+            url = "https://maven.neoforged.net/releases"
+        }
+        maven {
+            name = "NeoForge-snapshots"
+            url = "https://maven.neoforged.net/snapshots"
+        }
     }
 
     dependencies {
         classpath("com.gradleup.shadow:shadow-gradle-plugin:8.3.6") // for shadowing
         classpath("io.freefair.gradle:lombok-plugin:8.6")
-        // Note: Architectury Loom is applied as a plugin in subprojects, not as a classpath dependency
+        classpath("net.fabricmc:fabric-loom:1.13.4")
+        classpath("net.minecraftforge.gradle:ForgeGradle:6.0.+") { changing = true }
+        classpath("net.neoforged.gradle:userdev:7.1.22")
     }
 }
 
