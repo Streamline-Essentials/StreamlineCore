@@ -1,0 +1,123 @@
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'com.gradleup.shadow'
+apply plugin: 'io.freefair.lombok'
+apply plugin: 'maven-publish'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Override root project's Java 11 source/target compatibility for Forge which requires Java 17
+afterEvaluate {
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = '17'
+        targetCompatibility = '17'
+    }
+}
+
+// Fix dependency resolution attribute to accept Java 17+ libraries
+configurations.all {
+    attributes {
+        attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir rootProject.file("forge/forge-common/src/main/java")
+        }
+    }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    runs {
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                streamlinecore {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    maven { url "https://maven.minecraftforge.net" }
+    maven { url "https://repo.codemc.io/repository/maven-releases/" }
+    maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.io/repository/streamline-essentials/"
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.10'
+
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
+    compileOnly "net.luckperms:api:5.4"
+
+    implementation fg.deobf("gg.drak:TheBase:1.1.0")
+}
+
+compileJava {
+    dependsOn(":StreamlineCore-API:jar")
+}
+
+delombok {
+    dependsOn(":StreamlineCore-API:jar")
+}
+
+shadowJar {
+    relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
+    relocate("ch.qos.logback", "host.plas.bou.libs.logback")
+    archiveFileName = project.name + "-" + project.version + "-all.jar"
+    archiveClassifier = 'shadow'
+}
+
+deploy.configure {
+    from jar.archiveFile
+}
+
+jar.finalizedBy(deploy)
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title"     : "streamlinecore",
+            "Specification-Vendor"    : "DrakDv",
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : project.name,
+            "Implementation-Version"  : project.jar.archiveVersion,
+            "Implementation-Vendor"   : "DrakDv",
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+processResources {
+    inputs.property("name", rootProject.name.toString())
+    inputs.property("version", rootProject.version.toString())
+    filesMatching("**/mods.toml") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+    filesMatching("**/streamline.properties") {
+        expand(
+            "name": rootProject.name.toString(),
+            "version": rootProject.version.toString()
+        )
+    }
+}

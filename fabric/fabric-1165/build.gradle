@@ -1,0 +1,65 @@
+apply plugin: 'fabric-loom'
+apply plugin: 'com.gradleup.shadow'
+apply plugin: 'io.freefair.lombok'
+apply plugin: 'maven-publish'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// fabric-1165 uses its own sources (Yarn-mapped API names differ from Mojang-mapped)
+
+configurations.all {
+    resolutionStrategy.force "com.github.ben-manes.caffeine:caffeine:2.9.3"
+}
+
+repositories {
+    maven { url "https://maven.fabricmc.net" }
+    maven { url "https://repo.codemc.io/repository/maven-releases/" }
+    maven { url "https://repo.codemc.io/repository/maven-snapshots/" }
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.io/repository/streamline-essentials/"
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.16.5"
+    mappings "net.fabricmc:yarn:1.16.5+build.10:v2"
+    modImplementation "net.fabricmc:fabric-loader:0.19.2"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.42.0+1.16"
+
+    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    compileOnly project(path: ':StreamlineCore-Singularity')
+    modCompileOnly "net.luckperms:api:5.4"
+    implementation include("gg.drak:TheBase:1.1.0")
+    implementation include("ch.qos.logback:logback-classic:1.5.6")
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}
+
+compileJava { dependsOn(":StreamlineCore-API:jar") }
+delombok { dependsOn(":StreamlineCore-API:jar") }
+
+processResources {
+    inputs.property("name", rootProject.name.toString())
+    inputs.property("version", rootProject.version.toString())
+    filesMatching("**/fabric.mod.json") {
+        expand("name": rootProject.name.toString(), "version": rootProject.version.toString())
+    }
+    filesMatching("**/streamline.properties") {
+        expand("name": rootProject.name.toString(), "version": rootProject.version.toString())
+    }
+}
+
+shadowJar {
+    relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
+    relocate("ch.qos.logback", "host.plas.bou.libs.logback")
+    archiveFileName = project.name + "-" + project.version + "-all.jar"
+    archiveClassifier = 'shadow'
+}
+
+deploy.configure { from remapJar.archiveFile }
+remapJar.finalizedBy(deploy)

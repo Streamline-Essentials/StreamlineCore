@@ -8,6 +8,36 @@ if (! isCI()) {
     include ':bungee'
     include ':spigot'
     include ':velocity'
+
+    // Fabric versions (shared sources in fabric/fabric-common/ directory, not a compiled subproject)
+    include ':fabric-1165'
+    include ':fabric-1201'
+    include ':fabric-1211'
+    include ':fabric-12111'
+    project(':fabric-1165').projectDir = file('fabric/fabric-1165')
+    project(':fabric-1201').projectDir = file('fabric/fabric-1201')
+    project(':fabric-1211').projectDir = file('fabric/fabric-1211')
+    project(':fabric-12111').projectDir = file('fabric/fabric-12111')
+
+    // Forge versions (shared sources in forge/forge-common/ directory, not a compiled subproject)
+    include ':forge-1165'
+    include ':forge-1201'
+    project(':forge-1165').projectDir = file('forge/forge-1165')
+    project(':forge-1201').projectDir = file('forge/forge-1201')
+
+    // NeoForge versions (shared sources in neoforge/neoforge-common/ directory, not a compiled subproject)
+    include ':neoforge-1211'
+    include ':neoforge-12111'
+    project(':neoforge-1211').projectDir = file('neoforge/neoforge-1211')
+    project(':neoforge-12111').projectDir = file('neoforge/neoforge-12111')
+
+    // MC 26.1.1 requires Java 25 — only include if available
+    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
+        include ':fabric-2611'
+        include ':neoforge-2611'
+        project(':fabric-2611').projectDir = file('fabric/fabric-2611')
+        project(':neoforge-2611').projectDir = file('neoforge/neoforge-2611')
+    }
 }
 
 findProject(':backend-api').name = 'bapi'
@@ -21,6 +51,23 @@ if (! isCI()) {
     findProject(':bungee').name = rootProject.name + '-Bungee'
     findProject(':spigot').name = rootProject.name + '-Spigot'
     findProject(':velocity').name = rootProject.name + '-Velocity'
+
+    findProject(':fabric-1165').name = rootProject.name + '-Fabric-1165'
+    findProject(':fabric-1201').name = rootProject.name + '-Fabric-1201'
+    findProject(':fabric-1211').name = rootProject.name + '-Fabric-1211'
+    findProject(':fabric-12111').name = rootProject.name + '-Fabric-12111'
+    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
+        findProject(':fabric-2611').name = rootProject.name + '-Fabric-2611'
+    }
+
+    findProject(':forge-1165').name = rootProject.name + '-Forge-1165'
+    findProject(':forge-1201').name = rootProject.name + '-Forge-1201'
+
+    findProject(':neoforge-1211').name = rootProject.name + '-NeoForge-1211'
+    findProject(':neoforge-12111').name = rootProject.name + '-NeoForge-12111'
+    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
+        findProject(':neoforge-2611').name = rootProject.name + '-NeoForge-2611'
+    }
 }
 
 static def isCI() {
