@@ -1,0 +1,12 @@
+---
+description: Always git add and commit after every code change
+alwaysApply: true
+---
+
+# Auto-commit after every change
+
+After making any file changes in this repository, always `git add` the relevant files and create a git commit before ending the turn.
+
+Follow the project's committing-changes protocol (status/diff/log, HEREDOC commit message, no force push, no config changes, no secrets). Treat this preference as an explicit standing request to commit — do not wait for the user to ask again.
+
+Skip the commit only when there is nothing to commit, or when the user explicitly says not to commit for a specific change.
