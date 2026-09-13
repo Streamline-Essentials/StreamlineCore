@@ -16,7 +16,7 @@ public class MainListener implements BaseEventListener {
     public void updateLogin(LoginCompletedEvent event) {
         CosmicPlayer sender = event.getPlayer();
 
-        Optional<Party> optional = GroupManager.get(sender);
+        Optional<Party> optional = GroupManager.getParty(sender);
         if (optional.isPresent()) {
             Party party = optional.get();
             // do something with party
@@ -27,7 +27,7 @@ public class MainListener implements BaseEventListener {
     public void updateLogout(LogoutEvent event) {
         CosmicPlayer sender = event.getPlayer();
 
-        Optional<Party> optional = GroupManager.get(sender);
+        Optional<Party> optional = GroupManager.getParty(sender);
         if (optional.isPresent()) {
             Party party = optional.get();
 

@@ -6,6 +6,7 @@ import host.plas.bou.utils.SenderUtils;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.streamline.api.SLAPI;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
@@ -25,10 +26,12 @@ import java.util.*;
  * Spigot implementation of {@link singularity.interfaces.IMessenger} that
  * sends formatted messages and titles to Bukkit players and the console.
  *
- * <p>Colour codes are processed by the BukkitOfUtils (BOU) message utilities,
- * supporting legacy {@code &}-codes, hex colours, and MiniMessage-style tags.
- * When the SLAPI layer is ready, PlaceholderAPI-style replacements are applied
- * before sending.
+ * <p>Colour codes are processed by BOU {@link ColorUtils#colorizeHard(String)},
+ * which supports legacy {@code &}-codes and hex forms ({@code &#RRGGBB},
+ * {@code {#RRGGBB}}, {@code #RRGGBB}, {@code <#RRGGBB>}). Plain
+ * {@code MessageUtils.codedString} is not used — it only translates {@code &}
+ * codes and drops hex. When the SLAPI layer is ready, PlaceholderAPI-style
+ * replacements are applied before sending.
  */
 public class Messenger implements IMessenger {
     /**
@@ -66,7 +69,7 @@ public class Messenger implements IMessenger {
      */
     @Deprecated
     public static String colorAsStringBOU(String message) {
-        return host.plas.bou.utils.MessageUtils.codedString(message); // Already new-lined.
+        return ColorUtils.colorizeHard(message);
     }
 
     /**
@@ -267,26 +270,25 @@ public class Messenger implements IMessenger {
     }
 
     /**
-     * Translates colour codes and formatting tags in {@code value} using the BOU
-     * message utilities and returns the resulting coloured string.
+     * Translates colour codes and hex tags in {@code value} via BOU
+     * {@link ColorUtils#colorizeHard(String)}.
      *
      * @param value the raw string with colour codes
      * @return the formatted string ready for display
      */
     public String codedStringBOU(String value) {
-        return host.plas.bou.utils.MessageUtils.codedString(value); // Already new-lined.
+        return ColorUtils.colorizeHard(value);
     }
     
     /**
-     * Converts {@code value} (which may contain colour codes and formatting tags)
-     * into an array of BungeeCord {@link net.md_5.bungee.api.chat.BaseComponent}s
-     * using the BOU {@link host.plas.bou.utils.ColorUtils} utilities.
+     * Converts {@code value} (legacy {@code &}-codes and hex tags) into
+     * BungeeCord {@link BaseComponent}s after BOU hard colourization.
      *
      * @param value the raw string with colour codes
      * @return the array of base components representing the formatted text
      */
     public BaseComponent[] colorizeBOU(String value) {
-        return ColorUtils.color(value);
+        return TextComponent.fromLegacyText(ColorUtils.colorizeHard(value));
     }
     
     /**

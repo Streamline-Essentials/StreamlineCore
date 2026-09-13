@@ -27,41 +27,100 @@ public class GroupManager {
         loadedParties.removeIf(a -> a.getUuid().equals(uuid));
     }
 
-    public static void unload(Party party) {
-        unload(party.getUuid());
+    /**
+     * Unloads exactly this group, matched on its classed identifier so that a
+     * {@link Party} and a {@link Guild} sharing a uuid are not both dropped.
+     */
+    public static void unload(AbstractGroup group) {
+        loadedParties.removeIf(a -> a.getClassedIdentifier().equals(group.getClassedIdentifier()));
     }
 
     public static boolean isLoaded(String uuid) {
         return get(uuid).isPresent();
     }
 
-    public static boolean isLoaded(Party party) {
-        return isLoaded(party.getUuid());
+    /**
+     * Returns whether this exact group is loaded, matched on its classed identifier so
+     * that a loaded {@link Party} does not mask an unloaded {@link Guild} of the same uuid.
+     */
+    public static boolean isLoaded(AbstractGroup group) {
+        return loadedParties.stream().anyMatch(a -> a.getClassedIdentifier().equals(group.getClassedIdentifier()));
     }
 
     public static Optional<AbstractGroup> get(String uuid) {
         return loadedParties.stream().filter(a -> a.getUuid().equals(uuid)).findFirst();
     }
 
+    /**
+     * Returns the group the given sender owns or belongs to.
+     *
+     * <p>A group may be loaded before its owner is resolved (see {@code GuildKeeper}), so
+     * a null owner is treated as "not this sender's group" rather than an error.</p>
+     */
     public static Optional<AbstractGroup> get(CosmicSender player) {
+        if (player == null) return Optional.empty();
+
         return loadedParties.stream().filter(a -> {
-            if (a.getOwner().getUuid().equals(player.getUuid())) return true;
+            CosmicSender owner = a.getOwner();
+            if (owner != null && owner.getUuid().equals(player.getUuid())) return true;
             return a.hasMember(player);
         }).findFirst();
     }
 
+    /**
+     * Returns the loaded group with the given uuid when it is of the requested type.
+     *
+     * @param uuid  the group's uuid
+     * @param clazz the group type to narrow to
+     * @param <T>   the group type
+     * @return the group, or empty if none is loaded or it is a different type
+     */
+    public static <T extends AbstractGroup> Optional<T> get(String uuid, Class<T> clazz) {
+        return loadedParties.stream()
+                .filter(clazz::isInstance)
+                .filter(a -> a.getUuid().equals(uuid))
+                .map(clazz::cast)
+                .findFirst();
+    }
+
+    /**
+     * Returns the loaded group the sender belongs to when it is of the requested type.
+     *
+     * @param player the sender whose group to find
+     * @param clazz  the group type to narrow to
+     * @param <T>    the group type
+     * @return the group, or empty if none is loaded or it is a different type
+     */
+    public static <T extends AbstractGroup> Optional<T> get(CosmicSender player, Class<T> clazz) {
+        if (player == null) return Optional.empty();
+
+        // Narrow by type before picking, so that a sender who is in both a party and a
+        // guild still resolves to the requested one.
+        return loadedParties.stream()
+                .filter(clazz::isInstance)
+                .filter(a -> {
+                    CosmicSender owner = a.getOwner();
+                    if (owner != null && owner.getUuid().equals(player.getUuid())) return true;
+                    return a.hasMember(player);
+                })
+                .map(clazz::cast)
+                .findFirst();
+    }
+
     public static Optional<Party> getParty(String uuid) {
-        Optional<AbstractGroup> group = get(uuid);
-        if (group.isEmpty()) return Optional.empty();
-        if (! (group.get() instanceof Party)) return Optional.empty();
-        return Optional.of((Party) group.get());
+        return get(uuid, Party.class);
     }
 
     public static Optional<Party> getParty(CosmicSender player) {
-        Optional<AbstractGroup> group = get(player);
-        if (group.isEmpty()) return Optional.empty();
-        if (! (group.get() instanceof Party)) return Optional.empty();
-        return Optional.of((Party) group.get());
+        return get(player, Party.class);
+    }
+
+    public static Optional<Guild> getGuild(String uuid) {
+        return get(uuid, Guild.class);
+    }
+
+    public static Optional<Guild> getGuild(CosmicSender player) {
+        return get(player, Guild.class);
     }
 
     public static boolean hasParty(CosmicSender player) {

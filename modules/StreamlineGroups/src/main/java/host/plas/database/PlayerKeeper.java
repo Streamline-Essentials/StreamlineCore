@@ -20,7 +20,7 @@ public class PlayerKeeper extends DBKeeper<GroupedPlayer> {
     public void ensureMysqlTables() {
         String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%grouped_players` (" +
                 "`Uuid` VARCHAR(36) NOT NULL PRIMARY KEY, " +
-                "`ChatType` TEXT NOT NULL, " +
+                "`ChatType` TEXT NOT NULL " +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -31,8 +31,8 @@ public class PlayerKeeper extends DBKeeper<GroupedPlayer> {
     @Override
     public void ensureSqliteTables() {
         String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%grouped_players` (" +
-                "`Uuid` VARCHAR(36) NOT NULL PRIMARY KEY, " +
-                "`ChatType` TEXT NOT NULL, " +
+                "`Uuid` TEXT NOT NULL PRIMARY KEY, " +
+                "`ChatType` TEXT NOT NULL " +
                 ");;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -143,7 +143,7 @@ public class PlayerKeeper extends DBKeeper<GroupedPlayer> {
     }
 
     public boolean existsBoth(String identifier) {
-        String statement = "SELECT * FROM `%table_prefix%chatter_main` WHERE `uuid` = ?;";
+        String statement = "SELECT `Uuid` FROM `%table_prefix%grouped_players` WHERE `Uuid` = ?;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
@@ -164,6 +164,24 @@ public class PlayerKeeper extends DBKeeper<GroupedPlayer> {
         });
 
         return exists.get();
+    }
+
+    @Override
+    public boolean deleteMysql(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    @Override
+    public boolean deleteSqlite(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    public boolean deleteBoth(String identifier) {
+        String statement = "DELETE FROM `%table_prefix%grouped_players` WHERE `Uuid` = ?;;";
+
+        statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
+
+        return deleteWith(identifier, statement);
     }
 
     public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllChatters() {

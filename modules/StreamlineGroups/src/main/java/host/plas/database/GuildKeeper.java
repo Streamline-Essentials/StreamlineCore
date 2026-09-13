@@ -1,27 +1,39 @@
 package host.plas.database;
 
 import host.plas.data.Guild;
-import host.plas.data.chats.ChatType;
-import host.plas.data.player.GroupedPlayer;
 import net.streamline.api.SLAPI;
-import singularity.database.DatabaseType;
+import singularity.data.console.CosmicSender;
 import singularity.database.modules.DBKeeper;
+import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Persists {@link Guild} groups.
+ *
+ * <p>Guilds keep the state declared on {@code AbstractGroup} -- owner, visibility, mute
+ * state, size cap and creation time -- in their own {@code guilds} table, separate from
+ * the {@code grouped_players} table that {@link PlayerKeeper} owns.</p>
+ */
 public class GuildKeeper extends DBKeeper<Guild> {
     public GuildKeeper() {
-        super("grouped_players", Guild::new);
+        super("guilds", Guild::new);
     }
 
     @Override
     public void ensureMysqlTables() {
-        String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%grouped_players` (" +
+        String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%guilds` (" +
                 "`Uuid` VARCHAR(36) NOT NULL PRIMARY KEY, " +
-                "`ChatType` TEXT NOT NULL, " +
+                "`OwnerUuid` VARCHAR(36) NOT NULL, " +
+                "`IsMuted` BIT NOT NULL, " +
+                "`IsPublic` BIT NOT NULL, " +
+                "`MaxSize` INT NOT NULL, " +
+                "`CreateDate` BIGINT NOT NULL " +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -31,9 +43,13 @@ public class GuildKeeper extends DBKeeper<Guild> {
 
     @Override
     public void ensureSqliteTables() {
-        String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%grouped_players` (" +
-                "`Uuid` VARCHAR(36) NOT NULL PRIMARY KEY, " +
-                "`ChatType` TEXT NOT NULL, " +
+        String statement = "CREATE TABLE IF NOT EXISTS `%table_prefix%guilds` (" +
+                "`Uuid` TEXT NOT NULL PRIMARY KEY, " +
+                "`OwnerUuid` TEXT NOT NULL, " +
+                "`IsMuted` INTEGER NOT NULL, " +
+                "`IsPublic` INTEGER NOT NULL, " +
+                "`MaxSize` INTEGER NOT NULL, " +
+                "`CreateDate` INTEGER NOT NULL " +
                 ");;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -42,95 +58,105 @@ public class GuildKeeper extends DBKeeper<Guild> {
     }
 
     @Override
-    public void saveMysql(GroupedPlayer obj) {
-        String statement = "INSERT INTO `%table_prefix%grouped_players` " +
-                "(`Uuid`, `ChatType`) " +
-                "VALUES " +
-                "( ?, ? )" +
+    public void saveMysql(Guild obj) {
+        String statement = "INSERT INTO `%table_prefix%guilds` (" +
+                "`Uuid`, `OwnerUuid`, `IsMuted`, `IsPublic`, `MaxSize`, `CreateDate`" +
+                ") VALUES (?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE " +
-                "`ChatType` = ?;";
+                "`OwnerUuid` = ?, `IsMuted` = ?, `IsPublic` = ?, `MaxSize` = ?, `CreateDate` = ?;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
         getDatabase().execute(statement, stmt -> {
             try {
-                stmt.setString(1, obj.getIdentifier());
-                stmt.setString(2, obj.getChatType().name());
+                stmt.setString(1, obj.getUuid());
+                stmt.setString(2, ownerUuidOf(obj));
+                stmt.setBoolean(3, obj.isMuted());
+                stmt.setBoolean(4, obj.isPublic());
+                stmt.setInt(5, obj.getMaxSize());
+                stmt.setLong(6, createMillisOf(obj));
 
-                stmt.setString(3, obj.getChatType().name());
+                // Repeat everything but the primary key for the update half.
+                stmt.setString(7, ownerUuidOf(obj));
+                stmt.setBoolean(8, obj.isMuted());
+                stmt.setBoolean(9, obj.isPublic());
+                stmt.setInt(10, obj.getMaxSize());
+                stmt.setLong(11, createMillisOf(obj));
             } catch (Exception e) {
-                e.printStackTrace();
+                MessageUtils.logWarning("Failed to save guild " + obj.getUuid(), e);
             }
         });
     }
 
     @Override
-    public void saveSqlite(GroupedPlayer obj) {
-        String statement = "INSERT OR REPLACE INTO `%table_prefix%grouped_players` " +
-                "(`Uuid`, `ChatType`) " +
-                "VALUES " +
-                "( ?, ? );";
+    public void saveSqlite(Guild obj) {
+        String statement = "INSERT OR REPLACE INTO `%table_prefix%guilds` (" +
+                "`Uuid`, `OwnerUuid`, `IsMuted`, `IsPublic`, `MaxSize`, `CreateDate`" +
+                ") VALUES (?, ?, ?, ?, ?, ?);";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
         getDatabase().execute(statement, stmt -> {
             try {
-                stmt.setString(1, obj.getIdentifier());
-                stmt.setString(2, obj.getChatType().name());
+                stmt.setString(1, obj.getUuid());
+                stmt.setString(2, ownerUuidOf(obj));
+                stmt.setBoolean(3, obj.isMuted());
+                stmt.setBoolean(4, obj.isPublic());
+                stmt.setInt(5, obj.getMaxSize());
+                stmt.setLong(6, createMillisOf(obj));
             } catch (Exception e) {
-                e.printStackTrace();
+                MessageUtils.logWarning("Failed to save guild " + obj.getUuid(), e);
             }
         });
     }
 
     @Override
-    public Optional<GroupedPlayer> loadMysql(String identifier) {
+    public Optional<Guild> loadMysql(String identifier) {
         return loadBoth(identifier);
     }
 
     @Override
-    public Optional<GroupedPlayer> loadSqlite(String identifier) {
+    public Optional<Guild> loadSqlite(String identifier) {
         return loadBoth(identifier);
     }
 
-    public Optional<GroupedPlayer> loadBoth(String identifier) {
-        String statement = "SELECT * FROM `%table_prefix%grouped_players` WHERE `Uuid` = ?;";
+    public Optional<Guild> loadBoth(String identifier) {
+        String statement = "SELECT * FROM `%table_prefix%guilds` WHERE `Uuid` = ?;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
-        AtomicReference<Optional<GroupedPlayer>> user = new AtomicReference<>(Optional.empty());
+        AtomicReference<Optional<Guild>> guild = new AtomicReference<>(Optional.empty());
         getDatabase().executeQuery(statement, stmt -> {
             try {
                 stmt.setString(1, identifier);
             } catch (Exception e) {
-                e.printStackTrace();
+                MessageUtils.logWarning("Failed to bind uuid while loading a guild", e);
             }
-        }, (result) -> {
+        }, result -> {
             try {
-                if (result.next()) {
-                    String uuid = result.getString("Uuid");
-                    String chatTypeStr = result.getString("ChatType");
+                if (! result.next()) return;
 
-                    ChatType chatType;
-                    try {
-                        chatType = ChatType.valueOf(chatTypeStr);
-                    } catch (IllegalArgumentException e) {
-                        chatType = ChatType.NOT_SET;
-                    }
+                String uuid = result.getString("Uuid");
+                String ownerUuid = result.getString("OwnerUuid");
 
-                    GroupedPlayer u = new GroupedPlayer(uuid);
-                    u.setChatType(chatType);
+                // Constructed with loading disabled so that building the guild does not
+                // re-enter the group manager while this load is still in flight.
+                Optional<CosmicSender> owner = UserUtils.getOrGetSender(ownerUuid);
+                Guild g = owner.map(sender -> new Guild(uuid, sender, false))
+                        .orElseGet(() -> new Guild(uuid, false));
 
-                    user.set(Optional.of(u));
-                }
+                g.setMuted(result.getBoolean("IsMuted"));
+                g.setPublic(result.getBoolean("IsPublic"));
+                g.setMaxSize(result.getInt("MaxSize"));
+                g.setCreateDate(new Date(result.getLong("CreateDate")));
 
-                result.close();
+                guild.set(Optional.of(g));
             } catch (Exception e) {
-                e.printStackTrace();
+                MessageUtils.logWarning("Failed to load guild " + identifier, e);
             }
         });
 
-        return user.get();
+        return guild.get();
     }
 
     @Override
@@ -144,70 +170,65 @@ public class GuildKeeper extends DBKeeper<Guild> {
     }
 
     public boolean existsBoth(String identifier) {
-        String statement = "SELECT * FROM `%table_prefix%chatter_main` WHERE `uuid` = ?;";
+        return loadBoth(identifier).isPresent();
+    }
+
+    @Override
+    public boolean deleteMysql(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    @Override
+    public boolean deleteSqlite(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    public boolean deleteBoth(String identifier) {
+        String statement = "DELETE FROM `%table_prefix%guilds` WHERE `Uuid` = ?;;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
-        AtomicReference<Boolean> exists = new AtomicReference<>(false);
-        getDatabase().executeQuery(statement, stmt -> {
-            try {
-                stmt.setString(1, identifier);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, (result) -> {
-            try {
-                exists.set(result.next());
-                result.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-
-        return exists.get();
+        return deleteWith(identifier, statement);
     }
 
-    public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllChatters() {
-        if (SLAPI.getMainDatabase().getConnectorSet().getType() == DatabaseType.MYSQL) {
-            return pullAllThingsMySql();
-        } else {
-            return pullAllThingsSqlite();
-        }
-    }
+    /**
+     * Loads every stored guild.
+     *
+     * @return a future resolving to all guilds currently persisted
+     */
+    public CompletableFuture<ConcurrentSkipListSet<Guild>> pullAllGuilds() {
+        return CompletableFuture.supplyAsync(() -> {
+            String statement = "SELECT `Uuid` FROM `%table_prefix%guilds`;";
 
-    public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllThingsMySql() {
-        return pullAllThingsBoth();
-    }
+            statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
-    public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllThingsSqlite() {
-        return pullAllThingsBoth();
-    }
-
-    public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllThingsBoth() {
-        String statement = "SELECT `Uuid` FROM `%table_prefix%grouped_players`;";
-
-        statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
-
-        ConcurrentSkipListSet<String> uuids = new ConcurrentSkipListSet<>();
-        getDatabase().executeQuery(statement, stmt -> {}, (result) -> {
-            try {
-                while (result.next()) {
-                    String uuid = result.getString("Uuid");
-
-                    uuids.add(uuid);
+            ConcurrentSkipListSet<String> uuids = new ConcurrentSkipListSet<>();
+            getDatabase().executeQuery(statement, stmt -> {}, result -> {
+                try {
+                    while (result.next()) {
+                        uuids.add(result.getString("Uuid"));
+                    }
+                } catch (Exception e) {
+                    MessageUtils.logWarning("Failed to list guilds", e);
                 }
+            });
 
-                result.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            ConcurrentSkipListSet<Guild> guilds = new ConcurrentSkipListSet<>();
+            uuids.forEach(uuid -> loadBoth(uuid).ifPresent(guilds::add));
+
+            return guilds;
         });
+    }
 
-        AtomicReference<ConcurrentSkipListSet<GroupedPlayer>> things = new AtomicReference<>(new ConcurrentSkipListSet<>());
-        uuids.forEach((uuid) -> {
-            load(uuid).join().ifPresent(things.get()::add);
-        });
+    /**
+     * A guild may be constructed before an owner is resolved, so the owner uuid is
+     * stored as an empty string rather than failing the write.
+     */
+    private String ownerUuidOf(Guild guild) {
+        return guild.getOwner() == null ? "" : guild.getOwner().getUuid();
+    }
 
-        return CompletableFuture.completedFuture(things.get());
+    private long createMillisOf(Guild guild) {
+        return guild.getCreateDate() == null ? System.currentTimeMillis() : guild.getCreateDate().getTime();
     }
 }

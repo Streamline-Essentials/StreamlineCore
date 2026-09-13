@@ -45,8 +45,9 @@ dependencies {
 
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
     compileOnly project(path: ':StreamlineCore-Singularity')
-    compileOnly "net.luckperms:api:5.4"
+    compileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
     implementation "gg.drak:TheBase:1.1.0"
+    PLATFORM_LIBRARIES.each { implementation(it) }
 }
 
 compileJava { dependsOn(":StreamlineCore-API:jar") }

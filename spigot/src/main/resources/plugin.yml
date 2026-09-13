@@ -9,6 +9,9 @@ description: True potential is here. A Proxy and Spigot plugin that opens up end
 depend:
   - LuckPerms
   - BukkitOfUtils
+# Maven Central libs — downloaded by Spigot/Paper (not shaded into this jar).
+libraries:
+${librariesBlock}
 soft-depend:
   - Geyser-Spigot
   - Geyser-Folia

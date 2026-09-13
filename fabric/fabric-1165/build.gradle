@@ -34,7 +34,7 @@ dependencies {
 
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
     compileOnly project(path: ':StreamlineCore-Singularity')
-    modCompileOnly "net.luckperms:api:5.4"
+    modCompileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
     implementation include("gg.drak:TheBase:1.1.0")
     implementation include("ch.qos.logback:logback-classic:1.5.6")
     compileOnly 'org.jetbrains:annotations:24.0.1'
@@ -54,12 +54,4 @@ processResources {
     }
 }
 
-shadowJar {
-    relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
-    relocate("ch.qos.logback", "host.plas.bou.libs.logback")
-    archiveFileName = project.name + "-" + project.version + "-all.jar"
-    archiveClassifier = 'shadow'
-}
-
-deploy.configure { from remapJar.archiveFile }
-remapJar.finalizedBy(deploy)
+apply from: rootProject.file('fabric/fabric-mod.gradle')

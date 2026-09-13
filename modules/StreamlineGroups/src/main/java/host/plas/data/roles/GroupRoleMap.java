@@ -166,17 +166,24 @@ public class GroupRoleMap {
     }
 
     public void demote(CosmicSender user) {
-        if (getRoleOf(user) == null) applyUser(getRolesOrdered().firstEntry().getValue(), user);
+        if (getRoleOf(user) == null) {
+            applyUser(getRolesOrdered().firstEntry().getValue(), user);
+            return;
+        }
 
-//        SavableGroupRole oldRole = getRoleOf(user);
+        // Already at the lowest role -- there is nothing below to demote into.
         SavableGroupRole newRole = getPreviousRoleOf(user);
+        if (newRole == null) return;
 
         removeUserAll(user);
         applyUser(newRole, user);
     }
 
     public boolean userHas(CosmicSender user, GroupFlag flag) {
-        return getRoleOf(user).hasFlag(flag);
+        SavableGroupRole role = getRoleOf(user);
+        if (role == null) return false;
+
+        return role.hasFlag(flag);
     }
 
     public SavableGroupRole getHigherRole(SavableGroupRole role) {
@@ -228,14 +235,19 @@ public class GroupRoleMap {
 
         int i = 0;
         for (SavableGroupRole role : roles.values()) {
+            // Flags are joined by ".." with no trailing separator, so that splitting on
+            // ".." in fromString does not produce an empty trailing flag.
             StringBuilder flags = new StringBuilder();
+            boolean first = true;
             for (String flag : role.getFlags()) {
-                flags.append(flag).append("..");
+                if (! first) flags.append("..");
+                flags.append(flag);
+                first = false;
             }
 
             builder.append("[").append(i).append(":").append("identifier=").append(role.getIdentifier()).append(",")
                     .append("name=").append(role.getName()).append(",").append("priority=").append(role.getPriority())
-                    .append(",").append("max").append(role.getMax()).append("flags=").append(flags).append("]");
+                    .append(",").append("max=").append(role.getMax()).append(",").append("flags=").append(flags).append("]");
 
             i ++;
         }
@@ -243,10 +255,12 @@ public class GroupRoleMap {
         return builder.toString();
     }
 
-    public static GroupRoleMap fromString(Party group, String string) {
+    public static GroupRoleMap fromString(AbstractGroup group, String string) {
         GroupRoleMap map = new GroupRoleMap(group);
 
-        Matcher matcher = MatcherUtils.matcherBuilder("\\[(\\d+):(identifier=(.*),name=(.*),priority=(.*),max=(.*),flags=(.*))\\]", string);
+        // Non-greedy so that a string holding several roles does not collapse into one
+        // match spanning every entry.
+        Matcher matcher = MatcherUtils.matcherBuilder("\\[(\\d+):(identifier=(.*?),name=(.*?),priority=(.*?),max=(.*?),flags=(.*?))\\]", string);
         List<String[]> matches = MatcherUtils.getGroups(matcher, 7);
 
         for (String[] match : matches) {

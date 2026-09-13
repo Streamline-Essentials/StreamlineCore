@@ -19,11 +19,20 @@ import singularity.data.players.CosmicPlayer;
 import singularity.modules.ModuleUtils;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Base type for the groups a player can belong to, such as a {@link Party} or a
+ * {@link Guild}.
+ *
+ * <p>Groups are {@link Identified} rather than {@code Comparable<AbstractGroup>} so that
+ * subclasses are free to implement {@code Loadable}, which carries its own
+ * {@code Comparable<Identified>} contract.</p>
+ */
 @Getter @Setter
-public class AbstractGroup implements Comparable<AbstractGroup> {
+public class AbstractGroup implements Identified {
     private String uuid;
     private GroupType type;
 
@@ -42,6 +51,8 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
     private int maxSize;
     private Date createDate;
     private GroupRoleMap groupRoleMap;
+    /** Guards {@link #dispose()} so that disbanding twice is a no-op. */
+    private boolean disposed = false;
 
     public AbstractGroup(GroupType type, String uuid, @Nullable CosmicSender owner, boolean load) {
         this.uuid = uuid;
@@ -80,21 +91,42 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
         return getClass().getSimpleName() + "-" + getUuid();
     }
 
+    /**
+     * Orders groups by their classed identifier, so that a {@link Party} and a
+     * {@link Guild} sharing a uuid remain distinct entries in the sorted sets that hold
+     * loaded groups.
+     */
     @Override
-    public int compareTo(@NotNull AbstractGroup o) {
-        return getClassedIdentifier().compareTo(o.getClassedIdentifier());
+    public int compareTo(@NotNull Identified o) {
+        if (o instanceof AbstractGroup) {
+            return getClassedIdentifier().compareTo(((AbstractGroup) o).getClassedIdentifier());
+        }
+        return getIdentifier().compareTo(o.getIdentifier());
     }
 
     public void grabFromDatabase() {
 
     }
 
+    /**
+     * Adopts the given owner, re-deriving the size cap from their permissions and placing
+     * them in the highest configured role.
+     */
     public void updateOwner(CosmicSender owner) {
-        if (owner != null) {
-            this.owner = owner;
-            this.maxSize = getMaxSize(owner);
-            this.groupRoleMap.applyUser(groupRoleMap.getRolesOrdered().lastEntry().getValue(), this.owner);
+        if (owner == null) return;
+
+        this.owner = owner;
+        this.maxSize = getMaxSize(owner);
+
+        // With no roles configured there is no leader role to apply the owner to.
+        Map.Entry<Float, SavableGroupRole> highest = groupRoleMap.getRolesOrdered().lastEntry();
+        if (highest == null) {
+            StreamlineGroups.getInstance().logWarning("No roles are configured; the owner of "
+                    + getClassedIdentifier() + " could not be given a role.");
+            return;
         }
+
+        this.groupRoleMap.applyUser(highest.getValue(), this.owner);
     }
 
     public void load() {
@@ -184,10 +216,7 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
     }
 
     public boolean hasInvite(CosmicSender user) {
-        for (CosmicSender u : getInvitesAsUsers()) {
-            if (u.getUuid().equals(user.getUuid())) return true;
-        }
-        return false;
+        return getInviteTicker(user) != null;
     }
 
     public boolean hasMember(CosmicSender stat){
@@ -199,28 +228,32 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
     }
 
     public InviteTicker getInviteTicker(CosmicSender invited) {
+        if (invited == null) return null;
+
         for (InviteTicker inviteTicker : invites) {
-            if (inviteTicker.getInvited().equals(invited)) return inviteTicker;
+            CosmicSender other = inviteTicker.getInvited();
+            if (other != null && other.getUuid().equals(invited.getUuid())) return inviteTicker;
         }
 
         return null;
     }
 
     public void remFromInvites(InviteTicker ticker){
-        if (! getInvitesAsUsers().contains(ticker.getInvited())) return;
         invites.remove(ticker);
     }
 
+    /** Cancels and drops the pending invite for the given user, if there is one. */
     public void remFromInvites(CosmicSender user){
-        if (! getInvitesAsUsers().contains(user)) return;
         InviteTicker ticker = getInviteTicker(user);
+        if (ticker == null) return;
+
         ticker.cancel();
         invites.remove(ticker);
     }
 
+    /** Drops the user's invite <em>and</em> removes them from every role. */
     public void remFromInvitesCompletely(CosmicSender user){
-        if (! getInvitesAsUsers().contains(user)) return;
-        invites.remove(getInviteTicker(user));
+        remFromInvites(user);
         groupRoleMap.removeUserAll(user);
     }
 
@@ -233,7 +266,7 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
     }
 
     public void addInvite(CosmicSender inviter, CosmicSender to) {
-        if (getInvitesAsUsers().contains(to)) return;
+        if (hasInvite(to)) return;
         invites.add(new InviteTicker(this, to, inviter));
         ModuleUtils.fireEvent(new InviteCreateEvent<>(this, to, inviter));
     }
@@ -262,9 +295,20 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
         return groupRoleMap.userHas(user, flag);
     }
 
+    /**
+     * Sets the size cap, clamped to what the owner's permissions actually allow.
+     *
+     * <p>The ceiling is derived from the owner rather than from the group's own uuid,
+     * which is not a sender identifier.</p>
+     */
     public void setMaxSize(int size){
-        CosmicSender user = ModuleUtils.getOrCreateSender(getUuid()).orElse(null);
-        if (user == null) return;
+        CosmicSender user = getOwner();
+        if (user == null) {
+            // No owner resolved yet (a group loaded before its owner). Take the value as
+            // given; updateOwner re-derives the ceiling once an owner arrives.
+            this.maxSize = size;
+            return;
+        }
 
         if (size <= getMaxSize(user))
             this.maxSize = size;
@@ -306,13 +350,20 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
         groupRoleMap.demote(user);
     }
 
+    /**
+     * Tears the group down: cancels every outstanding invite, drops all members and
+     * removes it from the loaded set.
+     *
+     * <p>Safe to call more than once -- a group that has already been disposed of simply
+     * returns.</p>
+     */
     public void disband() {
-        if (isLoaded()) {
-            try {
-                unload();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
+        if (disposed) return;
+
+        try {
+            unload();
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
 
         try {
@@ -322,24 +373,28 @@ public class AbstractGroup implements Comparable<AbstractGroup> {
         }
     }
 
-    public void dispose() throws Throwable {
+    /**
+     * Releases the group's state. Collections are cleared rather than nulled so that a
+     * stale reference to a disbanded group cannot trigger a {@link NullPointerException}.
+     */
+    public void dispose() {
+        if (disposed) return;
+        disposed = true;
+
         try {
-            if (getAllUsers().isEmpty()) {
-                unload();
-                return;
+            for (InviteTicker ticker : invites) {
+                try {
+                    ticker.cancel();
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
-            for (CosmicSender user : getAllUsers()) {
-                remFromInvitesCompletely(user);
-            }
-            groupRoleMap.clearRoles();
-            groupRoleMap = null;
-            owner = null;
             invites.clear();
-            invites = null;
+
+            groupRoleMap.clearRoles();
+            owner = null;
         } catch (Throwable e) {
             e.printStackTrace();
         }
-
-        finalize();
     }
 }

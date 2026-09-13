@@ -5,9 +5,9 @@
 //
 //     apply from: "$rootDir/modules/module.gradle"
 //
-// Everything a module used to declare for itself -- the java/shadow/lombok plugins,
-// the common repositories, Java 11, the PF4J manifest -- comes from here and from the
-// root build.gradle's allprojects block.
+// The java/shadow/lombok plugins, the common repositories, Java 11 and the PF4J manifest
+// all come from here and from the root build.gradle's allprojects block, so a module
+// declares none of them itself.
 //
 // The module's own gradle.properties supplies name, version, and the pf.* values.
 // StreamlineCore itself is consumed as a project dependency, so modules always build
@@ -72,15 +72,14 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'net.luckperms:api:5.4'
+    compileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
 
-    // The point of nesting the modules here: resolve StreamlineCore from this build
-    // instead of downloading a pinned StreamlineCore-API/BAPI artifact.
+    // StreamlineCore resolves from this build, so a module always compiles against the
+    // API sitting beside it rather than a pinned published artifact.
     //
-    // The 'shadow' configuration is used rather than a plain project dependency: the
-    // core projects declare their own libraries as compileOnly, which is not transitive,
-    // so a normal project() dependency would expose none of singularity.*, org.pf4j or
-    // gg.drak.thebase. The shadow JAR is what the published artifact used to provide.
+    // The 'shadow' configuration carries the core's bundled classes. The core projects
+    // declare their libraries as compileOnly, which is not transitive, so a plain
+    // project() dependency exposes none of singularity.*, org.pf4j or gg.drak.thebase.
     def coreProject = project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'
 
     annotationProcessor(compileOnly(project(path: coreProject, configuration: 'shadow')))

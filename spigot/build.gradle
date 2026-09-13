@@ -1,32 +1,25 @@
 dependencies {
     // Platform dependencies.
-    // Spigot (commented out: uncomment if needed)
-//    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"))
-
-    // Paper (commented out: uncomment if needed)
     annotationProcessor(compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT"))
-
-    // Use Spigot API for version 1.16.5
-//    annotationProcessor(compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"))
 
     // Defaults.
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
     annotationProcessor(THE_BASE)
     compileOnly(COMP_ONLY)
+    compileOnly(PLATFORM_LIBRARIES)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
-    // BOU
-    annotationProcessor(compileOnly("gg.drak:BukkitOfUtils:1.18.0"))
+    // BOU (provides TheBase at runtime)
+    annotationProcessor(compileOnly("gg.drak:BukkitOfUtils:${rootProject.properties["bou_version"]}"))
 
     // Streamline API.
     compileOnly project(path: ":StreamlineCore-API")
 
-    // Streamline BAPI with exclusion for a specific dependency
+    // Thin BAPI — no Maven Central libs; those come from plugin.yml libraries:.
     implementation(project(path: ':StreamlineCore-BAPI', configuration: 'shadow')) {
-        // Correct way to exclude dependency
         exclude group: "com.github.Server-Utilities", module: "TheBase"
         exclude group: "gg.drak.thebase"
         exclude group: "gg.drak", module: "TheBase"
@@ -36,14 +29,46 @@ dependencies {
 }
 
 compileJava {
-    dependsOn(":StreamlineCore-BAPI:jar")
+    dependsOn(":StreamlineCore-BAPI:shadowJar")
 }
 
 delombok {
-    dependsOn(":StreamlineCore-BAPI:jar")
+    dependsOn(":StreamlineCore-BAPI:shadowJar")
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
+}
+
+shadowJar {
+    configurations = [project.configurations.runtimeClasspath]
+
+    // Never package downloadable Maven Central libs (plugin.yml libraries: handles them).
+    PLATFORM_LIBRARIES.each { coord ->
+        def parts = coord.split(':')
+        exclude "META-INF/maven/${parts[0].replace('.', '/')}/${parts[1]}/**"
+    }
+    exclude 'com/zaxxer/hikari/**'
+    exclude 'org/sqlite/**'
+    exclude 'sqlite-jdbc.properties'
+    exclude 'com/mysql/**'
+    exclude 'mysql/**'
+    exclude 'com/google/protobuf/**'
+    exclude 'google/protobuf/**'
+    exclude 'com/google/gson/**'
+    exclude 'com/github/benmanes/caffeine/**'
+    exclude 'org/checkerframework/**'
+    exclude 'com/google/errorprone/**'
+    // Keep org.pf4j / java-semver — required on the host classloader for modules.
+    exclude 'org/apache/commons/codec/**'
+    exclude 'ch/qos/logback/**'
+    exclude 'org/slf4j/**'
+    exclude 'com/google/common/**'
+    exclude 'com/google/guava/**'
+    exclude 'io/lettuce/**'
+    exclude 'redis/clients/**'
+    exclude 'io/netty/**'
+    exclude 'reactor/**'
+    exclude 'org/reactivestreams/**'
 }

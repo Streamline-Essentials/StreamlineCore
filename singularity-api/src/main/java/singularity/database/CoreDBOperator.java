@@ -267,9 +267,8 @@ public class CoreDBOperator extends DBOperator {
         MessageUtils.logInfo("Migrating the '" + table + "' table: removing duplicates and adding a primary key.");
 
         // Collapse duplicates by rebuilding the table with one row per (Type, Identifier),
-        // keeping the newest PostDate. A self-join on PostDate alone would leave ties
-        // behind, and InnoDB exposes no row id to break them, so the rebuild is done
-        // through a grouped copy instead.
+        // keeping the newest PostDate. A grouped copy is used because InnoDB exposes
+        // no row id with which to break ties between rows sharing a PostDate.
         String temp = table + "_migrating";
 
         this.executeSingle("DROP TABLE IF EXISTS `" + temp + "`;", stmt -> {});
@@ -332,8 +331,8 @@ public class CoreDBOperator extends DBOperator {
                 new SavePlayerEvent(player).fire();
             }, getDatabaseExecutor());
         } else {
-            // Run inline rather than dispatching and blocking: this path is often
-            // already on a database worker, and waiting there would tie up a thread
+            // The synchronous path runs on the calling thread. Callers are often
+            // already database workers, and dispatching then blocking would tie one up
             // for the duration of another worker's task.
             savePlayerSync(player);
 
@@ -543,7 +542,7 @@ public class CoreDBOperator extends DBOperator {
                 new SaveSenderEvent(sender).fire();
             }, getDatabaseExecutor());
         } else {
-            // Run inline rather than dispatching and blocking; see savePlayer.
+            // Runs on the calling thread, as in savePlayer.
             saveSenderSync(sender);
 
             new SaveSenderEvent(sender).fire();
@@ -821,9 +820,9 @@ public class CoreDBOperator extends DBOperator {
                 return Optional.of(player);
             }, getDatabaseExecutor()));
 
-        // Evict once complete, so the next caller re-reads the database. Done here
-        // rather than inside the supplier, which would evict the entry while the
-        // cache was still populating it.
+        // Eviction happens on completion, outside the supplier, so that the entry is
+        // only removed once the cache has finished populating it. The next caller then
+        // re-reads the database.
         return future.whenComplete((result, error) -> getLoadingPlayers().synchronous().invalidate(uuid));
     }
 
@@ -865,9 +864,9 @@ public class CoreDBOperator extends DBOperator {
                 }
             }, rs -> {
                 try {
-                    // PLAYER_EXISTS is a SELECT EXISTS(...) -- it always returns exactly one
-                    // row holding 0 or 1, so the row's value must be read. Testing rs.next()
-                    // alone would always be true and report every player as existing.
+                    // PLAYER_EXISTS is a SELECT EXISTS(...), which always returns exactly
+                    // one row holding 0 or 1. The answer is that value, not the presence
+                    // of the row.
                     if (rs.next()) atomicBoolean.set(rs.getBoolean(1));
                 } catch (Exception e) {
                     MessageUtils.logWarning("Failed to read exists result", e);
@@ -1456,10 +1455,8 @@ public class CoreDBOperator extends DBOperator {
             String s1 = Statements.getStatement(Statements.StatementType.DROP_PLAYER, this.getConnectorSet());
             if (s1 == null || s1.isBlank()) return false;
 
-            // DROP_PLAYER is a ';;'-delimited batch of DELETEs, so it must go through
-            // execute() to be split. Each sub-statement takes a single uuid parameter;
-            // routing it through executeQuery() would both fail to split the batch and
-            // run DML through executeQuery(), which drivers reject.
+            // DROP_PLAYER is a ';;'-delimited batch of DELETEs. execute() splits it and
+            // runs each sub-statement, which takes a single uuid parameter, as DML.
             List<ExecutionResult> results = this.execute(s1, stmt -> {
                 try {
                     stmt.setString(1, uuid);

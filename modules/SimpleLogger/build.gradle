@@ -11,7 +11,9 @@ repositories {
 dependencies {
     // StreamlineMessaging is a sibling module, so it resolves from this build rather
     // than from a published snapshot.
-    compileOnly project(":modules:StreamlineMessaging")
+    // Depends on the plain jar: shadowJar writes into the same build/libs directory,
+    // so naming the configuration keeps the producing task unambiguous.
+    compileOnly project(path: ":modules:StreamlineMessaging", configuration: "archives")
 
     shadow(implementation("net.dv8tion:JDA:$jdaVersion").exclude(group: "org.slf4j"))
     shadow(implementation("club.minnced:discord-webhooks:0.8.4").exclude(group: "org.slf4j"))

@@ -28,7 +28,7 @@ public class GroupsExpansion extends RATExpansion {
         new IdentifiedReplaceable(this, "loaded_parties", (s) -> String.valueOf(GroupManager.getLoadedParties().size())).register();
 
         new IdentifiedUserReplaceable(this, MatcherUtils.makeLiteral("party_") + "(.*?)", 1, (s, u) -> {
-            Optional<Party> optional = GroupManager.get(u);
+            Optional<Party> optional = GroupManager.getParty(u);
             if (optional.isEmpty()) return s.string();
             Party party = optional.get();
 
