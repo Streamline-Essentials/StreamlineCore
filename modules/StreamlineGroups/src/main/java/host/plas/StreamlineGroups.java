@@ -86,8 +86,7 @@ public class StreamlineGroups extends SimpleModule {
         guildKeeper = new GuildKeeper();
         guildLoader = new GuildLoader();
 
-        playerKeeper.ensureTables();
-        guildKeeper.ensureTables();
+        loadStoredGuilds();
 
         getGroupsExpansion().init();
 
@@ -96,6 +95,29 @@ public class StreamlineGroups extends SimpleModule {
         new GuildCommand(this).register();
         new GCCommand().register();
         new GroupChatCommand().register();
+    }
+
+    /**
+     * Brings every stored guild into memory, registering each with both the guild loader
+     * and the group manager so that {@code GroupManager.getGuild} can find it.
+     *
+     * <p>Runs off-thread: the module does not need guilds present to finish enabling, and
+     * the query would otherwise block server startup.</p>
+     */
+    private void loadStoredGuilds() {
+        guildKeeper.pullAllGuilds().whenComplete((guilds, throwable) -> {
+            if (throwable != null) {
+                logWarning("Failed to load stored guilds: " + throwable.getMessage());
+                return;
+            }
+
+            guilds.forEach(guild -> {
+                guildLoader.load(guild);
+                guild.load();
+            });
+
+            logInfo("Loaded " + guilds.size() + " guild(s).");
+        });
     }
 
     /**

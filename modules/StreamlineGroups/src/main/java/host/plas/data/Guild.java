@@ -16,12 +16,6 @@ import java.util.concurrent.CompletableFuture;
  */
 @Getter @Setter
 public class Guild extends AbstractGroup implements Loadable<Guild> {
-    /**
-     * Set while {@link #hydrated(String, CosmicSender)} is building a guild from a query
-     * result, so that the constructor does not fetch it back out of the database.
-     */
-    private static final ThreadLocal<Boolean> hydrating = ThreadLocal.withInitial(() -> false);
-
     private boolean fullyLoaded = false;
 
     public Guild(String uuid, CosmicSender owner, boolean load) {
@@ -70,24 +64,20 @@ public class Guild extends AbstractGroup implements Loadable<Guild> {
     @Override
     public void grabFromDatabase() {
         if (StreamlineGroups.getGuildKeeper() == null) return;
-        // Guilds built by the keeper itself are already being populated from a result set;
-        // re-entering the keeper here would recurse.
-        if (hydrating.get()) return;
 
         augment(StreamlineGroups.getGuildKeeper().load(getUuid()), true);
     }
 
     /**
-     * Builds a guild without triggering a database fetch, for use by
-     * {@code GuildKeeper} while it populates one from a query result.
+     * Builds a guild whose fields the caller fills in from storage, without a database
+     * fetch of its own. Used by {@code GuildKeeper} while reading a query result.
      */
     public static Guild hydrated(String uuid, CosmicSender owner) {
-        hydrating.set(true);
-        try {
-            return owner == null ? new Guild(uuid, false) : new Guild(uuid, owner, false);
-        } finally {
-            hydrating.set(false);
-        }
+        return new Guild(uuid, owner, false, true);
+    }
+
+    private Guild(String uuid, CosmicSender owner, boolean load, boolean hydrating) {
+        super(GroupType.GUILD, uuid, owner, load, hydrating);
     }
 
     @Override
@@ -111,9 +101,11 @@ public class Guild extends AbstractGroup implements Loadable<Guild> {
 
                 setMuted(stored.isMuted());
                 setPublic(stored.isPublic());
-                setMaxSize(stored.getMaxSize());
                 setCreateDate(stored.getCreateDate());
+                // The owner is adopted first because updateOwner re-derives the size cap
+                // from their permissions; the stored cap is applied over that.
                 updateOwner(stored.getOwner());
+                setMaxSize(stored.getMaxSize());
             } else {
                 // Nothing stored yet -- persist the defaults so later loads find a row.
                 if (! isGet) save();

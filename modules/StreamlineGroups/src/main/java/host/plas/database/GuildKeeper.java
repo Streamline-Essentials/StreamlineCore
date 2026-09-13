@@ -34,6 +34,12 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 "`IsPublic` BIT NOT NULL, " +
                 "`MaxSize` INT NOT NULL, " +
                 "`CreateDate` BIGINT NOT NULL " +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8;;" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%guild_members` (" +
+                "`GuildUuid` VARCHAR(36) NOT NULL, " +
+                "`MemberUuid` VARCHAR(36) NOT NULL, " +
+                "`RoleIdentifier` VARCHAR(128) NOT NULL, " +
+                "PRIMARY KEY (`GuildUuid`, `MemberUuid`) " +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -50,6 +56,12 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 "`IsPublic` INTEGER NOT NULL, " +
                 "`MaxSize` INTEGER NOT NULL, " +
                 "`CreateDate` INTEGER NOT NULL " +
+                ");;" +
+                "CREATE TABLE IF NOT EXISTS `%table_prefix%guild_members` (" +
+                "`GuildUuid` TEXT NOT NULL, " +
+                "`MemberUuid` TEXT NOT NULL, " +
+                "`RoleIdentifier` TEXT NOT NULL, " +
+                "PRIMARY KEY (`GuildUuid`, `MemberUuid`) " +
                 ");;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
@@ -86,6 +98,8 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 MessageUtils.logWarning("Failed to save guild " + obj.getUuid(), e);
             }
         });
+
+        saveMembers(obj);
     }
 
     @Override
@@ -106,6 +120,67 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 stmt.setLong(6, createMillisOf(obj));
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to save guild " + obj.getUuid(), e);
+            }
+        });
+
+        saveMembers(obj);
+    }
+
+    /**
+     * Rewrites the guild's membership rows, one per member, recording the role each one
+     * currently holds. The set is replaced wholesale so that members who have left do not
+     * linger.
+     */
+    private void saveMembers(Guild obj) {
+        String delete = injectTablePrefix("DELETE FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;;");
+        deleteWith(obj.getUuid(), delete);
+
+        String insert = injectTablePrefix("INSERT INTO `%table_prefix%guild_members` " +
+                "(`GuildUuid`, `MemberUuid`, `RoleIdentifier`) VALUES (?, ?, ?);");
+
+        obj.getGroupRoleMap().getRoles().forEach(role ->
+                obj.getGroupRoleMap().getUsersOf(role).forEach(member ->
+                        getDatabase().execute(insert, stmt -> {
+                            try {
+                                stmt.setString(1, obj.getUuid());
+                                stmt.setString(2, member.getUuid());
+                                stmt.setString(3, role.getIdentifier());
+                            } catch (Exception e) {
+                                MessageUtils.logWarning("Failed to save a member of guild " + obj.getUuid(), e);
+                            }
+                        })));
+    }
+
+    /**
+     * Restores the guild's members into the roles they held, skipping any role that is no
+     * longer configured.
+     */
+    private void loadMembers(Guild guild) {
+        String statement = injectTablePrefix(
+                "SELECT `MemberUuid`, `RoleIdentifier` FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;");
+
+        getDatabase().executeQuery(statement, stmt -> {
+            try {
+                stmt.setString(1, guild.getUuid());
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to bind uuid while loading guild members", e);
+            }
+        }, result -> {
+            try {
+                while (result.next()) {
+                    String memberUuid = result.getString("MemberUuid");
+                    String roleIdentifier = result.getString("RoleIdentifier");
+
+                    Optional<CosmicSender> member = UserUtils.getOrGetSender(memberUuid);
+                    if (member.isEmpty()) continue;
+
+                    guild.getGroupRoleMap().getRoles().stream()
+                            .filter(role -> role.getIdentifier().equals(roleIdentifier))
+                            .findFirst()
+                            .ifPresent(role -> guild.getGroupRoleMap().applyUser(role, member.get()));
+                }
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to load members of guild " + guild.getUuid(), e);
             }
         });
     }
@@ -150,6 +225,8 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 g.setMaxSize(result.getInt("MaxSize"));
                 g.setCreateDate(new Date(result.getLong("CreateDate")));
 
+                loadMembers(g);
+
                 guild.set(Optional.of(g));
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to load guild " + identifier, e);
@@ -184,7 +261,8 @@ public class GuildKeeper extends DBKeeper<Guild> {
     }
 
     public boolean deleteBoth(String identifier) {
-        String statement = "DELETE FROM `%table_prefix%guilds` WHERE `Uuid` = ?;;";
+        String statement = "DELETE FROM `%table_prefix%guilds` WHERE `Uuid` = ?;;" +
+                "DELETE FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 

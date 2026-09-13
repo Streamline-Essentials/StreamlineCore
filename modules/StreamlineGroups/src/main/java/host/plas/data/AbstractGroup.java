@@ -54,7 +54,12 @@ public class AbstractGroup implements Identified {
     /** Guards {@link #dispose()} so that disbanding twice is a no-op. */
     private boolean disposed = false;
 
-    public AbstractGroup(GroupType type, String uuid, @Nullable CosmicSender owner, boolean load) {
+    /**
+     * @param hydrating {@code true} when the caller is filling this group's fields in from
+     *                  storage itself, which suppresses the constructor's own fetch so that
+     *                  building a group from a query result does not re-enter the database
+     */
+    public AbstractGroup(GroupType type, String uuid, @Nullable CosmicSender owner, boolean load, boolean hydrating) {
         this.uuid = uuid;
         this.type = type;
 
@@ -64,7 +69,11 @@ public class AbstractGroup implements Identified {
 
         if (! isLoaded() && load) load();
 
-        grabFromDatabase();
+        if (! hydrating) grabFromDatabase();
+    }
+
+    public AbstractGroup(GroupType type, String uuid, @Nullable CosmicSender owner, boolean load) {
+        this(type, uuid, owner, load, false);
     }
 
     public AbstractGroup(GroupType type, String uuid, CosmicSender owner) {

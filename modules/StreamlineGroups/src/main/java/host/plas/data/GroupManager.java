@@ -562,21 +562,6 @@ public class GroupManager {
         return getGuild(player).isPresent();
     }
 
-    /**
-     * Returns the sender's guild, pulling it into memory from storage when the sender has
-     * one stored but it is not currently loaded.
-     */
-    public static Optional<Guild> getOrLoadGuild(CosmicSender player) {
-        Optional<Guild> loaded = getGuild(player);
-        if (loaded.isPresent()) return loaded;
-
-        if (StreamlineGroups.getGuildLoader() == null) return Optional.empty();
-
-        return StreamlineGroups.getGuildLoader().getLoaded().stream()
-                .filter(a -> a.hasMember(player))
-                .findFirst();
-    }
-
     public static Guild createGuild(CosmicSender sender, CosmicSender leader) {
         Optional<Guild> existing = getGuild(leader);
         if (existing.isPresent()) {
@@ -584,6 +569,8 @@ public class GroupManager {
             return existing.get();
         }
 
+        // The constructor registers the guild with the group manager; the loader keeps the
+        // separate set that backs persistence.
         Guild guild = new Guild(leader);
         StreamlineGroups.getGuildLoader().load(guild);
         guild.save();
@@ -739,6 +726,8 @@ public class GroupManager {
 
         String uuid = guild.getUuid();
 
+        // Dropped from the loader without saving: disband removes it for good, so writing
+        // its final state back would recreate the rows the delete below removes.
         if (StreamlineGroups.getGuildLoader() != null) StreamlineGroups.getGuildLoader().getLoaded().remove(guild);
         guild.disband();
 
