@@ -6,7 +6,11 @@ import lombok.Setter;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
 import singularity.database.DatabaseType;
+import singularity.database.ExecutionResult;
+import singularity.utils.MessageUtils;
 
+import java.sql.ParameterMetaData;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -308,4 +312,92 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
      * @return {@code true} if a matching row exists; {@code false} otherwise
      */
     public abstract boolean existsSqlite(String identifier);
+
+    /**
+     * Asynchronously removes a resource's stored data by its identifier.
+     *
+     * @param identifier the identifier of the resource to remove
+     * @return a {@link CompletableFuture} resolving to {@code true} if the delete was
+     *         carried out, or {@code false} if this keeper does not implement one
+     */
+    public CompletableFuture<Boolean> delete(String identifier) {
+        return CompletableFuture.supplyAsync(() -> deleteRaw(identifier));
+    }
+
+    /**
+     * Synchronously removes a resource's stored data, ensuring tables exist first and
+     * delegating to {@link #deleteMysql(String)} or {@link #deleteSqlite(String)} based
+     * on the active database type.
+     *
+     * @param identifier the identifier of the resource to remove
+     * @return {@code true} if the delete was carried out; {@code false} otherwise
+     */
+    public boolean deleteRaw(String identifier) {
+        ensureTables();
+
+        if (getDatabaseType() == DatabaseType.MYSQL) {
+            return deleteMysql(identifier);
+        } else if (getDatabaseType() == DatabaseType.SQLITE) {
+            return deleteSqlite(identifier);
+        }
+        return false;
+    }
+
+    /**
+     * Removes the resource using MySQL-specific SQL. Called by
+     * {@link #deleteRaw(String)} when the active database type is
+     * {@link DatabaseType#MYSQL}.
+     *
+     * <p>Not abstract, so that keepers written before deletion existed keep compiling.
+     * The default deletes nothing and reports {@code false}; a keeper that stores data
+     * across several tables should override this and remove every row it owns.</p>
+     *
+     * @param identifier the identifier of the resource to remove
+     * @return {@code true} if the delete was carried out; {@code false} otherwise
+     */
+    public boolean deleteMysql(String identifier) {
+        return false;
+    }
+
+    /**
+     * Removes the resource using SQLite-specific SQL. Called by
+     * {@link #deleteRaw(String)} when the active database type is
+     * {@link DatabaseType#SQLITE}.
+     *
+     * <p>Not abstract, for the same reason as {@link #deleteMysql(String)}.</p>
+     *
+     * @param identifier the identifier of the resource to remove
+     * @return {@code true} if the delete was carried out; {@code false} otherwise
+     */
+    public boolean deleteSqlite(String identifier) {
+        return false;
+    }
+
+    /**
+     * Executes the given {@code ;;}-delimited statements, binding the identifier to
+     * every {@code ?} placeholder in each one.
+     *
+     * <p>Intended for {@link #deleteMysql(String)} and {@link #deleteSqlite(String)}
+     * implementations, which usually run one {@code DELETE} per table keyed on the
+     * same identifier.</p>
+     *
+     * @param identifier the identifier to bind
+     * @param statements the statements to run, table prefix and database name already
+     *                   injected
+     * @return {@code true} if no statement reported an error
+     */
+    protected boolean deleteWith(String identifier, String statements) {
+        List<ExecutionResult> results = getDatabase().execute(statements, stmt -> {
+            try {
+                ParameterMetaData meta = stmt.getParameterMetaData();
+                for (int i = 1; i <= meta.getParameterCount(); i ++) {
+                    stmt.setString(i, identifier);
+                }
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to bind identifier for deletion", e);
+            }
+        });
+
+        return ! results.isEmpty() && results.stream().noneMatch(r -> r == ExecutionResult.ERROR);
+    }
 }
