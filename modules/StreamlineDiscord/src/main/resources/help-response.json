@@ -1,0 +1,26 @@
+{
+  "title": "Bot Setup Help",
+  "description": "This message provides very basic StreamlineCore Discord bot help for admins.",
+  "fields": [
+    {
+      "name": "Documentation Wiki Link",
+      "value": "https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup",
+      "inline": false
+    },
+    {
+      "name": "Streamline Help Discord Link",
+      "value": "https://dsc.gg/streamline",
+      "inline": false
+    },
+    {
+      "name": "Need More Help?",
+      "value": "__Private message__ %discord_bot_author_name_tagged% on Discord.",
+      "inline": false
+    }
+  ],
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

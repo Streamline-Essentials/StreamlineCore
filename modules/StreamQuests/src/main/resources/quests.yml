@@ -1,0 +1,13 @@
+enter-nether:
+  pretty-name: "&cEnter the Nether"
+  requirements:
+    nether-join:
+      type: ENVIRONMENT_JOINS
+      value: NETHER
+      amount: 1
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"

@@ -1,0 +1,16 @@
+# Here you can set custom placeholders for anything.
+# These placeholders can be used in any streamline messages.
+# Example:
+# ':foo:': bar
+# In the example above, if the characters (in order and
+# case-sensitive) ':foo:' (without the ' marks) were in
+# a streamline message (including some chat messages),
+# it would replace them with 'bar' (without the ' marks).
+#
+# WARNING : Putting the ' marks ensures that the plugin
+# does not get confused or corrupt messages.
+':shrug:': "&e¯\\_(ツ)_/¯"
+':tableflip:': "&c(╯°□°）╯︵ ┻━┻"
+':unflip:': "&5┬─┬ ノ( ゜-゜ノ)"
+'<3': "&c❤"
+'{{discord_link}}': "https://dsc.gg/streamline"

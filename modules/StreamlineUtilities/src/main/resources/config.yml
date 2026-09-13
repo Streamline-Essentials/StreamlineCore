@@ -1,0 +1,75 @@
+# Configurations for chat.
+chat:
+  # Configurations for chat modifying.
+  modify:
+    # Enable modifying chat? --> formatting (color codes, placeholders, etc.)
+    enabled: true
+    # The permission the sender needs in order for their messages to be modified.
+    permission: "streamline.utils.chat.modify"
+
+# Configurations for nicknames.
+nicknames:
+  # Enable nicknames?
+  enabled: true
+  # The format for the final output of the nickname.
+  format: "%this_input%"
+
+# Configurations for tpa.
+tpa:
+  # Time in server ticks before a tpa request expires.
+  timeout: 600
+  # Teleport delay ticks.
+  # Set this to more than the time it takes for a player to connect to another server.
+  delay-ticks: 20
+  # Blacklist configuration.
+  blacklist:
+    # If true, the blacklist acts as a whitelist.
+    acts-as-whitelist: false
+    # The servers to blacklist.
+    servers:
+      - hub
+    # The worlds to blacklist.
+    worlds:
+      - lobby_world
+
+# Configurations for the last server.
+# When a player joins, they will join on the server they were last on.
+last-server:
+  # Enable last server?
+  enabled: false
+  # The permission the player needs in order to join on the last server.
+  permission:
+    # Is the permission required for use?
+    required: true
+    # The permission.
+    value: streamline.utils.last-server
+  # The default server to join on if the player has no last server.
+  default-server: "hub"
+
+# Configurations for homes.
+homes:
+  # Enable homes?
+  enabled: true
+  # Teleport delay ticks.
+  # Set this to more than the time it takes for a player to connect to another server.
+  delay-ticks: 20
+  # The maximum amount of homes a player can have.
+  permissions:
+    1: streamline.utils.homes.1
+    2: streamline.utils.homes.2
+    5: streamline.utils.homes.5
+  # Blacklist configuration.
+  blacklist:
+    # If true, the blacklist acts as a whitelist.
+    acts-as-whitelist: false
+    # The servers to blacklist.
+    servers:
+      - hub
+    # The worlds to blacklist.
+    worlds:
+      - lobby_world
+
+saving:
+  use: YAML
+  databases:
+    prefix: "utilities_"

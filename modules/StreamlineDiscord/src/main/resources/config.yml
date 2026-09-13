@@ -1,0 +1,147 @@
+# Discord bot settings.
+bot:
+  # Fully disables the Discord bot.
+  # Great when running this on backend servers.
+  full-disable: false
+  # The token of your discord bot.
+  token: "<put token here -- DO NOT GIVE THIS TO ANYONE>"
+  # The prefix for commands for your discord bot.
+  prefix: ">>"
+  # Settings for the activity or status of your bot.
+  # With default settings, it will say "Playing... play.plasmere.net"
+  # under your bot on the sidebar in your Discord server.
+  activity:
+    # Type can be:
+    # CUSTOM_STATUS
+    # COMPETING
+    # LISTENING
+    # DEFAULT
+    # STREAMING
+    # WATCHING
+    type: "WATCHING"
+    # The value after said setting.
+    # If above is "LISTENING" and this is "your suggestions",
+    # it will say "Listening to... your suggestions"
+    # under your bot.
+    value: "play.plasmere.net"
+  # The link to the image to use for the Discord bot.
+  avatar-url: "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  # Allows for use of Discord's Slash Commands.
+  slash-commands: true
+  # The ID of the main Discord server to use for the bot.
+  main-guild-id: 0
+
+# For settings regarding linking of Discord channels to Minecraft.
+messaging:
+  # Avatar to use when sending user messages (typically when sending chat messages) to Discord.
+  # ONLY APPLICABLE FOR EMBEDS!
+  avatar-url: "https://minotar.net/helm/%streamline_user_uuid%/1024.png"
+  # Default formats for Minecraft -> Discord and Discord -> Minecraft.
+  # Per-route format is customizable in the 'routes' folder under which route you want to edit.
+  default-format:
+    # Minecraft -> Discord.
+    from-minecraft: "%streamline_user_absolute%: %this_message%"
+    # Discord -> Minecraft.
+    from-discord: "&8[&9&lDiscord&8] &d%streamline_user_absolute% &9>> &r%this_message%"
+  # Toggle-ables for -> Discord chat messages.
+  to-discord:
+    # Using Streamline Messaging Module's chat channels.
+    streamline-channels: true
+    # Using Streamline Groups Module's guild chat.
+    streamline-guilds: true
+    # Using Streamline Groups Module's party chat.
+    streamline-parties: true
+  # Toggle-ables for -> Minecraft chat messages.
+  to-minecraft:
+    # Using Streamline Messaging Module's chat channels.
+    streamline-channels: true
+    # Using Streamline Groups Module's guild chat.
+    streamline-guilds: true
+    # Using Streamline Groups Module's party chat.
+    streamline-parties: true
+
+# Server events for Streamline Discord to watch.
+# These are specific events for servers.
+server-events:
+  # This will add all server events to a Minecraft
+  # ... (only SPECIFIC_NATIVE and GLOBAL_NATIVE) ->
+  # ... Discord (DISCORD_TEXT) Route.
+  # Look at the wiki or ask @drakdv on the
+  # Streamline Hub Discord server for more help.
+  add-all-events-on-discord-route-creation: false
+  # All streamline type server events will work on
+  # your Proxy and your Backend servers.
+  streamline:
+    # Fired when a player joins the server.
+    login: true
+    # Fired when a player leaves the server.
+    logout: true
+  spigot:
+    # Fired when a player achieves an advancement on the server.
+    advancement: true
+    # Fired when a player dies on the server.
+    death: true
+
+# All settings pertaining to the Discord Module's Module itself.
+module:
+  # Tells the module if it should send event messaging information
+  # to the Proxy itself -- so the Proxy can handle it instead.
+  # This is useful if you want multiple servers to talk to Discord,
+  # but don't want to have multiple Discord bots.
+  #
+  # If you are running this module on the Proxy, changing this will
+  # do nothing. If you need more help, please ask on our Discord.
+  forward-events-to-proxy: true
+
+# Settings for verifying users.
+verification:
+  # Only lets players verify if they run the <prefix>verify command or /verify slash command (for the Discord part of verification).
+  only-command: true
+  # The responses' configuration.
+  response:
+    # Only send in private (not DMs) when responding to the verification (on Discord).
+    private-thread: true
+  # For events triggered by the verification.
+  events:
+    # When the user is successfully verified.
+    verified:
+      # For the minecraft side.
+      minecraft:
+        # Enable or disable the minecraft side of the event.
+        enabled: false
+        # The commands to run on verification.
+        commands:
+          - "luckperms user %streamline_user_absolute% parent add verified"
+      # For the discord side.
+      discord:
+        # Enable or disable the discord side of the event.
+        enabled: false
+        # The roles to add on verification.
+        # Make sure the bot has the "Manage Roles" permission.
+        # Also, make sure the roles are the IDs of the roles on Discord.
+        # --> It should look something like this: 1234567890987654321
+        roles-to-add:
+          # The ID of the role to add to the user.
+          - 000000000000000000
+          - 000000000000000000
+    # When the user is successfully unverified.
+    unverified:
+      # For the minecraft side.
+      minecraft:
+        # Enable or disable the minecraft side of the event.
+        enabled: false
+        # The commands to run on un-verification.
+        commands:
+          - "luckperms user %streamline_user_absolute% parent remove verified"
+      # For the discord side.
+      discord:
+        # Enable or disable the discord side of the event.
+        enabled: false
+        # The roles to add on un-verification.
+        # Make sure the bot has the "Manage Roles" permission.
+        # Also, make sure the roles are the IDs of the roles on Discord.
+        # --> It should look something like this: 1234567890987654321
+        roles-to-remove:
+          # The ID of the role to add to the user.
+          - 000000000000000000
+          - 000000000000000000

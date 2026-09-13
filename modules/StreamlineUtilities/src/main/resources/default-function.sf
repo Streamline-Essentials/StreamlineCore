@@ -1,0 +1,10 @@
+# ================== Help Info ==================
+# The following is a list of essential items.
+# DIRECTORS:
+# @o = As full permissions.
+# @c = As console.
+# @a = As all users.
+# @n:"<name>" = As <name>.
+# @u:"<uuid>" = As <uuid>.
+# Example:
+server lobby

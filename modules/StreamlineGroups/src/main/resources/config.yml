@@ -1,0 +1,94 @@
+# Settings for groups.
+groups:
+  # Settings for saving users.
+  saving:
+    # The type of storage to use.
+    # Can be:
+    # YAML (Default) (Flat file)
+    # JSON (Flat file)
+    # TOML (Flat file)
+    # MONGO (NoSQL database)
+    # MYSQL (SQL database)
+    use: YAML
+  # The base settings for groups.
+  base:
+    # The maximum amount of players per base group.
+    # You can add LuckPerms roles here.
+    # "media: 16" = Anyone with the LuckPerms media role will be allowed 16 players in their group.
+    maximum:
+      default: 8
+      media: 16
+    # The settings revolving around group invites.
+    invites:
+      # The time (in server ticks | 20 ticks per second) to wait before canceling a group invite.
+      timeout: 2400
+  party:
+    # The maximum amount of players per base group.
+    # You can add LuckPerms roles here.
+    # "media: 16" = Anyone with the LuckPerms media role will be allowed 16 players in their group.
+    # Set "<LuckPerms group>: -1" to use base (above) values for that group.
+    maximum:
+      default: 12
+      media: -1
+  guild:
+    # The maximum amount of players per base group.
+    # You can add LuckPerms roles here.
+    # "media: 16" = Anyone with the LuckPerms media role will be allowed 16 players in their group.
+    # Set "<LuckPerms group>: -1" to use base (above) values for that group.
+    maximum:
+      default: 100
+      media: 120
+    # Settings for all things experience-based with player users.
+    experience:
+      # Settings for announcing things with experience.
+      announce:
+      # Settings for announcing level changes.
+        level-change:
+          # If we should tell them with a title.
+          title: true
+          # If we should tell them with a chat message.
+          chat: false
+      # Settings for the payout of experience. (Adding or removing experience to or from player users.)
+      payout:
+        # The amount to add every payout. Works with negative numbers!
+        # -10 = subtracts 10 xp every payout period.
+        # 10 = adds 10 xp every payout period.
+        amount: 1.0
+        # The amount of time (in server ticks; 20 ticks per second) to run a payout after. (Repeats.)
+        # 400 = every 20 seconds. (DEFAULT.)
+        every: 400
+      # Settings for the starting xp and level for when a player user profile is first created.
+      starting:
+        # The starting level.
+        # Leveling equation can be configured below.
+        level: 1
+        # The starting xp amount.
+        # Leveling equation can be configured below.
+        xp: 0
+      # The equation to use when calculating level up.
+      equation: "10000 + (10000 * (%groups_guild_level% - 1))"
+    # Configurations for Guild names.
+    name:
+      # The regex to test on. If this regex matches any part of the Guild name, it will deny it.
+      # For regex help, please see this website (you can tinker around too): https://regex101.com/
+      disallowed-regex: "\bnigger|\bniggers|\bass|\bcunt|\bcunts"
+      # For determining if a name is valid by length...
+      length:
+        # Should the name's length check include formatting (&e, &o, &k, etc.)?
+        include-formatting: false
+        # Maximum length.
+        max: 10
+        # Minimum length.
+        min: 1
+# Settings for users.
+grouped-users:
+  # Settings for saving users.
+  saving:
+    # The type of storage to use.
+    # Can be:
+    # YAML (Default) (Flat file)
+    # JSON (Flat file)
+    # TOML (Flat file)
+    # MONGO (NoSQL database)
+    # MYSQL (SQL database)
+    use: YAML

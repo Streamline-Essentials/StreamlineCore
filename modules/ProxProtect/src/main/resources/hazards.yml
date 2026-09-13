@@ -1,0 +1,39 @@
+slash-login:
+  cause: CHAT
+  conditions:
+    1:
+      type: MESSAGE_STARTS_WITH
+      value: "./login"
+  actions:
+    1:
+      type: EXECUTE_CONSOLE_COMMAND
+      value: "kick %streamline_user_absolute% &cAction not allowed."
+    2:
+      type: MESSAGE
+      value: "[p:streamline.group.admin] %streamline_user_formatted% &c&ohas been kicked for trying to backdoor the server with &b&o./login&8&o!"
+swear:
+  cause: CHAT
+  conditions:
+    1:
+      type: MESSAGE_CONTAINS_CASE_INSENSITIVE
+      value: "https://gist.githubusercontent.com/MrDrakify/eac57ca4c00d59a4b1d6e391fe385e64/raw/ea060536d9769051492b0d98b906f7e03eac1233/swear-words.txt"
+  actions:
+    1:
+      type: EXECUTE_CONSOLE_COMMAND
+      value: "boumsg %streamline_user_absolute% &cMessage blocked for saying something inappropriate&8."
+    2:
+      type: MESSAGE
+      value: "[p:streamline.group.admin] %streamline_user_formatted% &c&otried to say a blacklisted word&8&o!"
+swear-command:
+  cause: CHAT
+  conditions:
+    1:
+      type: COMMAND_CONTAINS_CASE_INSENSITIVE
+      value: "https://gist.githubusercontent.com/MrDrakify/eac57ca4c00d59a4b1d6e391fe385e64/raw/ea060536d9769051492b0d98b906f7e03eac1233/swear-words.txt"
+  actions:
+    1:
+      type: EXECUTE_CONSOLE_COMMAND
+      value: "boumsg %streamline_user_absolute% &cMessage blocked for saying something inappropriate&8."
+    2:
+      type: MESSAGE
+      value: "[p:streamline.group.admin] %streamline_user_formatted% &c&otried to say a blacklisted word&8&o!"

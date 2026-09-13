@@ -1,0 +1,8 @@
+# Placeholders to be primed.
+placeholders:
+  # LuckPerms related placeholders to be primed.
+  luckperms:
+    # LuckPerms meta keys to be primed.
+    meta-keys:
+    - "name_color"
+    - "rank_value"

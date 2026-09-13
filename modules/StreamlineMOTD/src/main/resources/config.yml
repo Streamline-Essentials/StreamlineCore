@@ -1,0 +1,85 @@
+# Settings for the motd (Message of the Day) in the server list.
+motd:
+  # Enable this?
+  enabled: true
+  # List of MOTD's to display. Each line is a new MOTD.
+  # A MOTD (Message of the Day) is a message that is displayed to users in the server list.
+  list:
+    - "&7Just a Streamlined Minecraft Server"
+  # The way the MOTD is selected.
+  # Options:
+  # RANDOM: Select a random MOTD from the list.
+  # SEQUENTIAL: Select the next MOTD in the list.
+  # STATIC: Selects only the first MOTD in the list.
+  selection: STATIC
+  # The amount of server ticks to wait before selecting the next single line for the message of the day.
+  ticks: 20
+
+# Settings for the sample in the server list.
+sample:
+  # Enable this?
+  enabled: false
+  # List of samples to display. Each line is a new sample.
+  # A sample is what you see when you hover over the server's ping in the server list.
+  # Notes:
+  # - Multiple entities = different Samples (selected by the selection type and ticks).
+  list:
+  - "&aJoin on in! &7(&f%motd_online%&9/&f%motd_max%&7)"
+#  - "&cSecond Sample%newline%&7(Not shown in the 1st one)%newline%Use '%newline%' to make a new line."
+  # The way the sample is selected.
+  # Options:
+  # RANDOM: Select a random line from the list.
+  # SEQUENTIAL: Select the next line in the list.
+  # STATIC: Selects only the first MOTD in the list.
+  selection: STATIC
+  # The amount of server ticks to wait before selecting the next single line for the sample.
+  ticks: 20
+
+# How should the module handle selection updates?
+# Options:
+# ON_TICK: Update the selection every X ticks.
+# ON_PING: Update the selection every time the server is pinged.
+# NONE: Do not update the selection.
+update:
+  type: NONE
+  # The amount of server ticks to wait before ticking the update for the selection.
+  # Notes:
+  # - update.type must be set to ON_TICK for this to work.
+  # - 20 ticks = 1 second.
+  # - If set to 1 and the type of selection ticks (sample.ticks OR motd.ticks) is set 20, then that type's
+  # selection will update every second. (1 * 20 = 20 ticks. 20 ticks = 1 second.)
+  # - If set to 20 and the type of selection ticks (sample.ticks OR motd.ticks) is set to 20, then that type's
+  # selection will update every 20 seconds. (20 * 20 = 400 ticks. 400 ticks = 20 seconds.)
+  x-ticks: 1
+
+# The settings for the favicon in the server list. (The server icon that appears next to the server.)
+favicon:
+  # Enable this?
+  enabled: true
+  # The path to the favicon file.
+  # Notes:
+  # - If you just specify a file name, it will look in the "icons" folder (of this module).
+  # - If you don't specify a file extension, it will look for a file with the ".png" extension.
+  # - "default" will use the default icon of the server.
+  path: default
+
+# Settings for the player count in the server list.
+online:
+  # The maximum number of players to display in the MOTD.
+  # You can put any equation here.
+  max: "100"
+  # max: "100 + 50"
+  # max: "100 + %motd_online%"
+  # The number of online players to display in the MOTD.
+  # You can put any equation here.
+  current: "%streamline_players_online%"
+  # current: "%streamline_players_online% + 10"
+
+# The version of your server when players are connecting.
+version:
+  # Enable this?
+  enabled: false
+  # The name.
+  name: "1.21.6"
+  # The specific protocol version.
+  protocol: 771
