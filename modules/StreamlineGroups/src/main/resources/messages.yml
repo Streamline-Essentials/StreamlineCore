@@ -1,0 +1,140 @@
+errors:
+  base:
+    already:
+      exists: "&cThat group already exists!"
+      in:
+        self: "&cYou are already in a group!"
+        other: "&cThat player is already in a group!"
+    not:
+      flag: "&cYou do not have the %this_flag% flag in this group!"
+      invited: "&cThat user is not invited to this group!"
+      exists: "&cThat group does not exist!"
+      in:
+        self: "&cYou are not in a group!"
+        other: "&cThat player is not in a group!"
+    cannot:
+      promote:
+        self: "&cYou cannot promote yourself!"
+        leader: "&cThis player is already leader!"
+        same: "&cYou are of the same role as this player!"
+      demote:
+        self: "&cYou cannot demote yourself!"
+        leader: "&cThis player is a leader!"
+        same: "&cYou are of the same role as this player!"
+
+guilds:
+  create: "&eYou just created a guild named &r%groups_guild_name%&8!"
+  invite:
+    send:
+      sender: "&eJust invited %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+      members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &ejust invited %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+      other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &ejust invited &dyou &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    timeout:
+      sender: "&eInvite to %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild &c&lexpired&8!"
+      members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8'&es invite to %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild &c&lexpired&8!"
+      other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8'&es invite to &dyou &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild &c&lexpired&8!"
+  accept:
+    sender: "&dYou &aaccepted %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es invite &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &aaccepted &ethe invite from %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8 &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &aaccepted &ethe invite to %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+  deny:
+    sender: "&dYou &cdenied %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es invite &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdenied &ethe invite from %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8 &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdenied &ethe invite to %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+  disband:
+    sender: "&dYou &cdisbanded %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdisbanded %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    leader: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdisbanded &dyour &eguild&8!"
+  promote:
+    sender: "&dYou &apromoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &apromoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &apromoted &dyou &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eguild&8!"
+  demote:
+    sender: "&dYou &cdemoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdemoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdemoted &dyou &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eguild&8!"
+  leave:
+    sender: "&dYou &cremoved %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &efrom %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    members: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &cleft %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild&8!"
+    other: "&dYou &cleft %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eguild&8!"
+  list:
+    main: "&7&l----+ &5Guild List &7+----%this_for_roles%"
+    role: "%newline%%this_role_name%&8: %this_role_members%"
+  chat: "&5Guild &7&l> &d%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8: &f%this_message%"
+  rename:
+    sender: "&dYou &erenamed %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild to &r%this_name_new% &efrom &r%this_name_old%&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &erenamed %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es guild to &r%this_name_new% &efrom &r%this_name_old%&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &erenamed &dyour &eguild to &r%this_name_new% &efrom &r%this_name_old%&8!"
+
+parties:
+  create: "&eYou just created a party&8!"
+  invite:
+    send:
+      sender: "&eJust invited %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+      members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &ejust invited %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+      other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &ejust invited &dyou &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    timeout:
+      sender: "&eInvite to %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party &c&lexpired&8!"
+      members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8'&es invite to %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party &c&lexpired&8!"
+      other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8'&es invite to &dyou &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party &c&lexpired&8!"
+  accept:
+    sender: "&dYou &aaccepted %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es invite &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &aaccepted &ethe invite from %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8 &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &aaccepted &ethe invite to %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+  deny:
+    sender: "&dYou &cdenied %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es invite &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdenied &ethe invite from %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8 &eto %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdenied &ethe invite to %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+  disband:
+    sender: "&dYou &cdisbanded %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdisbanded %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    leader: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdisbanded &dyour &eparty&8!"
+  promote:
+    sender: "&dYou &apromoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &apromoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &apromoted &dyou &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eparty&8!"
+  demote:
+    sender: "&dYou &cdemoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdemoted %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &cdemoted &dyou &ein %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eparty&8!"
+  leave:
+    sender: "&dYou &cremoved %streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &efrom %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &cleft %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "&dYou &cleft %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eparty&8!"
+  list:
+    main: "&7&l----+ &5Party List &7+----%this_for_roles%"
+    role: "%newline%%this_role_name%&8: %this_role_members%"
+  kick:
+    sender: "&dYou &cremoved %streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &efrom %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    members: "%streamline_parse_%this_target%:::*/*streamline_user_formatted*/*% &cwas removed from %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es party&8!"
+    other: "&dYou &cwere removed from %streamline_parse_%this_owner%:::*/*streamline_user_formatted*/*%&8'&es &eparty&8!"
+  chat: "&5Party &7&l> &d%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*%&8: &f%this_message%"
+
+placeholders:
+  guild:
+    not-found: "&cNo Guild Found"
+  party:
+    not-found: "&cNo Party Found"
+
+# Messages for savable guild experience handling.
+experience:
+  # Messages for level handling.
+  level:
+    # Messages for when the savable guild's level changes.
+    on-change:
+      # The title to be shown. Can be turned off in "config.yml" file!
+      title:
+        # The main title (big text).
+        main: "&2GUILD &bLEVEL UP"
+        # The subtitle.
+        subtitle: "&6Your guild is now level &a%streamline_user_level%&8!"
+        # Ticks to fade in.
+        in: 20
+        # Ticks to stay on screen.
+        stay: 10
+        # Ticks to fade out.
+        out: 20
+      # The chat messages to be shown. Can be turned off in "config.yml" file!
+      chat:
+        - "&2GUILD &bLEVEL UP"
+        - "&6Your guild is now level &a%streamline_user_level%&8!"

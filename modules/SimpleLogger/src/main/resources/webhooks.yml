@@ -1,0 +1,97 @@
+global:
+  url: "WEBHOOK_URL"
+  commands:
+    enabled: true
+    plain:
+      enabled: true
+      name: "%streamline_user_absolute% (on %streamline_user_server%)"
+      picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+      content: "%content%"
+    embed:
+      enabled: false
+      color: 0
+      title: "%streamline_user_absolute% -> %streamline_user_server%"
+      description: "%content%"
+      picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+  chat:
+    enabled: false
+    plain:
+      enabled: true
+      name: "%streamline_user_absolute% (on %streamline_user_server%)"
+      picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+      content: "%content%"
+    embed:
+      enabled: false
+      color: 0
+      title: "%streamline_user_absolute% -> %streamline_user_server%"
+      description: "%content%"
+      picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+
+servers:
+  SMP:
+    url: "WEBHOOK_URL"
+    commands:
+      enabled: false
+      plain:
+        enabled: true
+        name: "%streamline_user_absolute%"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+        content: "%content%"
+      embed:
+        enabled: false
+        color: 0
+        title: "%streamline_user_absolute%"
+        description: "%content%"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+    chat:
+      enabled: true
+      plain:
+        enabled: true
+        name: "%streamline_user_absolute%"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+        content: "%content%"
+      embed:
+        enabled: false
+        color: 0
+        title: "%streamline_user_absolute%"
+        description: "%content%"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+
+message-channels:
+  staff:
+    url: "WEBHOOK_URL"
+    chat:
+      enabled: true
+      plain:
+        enabled: true
+        name: "%streamline_user_absolute% (on %streamline_user_server%)"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+        content: "%content%"
+      embed:
+        enabled: false
+        color: 0
+        title: "%streamline_user_absolute% -> %streamline_user_server%"
+        description: "%content%"
+        picture: "https://crafatar.com/avatars/%streamline_user_uuid%?size=128&overlay"
+
+logs:
+  listen-to:
+    - "INFO"
+    - "WARNING"
+    - "SEVERE"
+    - "DEBUG"
+  main-url: "WEBHOOK_URL"
+  # For use with the redis-info.yml configuration.
+  filtered-urls:
+    # It goes:
+    # <server-name>: "<webhook-url>"
+    LOBBY: "WEBHOOK_URL"
+  plain:
+    enabled: true
+    content: "%content%"
+  embed:
+    enabled: false
+    color: 0
+    title: "Server Log Entry"
+    description: "%content%"
+    picture: "https://assets.bedwarssmp.net/images/bedlogo.png"

@@ -3,23 +3,24 @@ dependencies {
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
     annotationProcessor(THE_BASE)
-    implementation(IMPL)
     compileOnly(COMP_ONLY)
-    shadow(SHADOW)
+
+    // Downloadable libs: compile only — Spigot/Bungee/Velocity fetch at runtime.
+    compileOnly(PLATFORM_LIBRARIES)
+
+    // PF4J must ship inside this jar so module PluginClassLoaders can see CosmicModule.
+    HOST_SHADED_LIBRARIES.each { coord ->
+        shadow(implementation(coord))
+    }
 
     // The Base
     compileOnly(THE_BASE)
 
-    // Google IO.
-    shadow(implementation('com.google.guava:guava:30.1-jre'))
-    shadow(implementation('com.google.code.gson:gson:2.8.8'))
+    // JetBrains annotations (compile-only).
+    annotationProcessor(compileOnly('org.jetbrains:annotations:20.1.0'))
+}
 
-    // JetBrains.
-    annotationProcessor(shadow(implementation('org.jetbrains:annotations:20.1.0')))
-
-    // Redis (Lettuce).
-    implementation(shadow('io.lettuce:lettuce-core:6.8.0.RELEASE'))
-
-    // Files.
-//    implementation(shadow(files(FILES)));
+shadowJar {
+    // Project classes + HOST_SHADED_LIBRARIES only (no Hikari/Netty/etc.).
+    configurations = [project.configurations.shadow]
 }

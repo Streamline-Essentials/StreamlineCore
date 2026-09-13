@@ -1,0 +1,9 @@
+{
+  "title": "User Verify",
+  "description": "You have already verified your account!",
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

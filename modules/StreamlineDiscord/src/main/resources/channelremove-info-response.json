@@ -1,0 +1,20 @@
+{
+  "title": "Channel Setup",
+  "fields": [
+    {
+      "name": "Help",
+      "value": "[...] -> \"...\" is optional.\n<...> -> Argument described by \"...\"\nValid \"identifier\"s: Server Name, Permission, Guild UUID, Party UUID, Streamline Chat Channel Name, Discord Text Channel ID",
+      "inline": false
+    },
+    {
+      "name": "Usage",
+      "value": "**%discord_bot_prefix%%this_command_label% <identifier>",
+      "inline": false
+    }
+  ],
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

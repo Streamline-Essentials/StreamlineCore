@@ -1,0 +1,21 @@
+apply from: "$rootDir/modules/module.gradle"
+
+repositories {
+    maven { url = "https://repo.onarandombox.com/content/groups/public/" }
+    maven { url = "https://mvn.lumine.io/repository/maven-public/" }
+    maven { url = "https://maven.aestrus.io/releases" }
+}
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
+    compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
+
+    // Multiverse
+    compileOnly "com.onarandombox.multiversecore:Multiverse-Core:4.3.2-SNAPSHOT"
+    compileOnly "com.onarandombox.multiverseinventories:Multiverse-Inventories:4.2.4-SNAPSHOT"
+
+    // Plugins with no public artifact, kept alongside the module.
+    compileOnly files("impl/WorldSystem.jar")
+    compileOnly files("impl/MythicDungeons.jar")
+    compileOnly "io.lumine:Mythic-Dist:5.6.1"
+}

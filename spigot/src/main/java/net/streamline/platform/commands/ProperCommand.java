@@ -24,15 +24,42 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
+/**
+ * Spigot/Bukkit adapter that bridges a cross-platform {@link CosmicCommand}
+ * to the Bukkit command system.
+ *
+ * <p>Implements both {@link org.bukkit.command.TabExecutor} and
+ * {@link IProperCommand} so that Streamline's command handler can dispatch
+ * execution and tab-completion through the standard Bukkit command pipeline.
+ */
 @Getter
 public class ProperCommand extends BuildableCommand implements TabExecutor, IProperCommand {
+    /**
+     * The underlying cross-platform command that this adapter wraps.
+     * Lombok generates a {@code getParent()} accessor via the class-level {@code @Getter}.
+     */
     private final CosmicCommand parent;
 
+    /**
+     * Constructs a new {@code ProperCommand} wrapping the given
+     * {@link CosmicCommand}, initialising the Bukkit command metadata
+     * (description, usage, aliases) from the parent.
+     *
+     * @param parent the cross-platform command to wrap
+     */
     public ProperCommand(CosmicCommand parent) {
         super(builder(parent));
         this.parent = parent;
     }
 
+    /**
+     * Creates a {@link CommandBuilder} pre-configured with the base name,
+     * description, usage text, and aliases taken from the given
+     * {@link CosmicCommand}.
+     *
+     * @param parent the cross-platform command providing metadata
+     * @return a configured {@link CommandBuilder} ready to build this command
+     */
     public static CommandBuilder builder(CosmicCommand parent) {
         return new CommandBuilder(parent.getBase(), StreamlineSpigot.getInstance())
                 .setDescription("Not defined.")
@@ -40,11 +67,24 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
                 .setAliases(parent.getAliases());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Delegates to {@link #execute(CommandSender, String, String[])} to run
+     * the underlying {@link CosmicCommand}.
+     */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         return execute(sender, label, args);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the sender to a {@link singularity.data.console.CosmicSender},
+     * delegates to {@link CosmicCommand#baseTabComplete}, and filters the result
+     * against the current argument text.
+     */
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
@@ -68,6 +108,12 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Delegates to {@link #onTabComplete} and sanitises the result by
+     * removing {@code null} and blank entries.
+     */
     @Override
     public @NotNull List<String> tabComplete(@NotNull CommandSender sender, @NotNull String alias, @NotNull String @NotNull [] args) throws IllegalArgumentException {
         try {
@@ -88,6 +134,13 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Registration on Spigot is handled externally via
+     * {@link net.streamline.platform.BasePlugin#registerCommands(ProperCommand...)};
+     * this method is intentionally a no-op.
+     */
     @Override
     public void registerThis() {
 //        try {
@@ -97,6 +150,13 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
 //        }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Unregistration on Spigot is handled externally via
+     * {@link net.streamline.platform.BasePlugin#unregisterCommands(String...)};
+     * this method is intentionally a no-op.
+     */
     @Override
     public void unregisterThis() {
 //        try {
@@ -106,6 +166,14 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
 //        }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Resolves the sender to a {@link singularity.data.console.CosmicSender},
+     * invokes {@link CosmicCommand#baseRun}, and maps the resulting
+     * {@link singularity.command.result.CommandResult} to a boolean return value
+     * ({@code true} for success, {@code false} for error/failure/null).
+     */
     @Override
     public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
         try {

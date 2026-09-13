@@ -1,0 +1,7 @@
+world-actions:
+  dungeons:
+    regex: "[d](.*?)[_](.*?)"
+    createOwn: false
+  worldsystem:
+    regex: "[I][D](.*?)"
+    createOwn: true

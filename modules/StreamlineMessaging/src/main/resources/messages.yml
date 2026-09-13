@@ -1,0 +1,49 @@
+errors:
+  messaging:
+    self: "&cYou cannot message yourself!"
+  channel:
+    is-null: "&cThat channel does not exist or is not loaded!"
+    no-access: "&cYou do not have permissions to access that channel!"
+  friends:
+    self:
+      invite: "&cYou cannot friend yourself!"
+    already:
+      friends: "&cYou are already friends with this user!"
+      not-friends: "&cYou are not this user's friend!"
+      best-friends: "&cYou are already best friends with this user!"
+      not-best-friends: "&cYou are already not best friends with this user!"
+      invited: "&cYou already invited this user to be your friend!"
+    toggled:
+      off:
+        invites: "&cThat player has friend invites toggled off!"
+
+
+friends:
+  regular:
+    add:
+      message: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ewas &aadded &eto &dyour &cfriend&7'&cs list&8!"
+      send: false
+    remove:
+      message: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ewas &cremoved &efrom &dyour &cfriend&7'&cs list&8!"
+      send: false
+    list:
+      max-per-page: 5
+      entry:
+        not-last: "&d%streamline_user_formatted% &7(&e%streamline_user_online%&7)%newline%"
+        last: "&d%streamline_user_formatted% &7(&e%streamline_user_online%&7)"
+  best:
+    add:
+      message: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ewas &aadded &eto &dyour &cbest friend&7'&cs list&8!"
+      send: true
+    remove:
+      message: "%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ewas &cremoved &efrom &dyour &cbest friend&7'&cs list&8!"
+      send: true
+    list:
+      max-per-page: 5
+      entry:
+        not-last: "&d%streamline_user_formatted% &7(&e%streamline_user_online%&7)%newline%"
+        last: "&d%streamline_user_formatted% &7(&e%streamline_user_online%&7)"
+  invite:
+    timeout:
+      sender: "&dYour &efriend invite to &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ehas &c&lexpired&8!"
+      invited: "&eThe friend invite to &dyou &efrom &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*% &ehas &c&lexpired&8!"

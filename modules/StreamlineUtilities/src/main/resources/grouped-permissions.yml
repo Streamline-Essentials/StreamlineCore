@@ -1,0 +1,32 @@
+# Group's identifier.
+# Example: 'staff'
+staff:
+  # Colored name of the group.
+  name: "&c&lStaff"
+  # Permission of the group.
+  # Users with this permission will be in the group.
+  permission: "streamline.utils.group.staff"
+# Group's identifier.
+# Example: 'builder'
+builder:
+  # Colored name of the group.
+  name: "&2&lBuilder"
+  # Permission of the group.
+  # Users with this permission will be in the group.
+  permission: "streamline.utils.group.builder"
+# Group's identifier.
+# Example: 'mod'
+mod:
+  # Colored name of the group.
+  name: "&b&lMod"
+  # Permission of the group.
+  # Users with this permission will be in the group.
+  permission: "streamline.utils.group.mod"
+# Group's identifier.
+# Example: 'admin'
+admin:
+  # Colored name of the group.
+  name: "&c&lAdmin"
+  # Permission of the group.
+  # Users with this permission will be in the group.
+  permission: "streamline.utils.group.admin"

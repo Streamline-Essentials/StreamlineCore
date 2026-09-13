@@ -12,21 +12,68 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Command for managing the lifecycle of PF4J modules at runtime.
+ *
+ * <p>Supports the following sub-commands:
+ * <ul>
+ *   <li>{@code reapply [modules...]} — unregisters and re-registers modules.</li>
+ *   <li>{@code reload [modules...]} — restarts modules.</li>
+ *   <li>{@code load [modules...]} — registers previously unloaded modules.</li>
+ *   <li>{@code unload [modules...]} — unregisters running modules.</li>
+ *   <li>{@code enable [modules...]} — starts disabled modules.</li>
+ *   <li>{@code disable [modules...]} — stops running modules.</li>
+ * </ul>
+ * When no module identifiers are provided the operation applies to all modules.
+ * Registered under {@code streamlinemodules}, {@code module}, {@code modules},
+ * {@code pmodules}, and {@code slm}.
+ */
 public class ModulesCommand extends CosmicCommand {
+
+    /** Feedback message sent when all modules are re-applied successfully. */
     private final String messageResultReapplyAll;
+
+    /** Feedback message sent when a single named module is re-applied. */
     private final String messageResultReapplyOne;
+
+    /** Feedback message sent when all modules are reloaded successfully. */
     private final String messageResultReloadAll;
+
+    /** Feedback message sent when a single named module is reloaded. */
     private final String messageResultReloadOne;
+
+    /** Feedback message sent when all external modules are loaded. */
     private final String messageResultLoadAll;
+
+    /** Feedback message sent when a single named module is loaded. */
     private final String messageResultLoadOne;
+
+    /** Feedback message sent when all modules are unloaded. */
     private final String messageResultUnloadAll;
+
+    /** Feedback message sent when a single named module is unloaded. */
     private final String messageResultUnloadOne;
+
+    /** Feedback message sent when all modules are enabled. */
     private final String messageResultEnableAll;
+
+    /** Feedback message sent when a single named module is enabled. */
     private final String messageResultEnableOne;
+
+    /** Feedback message sent when all modules are disabled. */
     private final String messageResultDisableAll;
+
+    /** Feedback message sent when a single named module is disabled. */
     private final String messageResultDisableOne;
+
+    /** Feedback message listing all currently loaded modules. */
     private final String messageResultListAll;
 
+    /**
+     * Registers the modules command with the {@code streamline-base} module and
+     * loads all configurable response messages from the command resource file,
+     * falling back to built-in defaults when no configuration entry exists.
+     */
     public ModulesCommand() {
         super(
                 "streamline-base",
@@ -64,6 +111,15 @@ public class ModulesCommand extends CosmicCommand {
                 "&eDisabled module &7'&c%this_identifier%&7'&8!");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Routes execution to the appropriate module lifecycle action.  When a
+     * list of module identifiers follows the action keyword, only those modules
+     * are affected; otherwise the action applies to every loaded module.</p>
+     *
+     * @param context the command context carrying the sender and parsed arguments
+     */
     @Override
     public void run(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() < 1) {
@@ -163,6 +219,17 @@ public class ModulesCommand extends CosmicCommand {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Offers the available action keywords at argument position 1.  At
+     * position 2, returns the identifiers of loaded (malleable) modules for
+     * actions that target existing modules, or unloaded external module
+     * identifiers for the {@code load} action.</p>
+     *
+     * @param context the command context carrying the sender and current argument list
+     * @return a sorted set of tab-completion candidates
+     */
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() <= 1) {

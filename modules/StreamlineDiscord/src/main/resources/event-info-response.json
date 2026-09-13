@@ -1,0 +1,30 @@
+{
+  "title": "Event Setup",
+  "fields": [
+    {
+      "name": "Help",
+      "value": "[...] -> \"...\" is optional.\n<...> -> Argument described by \"...\"\nValid \"type\"s: LOGIN, LOGOUT, ADVANCEMENT, DEATH, all\nValid \"identifier\"s: The Routes' identifier.",
+      "inline": false
+    },
+    {
+      "name": "Add Usage",
+      "value": "**%discord_bot_prefix%%this_command_label% set <type> <identifier>",
+      "inline": false
+    },
+    {
+      "name": "Remove Usage",
+      "value": "**%discord_bot_prefix%%this_command_label% remove <type> <identifier>",
+      "inline": false
+    },
+    {
+      "name": "Clear Usage",
+      "value": "**%discord_bot_prefix%%this_command_label% clear <type> <identifier>",
+      "inline": false
+    }
+  ],
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

@@ -15,12 +15,22 @@ buildscript {
             name = "Forge"
             url = "https://maven.minecraftforge.net"
         }
+        maven {
+            name = "NeoForge"
+            url = "https://maven.neoforged.net/releases"
+        }
+        maven {
+            name = "NeoForge-snapshots"
+            url = "https://maven.neoforged.net/snapshots"
+        }
     }
 
     dependencies {
         classpath("com.gradleup.shadow:shadow-gradle-plugin:8.3.6") // for shadowing
         classpath("io.freefair.gradle:lombok-plugin:8.6")
-        // Note: Architectury Loom is applied as a plugin in subprojects, not as a classpath dependency
+        classpath("net.fabricmc:fabric-loom:1.13.4")
+        classpath("net.minecraftforge.gradle:ForgeGradle:6.0.+") { changing = true }
+        classpath("net.neoforged.gradle:userdev:7.1.22")
     }
 }
 
@@ -81,7 +91,10 @@ allprojects {
     }
 }
 
-subprojects {
+// Core platform projects only. Modules under modules/ are configured by
+// modules/module.gradle instead: they have no plugin.yml to expand, are not published
+// to the Streamline Maven repo, and must keep their own version and manifest.
+configure(subprojects.findAll { ! it.path.startsWith(':modules') }) {
     apply from: rootDir.toString() + "/dependencies.gradle"
 
     ext {
@@ -99,17 +112,22 @@ subprojects {
         // Debugging: Print values
         doFirst {
             println "Version: " + rootProject.version.toString() + ", Name: " + rootProject.name.toString() + ", Main: " + project.ext.pluginMain.toString()
+            if (project.ext.has("PLATFORM_LIBRARIES")) {
+                println "Platform libraries (${project.ext.PLATFORM_LIBRARIES.size()}):"
+            }
         }
 
         inputs.property("name", rootProject.name.toString())
         inputs.property("version", rootProject.version.toString())
         inputs.property("main", project.ext.pluginMain.toString())
+        inputs.property("libraries", project.ext.PLATFORM_LIBRARIES.join('|'))
         outputs.dir(file("build/generated-src"))
 
         filesMatching("**/plugin.yml") {
             expand (
                     "name": rootProject.name.toString(),
                     "version": rootProject.version.toString(),
+                    "librariesBlock": project.ext.PLATFORM_LIBRARIES.collect { "  - ${it}" }.join('\n'),
             )
         }
         filesMatching("**/velocity-plugin.json") {
@@ -144,6 +162,11 @@ subprojects {
         }
     }
 
+    // Keep the plain jar from overwriting the shadowed main artifact.
+    tasks.named('jar', Jar).configure {
+        archiveClassifier.set('plain')
+    }
+
     shadowJar {
         manifest {
             attributes(
@@ -152,9 +175,10 @@ subprojects {
             )
         }
 
-        relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
-        relocate("ch.qos.logback", "host.plas.bou.libs.logback")
+        // Relocations only apply when those packages are actually shaded (mod loaders).
+        relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.usched")
 
+        archiveClassifier.set('')
         archiveFileName = project.name + "-" + project.version + ".jar"
 
 //        minimize()
@@ -180,12 +204,23 @@ subprojects {
     shadowJar.finalizedBy(deploy)
 
     tasks.named('deploy').configure {
-        dependsOn 'shadowJar', 'sourcesJar', 'javadocJar', 'jar'
+        dependsOn 'shadowJar', 'sourcesJar', 'javadocJar'
     }
 
     java {
         withSourcesJar()
         withJavadocJar()
+    }
+
+    // Lombok @Getter/@Setter (and default ctors) lack per-method Javadoc after delombok.
+    // Keep real doclint issues; drop the missing-comment noise that floods clean builds.
+    tasks.withType(Javadoc).configureEach {
+        options {
+            addBooleanOption('Xdoclint:all,-missing', true)
+            encoding = 'UTF-8'
+            charSet = 'UTF-8'
+        }
+        failOnError = false
     }
 
     publishing {
@@ -215,6 +250,58 @@ subprojects {
             }
         }
     }
+}
+
+// Modules build a shadowed PF4J JAR and drop it next to the platform JARs, but are
+// not published to the Streamline Maven repo -- they are plugins, not API artifacts.
+// ':modules' itself is just a container and produces nothing.
+configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':modules' }) {
+    // Keep the plain jar from colliding with the shadowed module artifact. Both write
+    // into build/libs, and CI collects everything it finds there, so an unshaded jar
+    // left beside the real one would be published as though it were the module.
+    tasks.named('jar', Jar).configure {
+        archiveClassifier.set('plain')
+    }
+
+    tasks.register('deploy', Copy) {
+        def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
+        def modulesDir = new File(deployDir, "modules")
+
+        // shadowJar and jar both write into build/libs, so the producers of everything
+        // in that directory must be declared or Gradle reports an implicit dependency.
+        dependsOn tasks.named('shadowJar'), tasks.named('jar')
+
+        doFirst {
+            modulesDir.mkdirs()
+            println "Deploying module ${project.name} to: $modulesDir"
+        }
+
+        from shadowJar.archiveFile
+        into modulesDir
+    }
+
+    shadowJar.finalizedBy(deploy)
+
+    // 'build' alone only wires in the plain jar, so the shadowed artifact is attached
+    // explicitly. CI runs 'gradle build' and collects what it finds, and the module JAR
+    // is the artifact that ships.
+    tasks.named('assemble').configure {
+        dependsOn tasks.named('shadowJar')
+    }
+}
+
+// The root build drives the module JARs, so a plain 'gradle clean build' produces and
+// deploys every module alongside the platform artifacts.
+tasks.named('build').configure {
+    dependsOn subprojects.findAll { it.path.startsWith(':modules') && it.path != ':modules' }
+            .collect { "${it.path}:shadowJar" }
+}
+
+// The ':modules' container has no sources; keep it from producing an empty artifact.
+// It is absent on JitPack, which builds only the API artifacts.
+findProject(':modules')?.with {
+    tasks.matching { it.name in ['shadowJar', 'jar', 'publish', 'publishToMavenLocal'] }
+            .configureEach { it.enabled = false }
 }
 
 tasks.register("clearDeploys", Delete) {

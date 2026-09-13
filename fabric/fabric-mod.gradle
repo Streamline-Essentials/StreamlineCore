@@ -1,0 +1,29 @@
+dependencies {
+    shadow project(path: ':StreamlineCore-API', configuration: 'shadow')
+    // Mod loaders have no Maven library downloader — shade platform libs here.
+    // (PF4J is already inside the thin API/Singularity shadow artifact.)
+    PLATFORM_LIBRARIES.each { shadow(it) }
+}
+
+tasks.named('shadowJar') {
+    configurations = [project.configurations.shadow]
+    zip64 = true
+    dependsOn tasks.named('processIncludeJars')
+
+    relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
+    relocate("ch.qos.logback", "host.plas.bou.libs.logback")
+    archiveFileName = project.name + "-" + project.version + "-all.jar"
+    archiveClassifier = 'shadow'
+}
+
+tasks.named('remapJar') {
+    dependsOn tasks.named('shadowJar')
+    inputFile.set(tasks.named('shadowJar').flatMap { it.archiveFile })
+}
+
+tasks.named('remapSourcesJar') {
+    dependsOn(':StreamlineCore-API:jar')
+}
+
+deploy.configure { from remapJar.archiveFile }
+remapJar.finalizedBy(deploy)
