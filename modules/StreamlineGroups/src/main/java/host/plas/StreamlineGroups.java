@@ -1,10 +1,14 @@
 package host.plas;
 
+import host.plas.commands.GroupChatCommand;
 import host.plas.commands.PCCommand;
 import host.plas.commands.PartyCommand;
 import host.plas.configs.Configs;
 import host.plas.configs.DefaultRoles;
 import host.plas.configs.Messages;
+import host.plas.data.Guild;
+import host.plas.database.GuildKeeper;
+import host.plas.database.GuildLoader;
 import host.plas.database.PlayerKeeper;
 import host.plas.database.PlayerLoader;
 import host.plas.listeners.MainListener;
@@ -45,6 +49,11 @@ public class StreamlineGroups extends SimpleModule {
     @Getter @Setter
     private static PlayerLoader playerLoader;
 
+    @Getter @Setter
+    private static GuildKeeper guildKeeper;
+    @Getter @Setter
+    private static GuildLoader guildLoader;
+
     public StreamlineGroups(PluginWrapper wrapper) {
         super(wrapper);
     }
@@ -69,22 +78,55 @@ public class StreamlineGroups extends SimpleModule {
         mainListener = new MainListener();
         ModuleUtils.listen(mainListener, this);
 
+        // Keepers and loaders come up before the commands and listener that use them.
+        playerKeeper = new PlayerKeeper();
+        playerLoader = new PlayerLoader();
+        guildKeeper = new GuildKeeper();
+        guildLoader = new GuildLoader();
+
+        playerKeeper.ensureTables();
+        guildKeeper.ensureTables();
+
         getGroupsExpansion().init();
 
         new PartyCommand(this).register();
         new PCCommand().register();
-
-        playerKeeper = new PlayerKeeper();
-        playerLoader = new PlayerLoader();
+        new GroupChatCommand().register();
     }
 
+    /**
+     * Parties are session-scoped, so they are disbanded; guilds are persistent, so they are
+     * saved and unloaded rather than torn down. Every loaded player's chat routing is
+     * flushed on the way out.
+     */
     @Override
     public void onDisable() {
-        GroupManager.getLoadedParties().forEach((party) -> {
-            GroupManager.disbandParty(party.getOwner(), party.getOwner());
+        GroupManager.getLoadedParties().forEach(group -> {
+            try {
+                if (group instanceof Guild) {
+                    ((Guild) group).save(false);
+                } else {
+                    group.disband();
+                }
+            } catch (Throwable e) {
+                logWarning("Failed to shut down group " + group.getClassedIdentifier() + ": " + e.getMessage());
+            }
         });
 
         GroupManager.getLoadedParties().clear();
+
+        if (playerLoader != null) {
+            playerLoader.getLoaded().forEach(player -> {
+                try {
+                    player.save(false);
+                } catch (Throwable e) {
+                    logWarning("Failed to save grouped player " + player.getUuid() + ": " + e.getMessage());
+                }
+            });
+            playerLoader.getLoaded().clear();
+        }
+
+        if (guildLoader != null) guildLoader.getLoaded().clear();
 
         getGroupsExpansion().stop();
     }

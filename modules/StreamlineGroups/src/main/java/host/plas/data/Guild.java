@@ -1,6 +1,7 @@
 package host.plas.data;
 
 
+import host.plas.StreamlineGroups;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.data.console.CosmicSender;
@@ -9,9 +10,18 @@ import singularity.loading.Loadable;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * A persistent group. Unlike a {@link Party}, a guild outlives the session its members
+ * are online for and is stored by {@code GuildKeeper}.
+ */
 @Getter @Setter
 public class Guild extends AbstractGroup implements Loadable<Guild> {
-    private boolean loaded = false;
+    /**
+     * Set while {@link #hydrated(String, CosmicSender)} is building a guild from a query
+     * result, so that the constructor does not fetch it back out of the database.
+     */
+    private static final ThreadLocal<Boolean> hydrating = ThreadLocal.withInitial(() -> false);
+
     private boolean fullyLoaded = false;
 
     public Guild(String uuid, CosmicSender owner, boolean load) {
@@ -53,19 +63,36 @@ public class Guild extends AbstractGroup implements Loadable<Guild> {
         // Settings.
     }
 
+    /**
+     * Pulls this guild's stored state in the background, leaving the in-memory defaults in
+     * place until the load resolves.
+     */
     @Override
     public void grabFromDatabase() {
-        // Load from database...
+        if (StreamlineGroups.getGuildKeeper() == null) return;
+        // Guilds built by the keeper itself are already being populated from a result set;
+        // re-entering the keeper here would recurse.
+        if (hydrating.get()) return;
+
+        augment(StreamlineGroups.getGuildKeeper().load(getUuid()), true);
     }
 
-    @Override
-    public void save() {
-
+    /**
+     * Builds a guild without triggering a database fetch, for use by
+     * {@code GuildKeeper} while it populates one from a query result.
+     */
+    public static Guild hydrated(String uuid, CosmicSender owner) {
+        hydrating.set(true);
+        try {
+            return owner == null ? new Guild(uuid, false) : new Guild(uuid, owner, false);
+        } finally {
+            hydrating.set(false);
+        }
     }
 
     @Override
     public void save(boolean async) {
-
+        StreamlineGroups.getGuildKeeper().save(this, async);
     }
 
     @Override
@@ -74,17 +101,22 @@ public class Guild extends AbstractGroup implements Loadable<Guild> {
 
         loader.whenComplete((guild, throwable) -> {
             if (throwable != null) {
-                // Handle error...
+                throwable.printStackTrace();
                 fullyLoaded = true;
                 return;
             }
 
             if (guild.isPresent()) {
-                // do augmentation...
+                Guild stored = guild.get();
+
+                setMuted(stored.isMuted());
+                setPublic(stored.isPublic());
+                setMaxSize(stored.getMaxSize());
+                setCreateDate(stored.getCreateDate());
+                updateOwner(stored.getOwner());
             } else {
-                if (isGet) {
-                    save();
-                }
+                // Nothing stored yet -- persist the defaults so later loads find a row.
+                if (! isGet) save();
             }
 
             fullyLoaded = true;

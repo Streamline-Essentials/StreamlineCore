@@ -1,70 +1,79 @@
 package host.plas.database;
 
 import host.plas.StreamlineGroups;
-import host.plas.data.player.GroupedPlayer;
-import singularity.data.console.CosmicSender;
+import host.plas.data.Guild;
 import singularity.database.modules.DBKeeper;
 import singularity.loading.Loader;
-import singularity.utils.UserUtils;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-public class GuildLoader extends Loader<GroupedPlayer> {
-    private static GuildLoader instance;
-
+/**
+ * Holds the guilds that are currently in memory and backs them with {@link GuildKeeper}.
+ *
+ * <p>Unlike players, guilds are not per-sender, so there is no console guild; the console
+ * is not a member of anything and {@link #getConsole()} is unsupported.</p>
+ */
+public class GuildLoader extends Loader<Guild> {
+    /**
+     * Returns the module's guild loader, resolved through {@link StreamlineGroups} so that
+     * every caller shares one in-memory set.
+     */
     public static GuildLoader getInstance() {
-        if (instance == null) instance = new GuildLoader();
+        GuildLoader loader = StreamlineGroups.getGuildLoader();
+        if (loader == null) {
+            loader = new GuildLoader();
+            StreamlineGroups.setGuildLoader(loader);
+        }
 
-        return instance;
+        return loader;
     }
 
     @Override
-    public DBKeeper<GroupedPlayer> getKeeper() {
-        return StreamlineGroups.getPlayerKeeper();
+    public DBKeeper<Guild> getKeeper() {
+        return StreamlineGroups.getGuildKeeper();
+    }
+
+    /**
+     * Guilds have no console equivalent.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public Guild getConsole() {
+        throw new UnsupportedOperationException("The console does not belong to a guild.");
+    }
+
+    /**
+     * Looks a guild up by uuid.
+     *
+     * <p>Overridden so that the base class's console short-circuit -- which would call the
+     * unsupported {@link #getConsole()} -- never runs for guilds.</p>
+     */
+    @Override
+    public Optional<Guild> get(String identifier) {
+        if (identifier == null) return Optional.empty();
+
+        return getLoaded().stream().filter(a -> a.getIdentifier().equals(identifier)).findFirst();
     }
 
     @Override
-    public GroupedPlayer getConsole() {
-        CosmicSender console = UserUtils.getConsole();
-        Optional<GroupedPlayer> optional = getLoaded().stream().filter(a -> a.getIdentifier().equals(console.getUuid())).findFirst();
-        if (optional.isPresent()) return optional.get();
-
-        CompletableFuture<GroupedPlayer> loader = getOrCreateConsoleAsync();
-
-        return loader.join();
-    }
-
-    public CompletableFuture<GroupedPlayer> getOrCreateConsoleAsync() {
-        String uuid = UserUtils.getConsole().getUuid();
-
-        return CompletableFuture.supplyAsync(() -> {
-            Optional<GroupedPlayer> optional = getKeeper().load(uuid).join();
-            if (optional.isPresent()) return optional.get();
-
-            GroupedPlayer created = instantiate(uuid);
-            created.save();
-
-            return created;
-        });
+    public Guild instantiate(String identifier) {
+        // Built without loading so that instantiating does not re-enter the group manager
+        // while the loader is still deciding what to do with it.
+        return new Guild(identifier, false);
     }
 
     @Override
-    public void fireLoadEvents(GroupedPlayer savableChatter) {
+    public void fireLoadEvents(Guild loaded) {
 
     }
 
     @Override
-    public GroupedPlayer instantiate(String s) {
-        return new GroupedPlayer(s);
-    }
-
-    @Override
-    public void fireCreateEvents(GroupedPlayer savableChatter) {
+    public void fireCreateEvents(Guild created) {
 
     }
 
-    public boolean isLoaded(GroupedPlayer chatter) {
-        return isLoaded(chatter.getIdentifier());
+    public boolean isLoaded(Guild guild) {
+        return isLoaded(guild.getIdentifier());
     }
 }

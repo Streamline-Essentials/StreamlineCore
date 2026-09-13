@@ -1,11 +1,11 @@
 package host.plas.data.events;
 
-import host.plas.data.Party;
+import host.plas.data.AbstractGroup;
 import lombok.Getter;
 import singularity.data.console.CosmicSender;
 
 @Getter
-public class CreateGroupEvent<T extends Party> extends GroupEvent<T> {
+public class CreateGroupEvent<T extends AbstractGroup> extends GroupEvent<T> {
     private final CosmicSender creator;
 
     public CreateGroupEvent(T group, CosmicSender creator) {
