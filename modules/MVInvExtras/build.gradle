@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.20-R0.1-SNAPSHOT"
-    compileOnly "me.clip:placeholderapi:2.11.5"
+    compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
 
     // Multiverse
     compileOnly "com.onarandombox.multiversecore:Multiverse-Core:4.3.2-SNAPSHOT"
