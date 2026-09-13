@@ -122,6 +122,10 @@ run/
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
+# Third-party plugin JARs a module compiles against. They have no public Maven
+# artifact, so they are kept in the repo -- a CI clone cannot build without them.
+!modules/*/impl/*.jar
+
 **/target/
 **/.fastRequest/
 

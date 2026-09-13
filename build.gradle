@@ -256,6 +256,13 @@ configure(subprojects.findAll { ! it.path.startsWith(':modules') }) {
 // not published to the Streamline Maven repo -- they are plugins, not API artifacts.
 // ':modules' itself is just a container and produces nothing.
 configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':modules' }) {
+    // Keep the plain jar from colliding with the shadowed module artifact. Both write
+    // into build/libs, and CI collects everything it finds there, so an unshaded jar
+    // left beside the real one would be published as though it were the module.
+    tasks.named('jar', Jar).configure {
+        archiveClassifier.set('plain')
+    }
+
     tasks.register('deploy', Copy) {
         def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
         def modulesDir = new File(deployDir, "modules")
@@ -274,10 +281,25 @@ configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':m
     }
 
     shadowJar.finalizedBy(deploy)
+
+    // 'build' alone only wires in the plain jar, so the shadowed artifact is attached
+    // explicitly. CI runs 'gradle build' and collects what it finds, and the module JAR
+    // is the artifact that ships.
+    tasks.named('assemble').configure {
+        dependsOn tasks.named('shadowJar')
+    }
+}
+
+// The root build drives the module JARs, so a plain 'gradle clean build' produces and
+// deploys every module alongside the platform artifacts.
+tasks.named('build').configure {
+    dependsOn subprojects.findAll { it.path.startsWith(':modules') && it.path != ':modules' }
+            .collect { "${it.path}:shadowJar" }
 }
 
 // The ':modules' container has no sources; keep it from producing an empty artifact.
-project(':modules') {
+// It is absent on JitPack, which builds only the API artifacts.
+findProject(':modules')?.with {
     tasks.matching { it.name in ['shadowJar', 'jar', 'publish', 'publishToMavenLocal'] }
             .configureEach { it.enabled = false }
 }
