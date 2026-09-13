@@ -42,8 +42,8 @@ public class Statements {
                 "FirstJoin BIGINT, " +
                 "LastJoin BIGINT, " +
                 "CurrentName VARCHAR(64), " +
-                "CurrentIP VARCHAR(15), " +
-                "PlaySeconds INT, " +
+                "CurrentIP VARCHAR(45), " +
+                "PlaySeconds BIGINT, " +
                 "ProxyTouched BOOLEAN " +
                 ");;" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_meta` (" +
@@ -81,12 +81,21 @@ public class Statements {
                 "Name VARCHAR(255), " +
                 "Type VARCHAR(255) " +
                 ");;" +
+                // Type is capped at 191 so that the composite primary key fits within
+                // the 3072-byte InnoDB index limit under utf8mb4.
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%update` (" +
-                "Type VARCHAR(255), " +
-                "Identifier VARCHAR(36), " +
+                "Type VARCHAR(191) NOT NULL, " +
+                "Identifier VARCHAR(36) NOT NULL, " +
                 "ServerUuid VARCHAR(36), " +
-                "PostDate BIGINT " +
+                "PostDate BIGINT, " +
+                "PRIMARY KEY (Type, Identifier), " +
+                "INDEX `idx_update_ServerUuid` (ServerUuid), " +
+                "INDEX `idx_update_PostDate` (PostDate) " +
                 ");;" +
+                // Secondary indexes are declared inline: Oracle MySQL does not support
+                // CREATE INDEX ... IF NOT EXISTS (it is a parse error, ER_PARSE_ERROR),
+                // unlike MariaDB and SQLite. Columns that are already the PRIMARY KEY
+                // need no additional index.
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%tp_tickets` (" +
                 "Uuid VARCHAR(36) PRIMARY KEY, " +
                 "ServerName VARCHAR(255), " +
@@ -96,22 +105,10 @@ public class Statements {
                 "Z DOUBLE, " +
                 "Yaw FLOAT, " +
                 "Pitch FLOAT, " +
-                "PostDate BIGINT " +
-                ");;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%players_Uuid` ON `%table_prefix%players` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%player_meta_Uuid` ON `%table_prefix%player_meta` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%player_location_Uuid` ON `%table_prefix%player_location` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%player_permissions_Uuid` ON `%table_prefix%player_permissions` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%uuid_info_Uuid` ON `%table_prefix%uuid_info` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%saves_SavedAt` ON `%table_prefix%saves` (SavedAt);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%servers_Uuid` ON `%table_prefix%servers` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%update_Type` ON `%table_prefix%update` (Type);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%update_Identifier` ON `%table_prefix%update` (Identifier);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%update_ServerUuid` ON `%table_prefix%update` (ServerUuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%update_PostDate` ON `%table_prefix%update` (PostDate);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%tp_tickets_Uuid` ON `%table_prefix%tp_tickets` (Uuid);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%tp_tickets_ServerName` ON `%table_prefix%tp_tickets` (ServerName);;" +
-                "CREATE INDEX IF NOT EXISTS `%table_prefix%tp_tickets_PostDate` ON `%table_prefix%tp_tickets` (PostDate);;"
+                "PostDate BIGINT, " +
+                "INDEX `idx_tp_tickets_ServerName` (ServerName), " +
+                "INDEX `idx_tp_tickets_PostDate` (PostDate) " +
+                ");;"
         ),
 
         /** Inserts or updates the core player row (join times, name, IP, play seconds, proxy flag). */
@@ -226,7 +223,7 @@ public class Statements {
         PLAYER_IS_TOUCHED("SELECT ProxyTouched FROM `%table_prefix%players` WHERE Uuid = ?;"),
 
         /** Selects the server UUID and post-date of a pending update for a given type and identifier. */
-        CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
+        CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ? ORDER BY PostDate DESC LIMIT 1;"),
 
         /** Deletes the update record matching the given type and identifier. */
         CLEAR_UPDATE("DELETE FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
@@ -331,11 +328,13 @@ public class Statements {
                         "    Type TEXT, " +
                         "    PRIMARY KEY (Uuid)" +
                         ");;" +
+                        // Type/Identifier are NOT NULL because SQLite otherwise permits
+                        // NULLs in PRIMARY KEY columns, which would defeat the upsert.
                         "CREATE TABLE IF NOT EXISTS `%table_prefix%update` (" +
-                        "    Type TEXT, " +
-                        "    Identifier TEXT, " +
+                        "    Type TEXT NOT NULL, " +
+                        "    Identifier TEXT NOT NULL, " +
                         "    ServerUuid TEXT, " +
-                        "    PostDate REAL, " +
+                        "    PostDate INTEGER, " +
                         "    PRIMARY KEY (Type, Identifier) " +
                         ");;" +
                         "CREATE TABLE IF NOT EXISTS `%table_prefix%tp_tickets` (" +
@@ -469,7 +468,7 @@ public class Statements {
         PLAYER_IS_TOUCHED("SELECT ProxyTouched FROM `%table_prefix%players` WHERE Uuid = ?;"),
 
         /** Selects the server UUID and post-date of a pending update for a given type and identifier. */
-        CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),
+        CHECK_UPDATE("SELECT ServerUuid, PostDate FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ? ORDER BY PostDate DESC LIMIT 1;"),
 
         /** Deletes the update record matching the given type and identifier. */
         CLEAR_UPDATE("DELETE FROM `%table_prefix%update` WHERE Type = ? AND Identifier = ?;"),

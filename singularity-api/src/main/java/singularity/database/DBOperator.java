@@ -1,7 +1,7 @@
 package singularity.database;
 
-import gg.drak.thebase.lib.hikari.HikariConfig;
-import gg.drak.thebase.lib.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -51,6 +52,15 @@ public abstract class DBOperator {
     private Connection rawConnection;
 
     /**
+     * Tracks whether the schema-creation statements have already run for this
+     * operator, so that {@link #ensureUsable()} is a no-op after the first call.
+     */
+    private final AtomicBoolean schemaEnsured = new AtomicBoolean(false);
+
+    /** Guards schema creation so concurrent callers wait rather than racing ahead. */
+    private final Object schemaLock = new Object();
+
+    /**
      * Constructs a new {@code DBOperator}, immediately building and opening the
      * HikariCP connection pool.
      *
@@ -77,6 +87,8 @@ public abstract class DBOperator {
     public HikariDataSource buildDataSource() {
         HikariConfig config = new HikariConfig();
 
+        boolean sqlite = connectorSet.getType() == DatabaseType.SQLITE;
+
         switch (connectorSet.getType()) {
             case MYSQL:
                 config.setJdbcUrl(connectorSet.getUri());
@@ -89,11 +101,17 @@ public abstract class DBOperator {
 
                 config.setJdbcUrl(connectorSet.getUri() + getDatabaseFolder().getPath() + File.separator + connectorSet.getSqliteFileName());
 
+                // SQLite allows only one writer at a time; a larger pool just turns
+                // contention into SQLITE_BUSY errors. WAL keeps readers from blocking
+                // the writer, and busy_timeout waits instead of failing immediately.
+                config.addDataSourceProperty("journal_mode", "WAL");
+                config.addDataSourceProperty("busy_timeout", "5000");
+
                 break;
         }
         config.setPoolName(pluginUser + " - Pool");
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(2);
+        config.setMaximumPoolSize(sqlite ? 1 : 10);
+        config.setMinimumIdle(sqlite ? 1 : 2);
         config.setConnectionTimeout(30000);
         config.setIdleTimeout(600000);
         config.setMaxLifetime(1800000);
@@ -144,12 +162,17 @@ public abstract class DBOperator {
      *         {@link ExecutionResult#ERROR} if an exception was thrown
      */
     public ExecutionResult executeSingle(String statement, Consumer<PreparedStatement> statementBuilder) {
-        try (Connection connection = getConnection();
-             PreparedStatement stmt = connection.prepareStatement(statement)) {
+        try (Connection connection = getConnection()) {
+            if (connection == null) {
+                MessageUtils.logWarning("Could not obtain a connection to execute statement: " + statement);
+                return ExecutionResult.ERROR;
+            }
 
-            statementBuilder.accept(stmt);
+            try (PreparedStatement stmt = connection.prepareStatement(statement)) {
+                statementBuilder.accept(stmt);
 
-            return stmt.execute() ? ExecutionResult.YES : ExecutionResult.NO;
+                return stmt.execute() ? ExecutionResult.YES : ExecutionResult.NO;
+            }
         } catch (Exception e) {
             MessageUtils.logWarning("Failed to execute statement: " + statement, e);
             return ExecutionResult.ERROR;
@@ -167,12 +190,17 @@ public abstract class DBOperator {
      *                         {@link ResultSet}
      */
     public void executeQuery(String statement, Consumer<PreparedStatement> statementBuilder, DBAction action) {
-        try (Connection connection = getConnection();
-             PreparedStatement stmt = connection.prepareStatement(statement)) {
+        try (Connection connection = getConnection()) {
+            if (connection == null) {
+                MessageUtils.logWarning("Could not obtain a connection to execute query: " + statement);
+                return;
+            }
 
-            statementBuilder.accept(stmt);
-            try (ResultSet set = stmt.executeQuery()) {
-                action.accept(set);
+            try (PreparedStatement stmt = connection.prepareStatement(statement)) {
+                statementBuilder.accept(stmt);
+                try (ResultSet set = stmt.executeQuery()) {
+                    action.accept(set);
+                }
             }
         } catch (Exception e) {
             MessageUtils.logWarning("Failed to execute query: " + statement, e);
@@ -221,16 +249,16 @@ public abstract class DBOperator {
     }
 
     /**
-     * Ensures that the target database (schema) exists. Called by
-     * {@link #ensureUsable()} before table creation. Implementations should execute
-     * a {@code CREATE DATABASE IF NOT EXISTS} statement or equivalent.
+     * Ensures that all required tables exist in the database. Called by
+     * {@link #ensureUsable()} after database creation. Implementations should execute
+     * {@code CREATE TABLE IF NOT EXISTS} statements for every table they use.
      */
     public abstract void ensureTables();
 
     /**
-     * Ensures that all required tables exist in the database. Called by
-     * {@link #ensureUsable()} after database creation. Implementations should execute
-     * {@code CREATE TABLE IF NOT EXISTS} statements for every table they use.
+     * Ensures that the target database (schema) exists. Called by
+     * {@link #ensureUsable()} before table creation. Implementations should execute
+     * a {@code CREATE DATABASE IF NOT EXISTS} statement or equivalent.
      */
     public abstract void ensureDatabase();
 
@@ -238,11 +266,64 @@ public abstract class DBOperator {
      * Convenience method that sequentially calls {@link #ensureFile()},
      * {@link #ensureDatabase()}, and {@link #ensureTables()} to guarantee the
      * database is ready for use before any data operations.
+     *
+     * <p>The schema is only created once per operator. Callers may invoke this
+     * before every operation -- as the framework does -- without paying for the
+     * full DDL batch each time. Use {@link #ensureUsable(boolean)} to force the
+     * statements to run again.</p>
      */
     public void ensureUsable() {
-        this.ensureFile();
-        this.ensureDatabase();
-        this.ensureTables();
+        if (schemaEnsured.get()) return;
+
+        ensureUsable(false);
+    }
+
+    /**
+     * Ensures the database, schema, and tables exist.
+     *
+     * @param force if {@code true} the schema statements are executed even when they
+     *              have already run once for this operator
+     */
+    public void ensureUsable(boolean force) {
+        // Synchronized rather than a compare-and-set: a second caller must wait for the
+        // schema to actually exist. Flipping a flag up front would let it race ahead and
+        // query tables the first caller had not finished creating.
+        synchronized (schemaLock) {
+            if (! force && schemaEnsured.get()) return;
+
+            try {
+                this.ensureFile();
+                this.ensureDatabase();
+                this.ensureTables();
+
+                schemaEnsured.set(true);
+            } catch (Exception e) {
+                // Leave the flag unset so a later call retries.
+                schemaEnsured.set(false);
+                MessageUtils.logWarning("Failed to ensure the database is usable", e);
+            }
+        }
+    }
+
+    /**
+     * Closes the underlying HikariCP pool, releasing its connections and threads.
+     *
+     * <p>Should be called when the owning plugin or module is disabled. The operator
+     * remains usable afterwards: the next {@link #getConnection()} rebuilds the pool
+     * and the schema check is re-armed.</p>
+     */
+    public void close() {
+        HikariDataSource ds = this.dataSource;
+        this.dataSource = null;
+        schemaEnsured.set(false);
+
+        if (ds != null && ! ds.isClosed()) {
+            try {
+                ds.close();
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to close the database connection pool", e);
+            }
+        }
     }
 
     /**

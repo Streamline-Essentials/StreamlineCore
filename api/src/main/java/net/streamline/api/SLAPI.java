@@ -11,6 +11,7 @@ import net.streamline.api.base.timers.UserSyncTimer;
 import net.streamline.api.holders.HolderCompat;
 import net.streamline.api.permissions.MetaGrabberImpl;
 import singularity.Singularity;
+import singularity.database.CoreDBOperator;
 import singularity.interfaces.IMessenger;
 import singularity.interfaces.ISingularityExtension;
 import singularity.interfaces.IUserManager;
@@ -138,10 +139,18 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
 
     /**
      * Called when the platform plugin disables. Clears the cached LuckPerms
-     * reference to avoid stale state across reloads.
+     * reference and closes the main database pool so that its connections and
+     * threads are not leaked across reloads.
      */
     public static void onDisable() {
         lpOptional = Optional.empty();
+
+        try {
+            CoreDBOperator database = Singularity.getMainDatabase();
+            if (database != null) database.close();
+        } catch (Exception e) {
+            MessageUtils.logWarning("Could not close the main database", e);
+        }
     }
 
     /**
