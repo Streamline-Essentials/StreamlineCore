@@ -145,9 +145,10 @@ public class GroupManager {
     }
 
     public static Party createParty(CosmicSender sender, CosmicSender leader) {
-        if (hasParty(leader)) {
+        Optional<Party> existing = getParty(leader);
+        if (existing.isPresent()) {
             ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseAlreadyExists());
-            return getParty(leader).get(); // This should never be null
+            return existing.get();
         }
 
         Party party = getOrGetParty(leader);
@@ -168,8 +169,13 @@ public class GroupManager {
         }
         Party party = optional.get();
 
-        if (get(toInvite).isPresent()) {
+        if (getParty(toInvite).isPresent()) {
             ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseAlreadyInOther());
+            return;
+        }
+
+        if (party.hasMember(sender) && ! party.userHasFlag(sender, GroupFlag.INVITE)) {
+            ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorWithoutFlag(GroupFlag.INVITE));
             return;
         }
 
@@ -216,7 +222,12 @@ public class GroupManager {
             return;
         }
 
-        party.remFromInvites(invited);
+        if (party.getSize() >= party.getMaxSize()) {
+            ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseFullGroup());
+            return;
+        }
+
+        // addMember also clears the invite.
         party.addMember(invited);
 
         ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().partiesAcceptSender()
@@ -320,6 +331,11 @@ public class GroupManager {
             return;
         }
         Party party = optional.get();
+
+        if (party.hasMember(sender) && ! party.userHasFlag(sender, GroupFlag.DISBAND)) {
+            ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorWithoutFlag(GroupFlag.DISBAND));
+            return;
+        }
 
         for (CosmicSender user : party.getAllUsers()) {
             if (user.equals(sender)) {
@@ -486,6 +502,12 @@ public class GroupManager {
             return;
         }
 
+        // The owner leaving would strand the party with no leader, so it is disbanded.
+        if (party.getOwner() != null && party.getOwner().getUuid().equals(other.getUuid())) {
+            disbandParty(sender, other);
+            return;
+        }
+
         for (CosmicSender user : party.getAllUsers()) {
             if (user.equals(sender)) {
                 ModuleUtils.sendMessage(user, StreamlineGroups.getMessages().partiesLeaveSender()
@@ -520,6 +542,11 @@ public class GroupManager {
             return;
         }
         Party party = optional.get();
+
+        if (party.isMuted() && party.hasMember(sender) && ! party.userHasFlag(sender, GroupFlag.MUTE)) {
+            ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseMutedGroup());
+            return;
+        }
 
         for (CosmicSender user : party.getAllUsers()) {
             ModuleUtils.sendMessage(user, StreamlineGroups.getMessages().partiesChat()
