@@ -139,11 +139,11 @@ public class GuildKeeper extends DBKeeper<Guild> {
                 String uuid = result.getString("Uuid");
                 String ownerUuid = result.getString("OwnerUuid");
 
-                // Constructed with loading disabled so that building the guild does not
-                // re-enter the group manager while this load is still in flight.
+                // Constructed with loading disabled, and without a database fetch of its
+                // own, so that building the guild does not re-enter this keeper while the
+                // load is still in flight.
                 Optional<CosmicSender> owner = UserUtils.getOrGetSender(ownerUuid);
-                Guild g = owner.map(sender -> new Guild(uuid, sender, false))
-                        .orElseGet(() -> new Guild(uuid, false));
+                Guild g = Guild.hydrated(uuid, owner.orElse(null));
 
                 g.setMuted(result.getBoolean("IsMuted"));
                 g.setPublic(result.getBoolean("IsPublic"));

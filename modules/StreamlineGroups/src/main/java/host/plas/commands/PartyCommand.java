@@ -32,7 +32,7 @@ public class PartyCommand extends ModuleCommand {
 
     @Override
     public void run(CosmicSender sender, String[] strings) {
-        if (strings[0].equals("")) {
+        if (strings.length < 1 || strings[0].equals("")) {
             ModuleUtils.sendMessage(sender, MainMessagesHandler.MESSAGES.INVALID.ARGUMENTS_TOO_FEW.get());
             return;
         }

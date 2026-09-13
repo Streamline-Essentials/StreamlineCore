@@ -133,6 +133,18 @@ public class Messages extends ModularizedConfig {
         return getResource().getOrSetDefault("errors.base.not.in.other", "&cThat player is not in a group!");
     }
 
+    public String errorsBaseFullGroup() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("errors.base.full", "&cThat group is already full!");
+    }
+
+    public String errorsBaseMutedGroup() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("errors.base.muted", "&cThat group's chat is muted!");
+    }
+
     public String errorsBaseCannotPromoteSelf() {
         reloadResource();
 

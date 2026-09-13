@@ -11,12 +11,21 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class PlayerLoader extends Loader<GroupedPlayer> {
-    private static PlayerLoader instance;
-
+    /**
+     * Returns the module's loader.
+     *
+     * <p>Resolves through {@link StreamlineGroups} rather than holding a second static
+     * instance, so that every caller shares the one in-memory set of loaded players.</p>
+     */
     public static PlayerLoader getInstance() {
-        if (instance == null) instance = new PlayerLoader();
+        PlayerLoader loader = StreamlineGroups.getPlayerLoader();
+        if (loader == null) {
+            // Called before onEnable finished wiring the module up.
+            loader = new PlayerLoader();
+            StreamlineGroups.setPlayerLoader(loader);
+        }
 
-        return instance;
+        return loader;
     }
 
     @Override
