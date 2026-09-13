@@ -68,7 +68,10 @@ public class ChatterAdminCommand extends ModuleCommand {
                             CosmicSender other = optional.get();
                             MyLoader.getInstance().get(other.getUuid()).ifPresent(chatter -> {
                                 chatter.unload();
-                                StreamlineMessaging.getKeeper().
+                                // TODO: also remove the chatter's stored row. An unfinished
+                                //  'StreamlineMessaging.getKeeper().' call sat here and never
+                                //  compiled; neither Keeper nor DBKeeper exposes a delete, so
+                                //  the command currently only unloads.
                             });
 
                             return success();

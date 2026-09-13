@@ -4,7 +4,7 @@ import host.plas.MVInvExtras;
 import host.plas.data.WorldAction;
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.storage.resources.flat.simple.SimpleConfiguration;
+import gg.drak.thebase.storage.resources.flat.simple.SimpleConfiguration;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 

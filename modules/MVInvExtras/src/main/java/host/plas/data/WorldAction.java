@@ -2,7 +2,7 @@ package host.plas.data;
 
 import lombok.Getter;
 import lombok.Setter;
-import tv.quaint.objects.Identifiable;
+import gg.drak.thebase.objects.Identifiable;
 
 @Getter @Setter
 public class WorldAction implements Identifiable {
