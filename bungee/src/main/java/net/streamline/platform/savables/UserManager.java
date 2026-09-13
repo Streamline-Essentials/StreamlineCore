@@ -29,19 +29,42 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * BungeeCord implementation of {@link IUserManager} that manages the lifecycle
+ * of {@link CosmicPlayer} and {@link CosmicSender} objects on a BungeeCord proxy.
+ *
+ * <p>Provides player lookup, IP parsing, command execution (with optional
+ * wildcard-permission bypass), server transfer, resource-pack delivery,
+ * kick, teleport, and player-state utilities backed by the BungeeCord API.
+ */
 public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
+
+    /** The singleton instance of this user manager, set during construction. */
     @Getter
     private static UserManager instance;
 
+    /**
+     * Constructs the {@code UserManager} and registers it as the singleton instance.
+     */
     public UserManager() {
         instance = this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<CosmicPlayer> getOrCreatePlayer(ProxiedPlayer player) {
         return UserUtils.getOrCreatePlayer(player.getUniqueId().toString());
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns the console sender if {@code sender} is not a
+     * {@link ProxiedPlayer}; otherwise delegates to
+     * {@link #getOrCreatePlayer(ProxiedPlayer)}.
+     */
     @Override
     public Optional<CosmicSender> getOrCreateSender(CommandSender sender) {
         if (isConsole(sender)) {
@@ -52,11 +75,23 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         }
     }
 
+    /**
+     * Returns the display name for a {@link CommandSender}.
+     *
+     * <p>Returns the configured console name when the sender is not a player;
+     * otherwise returns the sender's own name.
+     *
+     * @param sender the BungeeCord command sender
+     * @return the display name
+     */
     public String getUsername(CommandSender sender) {
         if (isConsole(sender)) return GivenConfigs.getMainConfig().getConsoleName();
         else return sender.getName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getUsername(String uuid) {
         if (uuid.equals(GivenConfigs.getMainConfig().getConsoleDiscriminator())) return GivenConfigs.getMainConfig().getConsoleName();
@@ -67,10 +102,23 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         }
     }
 
+    /**
+     * Returns {@code true} if the given {@link CommandSender} is the proxy
+     * console rather than an online player.
+     *
+     * @param sender the sender to test
+     * @return {@code true} if {@code sender} is not a {@link ProxiedPlayer}
+     */
     public boolean isConsole(CommandSender sender) {
         return ! (sender instanceof ProxiedPlayer);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The console UUID is always considered online. For players, the proxy
+     * player list is scanned for a matching UUID.
+     */
     @Override
     public boolean isOnline(String uuid) {
         if (UserUtils.isConsole(uuid)) return true;
@@ -81,6 +129,15 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return false;
     }
 
+    /**
+     * Extracts the IP address string from a {@link ProxiedPlayer}'s socket address.
+     *
+     * <p>Returns a configured placeholder string when the player or address is
+     * {@code null}.
+     *
+     * @param player the player whose IP is required
+     * @return the host portion of the player's socket address, without port
+     */
     public String parsePlayerIP(ProxiedPlayer player) {
         if (player == null) return MainMessagesHandler.MESSAGES.DEFAULTS.IS_NULL.get();
 
@@ -93,6 +150,13 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return ipSt;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>When {@code bypass} is {@code true} and LuckPerms is available, the
+     * wildcard permission {@code "*"} is temporarily granted, the command is
+     * dispatched, and the permission is immediately revoked.
+     */
     @Override
     public boolean runAs(CosmicSender user, boolean bypass, String command) {
         CommandSender source;
@@ -126,6 +190,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ConcurrentSkipListSet<CosmicPlayer> getUsersOn(String server) {
         ConcurrentSkipListSet<CosmicPlayer> r = new ConcurrentSkipListSet<>();
@@ -141,6 +208,12 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return r;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Sends the player to the named backend server using the plugin-triggered
+     * connection reason.
+     */
     @Override
     public void connect(CosmicPlayer user, String server) {
         if (! user.isOnline()) return;
@@ -157,6 +230,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         player.connect(serverInfo, ServerConnectEvent.Reason.PLUGIN);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void sendUserResourcePack(CosmicPlayer user, CosmicResourcePack pack) {
         if (! user.isOnline()) return;
@@ -166,6 +242,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         SLAPI.getInstance().getProxyMessenger().sendMessage(ResourcePackMessageBuilder.build(user, true, user, pack));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String parsePlayerIP(String uuid) {
         ProxiedPlayer player = StreamlineBungee.getPlayer(uuid);
@@ -180,6 +259,11 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return ipSt;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns {@code 0} if the player is not online.
+     */
     @Override
     public double getPlayerPing(String uuid) {
         ProxiedPlayer player = StreamlineBungee.getPlayer(uuid);
@@ -187,6 +271,12 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return player.getPing();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Disconnects the player with a colour-processed message via
+     * {@link Messenger#codedText}.
+     */
     @Override
     public void kick(CosmicPlayer user, String message) {
         ProxiedPlayer player = StreamlineBungee.getInstance().getProxy().getPlayer(user.getUuid());
@@ -194,11 +284,20 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         player.disconnect(Messenger.getInstance().codedText(message));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ProxiedPlayer getPlayer(String uuid) {
         return StreamlineBungee.getPlayer(uuid);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Only players whose data is already loaded (i.e. present in the cache)
+     * are included in the returned map.
+     */
     @Override
     public ConcurrentSkipListMap<String, CosmicPlayer> ensurePlayers() {
         ConcurrentSkipListMap<String, CosmicPlayer> r = new ConcurrentSkipListMap<>();
@@ -214,6 +313,9 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return r;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getServerPlayerIsOn(String uuid) {
         ProxiedPlayer player = getPlayer(uuid);
@@ -228,11 +330,17 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return info.getName();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getServerPlayerIsOn(ProxiedPlayer player) {
         return getServerPlayerIsOn(player.getUniqueId().toString());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDisplayName(String uuid) {
         ProxiedPlayer player = getPlayer(uuid);
@@ -241,6 +349,13 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         return player.getDisplayName();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>On BungeeCord, teleportation is limited to connecting the player to
+     * the backend server specified in the location's {@link CosmicServer}.
+     * Fine-grained coordinate teleportation must be handled by a backend plugin.
+     */
     @Override
     public void teleport(CosmicPlayer player, CosmicLocation location) {
         if (! player.isOnline()) return;

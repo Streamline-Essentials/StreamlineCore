@@ -1,0 +1,50 @@
+name: '${name}'
+version: '${version}'
+main: '${main}'
+
+commands:
+  set-up-streamer:
+    description: Main command for StreamersUnite
+    permission: streamersunite.command.set-up-streamer
+    aliases:
+    - setupstreamer
+    - sus
+    - streamersetup
+    - stredit
+  go-live:
+    description: Command to set yourself as live
+    permission: streamersunite.command.go-live
+    aliases:
+      - on
+      - online
+      - live
+      - glive
+      - golive
+  go-offline:
+    description: Command to set yourself as offline
+    permission: streamersunite.command.go-offline
+    aliases:
+      - off
+      - unlive
+      - goff
+      - offline
+      - gooffline
+  live-rn:
+    description: Command to see who is live
+    permission: streamersunite.command.live-rn
+    aliases:
+      - lnow
+      - currentlylive
+      - checklive
+      - whoislive
+      - whoslive
+      - livern
+      - lrn
+      - livenow
+  broadcast-live:
+    description: Command to broadcast that you are live
+    permission: streamersunite.command.broadcast-live
+    aliases:
+      - bclive
+      - broadcastlive
+      - bl

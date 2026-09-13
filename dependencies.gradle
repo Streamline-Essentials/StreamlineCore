@@ -1,16 +1,53 @@
 ext {
-    IMPL = [
-            "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "org.pf4j:pf4j:3.10.0",
-            "commons-codec:commons-codec:1.5",
-            "ch.qos.logback:logback-classic:1.5.6",
+    // Must be shaded into the host plugin JAR. PF4J's PluginClassLoader parents to the
+    // loader that loaded PF4J — if PF4J comes from Spigot/Velocity libraries:, modules
+    // cannot see singularity.* (e.g. CosmicModule).
+    HOST_SHADED_LIBRARIES = [
+            'org.pf4j:pf4j:3.10.0',
+            'com.github.zafarkhaja:java-semver:0.9.0',
     ]
-    SHADOW = [
-            "com.github.ben-manes.caffeine:caffeine:3.1.8",
-            "org.pf4j:pf4j:3.10.0",
-            "commons-codec:commons-codec:1.5",
-            "ch.qos.logback:logback-classic:1.5.6",
+
+    // Maven Central libs loaded at runtime by Spigot/Bungee `libraries:` and the
+    // Velocity runtime library loader. Spigot does not resolve transitives — list them.
+    PLATFORM_LIBRARIES = [
+            'com.zaxxer:HikariCP:5.1.0',
+            'org.slf4j:slf4j-api:2.0.13',
+            'org.xerial:sqlite-jdbc:3.46.1.0',
+            'com.mysql:mysql-connector-j:8.0.33',
+            'com.google.protobuf:protobuf-java:3.21.9',
+            'com.google.code.gson:gson:2.8.8',
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
+            'org.checkerframework:checker-qual:3.37.0',
+            'com.google.errorprone:error_prone_annotations:2.21.1',
+            'commons-codec:commons-codec:1.15',
+            'ch.qos.logback:logback-classic:1.5.6',
+            'ch.qos.logback:logback-core:1.5.6',
+            'com.google.guava:guava:30.1-jre',
+            'com.google.guava:failureaccess:1.0.1',
+            'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava',
+            'com.google.code.findbugs:jsr305:3.0.2',
+            'com.google.j2objc:j2objc-annotations:1.3',
+            'io.lettuce:lettuce-core:6.8.0.RELEASE',
+            'redis.clients.authentication:redis-authx-core:0.1.1-beta2',
+            'io.netty:netty-common:4.1.118.Final',
+            'io.netty:netty-handler:4.1.118.Final',
+            'io.netty:netty-resolver:4.1.118.Final',
+            'io.netty:netty-buffer:4.1.118.Final',
+            'io.netty:netty-transport:4.1.118.Final',
+            'io.netty:netty-transport-native-unix-common:4.1.118.Final',
+            'io.netty:netty-codec:4.1.118.Final',
+            'io.netty:netty-resolver-dns:4.1.118.Final',
+            'io.netty:netty-codec-dns:4.1.118.Final',
+            'io.projectreactor:reactor-core:3.6.6',
+            'org.reactivestreams:reactive-streams:1.0.4',
     ]
+
+    // Compile classpath for modules that reference platform libs directly.
+    IMPL = PLATFORM_LIBRARIES + HOST_SHADED_LIBRARIES
+
+    // Mod loaders shade downloadable + host libs.
+    SHADOW = PLATFORM_LIBRARIES + HOST_SHADED_LIBRARIES
+
     ANNO = [
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
             "org.pf4j:pf4j:3.10.0",
@@ -22,12 +59,34 @@ ext {
     COMP_ONLY = [
     ]
     OTHER_PLUGINS = [
-            "net.luckperms:api:5.4",
-            "me.clip:placeholderapi:2.11.6",
+            "net.luckperms:api:5.5",
+            "me.clip:placeholderapi:2.12.3",
             "org.geysermc.geyser:api:2.2.0-SNAPSHOT",
             "org.geysermc.floodgate:api:2.2.3-SNAPSHOT",
     ]
     FILES = [
-//            rootProject.rootDir.getPath().toString() + "/impl/sqlite-jdbc.jar" // not needed
+    ]
+
+    // Paths stripped from TheBase fat jar when proxy platforms shade it.
+    THE_BASE_EXCLUDES = [
+            'org/sqlite/**',
+            'sqlite-jdbc.properties',
+            'com/mysql/**',
+            'mysql/**',
+            'com/zaxxer/hikari/**',
+            'com/google/gson/**',
+            'com/github/benmanes/caffeine/**',
+            'org/slf4j/**',
+            'ch/qos/logback/**',
+            'com/google/protobuf/**',
+            'google/protobuf/**',
+            'org/junit/**',
+            'gg/drak/thebase/lib/mysql/**',
+            'gg/drak/thebase/lib/hikari/**',
+            'gg/drak/thebase/lib/sqlite/**',
+            'META-INF/maven/com.zaxxer.HikariCP/**',
+            'META-INF/maven/org.xerial/sqlite-jdbc/**',
+            'META-INF/maven/com.mysql/**',
+            'META-INF/maven/mysql/**',
     ]
 }

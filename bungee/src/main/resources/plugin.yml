@@ -10,6 +10,9 @@ depend:
 soft-depend:
   - Geyser-Bungee
   - floodgate
+# Maven Central libs — downloaded by BungeeCord (not shaded into this jar).
+libraries:
+${librariesBlock}
 
 commands:
   streamlinespigot:

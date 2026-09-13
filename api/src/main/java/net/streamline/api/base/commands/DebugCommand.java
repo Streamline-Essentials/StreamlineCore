@@ -13,7 +13,20 @@ import singularity.utils.UuidUtils;
 
 import java.util.concurrent.ConcurrentSkipListSet;
 
+/**
+ * Command that exposes low-level debugging utilities to administrators.
+ *
+ * <p>Provides sub-commands for inspecting Geyser/Floodgate Bedrock detection,
+ * resolving player UUIDs and names, and publishing raw or wrapped messages to
+ * Redis channels. Registered under the {@code streamlinedebug} / {@code sldebug}
+ * aliases.</p>
+ */
 public class DebugCommand extends CosmicCommand {
+
+    /**
+     * Registers the debug command with the {@code streamline-base} module under
+     * the primary label {@code streamlinedebug} and the alias {@code sldebug}.
+     */
     public DebugCommand() {
         super(
                 "streamline-base",
@@ -23,6 +36,24 @@ public class DebugCommand extends CosmicCommand {
         );
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Dispatches execution to one of the following sub-commands based on the
+     * first argument:
+     * <ul>
+     *   <li>{@code geyser} — queries the Geyser/Floodgate holder for Bedrock
+     *       UUID / name detection or enabled status.</li>
+     *   <li>{@code uuid} — resolves a player name to its UUID via
+     *       {@link singularity.utils.UuidUtils}.</li>
+     *   <li>{@code name} — resolves a UUID to a player name.</li>
+     *   <li>{@code redis send} — wraps and publishes a message to a Redis channel.</li>
+     *   <li>{@code redis send-raw} — publishes a message to a Redis channel
+     *       without the standard wrapper.</li>
+     * </ul>
+     *
+     * @param ctx the command context carrying the sender and parsed arguments
+     */
     @Override
     public void run(CommandContext<CosmicCommand> ctx) {
         if (! ctx.isArgUsable(0)) {
@@ -194,6 +225,22 @@ public class DebugCommand extends CosmicCommand {
         return;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns context-sensitive completions:
+     * <ul>
+     *   <li>Argument 1: top-level actions ({@code geyser}, {@code uuid},
+     *       {@code name}, {@code redis}).</li>
+     *   <li>Argument 2: sub-actions relevant to the chosen top-level action,
+     *       or online player names / UUIDs where appropriate.</li>
+     *   <li>Argument 3: online player UUIDs or names for the {@code geyser uuid}
+     *       and {@code geyser name} sub-commands respectively.</li>
+     * </ul>
+     *
+     * @param ctx the command context carrying the sender and current argument list
+     * @return a sorted set of tab-completion candidates
+     */
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> ctx) {
         if (ctx.getArgCount() <= 1) {

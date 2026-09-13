@@ -3,9 +3,12 @@ package singularity.database;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,53 +35,330 @@ import singularity.interfaces.ISingularityExtension;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
+/**
+ * Concrete {@link DBOperator} implementation that handles all StreamlineCore database
+ * operations, including player data persistence, UUID tracking, cross-server update
+ * signalling, server registry entries, and teleportation tickets.
+ *
+ * <p>All long-running I/O is performed asynchronously via {@link CompletableFuture}
+ * to avoid blocking the server thread. A short-lived Caffeine {@link AsyncCache} is
+ * used to deduplicate concurrent load requests for the same player UUID.</p>
+ */
 public class CoreDBOperator extends DBOperator {
+
+    /**
+     * A 10-second write-after-access Caffeine cache that prevents duplicate
+     * asynchronous load operations for the same player UUID from hitting the
+     * database simultaneously.
+     */
     @Getter @Setter
     private static AsyncCache<String, Optional<CosmicSender>> loadingPlayers = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofSeconds(10))
             .buildAsync();
             ;
 
+    /**
+     * Dedicated pool for all database I/O.
+     *
+     * <p>Database work must not run on {@link java.util.concurrent.ForkJoinPool#commonPool()}:
+     * several operations block on nested futures (for example {@code loadPlayer} joins
+     * {@code exists}), and the common pool's parallelism is {@code cores - 1}, which is a
+     * single thread on a 2-core host. Blocking JDBC calls there starve the pool and can
+     * deadlock. Threads are daemons so they never keep the JVM alive.</p>
+     */
+    @Getter
+    private static final ExecutorService databaseExecutor = Executors.newFixedThreadPool(
+            Math.max(4, Runtime.getRuntime().availableProcessors()),
+            runnable -> {
+                Thread thread = new Thread(runnable, "Singularity Database Worker");
+                thread.setDaemon(true);
+                return thread;
+            });
+
+    /**
+     * Creates a new {@code CoreDBOperator} using the supplied connection configuration
+     * and registers it under the plugin label {@code "StreamlineCore"}.
+     *
+     * @param set the {@link ConnectorSet} describing the database connection
+     */
     public CoreDBOperator(ConnectorSet set) {
         super(set, "StreamlineCore");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Also discards any in-flight player load results, so that a later reconnect
+     * does not serve entries cached against the closed pool.</p>
+     */
+    @Override
+    public void close() {
+        super.close();
+
+        getLoadingPlayers().synchronous().invalidateAll();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes the {@code CREATE_DATABASE} statement for the current connector
+     * type. Does nothing if the statement is {@code null} or blank.</p>
+     */
     @Override
     public void ensureDatabase() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_DATABASE, this.getConnectorSet());
         if (s1 == null) return;
         if (s1.isBlank() || s1.isEmpty()) return;
 
-        this.execute(s1, stmt -> {});
+        failIfErrored(this.execute(s1, stmt -> {}), "create the database");
     }
 
+    /**
+     * Throws when any statement in a schema batch failed.
+     *
+     * <p>{@link #execute} reports failures as {@link ExecutionResult#ERROR} instead of
+     * throwing, so schema setup would otherwise appear to succeed and never be retried.
+     *
+     * @param results the results of the executed batch
+     * @param action  a short description of what was attempted, used in the message
+     */
+    private void failIfErrored(List<ExecutionResult> results, String action) {
+        if (results.stream().anyMatch(r -> r == ExecutionResult.ERROR)) {
+            throw new IllegalStateException("Failed to " + action + "; see the logged SQL errors above.");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Executes the {@code CREATE_TABLES} statement for the current connector
+     * type. Does nothing if the statement is {@code null} or blank.</p>
+     */
     @Override
     public void ensureTables() {
         String s1 = Statements.getStatement(Statements.StatementType.CREATE_TABLES, this.getConnectorSet());
         if (s1 == null) return;
         if (s1.isBlank() || s1.isEmpty()) return;
 
-        this.execute(s1, stmt -> {});
+        failIfErrored(this.execute(s1, stmt -> {}), "create the database tables");
+
+        migrateSchema();
     }
 
+    /**
+     * Applies idempotent schema migrations to pre-existing MySQL installations.
+     *
+     * <p>{@code CREATE TABLE IF NOT EXISTS} cannot alter a table that already exists,
+     * so schema corrections only reach fresh databases unless they are migrated
+     * explicitly. Each step checks the current state first and is safe to re-run.
+     * SQLite needs none of this: its types are dynamic and its {@code update} table
+     * has always declared the composite key.</p>
+     */
+    private void migrateSchema() {
+        if (getType() != DatabaseType.MYSQL) return;
+
+        migrateUpdateTable();
+        migratePlayerColumns();
+    }
+
+    /**
+     * Widens the {@code players} columns that were originally declared too narrow:
+     * {@code CurrentIP} could not hold an IPv6 address ({@code VARCHAR(15)}), and
+     * {@code PlaySeconds} was an {@code INT} that silently wrapped the long value
+     * written to it.
+     */
+    private void migratePlayerColumns() {
+        String table = this.getConnectorSet().getTablePrefix() + "players";
+
+        if (! columnMatches(table, "CurrentIP", "varchar", 45L)) {
+            MessageUtils.logInfo("Widening '" + table + "'.CurrentIP to hold IPv6 addresses.");
+            this.executeSingle("ALTER TABLE `" + table + "` MODIFY CurrentIP VARCHAR(45);", stmt -> {});
+        }
+
+        if (! columnMatches(table, "PlaySeconds", "bigint", null)) {
+            MessageUtils.logInfo("Widening '" + table + "'.PlaySeconds to BIGINT.");
+            this.executeSingle("ALTER TABLE `" + table + "` MODIFY PlaySeconds BIGINT;", stmt -> {});
+        }
+    }
+
+    /**
+     * Checks whether a column already has the expected type, so a migration can be
+     * skipped when it has run before.
+     *
+     * @param table     the table to inspect
+     * @param column    the column to inspect
+     * @param dataType  the expected {@code DATA_TYPE}, lower-case (e.g. {@code varchar})
+     * @param maxLength the expected character length, or {@code null} to ignore length
+     * @return {@code true} if the column already matches, or if its state could not be
+     *         determined -- in which case no migration should be attempted
+     */
+    private boolean columnMatches(String table, String column, String dataType, Long maxLength) {
+        AtomicBoolean matches = new AtomicBoolean(true);
+
+        this.executeQuery(
+                "SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS " +
+                        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?;",
+                stmt -> {
+                    try {
+                        stmt.setString(1, table);
+                        stmt.setString(2, column);
+                    } catch (Exception e) {
+                        MessageUtils.logWarning("Failed to bind column lookup for " + table + "." + column, e);
+                    }
+                },
+                rs -> {
+                    try {
+                        if (! rs.next()) return; // Column absent: leave it alone.
+
+                        boolean typeOk = dataType.equalsIgnoreCase(rs.getString("DATA_TYPE"));
+                        boolean lengthOk = maxLength == null
+                                || maxLength == rs.getLong("CHARACTER_MAXIMUM_LENGTH");
+
+                        matches.set(typeOk && lengthOk);
+                    } catch (Exception e) {
+                        MessageUtils.logWarning("Failed to read column metadata for " + table + "." + column, e);
+                    }
+                });
+
+        return matches.get();
+    }
+
+    /**
+     * Brings the {@code update} table on pre-existing MySQL installations in line with
+     * the current schema.
+     *
+     * <p>The table was originally created without a primary key, so the
+     * {@code ON DUPLICATE KEY UPDATE} in {@code PUT_UPDATE} could never fire and every
+     * post appended a new row. {@code CREATE TABLE IF NOT EXISTS} cannot repair an
+     * existing table, so the duplicate rows are collapsed (keeping the most recent per
+     * {@code Type}/{@code Identifier} pair) and the composite primary key is added.</p>
+     *
+     * <p>Idempotent and safe to run repeatedly: it does nothing once the key exists.
+     * SQLite is unaffected -- its table has always declared the key.</p>
+     */
+    private void migrateUpdateTable() {
+        if (getType() != DatabaseType.MYSQL) return;
+
+        String table = this.getConnectorSet().getTablePrefix() + "update";
+
+        AtomicBoolean hasPrimaryKey = new AtomicBoolean(false);
+        this.executeQuery(
+                "SELECT COUNT(*) FROM information_schema.STATISTICS " +
+                        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = 'PRIMARY';",
+                stmt -> {
+                    try {
+                        stmt.setString(1, table);
+                    } catch (Exception e) {
+                        MessageUtils.logWarning("Failed to bind table name while checking the update table", e);
+                    }
+                },
+                rs -> {
+                    try {
+                        if (rs.next()) hasPrimaryKey.set(rs.getInt(1) > 0);
+                        else hasPrimaryKey.set(true); // Unknown: do not attempt to migrate.
+                    } catch (Exception e) {
+                        MessageUtils.logWarning("Failed to read update table metadata", e);
+                        hasPrimaryKey.set(true);
+                    }
+                });
+
+        if (hasPrimaryKey.get()) return;
+
+        MessageUtils.logInfo("Migrating the '" + table + "' table: removing duplicates and adding a primary key.");
+
+        // Collapse duplicates by rebuilding the table with one row per (Type, Identifier),
+        // keeping the newest PostDate. A grouped copy is used because InnoDB exposes
+        // no row id with which to break ties between rows sharing a PostDate.
+        String temp = table + "_migrating";
+
+        this.executeSingle("DROP TABLE IF EXISTS `" + temp + "`;", stmt -> {});
+
+        ExecutionResult dedupe = this.executeSingle(
+                "CREATE TABLE `" + temp + "` (" +
+                        "Type VARCHAR(191) NOT NULL, " +
+                        "Identifier VARCHAR(36) NOT NULL, " +
+                        "ServerUuid VARCHAR(36), " +
+                        "PostDate BIGINT, " +
+                        "PRIMARY KEY (Type, Identifier), " +
+                        "INDEX `idx_update_ServerUuid` (ServerUuid), " +
+                        "INDEX `idx_update_PostDate` (PostDate)" +
+                        ") AS SELECT Type, Identifier, " +
+                        "SUBSTRING_INDEX(GROUP_CONCAT(ServerUuid ORDER BY PostDate DESC), ',', 1) AS ServerUuid, " +
+                        "MAX(PostDate) AS PostDate " +
+                        "FROM `" + table + "` " +
+                        "WHERE Type IS NOT NULL AND Identifier IS NOT NULL " +
+                        "GROUP BY Type, Identifier;", stmt -> {});
+
+        if (dedupe == ExecutionResult.ERROR) {
+            MessageUtils.logWarning("Could not rebuild '" + table + "'; leaving it untouched.");
+            this.executeSingle("DROP TABLE IF EXISTS `" + temp + "`;", stmt -> {});
+            return;
+        }
+
+        // Timestamped so a second migration never collides with an earlier backup.
+        String backup = table + "_old_" + System.currentTimeMillis();
+
+        ExecutionResult swap = this.executeSingle(
+                "RENAME TABLE `" + table + "` TO `" + backup + "`, " +
+                        "`" + temp + "` TO `" + table + "`;", stmt -> {});
+
+        if (swap == ExecutionResult.ERROR) {
+            MessageUtils.logWarning("Could not swap in the migrated '" + table + "'; leaving it untouched.");
+            this.executeSingle("DROP TABLE IF EXISTS `" + temp + "`;", stmt -> {});
+            return;
+        }
+
+        // The pre-migration rows are kept rather than dropped, so the original data can
+        // be recovered if the grouped rebuild lost anything unexpectedly. It is safe to
+        // delete by hand once the migration is confirmed good.
+        MessageUtils.logInfo("Migrated the '" + table + "' table successfully. "
+                + "The original rows were preserved as '" + backup + "' and can be dropped once verified.");
+    }
+
+    /**
+     * Persists all sections of a {@link CosmicPlayer} (main data, meta, location,
+     * permissions) to the database and fires a {@link SavePlayerEvent}.
+     *
+     * @param player the player whose data should be saved
+     * @param async  if {@code true} the save is performed on a background thread;
+     *               if {@code false} the calling thread blocks until completion
+     */
     public void savePlayer(CosmicPlayer player, boolean async) {
         if (async) {
             CompletableFuture.runAsync(() -> {
-                savePlayerAsync(player).join();
+                savePlayerSync(player);
 
                 new SavePlayerEvent(player).fire();
-            });
+            }, getDatabaseExecutor());
         } else {
-            savePlayerAsync(player).join();
+            // The synchronous path runs on the calling thread. Callers are often
+            // already database workers, and dispatching then blocking would tie one up
+            // for the duration of another worker's task.
+            savePlayerSync(player);
 
             new SavePlayerEvent(player).fire();
         }
     }
 
+    /**
+     * Asynchronously persists all sections of a {@link CosmicPlayer} to the database
+     * and fires a {@link SavePlayerEvent}. Equivalent to
+     * {@link #savePlayer(CosmicPlayer, boolean)} with {@code async = true}.
+     *
+     * @param player the player whose data should be saved
+     */
     public void savePlayer(CosmicPlayer player) {
         savePlayer(player, true);
     }
 
+    /**
+     * Checks whether the given player UUID has ever had their {@code ProxyTouched}
+     * flag set in the database.
+     *
+     * @param uuid the player UUID to check
+     * @return {@code true} if the player is recorded as proxy-touched (or the check
+     *         could not be executed); {@code false} if they are not
+     */
     public boolean isPlayerTouched(String uuid) {
         ensureUsable();
 
@@ -87,7 +367,7 @@ public class CoreDBOperator extends DBOperator {
         if (s1.isBlank() || s1.isEmpty()) return true;
 
         AtomicBoolean atomicBoolean = new AtomicBoolean(true);
-        
+
         this.executeQuery(s1, stmt -> {
             try {
                 stmt.setString(1, uuid);
@@ -98,19 +378,38 @@ public class CoreDBOperator extends DBOperator {
             try {
                 if (rs.next()) {
                     boolean isTouched = rs.getBoolean("ProxyTouched");
-                    
+
                     atomicBoolean.set(isTouched);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        
+
         return atomicBoolean.get();
     }
 
+    /**
+     * Writes main, meta, location, and permissions rows for a {@link CosmicPlayer}
+     * to the database and posts a cross-server player update signal.
+     *
+     * @param player the player to persist
+     * @return a {@link CompletableFuture} that resolves to {@code true} on success
+     *         or {@code false} if any statement was unavailable
+     */
     private CompletableFuture<Boolean> savePlayerAsync(CosmicPlayer player) {
-        return CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> savePlayerSync(player), getDatabaseExecutor());
+    }
+
+    /**
+     * Writes main, meta, location, and permissions rows for a {@link CosmicPlayer} on
+     * the calling thread and posts a cross-server player update signal.
+     *
+     * @param player the player to persist
+     * @return {@code true} on success, or {@code false} if any statement was unavailable
+     */
+    private boolean savePlayerSync(CosmicPlayer player) {
+        {
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
             if (s1 == null) return false;
             if (s1.isBlank() || s1.isEmpty()) return false;
@@ -200,9 +499,6 @@ public class CoreDBOperator extends DBOperator {
                 if (s1 == null) return false;
                 if (s1.isBlank() || s1.isEmpty()) return false;
 
-                s1 = s1.replace("%uuid%", player.getUuid());
-                s1 = s1.replace("%bypassing_permissions%", String.valueOf(player.getPermissions().isBypassingPermissions()));
-
                 this.execute(s1, stmt -> {
                     try {
                         stmt.setString(1, player.getUuid());
@@ -221,9 +517,18 @@ public class CoreDBOperator extends DBOperator {
             DefaultUpdaters.getPlayerUpdater().update(player.getUuid());
 
             return true;
-        });
+        }
     }
 
+    /**
+     * Persists a {@link CosmicSender} (non-player) to the database and fires a
+     * {@link SaveSenderEvent}. If the sender is actually a {@link CosmicPlayer},
+     * this delegates to {@link #savePlayer(CosmicPlayer, boolean)}.
+     *
+     * @param sender the sender whose data should be saved
+     * @param async  if {@code true} the save runs on a background thread;
+     *               if {@code false} the calling thread blocks until completion
+     */
     public void saveSender(CosmicSender sender, boolean async) {
         if (sender instanceof CosmicPlayer) {
             savePlayer((CosmicPlayer) sender, async);
@@ -232,23 +537,51 @@ public class CoreDBOperator extends DBOperator {
 
         if (async) {
             CompletableFuture.runAsync(() -> {
-                saveSenderAsync(sender).join();
+                saveSenderSync(sender);
 
                 new SaveSenderEvent(sender).fire();
-            });
+            }, getDatabaseExecutor());
         } else {
-            saveSenderAsync(sender).join();
+            // Runs on the calling thread, as in savePlayer.
+            saveSenderSync(sender);
 
             new SaveSenderEvent(sender).fire();
         }
     }
 
+    /**
+     * Asynchronously persists a {@link CosmicSender} (non-player) to the database
+     * and fires a {@link SaveSenderEvent}. Equivalent to
+     * {@link #saveSender(CosmicSender, boolean)} with {@code async = true}.
+     *
+     * @param sender the sender whose data should be saved
+     */
     public void saveSender(CosmicSender sender) {
         saveSender(sender, true);
     }
 
+    /**
+     * Writes main, meta, location (zeroed-out), and permissions rows for a
+     * {@link CosmicSender} (console or non-player entity) to the database, then
+     * signals a cross-server update.
+     *
+     * @param sender the sender to persist
+     * @return a {@link CompletableFuture} resolving to {@code true} on success or
+     *         {@code false} if any statement was unavailable
+     */
     private CompletableFuture<Boolean> saveSenderAsync(CosmicSender sender) {
-        return CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> saveSenderSync(sender), getDatabaseExecutor());
+    }
+
+    /**
+     * Writes main, meta, location (zeroed-out), and permissions rows for a
+     * {@link CosmicSender} on the calling thread, then signals a cross-server update.
+     *
+     * @param sender the sender to persist
+     * @return {@code true} on success, or {@code false} if any statement was unavailable
+     */
+    private boolean saveSenderSync(CosmicSender sender) {
+        {
             String s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_MAIN, this.getConnectorSet());
             if (s1 == null) return false;
             if (s1.isBlank() || s1.isEmpty()) return false;
@@ -301,7 +634,9 @@ public class CoreDBOperator extends DBOperator {
                 });
             }
 
-            if (true) {
+            // A non-player sender has no real location; a zeroed placeholder row is
+            // written so the location table always has a matching entry.
+            {
                 s1 = Statements.getStatement(Statements.StatementType.PUSH_PLAYER_LOCATION, this.getConnectorSet());
                 if (s1 == null) return false;
                 if (s1.isBlank() || s1.isEmpty()) return false;
@@ -338,9 +673,6 @@ public class CoreDBOperator extends DBOperator {
                 if (s1 == null) return false;
                 if (s1.isBlank() || s1.isEmpty()) return false;
 
-                s1 = s1.replace("%uuid%", sender.getUuid());
-                s1 = s1.replace("%bypassing_permissions%", String.valueOf(sender.getPermissions().isBypassingPermissions()));
-
                 this.execute(s1, stmt -> {
                     try {
                         stmt.setString(1, sender.getUuid());
@@ -359,16 +691,31 @@ public class CoreDBOperator extends DBOperator {
             DefaultUpdaters.getPlayerUpdater().update(sender.getUuid());
 
             return true;
-        });
+        }
     }
 
+    /**
+     * Asynchronously loads a {@link CosmicPlayer} from the database by UUID,
+     * creating a new default record if no existing entry is found. Concurrent
+     * requests for the same UUID are deduplicated via the {@link #loadingPlayers}
+     * cache.
+     *
+     * @param uuid the player UUID to load
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the loaded (or newly created) player, or empty if the load statements
+     *         are unavailable
+     */
     public CompletableFuture<Optional<CosmicSender>> loadPlayer(String uuid) {
-        CompletableFuture<Optional<CosmicSender>> future = getLoadingPlayers().getIfPresent(uuid);
-        if (future == null || future.isDone()) {
-            CompletableFuture<Optional<CosmicSender>> loading = CompletableFuture.supplyAsync(() -> {
+        // get(key, mappingFunction) is atomic, so concurrent callers for the same uuid
+        // share a single load rather than racing as they did with getIfPresent-then-put.
+        // The entry is evicted as soon as the load finishes: this cache exists only to
+        // collapse in-flight duplicates, never to serve results. Holding completed
+        // loads would make reload() and the cross-server updater read stale data.
+        CompletableFuture<Optional<CosmicSender>> future =
+                getLoadingPlayers().get(uuid, (key, executor) -> CompletableFuture.supplyAsync(() -> {
                 ensureUsable();
 
-                if (! exists(uuid).join()) {
+                if (! existsSync(uuid)) {
                     CosmicPlayer player = UserUtils.createPlayer(uuid);
                     savePlayer(player, false);
 
@@ -470,21 +817,38 @@ public class CoreDBOperator extends DBOperator {
                     }
                 });
 
-                getLoadingPlayers().synchronous().invalidate(uuid);
-
                 return Optional.of(player);
-            });
+            }, getDatabaseExecutor()));
 
-            getLoadingPlayers().put(uuid, loading);
-
-            future = loading;
-        }
-
-        return future;
+        // Eviction happens on completion, outside the supplier, so that the entry is
+        // only removed once the cache has finished populating it. The next caller then
+        // re-reads the database.
+        return future.whenComplete((result, error) -> getLoadingPlayers().synchronous().invalidate(uuid));
     }
 
+    /**
+     * Asynchronously checks whether a player record with the given UUID already
+     * exists in the main player table.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to {@code true} if the player
+     *         exists, or {@code false} otherwise
+     */
     public CompletableFuture<Boolean> exists(String uuid) {
-        return CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> existsSync(uuid), getDatabaseExecutor());
+    }
+
+    /**
+     * Checks on the calling thread whether a player record with the given UUID exists.
+     *
+     * <p>Used by operations that are already running on a database worker thread, so
+     * they do not block one worker while waiting on another.</p>
+     *
+     * @param uuid the player UUID to query
+     * @return {@code true} if the player exists, {@code false} otherwise
+     */
+    public boolean existsSync(String uuid) {
+        {
             ensureUsable();
 
             String s1 = Statements.getStatement(Statements.StatementType.PLAYER_EXISTS, this.getConnectorSet());
@@ -496,21 +860,32 @@ public class CoreDBOperator extends DBOperator {
                 try {
                     stmt.setString(1, uuid);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    MessageUtils.logWarning("Failed to bind uuid for exists check", e);
                 }
             }, rs -> {
                 try {
-                    atomicBoolean.set(rs.next());
+                    // PLAYER_EXISTS is a SELECT EXISTS(...), which always returns exactly
+                    // one row holding 0 or 1. The answer is that value, not the presence
+                    // of the row.
+                    if (rs.next()) atomicBoolean.set(rs.getBoolean(1));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    MessageUtils.logWarning("Failed to read exists result", e);
                     atomicBoolean.set(false);
                 }
             });
 
             return atomicBoolean.get();
-        });
+        }
     }
 
+    /**
+     * Asynchronously persists a {@link UuidInfo} record (UUID, usernames, IPs) to
+     * the database.
+     *
+     * @param uuidInfo the UUID info to save
+     * @return a {@link CompletableFuture} resolving to {@code true} on success or
+     *         {@code false} if the statement was unavailable
+     */
     public CompletableFuture<Boolean> saveUuidInfo(UuidInfo uuidInfo) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -535,9 +910,17 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return true;
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously loads the {@link UuidInfo} record for the given UUID from the
+     * database.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the found record, or empty if no entry exists
+     */
     public CompletableFuture<Optional<UuidInfo>> loadUuidInfo(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -545,8 +928,6 @@ public class CoreDBOperator extends DBOperator {
             String s1 = Statements.getStatement(Statements.StatementType.PULL_UUID_INFO, this.getConnectorSet());
             if (s1 == null) return Optional.empty();
             if (s1.isBlank() || s1.isEmpty()) return Optional.empty();
-
-            s1 = s1.replace("%uuid%", uuid);
 
             AtomicReference<Optional<UuidInfo>> uuidInfo = new AtomicReference<>(Optional.empty());
             this.executeQuery(s1, stmt -> {
@@ -571,9 +952,15 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return uuidInfo.get();
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously loads every {@link UuidInfo} row from the database.
+     *
+     * @return a {@link CompletableFuture} resolving to a thread-safe set containing
+     *         all UUID info records; never {@code null} but may be empty
+     */
     public CompletableFuture<ConcurrentSkipListSet<UuidInfo>> pullAllUuidInfo() {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -603,13 +990,28 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return uuids.get();
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that removes the pending update record
+     * for the given update type and resource identifier from the database.
+     *
+     * @param updateType the update type whose record should be cleared
+     * @param identifier the resource identifier to clear
+     */
     public void clearUpdateAsync(UpdateType<?> updateType, String identifier) {
-        CompletableFuture.runAsync(() -> clearUpdate(updateType, identifier).join());
+        CompletableFuture.runAsync(() -> clearUpdate(updateType, identifier).join(), getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously removes the pending update record for the given update type and
+     * resource identifier from the database.
+     *
+     * @param updateType the update type whose record should be removed
+     * @param identifier the resource identifier to clear
+     * @return a {@link CompletableFuture} that completes when the deletion is done
+     */
     public CompletableFuture<Void> clearUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -624,13 +1026,30 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that writes a new update record for the
+     * given update type and resource identifier, stamped with the current server UUID
+     * and timestamp.
+     *
+     * @param updateType the update type to post an update for
+     * @param identifier the resource identifier that changed
+     */
     public void postUpdateAsync(UpdateType<?> updateType, String identifier) {
-        CompletableFuture.runAsync(() -> postUpdate(updateType, identifier).join());
+        CompletableFuture.runAsync(() -> postUpdate(updateType, identifier).join(), getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously writes a new update record for the given update type and
+     * resource identifier, stamped with the current server UUID and the current
+     * system time.
+     *
+     * @param updateType the update type to post an update for
+     * @param identifier the resource identifier that changed
+     * @return a {@link CompletableFuture} that completes when the insert is done
+     */
     public CompletableFuture<Void> postUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -656,9 +1075,18 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously queries the update table for the most recent record matching
+     * the given update type and resource identifier.
+     *
+     * @param updateType the update type to check
+     * @param identifier the resource identifier to look up
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the latest {@link UpdateInfo}, or empty if no record exists
+     */
     public CompletableFuture<Optional<UpdateInfo>> checkUpdate(UpdateType<?> updateType, String identifier) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -695,13 +1123,26 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return date.get();
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that upserts a {@link SavedServer} row
+     * in the servers table.
+     *
+     * @param server the server to persist
+     */
     public void putServerAsync(SavedServer server) {
-        CompletableFuture.runAsync(() -> putServer(server).join());
+        CompletableFuture.runAsync(() -> putServer(server).join(), getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously upserts a {@link SavedServer} row (UUID, name, type) in the
+     * servers table.
+     *
+     * @param server the server to persist
+     * @return a {@link CompletableFuture} that completes when the upsert is done
+     */
     public CompletableFuture<Void> putServer(SavedServer server) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -722,9 +1163,17 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously loads a {@link SavedServer} record from the database by its
+     * UUID string.
+     *
+     * @param uuid the server UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the server if found, or empty otherwise
+     */
     public CompletableFuture<Optional<SavedServer>> pullServer(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -761,13 +1210,27 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return server.get();
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that upserts a {@link TPTicket} row in
+     * the teleportation tickets table.
+     *
+     * @param ticket the teleportation ticket to persist
+     */
     public void postTPTicketAsync(TPTicket ticket) {
-        CompletableFuture.runAsync(() -> postTPTicket(ticket).join());
+        CompletableFuture.runAsync(() -> postTPTicket(ticket).join(), getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously upserts a {@link TPTicket} (player UUID, target server, world,
+     * coordinates, rotation, and creation timestamp) in the teleportation tickets
+     * table.
+     *
+     * @param ticket the teleportation ticket to persist
+     * @return a {@link CompletableFuture} that completes when the upsert is done
+     */
     public CompletableFuture<Void> postTPTicket(TPTicket ticket) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -801,13 +1264,26 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Fires-and-forgets an asynchronous task that deletes the teleportation ticket
+     * for the given player UUID.
+     *
+     * @param uuid the player UUID whose ticket should be removed
+     */
     public void clearTPTicketAsync(String uuid) {
-        CompletableFuture.runAsync(() -> clearTPTicket(uuid).join());
+        CompletableFuture.runAsync(() -> clearTPTicket(uuid).join(), getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously deletes the teleportation ticket associated with the given
+     * player UUID from the database.
+     *
+     * @param uuid the player UUID whose ticket should be removed
+     * @return a {@link CompletableFuture} that completes when the deletion is done
+     */
     public CompletableFuture<Void> clearTPTicket(String uuid) {
         return CompletableFuture.runAsync(() -> {
             ensureUsable();
@@ -822,9 +1298,17 @@ public class CoreDBOperator extends DBOperator {
                     e.printStackTrace();
                 }
             });
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously retrieves the pending {@link TPTicket} for the given player
+     * UUID, if one exists.
+     *
+     * @param uuid the player UUID to query
+     * @return a {@link CompletableFuture} resolving to an {@link Optional} containing
+     *         the ticket, or empty if none is pending
+     */
     public CompletableFuture<Optional<TPTicket>> getTPTicket(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -872,9 +1356,16 @@ public class CoreDBOperator extends DBOperator {
             });
 
             return ticket.get();
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously loads every {@link TPTicket} row from the database.
+     * Logs the count of collected tickets at debug level when results are present.
+     *
+     * @return a {@link CompletableFuture} resolving to a thread-safe set containing
+     *         all pending teleportation tickets; never {@code null} but may be empty
+     */
     public CompletableFuture<ConcurrentSkipListSet<TPTicket>> pullAllTPTickets() {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
@@ -919,52 +1410,66 @@ public class CoreDBOperator extends DBOperator {
             if (! tickets.isEmpty()) MessageUtils.logDebug("Collected " + tickets.size() + " teleportation tickets.");
 
             return tickets;
-        });
+        }, getDatabaseExecutor());
     }
 
+    /**
+     * Asynchronously deletes all database rows associated with the given player UUID.
+     * Equivalent to {@link #delete(String, boolean)} with {@code async = true}.
+     *
+     * @param uuid the player UUID whose data should be removed
+     */
     public void delete(String uuid) {
         delete(uuid, true);
     }
 
+    /**
+     * Deletes all database rows associated with the given player UUID.
+     *
+     * @param uuid  the player UUID whose data should be removed
+     * @param async if {@code true} the deletion runs on a background thread;
+     *              if {@code false} the calling thread blocks until completion
+     */
     public void delete(String uuid, boolean async) {
         if (async) {
-            CompletableFuture.runAsync(() -> deletePlayer(uuid).join());
+            CompletableFuture.runAsync(() -> deletePlayer(uuid).join(), getDatabaseExecutor());
         } else {
             deletePlayer(uuid).join();
         }
     }
 
+    /**
+     * Asynchronously removes all rows for the given player UUID from every player
+     * table (main, meta, location, permissions, and any others covered by the
+     * {@code DROP_PLAYER} statement).
+     *
+     * @param uuid the player UUID to delete
+     * @return a {@link CompletableFuture} resolving to {@code true} if the deletion
+     *         succeeded, or {@code false} if the statement was blank or no rows were
+     *         affected
+     */
     public CompletableFuture<Boolean> deletePlayer(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
             ensureUsable();
 
             String s1 = Statements.getStatement(Statements.StatementType.DROP_PLAYER, this.getConnectorSet());
-            if (s1.isBlank()) return false;
+            if (s1 == null || s1.isBlank()) return false;
 
-            AtomicBoolean success = new AtomicBoolean(false);
-            this.executeQuery(s1, stmt -> {
+            // DROP_PLAYER is a ';;'-delimited batch of DELETEs. execute() splits it and
+            // runs each sub-statement, which takes a single uuid parameter, as DML.
+            List<ExecutionResult> results = this.execute(s1, stmt -> {
                 try {
                     stmt.setString(1, uuid);
-                    stmt.setString(2, uuid);
-                    stmt.setString(3, uuid);
-                    stmt.setString(4, uuid);
-                    stmt.setString(5, uuid);
                 } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }, rs -> {
-                try {
-                    if (rs.next()) {
-                        success.set(true);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    MessageUtils.logWarning("Failed to bind uuid for player deletion", e);
                 }
             });
 
-            if (success.get()) MessageUtils.logDebug("Deleted player data for " + uuid + ".");
+            boolean success = ! results.isEmpty() && results.stream().noneMatch(r -> r == ExecutionResult.ERROR);
 
-            return success.get();
-        });
+            if (success) MessageUtils.logDebug("Deleted player data for " + uuid + ".");
+
+            return success;
+        }, getDatabaseExecutor());
     }
 }

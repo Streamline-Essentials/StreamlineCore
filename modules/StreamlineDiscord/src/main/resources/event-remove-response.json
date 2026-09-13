@@ -1,0 +1,9 @@
+{
+  "title": "Event Setup",
+  "description": "Successfully removed the event(s) for route `%this_identifier%`:%this_type_named%",
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

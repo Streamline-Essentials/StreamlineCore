@@ -1,0 +1,36 @@
+Party:
+  member:
+    priority: 1
+    max: -1
+    name: "&cMEMBER"
+    flags:
+      - invite
+      - chat
+  moderator:
+    priority: 2
+    max: -1
+    name: "&cMODERATOR"
+    flags:
+      - moderator
+      - invite
+      - disband
+      - warp
+      - promote
+      - demote
+      - chat
+      - mute
+      - mute_bypass
+  leader:
+    priority: 3
+    max: 1
+    name: "&cLEADER"
+    flags:
+      - leader
+      - invite
+      - disband
+      - warp
+      - promote
+      - demote
+      - chat
+      - mute
+      - mute_bypass

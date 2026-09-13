@@ -16,12 +16,46 @@ import singularity.utils.UserUtils;
 import java.util.ArrayList;
 import java.util.Optional;
 
+/**
+ * RAT placeholder expansion that exposes core Streamline server and user data.
+ *
+ * <p>The expansion is registered under the {@code streamline} namespace.
+ * Categories of placeholders provided (all prefixed with {@code %streamline_}):
+ * <ul>
+ *   <li>Server stats — {@code version}, {@code players_max},
+ *       {@code players_online}, {@code users_online},
+ *       {@code players_loaded}, {@code users_loaded}.</li>
+ *   <li>Module stats — {@code modules_loaded}, {@code modules_enabled},
+ *       {@code modules_colorized} and their {@code _count} variants.</li>
+ *   <li>Default message aliases — {@code null}, {@code true}, {@code false},
+ *       {@code online}, {@code offline} and their {@code placeholders_} prefixed
+ *       counterparts.</li>
+ *   <li>Parse helpers — {@code parse_NAME:::expr} (evaluate an
+ *       expression in a named player's context) and {@code ?L:expr}
+ *       (evaluate on the proxy).</li>
+ *   <li>Per-user placeholders — ping, online status, UUID, display names,
+ *       prefix/suffix, play-time, IP, server, location coordinates, and
+ *       {@code ?R:expr} for per-user proxy evaluation.</li>
+ * </ul>
+ */
 public class StreamlineExpansion extends RATExpansion {
+
+    /**
+     * Constructs the expansion and logs its registration to the base module's
+     * logger.
+     */
     public StreamlineExpansion() {
         super(new RATExpansionBuilder("streamline"));
         BaseModule.getInstance().logInfo(getClass().getSimpleName() + " is registered!");
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Registers all Streamline placeholder replaceables with the RAT engine,
+     * covering server statistics, module info, constant message aliases,
+     * on-the-fly parse helpers, and per-user data fields.</p>
+     */
     @Override
     public void init() {
         new IdentifiedReplaceable(this, "version", (s) -> Singularity.getInstance().getPlatform().getVersion()).register();

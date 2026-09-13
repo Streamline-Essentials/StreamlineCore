@@ -1,7 +1,6 @@
 package net.streamline.platform.listeners;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
-import com.destroystokyo.paper.profile.PlayerProfile;
 import host.plas.bou.utils.ClassHelper;
 import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.Messenger;
@@ -18,7 +17,21 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Bukkit event listener for Paper-specific events that are not available on
+ * plain Spigot servers.
+ *
+ * <p>Only registers itself when the runtime is detected as a Paper server
+ * (via {@link host.plas.bou.utils.ClassHelper#isPaper()}). The main event
+ * handled here is {@link com.destroystokyo.paper.event.server.PaperServerListPingEvent},
+ * which provides richer server-list metadata than the vanilla Spigot equivalent.
+ */
 public class PaperListener implements Listener {
+    /**
+     * Constructs and conditionally registers this listener. If the server is
+     * not running Paper, the listener is created but never registered with the
+     * Bukkit plugin manager, so no events will be dispatched to it.
+     */
     public PaperListener() {
         if (! ClassHelper.isPaper()) return;
 
@@ -26,6 +39,14 @@ public class PaperListener implements Listener {
         StreamlineSpigot.getInstance().logInfo("PaperListener registered.");
     }
 
+    /**
+     * Handles the Paper server-list ping event, firing a cross-platform
+     * {@link singularity.events.server.ping.PingReceivedEvent} and applying any
+     * modifications (MOTD, player sample, max players, server icon) back onto
+     * the Bukkit event before it is sent to the connecting client.
+     *
+     * @param event the Paper server-list ping event
+     */
     @EventHandler
     public void onPing(PaperServerListPingEvent event) {
         String hostName;
@@ -64,21 +85,20 @@ public class PaperListener implements Listener {
 
         // Set the sample of the server (the players displayed when hovering over the player count)
         try {
-            event.getPlayerSample().clear();
+            event.getListedPlayers().clear();
 
-            List<PlayerProfile> playerSample = new ArrayList<>();
+            List<PaperServerListPingEvent.ListedPlayerInfo> playerSample = new ArrayList<>();
             for (PingedResponse.PlayerInfo playerInfo : pingReceivedEvent.getResponse().getPlayers().getSample()) {
                 try {
-                    PlayerProfile profile = Bukkit.getServer().createProfile(playerInfo.getUniqueId());
-                    profile.setName(Messenger.getInstance().codedString(playerInfo.getName()));
-                    playerSample.add(profile);
-                } catch (Throwable e) {
+                    String name = Messenger.getInstance().codedString(playerInfo.getName());
+                    playerSample.add(new PaperServerListPingEvent.ListedPlayerInfo(name, playerInfo.getUniqueId()));
+                } catch (Exception e) {
                     // do nothing.
                 }
             }
 
-            event.getPlayerSample().addAll(playerSample);
-        } catch (Throwable e) {
+            event.getListedPlayers().addAll(playerSample);
+        } catch (Exception e) {
             StreamlineSpigot.getInstance().logWarning("Failed to set player sample: " + e.getMessage());
             StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
         }

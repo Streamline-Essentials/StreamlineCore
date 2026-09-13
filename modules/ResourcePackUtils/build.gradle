@@ -1,0 +1,5 @@
+apply from: "$rootDir/modules/module.gradle"
+
+dependencies {
+    compileOnly "commons-codec:commons-codec:1.5"
+}

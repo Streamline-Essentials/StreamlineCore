@@ -1,0 +1,23 @@
+apply from: "$rootDir/modules/module.gradle"
+
+ext {
+    jdaVersion = "5.0.0-beta.21"
+}
+
+dependencies {
+    compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
+
+    // Sibling modules, resolved from this build rather than published snapshots.
+    // Depend on the plain jars: shadowJar writes into the same build/libs directory,
+    // so naming the configuration keeps the producing task unambiguous.
+    compileOnly project(path: ":modules:StreamlineMessaging", configuration: "archives")
+    compileOnly project(path: ":modules:StreamlineGroups", configuration: "archives")
+
+    shadow(implementation("net.dv8tion:JDA:$jdaVersion") {
+        exclude(group: "org.slf4j")
+    })
+    shadow(implementation("club.minnced:discord-webhooks:0.8.4") {
+        exclude(group: "org.slf4j")
+    })
+    shadow(implementation("ch.qos.logback:logback-classic:1.5.6"))
+}

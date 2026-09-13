@@ -1,0 +1,3 @@
+# Use StreamlineCore's redis?
+# Note: Only uses redis if StreamlineCore has it enabled.
+use-redis: true

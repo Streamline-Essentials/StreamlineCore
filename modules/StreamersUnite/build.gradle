@@ -1,0 +1,18 @@
+apply from: "$rootDir/modules/module.gradle"
+
+repositories {
+    maven { url = "https://repo.kryptonmc.org/releases" }
+
+    // TAB's API is published only through JitPack -- its own developer documentation
+    // directs users there and it is on neither CodeMC nor Maven Central. Scoped to that
+    // one group so nothing else can silently resolve from JitPack.
+    maven {
+        url = "https://jitpack.io"
+        content { includeGroup "com.github.NEZNAMY" }
+    }
+}
+
+dependencies {
+    // Must not be shaded or relocated, per TAB's API documentation.
+    compileOnly "com.github.NEZNAMY:TAB-API:5.0.7"
+}

@@ -1,0 +1,26 @@
+# Settings for sending the pack to players...
+pack:
+  # Pack URL.
+  url: "https://linktopack.com"
+  # The text shown when people join the server.
+  # (On the Minecraft pop-up prompt.)
+  prompt: "&eWe recommend using our pack."
+  # The hash for the pack.
+  hash: "hashForPack"
+  # Whether to force players to use the pack.
+  # Will kick them if they don't use it.
+  force: false
+  # Whether to check with the Proxy for the pack details.
+  # Use this if using BungeeCord. (And put on back-end servers.)
+  network-handled: true
+  # The ticks to wait before sending the pack to the player.
+  # This is to ensure the player is completely logged in before
+  # sending them data. Keep this higher than the amount of time
+  # it takes to transfer between servers.
+  # 20 = 1 second.
+  wait: 20
+
+# Players who are exempt from receiving the pack.
+exempt:
+  name-starts-with:
+    - "."

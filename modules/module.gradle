@@ -1,0 +1,120 @@
+// Shared conventions for StreamlineCore modules.
+//
+// Each module under modules/ applies this file and needs nothing else in its own
+// build.gradle beyond its module-specific repositories and dependencies:
+//
+//     apply from: "$rootDir/modules/module.gradle"
+//
+// The java/shadow/lombok plugins, the common repositories, Java 11 and the PF4J manifest
+// all come from here and from the root build.gradle's allprojects block, so a module
+// declares none of them itself.
+//
+// The module's own gradle.properties supplies name, version, and the pf.* values.
+// StreamlineCore itself is consumed as a project dependency, so modules always build
+// against the API sitting next to them in this repo rather than a published artifact.
+
+// The module's gradle.properties is read explicitly rather than through
+// project.properties. Gradle merges the root's gradle.properties over the subproject's,
+// so keys the root also defines -- 'version' and 'group' above all -- would otherwise
+// resolve to StreamlineCore's values and every module JAR would carry the core version.
+ext.moduleProps = new Properties()
+def modulePropsFile = file('gradle.properties')
+if (modulePropsFile.isFile()) {
+    modulePropsFile.withInputStream { ext.moduleProps.load(it) }
+}
+
+// Reads a module setting, falling back to project.properties for anything the module
+// does not define itself.
+ext.moduleProp = { String key, Object fallback = null ->
+    def value = ext.moduleProps.getProperty(key)
+    if (value == null || value.toString().trim().isEmpty()) {
+        value = project.properties.containsKey(key) ? project.properties[key] : fallback
+    }
+    return value
+}
+
+version = ext.moduleProp('version', rootProject.version)
+group = ext.moduleProp('group', rootProject.group)
+
+// Supplies THE_BASE, HOST_SHADED_LIBRARIES and PLATFORM_LIBRARIES, so module builds
+// stay pinned to the same library versions as the core they run inside.
+apply from: "$rootDir/dependencies.gradle"
+
+ext {
+    // Modules that need Bukkit-specific helpers compile against BAPI, which itself
+    // exposes the API; the rest compile against the API alone.
+    needsBapi = moduleProp('include-bapi', 'false').toString().toBoolean()
+
+    // PF4J reads a comma-separated list; 'none' means no dependencies at all.
+    pfDependencies = {
+        def raw = moduleProp('pf.dependencies', 'none').toString()
+        return raw == 'none' ? '' : raw.split(',\\s*').join(', ')
+    }()
+
+    pfRequires = {
+        def raw = moduleProp('pf.requires', 'none').toString()
+        return raw == 'none' ? '' : raw
+    }()
+
+    // PF4J's entry point: the pf.class package plus the module name.
+    moduleName = moduleProp('name', project.name).toString()
+    pfPluginClass = "${moduleProp('pf.class')}.${moduleName}"
+}
+
+repositories {
+    // Streamline artifacts come from CodeMC, never JitPack. The root build already
+    // declares this plus Spigot, PlaceholderAPI, Sonatype and the other shared repos,
+    // so a module only adds a repository when it needs one of its own.
+    maven {
+        name = "streamline-essentials"
+        url = "https://repo.codemc.io/repository/streamline-essentials/"
+    }
+}
+
+dependencies {
+    compileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
+
+    // StreamlineCore resolves from this build, so a module always compiles against the
+    // API sitting beside it rather than a pinned published artifact.
+    //
+    // The 'shadow' configuration carries the core's bundled classes. The core projects
+    // declare their libraries as compileOnly, which is not transitive, so a plain
+    // project() dependency exposes none of singularity.*, org.pf4j or gg.drak.thebase.
+    def coreProject = project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'
+
+    annotationProcessor(compileOnly(project(path: coreProject, configuration: 'shadow')))
+
+    // BAPI is a Bukkit-side layer built on BukkitOfUtils and the Spigot API, both of
+    // which it declares compileOnly. Modules that compile against BAPI use those types
+    // directly (host.plas.bou.*), so they are supplied here to match.
+    if (project.ext.needsBapi) {
+        compileOnly "gg.drak:BukkitOfUtils:${rootProject.properties["bou_version"]}"
+        compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
+        compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
+    }
+
+    // PF4J and TheBase are compileOnly (hence non-transitive) upstream, but modules
+    // compile directly against CosmicModule, @Extension and TheBase's utilities.
+    compileOnly(THE_BASE)
+    compileOnly(HOST_SHADED_LIBRARIES)
+    compileOnly(PLATFORM_LIBRARIES)
+}
+
+// The core shadow JARs must exist before a module compiles against them.
+compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
+
+shadowJar {
+    manifest {
+        attributes 'Plugin-Class': project.ext.pfPluginClass
+        attributes 'Plugin-Id': moduleProp('pf.id', project.name).toString()
+        attributes 'Plugin-Version': project.version.toString()
+        attributes 'Plugin-Requires': project.ext.pfRequires
+        attributes 'Plugin-Dependencies': project.ext.pfDependencies
+        attributes 'Plugin-Description': moduleProp('pf.description', '').toString()
+        attributes 'Plugin-Provider': moduleProp('pf.provider', '').toString()
+        attributes 'Plugin-License': moduleProp('pf.license', '').toString()
+    }
+
+    archiveClassifier.set('')
+    archiveFileName = "${project.ext.moduleName}-${project.version}.jar"
+}

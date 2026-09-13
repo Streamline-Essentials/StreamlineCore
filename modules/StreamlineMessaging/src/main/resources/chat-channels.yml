@@ -1,0 +1,50 @@
+# List of custom chat channels.
+# NOTE: the chat channel "none" is bound to default local chat!
+# Current types:
+# ROOM = just a room people can join and leave
+# LOCAL = local server chat only / only goes to players on their server
+# GLOBAL = global network chat / goes to all players on the network
+staff:
+  type: ROOM
+  prefix: "#"
+  permissions:
+    access: "streamline.messaging.chats.staff.access"
+    formatting: "streamline.messaging.chats.staff.formatting"
+  message: "&c&lSC &d%streamline_user_formatted% &7(&e%streamline_user_server%&7) &9&l>> &c%this_message%"
+  view:
+    permission: "streamline.messaging.chats.staff.view"
+    toggle:
+      permission: "streamline.messaging.chats.staff.toggle"
+builders:
+  type: ROOM
+  prefix: "B#"
+  permissions:
+    access: "streamline.messaging.chats.builders.access"
+    formatting: "streamline.messaging.chats.builders.formatting"
+  message: "&2&lB &d%streamline_user_formatted% &7(&e%streamline_user_server%&7) &9&l>> &2%this_message%"
+  view:
+    permission: "streamline.messaging.chats.builders.view"
+    toggle:
+      permission: "streamline.messaging.chats.builders.toggle"
+global:
+  type: GLOBAL
+  prefix: "!"
+  permissions:
+    access: "streamline.messaging.chats.global.access"
+    formatting: "streamline.messaging.chats.global.formatting"
+  message: "&3&lGLOBAL &d%streamline_user_formatted% &7(&e%streamline_user_server%&7) &9&l>> &f%this_message%"
+  view:
+    permission: "streamline.messaging.chats.global.view"
+    toggle:
+      permission: "streamline.messaging.chats.global.toggle"
+local:
+  type: LOCAL
+  prefix: "-"
+  permissions:
+    access: "streamline.messaging.chats.local.access"
+    formatting: "streamline.messaging.chats.local.formatting"
+  message: "&3&lLOCAL &d%streamline_user_formatted% &9&l>> &f%this_message%"
+  view:
+    permission: "streamline.messaging.chats.local.view"
+    toggle:
+      permission: "streamline.messaging.chats.local.toggle"

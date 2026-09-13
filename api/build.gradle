@@ -3,8 +3,9 @@ dependencies {
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
     annotationProcessor(THE_BASE)
-    implementation(IMPL)
     compileOnly(COMP_ONLY)
+    compileOnly(PLATFORM_LIBRARIES)
+    // Thin singularity artifact (project classes only; libs are compileOnly upstream).
     implementation project(path: ':StreamlineCore-Singularity', configuration: 'shadow')
 
     // Other Plugins
@@ -12,15 +13,12 @@ dependencies {
 
     // The Base
     compileOnly(THE_BASE)
-
-    // Files.
-//    implementation(shadow(files(FILES)));
 }
 
 compileJava {
-    dependsOn(":StreamlineCore-Singularity:jar")
+    dependsOn(":StreamlineCore-Singularity:shadowJar")
 }
 
 delombok {
-    dependsOn(":StreamlineCore-Singularity:jar")
+    dependsOn(":StreamlineCore-Singularity:shadowJar")
 }
