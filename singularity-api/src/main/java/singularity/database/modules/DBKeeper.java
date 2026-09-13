@@ -348,9 +348,9 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
      * {@link #deleteRaw(String)} when the active database type is
      * {@link DatabaseType#MYSQL}.
      *
-     * <p>Not abstract, so that keepers written before deletion existed keep compiling.
-     * The default deletes nothing and reports {@code false}; a keeper that stores data
-     * across several tables should override this and remove every row it owns.</p>
+     * <p>Deletion is optional: the default removes nothing and reports {@code false},
+     * so a keeper only supports it by overriding this method. A keeper whose resource
+     * spans several tables should remove every row it owns here.</p>
      *
      * @param identifier the identifier of the resource to remove
      * @return {@code true} if the delete was carried out; {@code false} otherwise
@@ -364,7 +364,7 @@ public abstract class DBKeeper<T extends Identifiable> implements Identifiable {
      * {@link #deleteRaw(String)} when the active database type is
      * {@link DatabaseType#SQLITE}.
      *
-     * <p>Not abstract, for the same reason as {@link #deleteMysql(String)}.</p>
+     * <p>Optional in the same way as {@link #deleteMysql(String)}.</p>
      *
      * @param identifier the identifier of the resource to remove
      * @return {@code true} if the delete was carried out; {@code false} otherwise

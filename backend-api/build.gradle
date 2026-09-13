@@ -7,26 +7,27 @@ dependencies {
     annotationProcessor(ANNO)
     annotationProcessor(THE_BASE)
     compileOnly(COMP_ONLY)
+    compileOnly(PLATFORM_LIBRARIES)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
-    // The Base
-    compileOnly("gg.drak:BukkitOfUtils:1.18.0")
+    // The Base / BOU
+    compileOnly("gg.drak:BukkitOfUtils:${rootProject.properties["bou_version"]}")
 
-    // Streamline API.
+    // Thin Streamline API (includes singularity classes; no Maven Central libs).
     implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
 
-    compileOnly 'me.clip:placeholderapi:2.11.2'
+    compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
 
     // Files.
     compileOnly(files(FILES))
 }
 
 compileJava {
-    dependsOn(":StreamlineCore-API:jar")
+    dependsOn(":StreamlineCore-API:shadowJar")
 }
 
 delombok {
-    dependsOn(":StreamlineCore-API:jar")
+    dependsOn(":StreamlineCore-API:shadowJar")
 }

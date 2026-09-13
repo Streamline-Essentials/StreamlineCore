@@ -7,21 +7,45 @@ dependencies {
     annotationProcessor(ANNO)
     annotationProcessor(THE_BASE)
     compileOnly(COMP_ONLY)
+    compileOnly(PLATFORM_LIBRARIES)
 
     // Other Plugins
     compileOnly(OTHER_PLUGINS)
 
-    // The Base
-    implementation(shadow(THE_BASE))
+    // The Base (not on Maven Central — shade, but strip libs the downloader provides)
+    shadow(THE_BASE)
 
-    // Streamline API.
-    implementation project(path: ':StreamlineCore-API', configuration: 'shadow')
+    // Thin Streamline API
+    shadow project(path: ':StreamlineCore-API', configuration: 'shadow')
 }
 
 compileJava {
-    dependsOn(":StreamlineCore-API:jar")
+    dependsOn(":StreamlineCore-API:shadowJar")
 }
 
 delombok {
-    dependsOn(":StreamlineCore-API:jar")
+    dependsOn(":StreamlineCore-API:shadowJar")
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+
+    THE_BASE_EXCLUDES.each { exclude it }
+
+    // Never shade downloadable libs — plugin.yml libraries: handles them.
+    exclude 'com/zaxxer/hikari/**'
+    exclude 'org/sqlite/**'
+    exclude 'com/mysql/**'
+    exclude 'com/google/protobuf/**'
+    exclude 'com/google/gson/**'
+    exclude 'com/github/benmanes/caffeine/**'
+    // Keep org.pf4j — required on the host classloader for modules.
+    exclude 'ch/qos/logback/**'
+    exclude 'org/slf4j/**'
+    exclude 'com/google/common/**'
+    exclude 'io/lettuce/**'
+    exclude 'io/netty/**'
+    exclude 'reactor/**'
+    exclude 'org/reactivestreams/**'
+    exclude 'redis/clients/**'
 }

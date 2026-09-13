@@ -4,6 +4,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
@@ -18,6 +19,7 @@ import net.streamline.base.StreamlineVelocity;
 import net.streamline.base.runnables.PlayerChecker;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.commands.ProperCommand;
+import net.streamline.platform.libs.VelocityLibraryLoader;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.savables.ConsoleHolder;
@@ -156,6 +158,12 @@ public abstract class BasePlugin implements ISingularityExtension {
     private final Metrics.Factory metricsFactory;
 
     /**
+     * This plugin's Velocity {@link PluginContainer}, used to attach runtime libraries.
+     */
+    @Getter
+    private final PluginContainer pluginContainer;
+
+    /**
      * The periodic task that ensures all online players have an initialised {@link CosmicPlayer}.
      */
     @Getter @Setter
@@ -169,13 +177,15 @@ public abstract class BasePlugin implements ISingularityExtension {
      * @param logger         the SLF4J logger provided by Velocity
      * @param dataFolder     the plugin data directory
      * @param metricsFactory the bStats factory used to create metric instances
+     * @param pluginContainer this plugin's container (for classpath library attachment)
      */
-    public BasePlugin(ProxyServer server, Logger logger, File dataFolder, Metrics.Factory metricsFactory) {
+    public BasePlugin(ProxyServer server, Logger logger, File dataFolder, Metrics.Factory metricsFactory, PluginContainer pluginContainer) {
         this.proxy = server;
         this.logger = logger;
         this.dataDirectory = dataFolder.toPath();
         this.dataFolder = dataFolder;
         this.metricsFactory = metricsFactory;
+        this.pluginContainer = pluginContainer;
 
         Path parentPath = this.dataDirectory.getParent();
         if (parentPath != null) {
@@ -267,6 +277,9 @@ public abstract class BasePlugin implements ISingularityExtension {
      */
     @Subscribe
     public void onEnable(ProxyInitializeEvent event) {
+        // Velocity has no native libraries: downloader — attach Maven Central jars first.
+        VelocityLibraryLoader.ensureLoaded(getProxy(), getPluginContainer(), getDataDirectory(), getLogger());
+
         userManager = new UserManager();
         messenger = new Messenger();
         consoleHolder = new ConsoleHolder();

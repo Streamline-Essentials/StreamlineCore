@@ -1,8 +1,7 @@
 package net.streamline.base;
 
 import com.google.inject.Inject;
-import com.velocitypowered.api.plugin.Dependency;
-import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.ProxyServer;
 import net.streamline.metrics.Metrics;
 import net.streamline.platform.BasePlugin;
@@ -33,15 +32,17 @@ public class StreamlineVelocity extends BasePlugin {
     /**
      * Constructs the plugin via Velocity dependency injection.
      *
-     * @param server         the Velocity {@link ProxyServer} instance
-     * @param logger         the SLF4J logger provided by Velocity
-     * @param metricsFactory the bStats {@link Metrics.Factory} for registering charts
+     * @param server          the Velocity {@link ProxyServer} instance
+     * @param logger          the SLF4J logger provided by Velocity
+     * @param metricsFactory  the bStats {@link Metrics.Factory} for registering charts
+     * @param pluginContainer this plugin's container (for runtime library attachment)
      */
     @Inject
     public StreamlineVelocity(ProxyServer server,
                               Logger logger,
-                              Metrics.Factory metricsFactory) {
-        super(server, logger, getOwnFolder(), metricsFactory);
+                              Metrics.Factory metricsFactory,
+                              PluginContainer pluginContainer) {
+        super(server, logger, getOwnFolder(), metricsFactory, pluginContainer);
     }
 
     /**

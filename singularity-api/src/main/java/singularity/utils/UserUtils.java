@@ -442,6 +442,10 @@ public class UserUtils {
 
         if (! UuidUtils.isValidPlayerUUID(uuid)) return Optional.empty();
 
+        // DB is initialised asynchronously; pre-login and other early callers can
+        // race ahead of GivenConfigs/Singularity database setup.
+        Singularity.awaitDatabaseReady();
+
         CosmicPlayer player = createTemporaryPlayer(uuid);
         player.load();
 

@@ -55,7 +55,7 @@ public class GroupsDependency extends ModuleDependencyHolder<StreamlineGroups> {
         ConcurrentSkipListMap<String, CosmicSender> r = new ConcurrentSkipListMap<>();
         if (! isPresent()) return r;
 
-        Optional<Party> optional = GroupManager.get(uuid);
+        Optional<Party> optional = GroupManager.getParty(uuid);
         if (optional.isEmpty()) return r;
         Party party = optional.get();
 

@@ -8,8 +8,10 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
 
     // Sibling modules, resolved from this build rather than published snapshots.
-    compileOnly project(":modules:StreamlineMessaging")
-    compileOnly project(":modules:StreamlineGroups")
+    // Depend on the plain jars: shadowJar writes into the same build/libs directory,
+    // so naming the configuration keeps the producing task unambiguous.
+    compileOnly project(path: ":modules:StreamlineMessaging", configuration: "archives")
+    compileOnly project(path: ":modules:StreamlineGroups", configuration: "archives")
 
     shadow(implementation("net.dv8tion:JDA:$jdaVersion") {
         exclude(group: "org.slf4j")

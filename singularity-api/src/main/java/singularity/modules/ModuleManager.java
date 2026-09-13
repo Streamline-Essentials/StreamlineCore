@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -125,6 +126,32 @@ public class ModuleManager {
             protected PluginDescriptorFinder createPluginDescriptorFinder() {
                 return new ManifestPluginDescriptorFinder();
             }
+
+            /**
+             * PF4J's {@code stopPlugin} always calls {@link PluginWrapper#getPlugin()},
+             * which constructs the plugin if the field is still null. That re-enters
+             * {@link CosmicModule} construction (and {@link #registerModule}) during
+             * unload of a never-started wrapper — stack overflow. Drop those without
+             * instantiating.
+             */
+            @Override
+            protected PluginState stopPlugin(String pluginId, boolean stopDependents) {
+                PluginWrapper wrapper = getPlugin(pluginId);
+                if (wrapper != null && ! isPf4jPluginMaterialized(wrapper)) {
+                    return wrapper.getPluginState();
+                }
+                return super.stopPlugin(pluginId, stopDependents);
+            }
+
+            @Override
+            protected boolean unloadPlugin(String pluginId, boolean unloadDependents) {
+                PluginWrapper wrapper = getPlugin(pluginId);
+                if (wrapper != null && ! isPf4jPluginMaterialized(wrapper)) {
+                    dropUnmaterializedPf4jPlugin(this, wrapper);
+                    return true;
+                }
+                return super.unloadPlugin(pluginId, unloadDependents);
+            }
         };
         setPluginManager(manager);
         return manager;
@@ -170,25 +197,55 @@ public class ModuleManager {
      * Attempts to add a module to the loaded-module registry.  If a module
      * with the same identifier is already registered and is not malleable the
      * request is rejected with a warning; if it is malleable the existing
-     * entry is first unregistered.  Fires a {@link ModuleLoadEvent} for
-     * {@link CosmicModule} instances.
+     * entry is replaced in-memory only (PF4J is not unloaded — calling
+     * {@code unloadPlugin} while {@link CosmicModule} is still constructing
+     * recursively recreates the plugin via {@link PluginWrapper#getPlugin()}).
+     * Fires a {@link ModuleLoadEvent} for {@link CosmicModule} instances.
      *
      * @param module the module to load; must not be {@code null}
      */
     public static void loadModule(@NonNull ModuleLike module) {
-        if (getLoadedModules().containsKey(module.getIdentifier())) {
-            if (! getModule(module.getIdentifier()).isMalleable()) {
+        String id = module.getIdentifier();
+        ModuleLike existing = getLoadedModules().get(id);
+        if (existing != null) {
+            if (existing == module) {
+                return;
+            }
+            if (! existing.isMalleable()) {
                 MessageUtils.logWarning(
-                        "Module '" + module.getIdentifier() + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers"
+                        "Module '" + id + "' by '" + module.getAuthorsStringed() + "' could not be loaded: identical identifiers"
                 );
                 return;
-            } else {
-                unregisterModule(module);
             }
+            // Drop the previous Streamline registration only. Never unloadPlugin here:
+            // CosmicModule.<init> → registerModule → loadModule runs while
+            // PluginWrapper.plugin is still null, and PF4J stop/unload would call
+            // getPlugin() → createInstance → nested CosmicModule.<init> forever.
+            replaceLoadedModule(existing);
         }
 
-        getLoadedModules().put(module.getIdentifier(), module);
+        getLoadedModules().put(id, module);
         if (module instanceof CosmicModule) ModuleUtils.fireEvent(new ModuleLoadEvent((CosmicModule) module));
+    }
+
+    /**
+     * Stops and forgets a previously registered module without touching PF4J.
+     * Used when a new {@link CosmicModule} instance is replacing an old one
+     * during plugin construction.
+     */
+    private static void replaceLoadedModule(@NonNull ModuleLike existing) {
+        try {
+            existing.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            BaseEventHandler.unbake(existing);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        getLoadedModules().remove(existing.getIdentifier());
+        getEnabledModules().remove(existing.getIdentifier());
     }
 
     /**
@@ -251,8 +308,20 @@ public class ModuleManager {
      */
     public static void registerExternalModule(@NotNull String jarName) {
         if (! jarName.endsWith(".jar")) jarName += ".jar";
-        safePluginManager().loadPlugin(safePluginManager().getPluginsRoot().resolve(jarName));
+        Path path = safePluginManager().getPluginsRoot().resolve(jarName);
+
+        // If a previous unload left a RESOLVED/STOPPED wrapper, drop it first.
+        PluginWrapper existingByJar = getPluginWrapperByJarName(jarName);
+        if (existingByJar != null) {
+            safePluginManager().unloadPlugin(existingByJar.getPluginId());
+        }
+
+        safePluginManager().loadPlugin(path);
         PluginWrapper plugin = getPluginWrapperByJarName(jarName);
+        if (plugin == null) {
+            MessageUtils.logSevere("Could not load module '" + jarName + "': plugin wrapper missing after loadPlugin.");
+            return;
+        }
         safePluginManager().startPlugin(plugin.getPluginId());
     }
 
@@ -358,21 +427,104 @@ public class ModuleManager {
     }
 
     /**
-     * Fully unloads a module: stops it, unloads the PF4J plugin, unbakes all
-     * event handlers, and removes it from the loaded-module registry.
+     * Fully unloads a module: removes it from Streamline registries first,
+     * stops it, unbakes event handlers, then unloads the PF4J plugin.
+     *
+     * <p>Registry removal is intentional-first so a concurrent
+     * {@link CosmicModule} constructor cannot see a stale entry and recurse
+     * into {@link #unregisterModule(ModuleLike)} / {@code unloadPlugin}.</p>
      *
      * @param module the module to unregister
      */
     public static void unregisterModule(ModuleLike module) {
+        if (module == null) return;
+
+        String id = module.getIdentifier();
+        ModuleLike removed = getLoadedModules().remove(id);
+        getEnabledModules().remove(id);
+
+        ModuleLike toStop = removed != null ? removed : module;
         try {
-//            unloadCommandsForModule(module);
-            module.stop();
-            safePluginManager().unloadPlugin(module.getIdentifier());
-            BaseEventHandler.unbake(module);
-            getLoadedModules().remove(module.getIdentifier());
+//            unloadCommandsForModule(toStop);
+            toStop.stop();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        try {
+            BaseEventHandler.unbake(toStop);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            if (safePluginManager().getPlugin(id) != null) {
+                safePluginManager().unloadPlugin(id);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @return {@code true} if {@link PluginWrapper} already holds a plugin instance
+     */
+    private static boolean isPf4jPluginMaterialized(PluginWrapper wrapper) {
+        try {
+            java.lang.reflect.Field field = PluginWrapper.class.getDeclaredField("plugin");
+            field.setAccessible(true);
+            return field.get(wrapper) != null;
+        } catch (Exception e) {
+            // Fail closed: assume not materialized so we never call getPlugin() to create one.
+            return false;
+        }
+    }
+
+    /**
+     * Removes a PF4J plugin that was never instantiated, without calling
+     * {@link PluginWrapper#getPlugin()} (which would construct a {@link CosmicModule}).
+     */
+    private static void dropUnmaterializedPf4jPlugin(JarPluginManager manager, PluginWrapper wrapper) {
+        String pluginId = wrapper.getPluginId();
+        try {
+            removePf4jMapEntry(manager, "plugins", pluginId);
+            removePf4jListEntry(manager, "resolvedPlugins", wrapper);
+            removePf4jListEntry(manager, "unresolvedPlugins", wrapper);
+            removePf4jListEntry(manager, "startedPlugins", wrapper);
+
+            java.lang.reflect.Field loadersField = AbstractPluginManager.class.getDeclaredField("pluginClassLoaders");
+            loadersField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, ClassLoader> loaders = (Map<String, ClassLoader>) loadersField.get(manager);
+            ClassLoader loader = loaders.remove(pluginId);
+            if (loader instanceof java.io.Closeable) {
+                try {
+                    ((java.io.Closeable) loader).close();
+                } catch (Exception ignored) {
+                    // ignore
+                }
+            }
+
+            MessageUtils.logInfo("Dropped unmaterialized PF4J plugin '" + pluginId + "' without instantiating it.");
+        } catch (Exception e) {
+            MessageUtils.logWarning("Could not safely drop unmaterialized plugin '" + pluginId + "'.");
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void removePf4jMapEntry(JarPluginManager manager, String fieldName, String key) throws Exception {
+        java.lang.reflect.Field field = AbstractPluginManager.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        Map<String, PluginWrapper> map = (Map<String, PluginWrapper>) field.get(manager);
+        map.remove(key);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void removePf4jListEntry(JarPluginManager manager, String fieldName, PluginWrapper wrapper) throws Exception {
+        java.lang.reflect.Field field = AbstractPluginManager.class.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        List<PluginWrapper> list = (List<PluginWrapper>) field.get(manager);
+        list.remove(wrapper);
     }
 
     /**

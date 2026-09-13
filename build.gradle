@@ -176,7 +176,7 @@ configure(subprojects.findAll { ! it.path.startsWith(':modules') }) {
         }
 
         // Relocations only apply when those packages are actually shaded (mod loaders).
-        relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.universalScheduler")
+        relocate("com.github.Anon8281.universalScheduler", "host.plas.bou.libs.usched")
 
         archiveClassifier.set('')
         archiveFileName = project.name + "-" + project.version + ".jar"
@@ -259,6 +259,10 @@ configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':m
     tasks.register('deploy', Copy) {
         def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
         def modulesDir = new File(deployDir, "modules")
+
+        // shadowJar and jar both write into build/libs, so the producers of everything
+        // in that directory must be declared or Gradle reports an implicit dependency.
+        dependsOn tasks.named('shadowJar'), tasks.named('jar')
 
         doFirst {
             modulesDir.mkdirs()

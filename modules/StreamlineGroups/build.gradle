@@ -1,6 +1,6 @@
 apply from: "$rootDir/modules/module.gradle"
 
 dependencies {
-    compileOnly "me.clip:placeholderapi:2.11.6"
+    compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
     implementation "redis.clients:jedis:4.3.0"
 }

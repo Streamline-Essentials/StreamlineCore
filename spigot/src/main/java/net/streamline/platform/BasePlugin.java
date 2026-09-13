@@ -2,8 +2,8 @@ package net.streamline.platform;
 
 import gg.drak.thebase.events.BaseEventHandler;
 import host.plas.bou.BetterPlugin;
-import host.plas.bou.libs.universalScheduler.UniversalScheduler;
-import host.plas.bou.libs.universalScheduler.scheduling.schedulers.TaskScheduler;
+import host.plas.bou.libs.usched.UniversalScheduler;
+import host.plas.bou.libs.usched.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.SLAPI;

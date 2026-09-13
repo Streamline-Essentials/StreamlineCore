@@ -1,7 +1,6 @@
 package net.streamline.platform.listeners;
 
 import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
-import com.destroystokyo.paper.profile.PlayerProfile;
 import host.plas.bou.utils.ClassHelper;
 import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.Messenger;
@@ -86,21 +85,20 @@ public class PaperListener implements Listener {
 
         // Set the sample of the server (the players displayed when hovering over the player count)
         try {
-            event.getPlayerSample().clear();
+            event.getListedPlayers().clear();
 
-            List<PlayerProfile> playerSample = new ArrayList<>();
+            List<PaperServerListPingEvent.ListedPlayerInfo> playerSample = new ArrayList<>();
             for (PingedResponse.PlayerInfo playerInfo : pingReceivedEvent.getResponse().getPlayers().getSample()) {
                 try {
-                    PlayerProfile profile = Bukkit.getServer().createProfile(playerInfo.getUniqueId());
-                    profile.setName(Messenger.getInstance().codedString(playerInfo.getName()));
-                    playerSample.add(profile);
-                } catch (Throwable e) {
+                    String name = Messenger.getInstance().codedString(playerInfo.getName());
+                    playerSample.add(new PaperServerListPingEvent.ListedPlayerInfo(name, playerInfo.getUniqueId()));
+                } catch (Exception e) {
                     // do nothing.
                 }
             }
 
-            event.getPlayerSample().addAll(playerSample);
-        } catch (Throwable e) {
+            event.getListedPlayers().addAll(playerSample);
+        } catch (Exception e) {
             StreamlineSpigot.getInstance().logWarning("Failed to set player sample: " + e.getMessage());
             StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
         }

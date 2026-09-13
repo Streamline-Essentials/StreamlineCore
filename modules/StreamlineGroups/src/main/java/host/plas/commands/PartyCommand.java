@@ -97,7 +97,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
 
-                Optional<Party> optional = GroupManager.get(otherOther.get());
+                Optional<Party> optional = GroupManager.getParty(otherOther.get());
                 if (optional.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -135,7 +135,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
                 
-                Optional<Party> otherOptional = GroupManager.get(otherOtherAccept.get());
+                Optional<Party> otherOptional = GroupManager.getParty(otherOtherAccept.get());
                 if (otherOptional.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -173,7 +173,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
                 
-                Optional<Party> otherOtherOptional = GroupManager.get(otherOtherDeny.get());
+                Optional<Party> otherOtherOptional = GroupManager.getParty(otherOtherDeny.get());
                 if (otherOtherOptional.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -199,7 +199,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
                 
-                Optional<Party> partyDisband = GroupManager.get(otherDisband.get());
+                Optional<Party> partyDisband = GroupManager.getParty(otherDisband.get());
                 if (partyDisband.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -237,7 +237,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
 
-                Optional<Party> partyPromote = GroupManager.get(otherOtherPromote.get());
+                Optional<Party> partyPromote = GroupManager.getParty(otherOtherPromote.get());
                 if (partyPromote.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -275,7 +275,7 @@ public class PartyCommand extends ModuleCommand {
                     return;
                 }
                 
-                Optional<Party> partyDemote = GroupManager.get(otherOtherDemote.get());
+                Optional<Party> partyDemote = GroupManager.getParty(otherOtherDemote.get());
                 if (partyDemote.isEmpty()) {
                     ModuleUtils.sendMessage(sender, StreamlineGroups.getMessages().errorsBaseNotInOther());
                     return;
@@ -365,7 +365,7 @@ public class PartyCommand extends ModuleCommand {
 
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CosmicSender sender, String[] strings) {
-        Optional<Party> optional = GroupManager.get(sender);
+        Optional<Party> optional = GroupManager.getParty(sender);
         
         if (strings.length <= 1) {
             return new ConcurrentSkipListSet<>(List.of(
@@ -412,7 +412,7 @@ public class PartyCommand extends ModuleCommand {
             if (strings[0].equalsIgnoreCase("demote")) {
                 if (optional.isEmpty()) return ModuleUtils.getOnlinePlayerNames();
                 Party party = optional.get();
-                if (! party.userHasFlag(sender, GroupFlag.PROMOTE)) return new ConcurrentSkipListSet<>();
+                if (! party.userHasFlag(sender, GroupFlag.DEMOTE)) return new ConcurrentSkipListSet<>();
                 ConcurrentSkipListSet<CosmicSender> users = party.getAllUsers();
                 party.getGroupRoleMap().rolesAbove(party.getRole(sender)).forEach(a -> {
                     users.removeAll(party.getGroupRoleMap().getUsersOf(a));
