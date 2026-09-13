@@ -89,9 +89,9 @@ dependencies {
     // which it declares compileOnly. Modules that compile against BAPI use those types
     // directly (host.plas.bou.*), so they are supplied here to match.
     if (project.ext.needsBapi) {
-        compileOnly 'gg.drak:BukkitOfUtils:1.19.0'
-        compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
-        compileOnly 'me.clip:placeholderapi:2.11.6'
+        compileOnly "gg.drak:BukkitOfUtils:${rootProject.properties["bou_version"]}"
+        compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
+        compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
     }
 
     // PF4J and TheBase are compileOnly (hence non-transitive) upstream, but modules
