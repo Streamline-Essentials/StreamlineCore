@@ -1,6 +1,8 @@
 package host.plas;
 
+import host.plas.commands.GCCommand;
 import host.plas.commands.GroupChatCommand;
+import host.plas.commands.GuildCommand;
 import host.plas.commands.PCCommand;
 import host.plas.commands.PartyCommand;
 import host.plas.configs.Configs;
@@ -91,6 +93,8 @@ public class StreamlineGroups extends SimpleModule {
 
         new PartyCommand(this).register();
         new PCCommand().register();
+        new GuildCommand(this).register();
+        new GCCommand().register();
         new GroupChatCommand().register();
     }
 

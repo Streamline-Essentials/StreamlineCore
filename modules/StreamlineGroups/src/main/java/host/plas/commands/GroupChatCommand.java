@@ -33,7 +33,7 @@ public class GroupChatCommand extends ModuleCommand {
         super(StreamlineGroups.getInstance(),
                 "groupchat",
                 "streamline.command.groupchat.default",
-                "gc", "gchat"
+                "gct", "chattoggle"
         );
 
         this.messageSetParty = getCommandResource().getOrSetDefault("messages.set.party",
