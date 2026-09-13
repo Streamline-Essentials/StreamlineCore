@@ -1,0 +1,37 @@
+# Message for Discord verification.
+verification:
+  # On completion.
+  success:
+    # Minecraft message.
+    minecraft: "&a&lSuccess&8! &eYou verified &d%streamline_user_absolute% &eas &d%discord_user_name_tagged%"
+    # Discord message.
+    discord: "--file:verify-success-response.json"
+  # On failure.
+  failure:
+    # Generic failure.
+    generic: "--file:verify-failure-response.json"
+    # Already verified.
+    already-verified: "--file:verify-already-response.json"
+
+# Message for Discord un-verification.
+unverification:
+  # On completion.
+  success:
+    # Minecraft message.
+    minecraft: "&a&lSuccess&8! &eYou unverified &d%streamline_user_absolute%"
+    # Discord message.
+    discord: "--file:unverify-success-response.json"
+  # On failure.
+  failure:
+    # Generic failure.
+    generic: "--file:unverify-failure-response.json"
+    # Already verified.
+    already-unverified: "--file:unverify-already-response.json"
+
+forwarded:
+  streamline:
+    login: "--file:on-login.json"
+    logout: "--file:on-logout.json"
+  spigot:
+    advancement: "--file:on-advancement.json"
+    death: "--file:on-death.json"

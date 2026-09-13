@@ -1,0 +1,9 @@
+{
+  "title": "Channel Setup",
+  "description": "Unlinked %this_channel_id% from __RouteType__ %this_type% with an __identifier__ of %this_identifier%!\n\nMore information and help at https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup#setting-and-removing-channel-routes",
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

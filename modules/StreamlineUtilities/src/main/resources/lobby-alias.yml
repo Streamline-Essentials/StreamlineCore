@@ -1,0 +1,47 @@
+# Lobby alias.
+basic:
+  # The command base to use when running the alias.
+  # For this example, to run the alias in-game, you would run the command "/lobby".
+  label: lobby
+  # The extra command aliases to use when running the alias.
+  # For this example, you could also use "/l" to run this alias in-game.
+  aliases:
+    - "l"
+  # Enables the alias.
+  enabled: true
+  # Permissions for the alias.
+  permissions:
+    # Default permission for running the alias.
+    default: streamline.utils.alias.lobby
+  # The argument configuration in the string of parameters.
+  # Info:
+  # In the command "/lobby hub1 Quaintified",
+  # The first argument would be "hub1"; the second
+  # would be "Quaintified"; and so on...
+  # Getter:
+  # To use a Getter, put an "@" sign in front
+  # of that Getter's identifier.
+  # Available Getters:
+  # @servers : Gets list of server names.
+  # @online_names : Gets list of player names (online).
+  # @loaded_names : Gets list of loaded users' names.
+  # @online_uuids : Gets list of player uuids (online).
+  # @loaded_uuids : Gets list of loaded users' uuids.
+  completion:
+    1:
+      - "@servers"
+    2:
+      - "@online_names"
+# Execution details.
+execution:
+  # The execution type.
+  # Available types:
+  # COMMAND
+  # FUNCTION
+  # SCRIPT (not working yet.) :)
+  type: FUNCTION
+  # The execution.
+  # If type = COMMAND, then this is the command you want to run.
+  # If type = FUNCTION, then this is the streamfunction identifier you want to run (file name without the ".sf").
+  # If type = SCRIPT, then this is the streamscript identifier you want to run (file name without the ".ss").
+  executes: "lobby-command"

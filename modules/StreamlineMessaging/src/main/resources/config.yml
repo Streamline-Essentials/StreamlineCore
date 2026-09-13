@@ -1,0 +1,55 @@
+# Configs for chat channels.
+chat-channels:
+  # The default chat channel for players to be in when they first join the server.
+  default: none
+  # Forces the default chat channel...
+  force-default:
+    # Makes the default chat channel the only chat channel. (Also meaning players cannot change it.)
+    always: false
+    # Sets the player's chat channel to the default chat channel when they join the server.
+    on-join: true
+
+# Configs for messaging other players via /message <player> <message> OR /reply <message>
+messaging:
+  # For /message <player> <message>
+  message:
+    permissions:
+      formatting: "streamline.messaging.formatting.message"
+    # Configs for updating the reply-to variables.
+    # The reply-to variables tell the module who to send that player's reply to.
+    update-reply-to:
+      # Updates the command's sender's reply-to to the recipient.
+      sender: true
+      # Updates the command's recipient's reply-to to the sender.
+      recipient: true
+  # For /reply <message>
+  reply:
+    permissions:
+      formatting: "streamline.messaging.formatting.message"
+    # Configs for updating the reply-to variables.
+    # The reply-to variables tell the module who to send that player's reply to.
+    update-reply-to:
+      # Updates the command's sender's reply-to to the recipient.
+      sender: true
+      # Updates the command's recipient's reply-to to the sender.
+      recipient: true
+
+# Settings for chatters.
+chatters:
+  # Settings for saving chatters.
+  saving:
+    # The type of storage to use.
+    # Can be:
+    # YAML (Default) (Flat file)
+    # JSON (Flat file)
+    # TOML (Flat file)
+    # MONGO (NoSQL database)
+    # MYSQL (SQL database)
+    use: YAML
+
+# Configs for friends.
+friends:
+  # Configs for friend invites.
+  invites:
+    # Time-out in ticks.
+    timeout: 600

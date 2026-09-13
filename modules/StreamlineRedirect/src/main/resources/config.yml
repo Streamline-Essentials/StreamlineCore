@@ -1,0 +1,45 @@
+# List of redirects.
+redirects: {} # remove the "{}" and add your redirects here.
+#  # Identifier for the redirect
+#  send-lobby:
+#    from:
+#      - SMP
+#      - CREATIVE
+#      - BUILD
+#    to:
+#      - HUB
+
+# Reasons to check when a player gets kicked from a server.
+reasons:
+  # List of reasons to check with contains lookup.
+  whitelisted:
+    # If it is enabled.
+    enabled: true
+    # The Type
+    type: "contains"
+    # The action to take when a player gets kicked for a reason in the list.
+    action: "deny"
+    # Whether to send the kick message to the player when they get kicked.
+    say-kick-message: true
+    # Whether to check for the reasons in a case-insensitive way.
+    case-insensitive: true
+    # The list of reasons to check for.
+    list:
+      - "whitelisted"
+      - "ᴡʜɪᴛᴇʟɪꜱᴛᴇᴅ"
+  # List of reasons to check with contains lookup.
+  banned-kicked:
+    # If it is enabled.
+    enabled: true
+    # The Type
+    type: "contains"
+    # The action to take when a player gets kicked for a reason in the list.
+    action: "deny"
+    # Whether to send the kick message to the player when they get kicked.
+    say-kick-message: false
+    # Whether to check for the reasons in a case-insensitive way.
+    case-insensitive: true
+    # The list of reasons to check for.
+    list:
+      - "banned"
+      - "kicked"

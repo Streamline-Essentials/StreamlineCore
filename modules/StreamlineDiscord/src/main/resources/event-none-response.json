@@ -1,0 +1,9 @@
+{
+  "title": "Event Setup",
+  "description" : "Sorry, but I could not find that Route...",
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

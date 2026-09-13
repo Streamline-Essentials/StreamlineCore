@@ -1,0 +1,25 @@
+# Messages for errors.
+errors:
+  # Messages for errors with functions.
+  functions:
+    # If the function is not ___...
+    not:
+      # Error message for when a function is not loaded.
+      loaded: "&cThat function is not loaded!"
+      # Error message for when a function is not enabled.
+      enabled: "&cThat function is not enabled!"
+
+# TPA messages.
+tpa:
+  # Messages for when the TPA is performed.
+  perform:
+    # The player being tpa-ed to.
+    to: "&d%streamline_parse_%this_from%:::*/*streamline_user_formatted*/*% &ewas teleported to you&8!"
+    # The player tpa-ing.
+    from: "&eYou were teleported to &d%streamline_parse_%this_to%:::*/*streamline_user_formatted*/*%&8!"
+  # Messages for when the TPA times out.
+  timeout:
+    # The player being tpa-ed to.
+    to: "&eTeleport request from &d%streamline_parse_%this_sender%:::*/*streamline_user_formatted*/*% &ctimed out&8!"
+    # The player tpa-ing.
+    from: "&eTeleport request to &d%streamline_parse_%this_receiver%:::*/*streamline_user_formatted*/*% &ctimed out&8!"

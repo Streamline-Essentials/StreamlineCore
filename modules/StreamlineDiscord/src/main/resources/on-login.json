@@ -1,0 +1,18 @@
+{
+  "bot": {
+    "avatar": {
+      "change": {
+        "enabled": true,
+        "to-on-message": "%discord_user_avatar_url%",
+        "to-after-message": "%discord_bot_avatar_url%"
+      }
+    }
+  },
+  "title": "PLAYER CONNECT",
+  "description": "%streamline_user_formatted% connected to %streamline_user_server%",
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}
