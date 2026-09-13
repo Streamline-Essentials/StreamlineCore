@@ -72,8 +72,9 @@ if (! isCI()) {
 
 // Self-provided modules: any folder under modules/ holding a build.gradle is picked up
 // automatically, so adding a module means dropping its sources in -- nothing to register
-// here. Skipped on CI, which publishes only the API artifacts.
-if (! isCI()) {
+// here. Included on Jenkins so its build produces the module JARs alongside the platform
+// ones; skipped on JitPack, which resolves only the API artifacts.
+if (! isJitPack()) {
     def modulesDir = file('modules')
     if (modulesDir.isDirectory()) {
         modulesDir.listFiles()
@@ -83,6 +84,16 @@ if (! isCI()) {
     }
 }
 
+// JitPack builds only the API artifacts that downstream plugins depend on.
+static def isJitPack() {
+    return System.getenv("JITPACK") != null
+}
+
+// Jenkins builds everything that ships, modules included.
+static def isJenkins() {
+    return System.getenv("JENKINS") != null
+}
+
 static def isCI() {
-    return System.getenv("JENKINS") != null || System.getenv("JITPACK") != null
+    return isJenkins() || isJitPack()
 }
