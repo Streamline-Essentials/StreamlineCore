@@ -415,6 +415,38 @@ public class Keeper extends DBKeeper<SavableChatter> {
         return loadBoth(identifier);
     }
 
+    @Override
+    public boolean deleteMysql(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    @Override
+    public boolean deleteSqlite(String identifier) {
+        return deleteBoth(identifier);
+    }
+
+    /**
+     * Removes every row belonging to a chatter. The chatter's data is spread over the
+     * main table and five satellite tables, which key on the owning player through
+     * different column names, so each is deleted explicitly.
+     *
+     * @param identifier the chatter's uuid
+     * @return {@code true} if every statement ran without error
+     */
+    public boolean deleteBoth(String identifier) {
+        String statement =
+                "DELETE FROM `%table_prefix%chatter_main` WHERE `Uuid` = ?;;" +
+                "DELETE FROM `%table_prefix%channel_views` WHERE `Uuid` = ?;;" +
+                "DELETE FROM `%table_prefix%chatter_friends` WHERE `PlayerUuid` = ?;;" +
+                "DELETE FROM `%table_prefix%chatter_ignores` WHERE `PlayerUuid` = ?;;" +
+                "DELETE FROM `%table_prefix%friend_invites` WHERE `PlayerUuid` = ?;;" +
+                "DELETE FROM `%table_prefix%best_friends` WHERE `PlayerUuid` = ?;;";
+
+        statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
+
+        return deleteWith(identifier, statement);
+    }
+
     public Optional<SavableChatter> loadBoth(String identifier) {
         String statement = "SELECT * FROM `%table_prefix%chatter_main` WHERE `Uuid` = ?;";
 

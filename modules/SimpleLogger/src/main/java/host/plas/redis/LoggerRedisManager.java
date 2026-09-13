@@ -9,7 +9,7 @@ import lombok.Setter;
 import net.streamline.api.SLAPI;
 import singularity.configs.given.GivenConfigs;
 import singularity.data.console.CosmicSender;
-import singularity.redis.RedisClient;
+import singularity.redis.OwnRedisClient;
 import singularity.redis.RedisMessage;
 import singularity.utils.UserUtils;
 
@@ -33,7 +33,7 @@ public class LoggerRedisManager {
     }
 
     public static boolean isUseRedis() {
-        return RedisClient.isConnected() && SimpleLogger.getRedisInfoConfig().isUseRedis();
+        return OwnRedisClient.isConnected() && SimpleLogger.getRedisInfoConfig().isUseRedis();
     }
 
     public static String getServer() {
