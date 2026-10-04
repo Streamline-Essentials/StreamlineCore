@@ -4,17 +4,21 @@ import net.minecraftforge.fml.common.Mod;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.listeners.ForgeListener;
 
+/**
+ * NeoForge for 1.20.1 forked from Forge before the package rename, so it is driven by the
+ * Forge EventBus 6 listener under {@code net.minecraftforge}.
+ */
 @Mod("streamlinecore")
-public class StreamlineForge extends BasePlugin {
+public class StreamlineNeoForge extends BasePlugin {
 
-    public StreamlineForge() {
+    public StreamlineNeoForge() {
         initialize();
         ForgeListener.register();
     }
 
     @Override
     public PlatformType getPlatformType() {
-        return PlatformType.FORGE;
+        return PlatformType.NEOFORGE;
     }
 
     @Override
@@ -33,7 +37,7 @@ public class StreamlineForge extends BasePlugin {
     public void reload() {
     }
 
-    public static StreamlineForge getInstance() {
-        return (StreamlineForge) BasePlugin.getInstance();
+    public static StreamlineNeoForge getInstance() {
+        return (StreamlineNeoForge) BasePlugin.getInstance();
     }
 }

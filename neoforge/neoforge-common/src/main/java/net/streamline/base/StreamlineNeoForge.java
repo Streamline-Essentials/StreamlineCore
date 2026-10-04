@@ -2,33 +2,37 @@ package net.streamline.base;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
 import net.streamline.platform.BasePlugin;
+import net.streamline.platform.listeners.NeoForgeListener;
 
 @Mod("streamlinecore")
 public class StreamlineNeoForge extends BasePlugin {
 
     public StreamlineNeoForge(IEventBus modBus) {
         initialize();
+        NeoForge.EVENT_BUS.register(new NeoForgeListener());
+    }
+
+    @Override
+    public PlatformType getPlatformType() {
+        return PlatformType.NEOFORGE;
     }
 
     @Override
     public void load() {
-        // Pre-init: nothing needed
     }
 
     @Override
     public void enable() {
-        // Post-init setup
     }
 
     @Override
     public void disable() {
-        // Cleanup
     }
 
     @Override
     public void reload() {
-        // Reload configuration
     }
 
     public static StreamlineNeoForge getInstance() {

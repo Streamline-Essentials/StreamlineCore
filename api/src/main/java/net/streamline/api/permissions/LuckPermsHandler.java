@@ -52,6 +52,28 @@ public class LuckPermsHandler {
     }
 
     /**
+     * Checks the specified permission node against the player's cached LuckPerms data.
+     * Only players LuckPerms has loaded (i.e. online players) can be checked; for anyone
+     * else, or when LuckPerms is unavailable or the UUID cannot be resolved, this returns
+     * {@code false}.
+     *
+     * @param uuid       the player's UUID (any format accepted by {@code UuidUtils.toUuid})
+     * @param permission the permission node string to check
+     * @return {@code true} if LuckPerms grants the permission to the loaded player
+     */
+    public static boolean hasPermission(String uuid, String permission) {
+        String sUuid = UuidUtils.toUuid(uuid);
+        if (sUuid == null) return false;
+
+        UUID playerUuid = UUID.fromString(sUuid);
+
+        return SLAPI.getLpOptional()
+                .map(lp -> lp.getUserManager().getUser(playerUuid))
+                .map(user -> user.getCachedData().getPermissionData().checkPermission(permission).asBoolean())
+                .orElse(false);
+    }
+
+    /**
      * Returns whether a valid LuckPerms API instance is currently available.
      *
      * @return {@code true} if LuckPerms is loaded and reachable, {@code false} otherwise
