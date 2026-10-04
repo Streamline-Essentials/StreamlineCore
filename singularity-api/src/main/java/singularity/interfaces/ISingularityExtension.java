@@ -37,6 +37,8 @@ public interface ISingularityExtension {
         FABRIC,
         /** Forge mod loader platform. */
         FORGE,
+        /** NeoForge mod loader platform. */
+        NEOFORGE,
         ;
     }
 
