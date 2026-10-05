@@ -108,6 +108,10 @@ public class StreamlineDiscord extends SimpleModule {
             return;
         }
 
+        // Every route, endpoint and verified-user save is queued on the middleware, so it
+        // must exist before anything below can fail and leave those saves with nowhere to go.
+        setDiscordMiddleware(new DiscordMiddleware());
+
         RouteLoader.loadAllRoutes();
 
         setDiscordExpansion(new DiscordExpansion());
@@ -127,13 +131,17 @@ public class StreamlineDiscord extends SimpleModule {
         }
 
         setVerifierTimer(new VerifierTimer());
-        setDiscordMiddleware(new DiscordMiddleware());
     }
 
     @Override
     public void onDisable() {
         // The middleware writes in batches every 5 seconds; flush whatever is still queued.
-        if (getDiscordMiddleware() != null) getDiscordMiddleware().run();
+        if (getDiscordMiddleware() != null) {
+            getDiscordMiddleware().run();
+            getDiscordMiddleware().cancel();
+        }
+        // Timers live in the core scheduler and would outlive an unloaded module.
+        if (getVerifierTimer() != null) getVerifierTimer().cancel();
 
         DiscordHandler.kill().completeOnTimeout(false, 7, TimeUnit.SECONDS).join();
         if (getDiscordExpansion() != null) getDiscordExpansion().stop();

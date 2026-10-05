@@ -9,9 +9,9 @@ import lombok.Setter;
 import singularity.scheduler.ModuleRunnable;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DiscordMiddleware extends ModuleRunnable {
     @Getter @Setter
@@ -38,18 +38,15 @@ public class DiscordMiddleware extends ModuleRunnable {
     @Getter
     private final ConcurrentSkipListSet<String> droppedVerifiedUsers = new ConcurrentSkipListSet<>();
 
-    private final AtomicBoolean processing = new AtomicBoolean(false);
-
     public DiscordMiddleware() {
         super(StreamlineDiscord.getInstance(), 0L, 100L); // Run every 5 seconds (100 ticks)
         setInstance(this);
     }
 
+    // Synchronized so the flush on module disable waits for a batch the timer has in
+    // flight instead of skipping it.
     @Override
-    public void run() {
-        if (processing.get()) return;
-        processing.set(true);
-
+    public synchronized void run() {
         try {
             // Process Drops first
             if (! droppedRoutes.isEmpty()) {
@@ -103,51 +100,79 @@ public class DiscordMiddleware extends ModuleRunnable {
         } catch (Exception e) {
             StreamlineDiscord.getInstance().logWarning("Middleware: Error during batch update: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            processing.set(false);
         }
     }
 
     public static void saveRoute(Route route) {
-        if (instance == null) return;
+        if (instance == null) {
+            writeThrough("route", route.getIdentifier(), () -> StreamlineDiscord.getRouteKeeper().save(route));
+            return;
+        }
         instance.routeCache.put(route.getIdentifier(), route);
         instance.dirtyRoutes.add(route.getIdentifier());
         instance.droppedRoutes.remove(route.getIdentifier());
     }
 
     public static void dropRoute(Route route) {
-        if (instance == null) return;
+        if (instance == null) {
+            String id = route.getIdentifier();
+            writeThrough("route", id, () -> CompletableFuture.runAsync(() -> StreamlineDiscord.getRouteKeeper().drop(id)));
+            return;
+        }
         instance.droppedRoutes.add(route.getIdentifier());
         instance.dirtyRoutes.remove(route.getIdentifier());
         instance.routeCache.remove(route.getIdentifier());
     }
 
     public static void saveEndPoint(EndPoint endPoint) {
-        if (instance == null) return;
+        if (instance == null) {
+            writeThrough("endpoint", endPoint.getIdentifier(), () -> StreamlineDiscord.getEndPointKeeper().save(endPoint));
+            return;
+        }
         instance.endPointCache.put(endPoint.getIdentifier(), endPoint);
         instance.dirtyEndPoints.add(endPoint.getIdentifier());
         instance.droppedEndPoints.remove(endPoint.getIdentifier());
     }
 
     public static void dropEndPoint(EndPoint endPoint) {
-        if (instance == null) return;
+        if (instance == null) {
+            String id = endPoint.getIdentifier();
+            writeThrough("endpoint", id, () -> CompletableFuture.runAsync(() -> StreamlineDiscord.getEndPointKeeper().drop(id)));
+            return;
+        }
         instance.droppedEndPoints.add(endPoint.getIdentifier());
         instance.dirtyEndPoints.remove(endPoint.getIdentifier());
         instance.endPointCache.remove(endPoint.getIdentifier());
     }
 
     public static void saveVerifiedUser(VerifiedUser user) {
-        if (instance == null) return;
+        if (instance == null) {
+            writeThrough("verified user", user.getIdentifier(), () -> StreamlineDiscord.getVerifiedUserKeeper().save(user));
+            return;
+        }
         instance.verifiedUserCache.put(user.getIdentifier(), user);
         instance.dirtyVerifiedUsers.add(user.getIdentifier());
         instance.droppedVerifiedUsers.remove(user.getIdentifier());
     }
 
     public static void dropVerifiedUser(VerifiedUser user) {
-        if (instance == null) return;
+        if (instance == null) {
+            String id = user.getIdentifier();
+            writeThrough("verified user", id, () -> CompletableFuture.runAsync(() -> StreamlineDiscord.getVerifiedUserKeeper().drop(id)));
+            return;
+        }
         instance.droppedVerifiedUsers.add(user.getIdentifier());
         instance.dirtyVerifiedUsers.remove(user.getIdentifier());
         instance.verifiedUserCache.remove(user.getIdentifier());
+    }
+
+    /**
+     * Writes straight to the database when there is no middleware to batch the change,
+     * so the change is persisted either way.
+     */
+    private static void writeThrough(String kind, String id, Runnable write) {
+        StreamlineDiscord.getInstance().logWarning("Discord middleware is not running; writing " + kind + " '" + id + "' directly.");
+        write.run();
     }
 
     public static Optional<Route> getRoute(String id) {
