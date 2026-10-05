@@ -8,10 +8,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
+import net.streamline.platform.compat.McCompat;
+import singularity.permissions.DefaultPermissions;
 import singularity.interfaces.audiences.IPlayerInterface;
 import singularity.interfaces.audiences.getters.PlayerGetter;
 import singularity.interfaces.audiences.real.RealPlayer;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -66,14 +69,18 @@ public class PlayerInterface implements IPlayerInterface<ServerPlayer> {
             }
 
             /**
-             * Mod loaders have no permission API; LuckPerms answers when it is installed,
-             * and without it nothing is granted.
+             * Mod loaders have no common permission API. A value LuckPerms sets explicitly
+             * wins; otherwise nodes modules declare as defaults are granted to everyone, and
+             * everything else to operators (level 2).
              */
             @Override
             public boolean hasPermission(String permission) {
                 ServerPlayer player = getPlayer();
                 if (player == null) return false;
-                return LuckPermsHandler.hasLuckPerms() && LuckPermsHandler.hasPermission(player.getStringUUID(), permission);
+                Optional<Boolean> explicit = LuckPermsHandler.permissionValue(player.getStringUUID(), permission);
+                if (explicit.isPresent()) return explicit.get();
+                if (DefaultPermissions.isGrantedByDefault(permission)) return true;
+                return McCompat.isOperator(player);
             }
 
             @Override

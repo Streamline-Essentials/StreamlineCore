@@ -10,6 +10,8 @@ import net.streamline.api.SLAPI;
 import net.streamline.api.base.module.BaseModule;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
+import net.streamline.platform.handlers.GameplayHandler;
+import singularity.Singularity;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
@@ -112,6 +114,7 @@ public abstract class BasePlugin implements ISingularityExtension {
                 getFolderName(), this, getUserManager(), getMessenger(),
                 getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         SLAPI.setBackendHandler(new BackendHandler());
+        Singularity.setGameplayHandler(createGameplayHandler());
 
         TaskManager.init();
 
@@ -142,6 +145,9 @@ public abstract class BasePlugin implements ISingularityExtension {
             if (entry.getKey().equals("version")) this.version = entry.getValue();
         }
     }
+
+    /** The loader's gameplay handler, which knows how that loader refreshes player names. */
+    protected abstract GameplayHandler createGameplayHandler();
 
     public abstract void load();
     public abstract void enable();

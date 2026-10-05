@@ -8,6 +8,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
+import net.streamline.platform.handlers.GameplayHandler;
+import singularity.Singularity;
 import net.streamline.platform.compat.McCompat;
 import singularity.configs.given.GivenConfigs;
 import singularity.configs.given.MainMessagesHandler;
@@ -191,19 +193,23 @@ public class UserManager implements IUserManager<Object, ServerPlayer> {
 
     @Override
     public void teleport(CosmicPlayer player, CosmicPlayer to) {
-        ServerPlayer p = getPlayer(player.getUuid());
         ServerPlayer target = getPlayer(to.getUuid());
-        if (p == null || target == null) return;
-        p.teleportTo(target.getX(), target.getY(), target.getZ());
+        if (target == null) return;
+        Singularity.gameplay().ifPresent(gameplay -> gameplay.teleport(player.getUuid(), GameplayHandler.locationOf(target)));
     }
 
     /**
-     * Moves the player within their current level; the location's world is not consulted.
+     * Moves the player to the location, changing dimension when needed. A location in a
+     * dimension that does not exist leaves the player where they are.
      */
     public static void teleport(ServerPlayer player, CosmicLocation location) {
+        if (Singularity.gameplay().isPresent()) {
+            Singularity.gameplay().get().teleport(player.getStringUUID(), location);
+            return;
+        }
+
         WorldPosition pos = location.getPosition();
         PlayerRotation rot = location.getRotation();
-
         player.setYRot(rot.getYaw());
         player.setXRot(rot.getPitch());
         player.teleportTo(pos.getX(), pos.getY(), pos.getZ());
