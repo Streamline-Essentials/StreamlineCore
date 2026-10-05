@@ -142,6 +142,16 @@ public class DiscordHandler {
         return safeDiscordAPI().getVoiceChannelById(id);
     }
 
+    /**
+     * A user's display tag: {@code name#1234} for legacy accounts, just {@code name} for
+     * accounts on Discord's unique-username system, whose discriminator is {@code 0000}.
+     */
+    public static String getTag(User user) {
+        String discriminator = user.getDiscriminator();
+        if (discriminator.isEmpty() || discriminator.equals("0000") || discriminator.equals("0")) return user.getName();
+        return user.getName() + "#" + discriminator;
+    }
+
     public static void registerCommands() {
         new ChannelCommand();
         new ChannelRemoveCommand();

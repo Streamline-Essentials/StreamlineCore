@@ -249,19 +249,19 @@ public class Route implements Loadable<Route> {
         if (! user.isDiscord()) return endPoint.getToFormat().replace("%this_message%", message);
         if (! VerifiedUsers.isVerified(user.getDiscordId())) return endPoint.getToFormat()
                 .replace("%streamline_user_absolute%",
-                        DiscordHandler.getUser(user.getDiscordId()).getName() + "#" + DiscordHandler.getUser(user.getDiscordId()).getDiscriminator())
+                        DiscordHandler.getTag(DiscordHandler.getUser(user.getDiscordId())))
                 .replace("%streamline_user_formatted%", DiscordHandler.getUser(user.getDiscordId()).getName())
                 .replace("%this_message%", message);
         String s = VerifiedUsers.getUUIDfromDiscordID(user.getDiscordId()).orElse(null);
         if (s == null) return endPoint.getToFormat()
                 .replace("%streamline_user_absolute%",
-                        DiscordHandler.getUser(user.getDiscordId()).getName() + "#" + DiscordHandler.getUser(user.getDiscordId()).getDiscriminator())
+                        DiscordHandler.getTag(DiscordHandler.getUser(user.getDiscordId())))
                 .replace("%streamline_user_formatted%", DiscordHandler.getUser(user.getDiscordId()).getName())
                 .replace("%this_message%", message);
         CosmicSender u = ModuleUtils.getOrCreateSender(s).orElse(null);
         if (u == null) return endPoint.getToFormat()
                 .replace("%streamline_user_absolute%",
-                        DiscordHandler.getUser(user.getDiscordId()).getName() + "#" + DiscordHandler.getUser(user.getDiscordId()).getDiscriminator())
+                        DiscordHandler.getTag(DiscordHandler.getUser(user.getDiscordId())))
                 .replace("%streamline_user_formatted%", DiscordHandler.getUser(user.getDiscordId()).getName())
                 .replace("%this_message%", message);
 
