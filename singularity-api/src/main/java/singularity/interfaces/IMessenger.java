@@ -1,6 +1,7 @@
 package singularity.interfaces;
 
 import singularity.data.console.CosmicSender;
+import singularity.objects.ClickableMessage;
 import singularity.objects.CosmicTitle;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,18 @@ public interface IMessenger {
      * @param title the {@link CosmicTitle} containing title text and timing parameters
      */
     void sendTitle(CosmicSender user, CosmicTitle title);
+
+    /**
+     * Sends a line whose segments carry hover tooltips and click actions. Platforms that
+     * cannot render chat components, and the console, receive the segments' text alone.
+     *
+     * @param to      the recipient; if {@code null} the message is discarded
+     * @param message the segments to send
+     */
+    default void sendClickable(@Nullable CosmicSender to, ClickableMessage message) {
+        if (to == null || message == null || message.isEmpty()) return;
+        sendMessage(to, message.joinedText());
+    }
 
     /**
      * Translates legacy color codes (e.g., {@code &a}, {@code &l}) and any platform-specific

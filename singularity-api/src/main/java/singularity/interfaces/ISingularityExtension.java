@@ -279,9 +279,9 @@ public interface ISingularityExtension {
 
     /**
      * Runs a task on the thread that owns game state: the Bukkit main thread
-     * (global region on Folia) on Spigot. Platforms without such a thread
-     * (proxies, and mod loaders, whose command registry hops to the server
-     * thread itself) run it inline on the calling thread.
+     * (global region on Folia) on Spigot, the server thread on mod loaders.
+     * Platforms without such a thread (proxies) run it inline on the calling
+     * thread.
      *
      * @param task the task to run
      */

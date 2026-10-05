@@ -172,6 +172,17 @@ public abstract class BasePlugin implements ISingularityExtension {
         return new ProperCommand(command);
     }
 
+    /**
+     * Runs {@code task} on the server thread: inline when already there, or before the server
+     * has started (there is no thread to hop to yet), otherwise queued for the next tick.
+     */
+    @Override
+    public void runOnMainThread(Runnable task) {
+        MinecraftServer current = server;
+        if (current == null || current.isSameThread()) task.run();
+        else current.execute(task);
+    }
+
     @Override
     public int getMaxPlayers() {
         MinecraftServer server = getServer();
