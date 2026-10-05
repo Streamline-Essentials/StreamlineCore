@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
+/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
 public final class AdminCommands {
 
     private AdminCommands() {}
@@ -29,6 +29,7 @@ public final class AdminCommands {
         commands.add(new TacoCommand("jump", AdminCommands::jump));
         commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("god", AdminCommands::god, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("invsee", AdminCommands::invsee, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("nickfor", AdminCommands::nickFor, AdminCommands::knownFirst));
         commands.add(new TacoCommand("mute", ctx -> mute(ctx, true), AdminCommands::knownFirst));
@@ -124,6 +125,18 @@ public final class AdminCommands {
         target.sendMessage(Msg.success("Flight " + (enable ? "enabled." : "disabled.")));
         if (! isSelf(ctx, target)) {
             ctx.reply(Msg.success("Flight " + (enable ? "enabled" : "disabled") + " for " + target.getCurrentName() + "."));
+        }
+    }
+
+    /** Toggles god mode; it stays on across respawns, world changes and relogs until toggled off. */
+    private static void god(TacoCommand.Ctx ctx) throws Msg.Fail {
+        CosmicPlayer target = targetOrSelf(ctx);
+        boolean enable = ! Sessions.get(target.getUuid()).isGod();
+        if (! gameplay().setGodMode(target.getUuid(), enable)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        Sessions.setGod(target.getUuid(), enable);
+        target.sendMessage(Msg.success("God mode " + (enable ? "enabled." : "disabled.")));
+        if (! isSelf(ctx, target)) {
+            ctx.reply(Msg.success("God mode " + (enable ? "enabled" : "disabled") + " for " + target.getCurrentName() + "."));
         }
     }
 

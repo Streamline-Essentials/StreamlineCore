@@ -119,7 +119,10 @@ public final class TacoDatabase {
                         + "CREATE TABLE IF NOT EXISTS `" + table("aliases") + "` (`name` VARCHAR(32) NOT NULL PRIMARY KEY, "
                         + "`requires_perm` INT NOT NULL DEFAULT 0, `tab_complete` INT NOT NULL DEFAULT 1, `tab_completes` TEXT);;"
                         + "CREATE TABLE IF NOT EXISTS `" + table("alias_commands") + "` (`name` VARCHAR(32) NOT NULL, "
-                        + "`line` INT NOT NULL, `command` TEXT NOT NULL, PRIMARY KEY (`name`, `line`));;",
+                        + "`line` INT NOT NULL, `command` TEXT NOT NULL, PRIMARY KEY (`name`, `line`));;"
+                        // God mode has its own table: CREATE TABLE IF NOT EXISTS never adds a column
+                        // to an existing players table.
+                        + "CREATE TABLE IF NOT EXISTS `" + table("god") + "` (`uuid` VARCHAR(36) NOT NULL PRIMARY KEY);;",
                 s -> {});
     }
 
@@ -153,6 +156,15 @@ public final class TacoDatabase {
 
     public static void setFly(String uuid, boolean fly) {
         update("UPDATE `" + table("players") + "` SET `fly` = ? WHERE `uuid` = ?;", fly ? 1 : 0, uuid);
+    }
+
+    public static boolean isGod(String uuid) {
+        return queryOne("SELECT `uuid` FROM `" + table("god") + "` WHERE `uuid` = ?;", rs -> true, uuid).isPresent();
+    }
+
+    public static void setGod(String uuid, boolean god) {
+        if (god) update("REPLACE INTO `" + table("god") + "` (`uuid`) VALUES (?);", uuid);
+        else update("DELETE FROM `" + table("god") + "` WHERE `uuid` = ?;", uuid);
     }
 
     public static void saveLastLocation(String uuid, Loc loc) {

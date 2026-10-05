@@ -80,9 +80,33 @@ public class GameplayHandler implements IGameplayHandler {
         };
     }
 
+    /** Players in god mode; {@link net.streamline.platform.listeners.GameplayListener} cancels their damage and hunger loss. */
+    private final Set<UUID> godMode = ConcurrentHashMap.newKeySet();
+
     /** Clears per-session state when the player leaves. */
     public void forget(Player player) {
         flightKept.remove(player.getUniqueId());
+        godMode.remove(player.getUniqueId());
+    }
+
+    public boolean isGod(UUID uuid) {
+        return godMode.contains(uuid);
+    }
+
+    @Override
+    public boolean setGodMode(String uuid, boolean enabled) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        if (enabled) {
+            godMode.add(player.getUniqueId());
+            TaskManager.schedule(player, () -> {
+                player.setFoodLevel(20);
+                player.setFireTicks(0);
+            });
+        } else {
+            godMode.remove(player.getUniqueId());
+        }
+        return true;
     }
 
     @Override
@@ -358,6 +382,15 @@ public class GameplayHandler implements IGameplayHandler {
         } catch (LinkageError notPaper) {
             return false;
         }
+    }
+
+    @Override
+    public boolean openEnderChest(String viewerUuid, String ownerUuid) {
+        Player viewer = BasePlugin.getPlayer(viewerUuid);
+        Player owner = BasePlugin.getPlayer(ownerUuid);
+        if (viewer == null || owner == null) return false;
+        TaskManager.schedule(viewer, () -> viewer.openInventory(owner.getEnderChest()));
+        return true;
     }
 
     @Override
