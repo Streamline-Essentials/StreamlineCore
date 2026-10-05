@@ -4,21 +4,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.Permissions;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.storage.LevelData;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.portal.TeleportTransition;
-
-import java.util.Set;
 
 /**
- * Minecraft API calls whose shape differs between game versions, for 1.21.11 onward.
- * The same class for older versions lives in {@code mod-common/compat/mc1201} and
- * {@code mod-common/compat/mc1211}.
+ * Minecraft API calls whose shape differs between game versions, for 1.21.1.
+ * The same class for other versions lives in {@code mod-common/compat/mc1201} and
+ * {@code mod-common/compat/current}.
  */
 public final class McCompat {
 
@@ -33,30 +26,27 @@ public final class McCompat {
 
     /** Lowest block Y in the level. */
     public static int minY(ServerLevel level) {
-        return level.getMinY();
+        return level.getMinBuildHeight();
     }
 
-    /** Highest block Y in the level, inclusive. */
+    /** Highest block Y in the level, inclusive; 1.21.1 reports the exclusive bound. */
     public static int maxY(ServerLevel level) {
-        return level.getMaxY();
+        return level.getMaxBuildHeight() - 1;
     }
 
     /** The level's dimension id, such as {@code minecraft:overworld}. */
     public static String dimensionId(ServerLevel level) {
-        return level.dimension().identifier().toString();
+        return level.dimension().location().toString();
     }
 
     public static void teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
-        player.teleport(new TeleportTransition(level, new Vec3(x, y, z), Vec3.ZERO, yaw, pitch,
-                Set.<Relative>of(), TeleportTransition.DO_NOTHING));
+        player.teleportTo(level, x, y, z, yaw, pitch);
     }
 
     /** Where new players spawn, with the facing they spawn with. */
     public static SpawnPoint worldSpawn(MinecraftServer server) {
-        LevelData.RespawnData data = server.getRespawnData();
-        ServerLevel level = server.getLevel(data.dimension());
-        if (level == null) level = server.overworld();
-        return new SpawnPoint(level, data.pos(), data.yaw(), data.pitch());
+        ServerLevel level = server.overworld();
+        return new SpawnPoint(level, level.getSharedSpawnPos(), level.getSharedSpawnAngle(), 0F);
     }
 
     public static boolean hasBindingCurse(ItemStack stack) {
@@ -65,7 +55,7 @@ public final class McCompat {
 
     /** Operator level 2 (gamemaster) or higher. */
     public static boolean isOperator(ServerPlayer player) {
-        return player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+        return player.hasPermissions(2);
     }
 
 

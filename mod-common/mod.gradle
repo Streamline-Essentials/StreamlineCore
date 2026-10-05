@@ -39,7 +39,8 @@ sourceSets {
 
         // Minecraft calls that changed shape between versions, one implementation per era,
         // plus the pack.mcmeta that 1.20.1's Forge-family loaders expect in every mod jar.
-        def compat = project.mcVersion.toString().startsWith('1.20.') ? 'mc1201' : 'current'
+        def mc = project.mcVersion.toString()
+        def compat = mc.startsWith('1.20.') ? 'mc1201' : (mc == '1.21.1' ? 'mc1211' : 'current')
         java.srcDir rootProject.file("mod-common/compat/${compat}/src/main/java")
         resources.srcDir rootProject.file("mod-common/compat/${compat}/src/main/resources")
     }
