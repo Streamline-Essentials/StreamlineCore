@@ -232,14 +232,20 @@ public class DiscordHandler {
 
     public static CompletableFuture<Boolean> kill() {
         return CompletableFuture.supplyAsync(() -> {
-            if (getDiscordAPI() == null) return false;
+            JDA api = getDiscordAPI();
+            if (api == null) return false;
 
             getRegisteredCommands().forEach((s, command) -> {
                 command.unregister();
             });
 
-            if (! StreamlineDiscord.getConfig().moduleForwardsEventsToProxy()) {
-                safeDiscordAPI().shutdownNow();
+            // JDA's worker threads must be gone before the module's class loader closes;
+            // a survivor fails with NoClassDefFoundError on its next lazily loaded class.
+            api.shutdownNow();
+            try {
+                api.awaitShutdown(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
             setConcurrentDiscordAPI(null);
