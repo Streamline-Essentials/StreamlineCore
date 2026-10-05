@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
 import singularity.command.CommandMessageBuilder;
+import singularity.gui.transport.GuiMessages;
 import singularity.messages.builders.*;
 import singularity.messages.answered.ReturnableMessage;
 import singularity.objects.SingleSet;
@@ -145,6 +146,10 @@ public class ProxiedMessageManager {
      */
     public static void handle(ProxiedMessage proxiedMessage) {
         if (proxiedMessage.getMainChannel().equals(Singularity.getApiChannel())) {
+            if (GuiMessages.isGuiMessage(proxiedMessage.getSubChannel())) {
+                GuiMessages.handle(proxiedMessage);
+                return;
+            }
             if (proxiedMessage.getSubChannel().equals(ResourcePackMessageBuilder.getSubChannel())) {
                 SingleSet<String, CosmicResourcePack> set = ResourcePackMessageBuilder.unbuild(proxiedMessage);
                 CosmicResourcePack resourcePack = set.getValue();
