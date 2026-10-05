@@ -1,4 +1,4 @@
-#Requires -Version 7
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Uploads built module jars to the Streamline module registry (modules.drak.gg).
@@ -49,6 +49,9 @@ $ErrorActionPreference = 'Stop'
 $modulesRoot = Join-Path $PSScriptRoot 'modules'
 $BaseUrl = $BaseUrl.TrimEnd('/')
 
+# Windows PowerShell 5.1 offers only TLS 1.0/1.1 by default; the registry requires 1.2+.
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
 $token = $env:SLMODULES_MASTER_TOKEN
 if ([string]::IsNullOrWhiteSpace($token) -and -not $WhatIfPreference) {
     throw 'Set $env:SLMODULES_MASTER_TOKEN to the registry master key.'
@@ -70,7 +73,10 @@ if ($Build -and -not $Jar) {
     # @() keeps a single task an array; splatting a lone string passes it character by character.
     $tasks = @(Get-ModuleFolders | ForEach-Object { ":modules:$($_.Name):shadowJar" })
     if ($PSCmdlet.ShouldProcess($tasks -join ' ', 'gradlew')) {
+        # Gradle writes warnings to stderr, which Windows PowerShell can turn into terminating errors under 'Stop'.
+        $ErrorActionPreference = 'Continue'
         & (Join-Path $PSScriptRoot 'gradlew.bat') @tasks
+        $ErrorActionPreference = 'Stop'
         if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed.' }
     }
 }
