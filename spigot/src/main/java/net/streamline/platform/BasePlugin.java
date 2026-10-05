@@ -89,6 +89,19 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     @Getter
     private final ServerType serverType = ServerType.BACKEND;
 
+    /** StreamlineCore's Modrinth project id; {@code upload-modrinth.ps1} publishes to the same project. */
+    public static final String MODRINTH_ID = "wEJy5rtv";
+
+    /**
+     * {@inheritDoc}
+     *
+     * @return {@link #MODRINTH_ID}
+     */
+    @Override
+    public String getModrinthId() {
+        return MODRINTH_ID;
+    }
+
     /**
      * The resource pack currently configured to be sent to players, if any.
      */
