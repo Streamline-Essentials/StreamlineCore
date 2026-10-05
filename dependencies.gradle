@@ -48,13 +48,32 @@ ext {
     // Mod loaders shade downloadable + host libs.
     SHADOW = PLATFORM_LIBRARIES + HOST_SHADED_LIBRARIES
 
+    // What the Fabric/Forge/NeoForge jars shade. Mod loaders have no library downloader,
+    // so everything here ships inside the mod. The rest of PLATFORM_LIBRARIES is left out
+    // on purpose: Minecraft itself ships Gson, Guava, commons-codec, Netty and SLF4J (bound
+    // to Log4j), and Forge/NeoForge refuse to start when two jars provide the same package.
+    // Logback is left out so it cannot take over SLF4J from the game's Log4j. Lettuce runs
+    // on the game's Netty and falls back to the JDK resolver without netty-resolver-dns.
+    // PF4J and java-semver arrive inside the API's shadow artifact.
+    MOD_SHADED_LIBRARIES = [
+            'com.zaxxer:HikariCP:5.1.0',
+            'org.xerial:sqlite-jdbc:3.46.1.0',
+            'com.mysql:mysql-connector-j:8.0.33',
+            'com.google.protobuf:protobuf-java:3.21.9',
+            'com.github.ben-manes.caffeine:caffeine:3.1.8',
+            'io.lettuce:lettuce-core:6.8.0.RELEASE',
+            'redis.clients.authentication:redis-authx-core:0.1.1-beta2',
+            'io.projectreactor:reactor-core:3.6.6',
+            'org.reactivestreams:reactive-streams:1.0.4',
+    ]
+
     ANNO = [
             "com.github.ben-manes.caffeine:caffeine:3.1.8",
             "org.pf4j:pf4j:3.10.0",
             'io.lettuce:lettuce-core:6.8.0.RELEASE',
     ]
     THE_BASE = [
-            'gg.drak:TheBase:1.1.0',
+            'gg.drak:TheBase:1.1.1',
     ]
     COMP_ONLY = [
     ]

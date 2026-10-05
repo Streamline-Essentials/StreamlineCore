@@ -1,0 +1,53 @@
+// NeoForge conventions. A version project sets, besides what mod-common/mod.gradle needs:
+//   neoForgeVersion  NeoForge build to compile against
+//   loaderMajor      lowest NeoForge version the mod metadata accepts
+//   legacy           true for 1.20.1, whose NeoForge is the pre-rename Forge fork
+//                    (net.neoforged:forge, net.minecraftforge packages, SRG at runtime)
+
+def legacy = project.ext.has('legacy') && project.legacy
+
+ext.metadataExtras = [loaderMajor: project.loaderMajor.toString()]
+
+if (legacy) {
+    apply plugin: 'net.neoforged.moddev.legacyforge'
+
+    // The fork still speaks Forge: the Forge EventBus 6 listener and a Forge-style
+    // mods.toml, with this project's own entrypoint reporting NeoForge.
+    ext.modSourceDirs = ['forge/forge-eventbus6']
+    ext.modResourceDirs = ['forge/forge-common']
+    // 1.20.1 runs on SRG names, so the shaded jar ships reobfuscated.
+    ext.modJarTask = 'reobfShadowJar'
+
+    legacyForge {
+        enable {
+            neoForgeVersion = project.neoForgeVersion
+            disableRecompilation = true
+        }
+    }
+} else {
+    apply plugin: 'net.neoforged.moddev'
+
+    ext.modSourceDirs = ['neoforge/neoforge-common']
+    ext.modJarTask = 'shadowJar'
+
+    neoForge {
+        enable {
+            version = project.neoForgeVersion
+            disableRecompilation = true
+        }
+    }
+}
+
+apply from: rootProject.file('mod-common/mod.gradle')
+
+if (legacy) {
+    tasks.named('shadowJar') {
+        archiveClassifier.set('dev-all')
+    }
+
+    obfuscation {
+        reobfuscate(tasks.named('shadowJar'), sourceSets.main) {
+            archiveClassifier.set('')
+        }
+    }
+}

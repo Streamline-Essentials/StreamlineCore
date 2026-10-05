@@ -7,7 +7,7 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.streamline.api.SLAPI;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import net.streamline.base.StreamlineBungee;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
@@ -153,7 +153,8 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
     /**
      * {@inheritDoc}
      *
-     * <p>When {@code bypass} is {@code true} and LuckPerms is available, the
+     * <p>When {@code bypass} is {@code true} and a permission plugin can grant nodes
+     * ({@link Permissions#canModify()}), the
      * wildcard permission {@code "*"} is temporarily granted, the command is
      * dispatched, and the permission is immediately revoked.
      */
@@ -173,16 +174,16 @@ public class UserManager implements IUserManager<CommandSender, ProxiedPlayer> {
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.addPermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.addPermission(player.getUuid(), "*");
             } else {
                 return false;
             }
         }
         StreamlineBungee.getInstance().getProxy().getPluginManager().dispatchCommand(source, command);
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.removePermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.removePermission(player.getUuid(), "*");
             } else {
                 return false;
             }

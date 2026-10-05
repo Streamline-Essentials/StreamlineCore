@@ -2,7 +2,7 @@ package net.streamline.platform.savables;
 
 import host.plas.bou.scheduling.TaskManager;
 import lombok.Getter;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
@@ -164,7 +164,8 @@ public class UserManager implements IUserManager<CommandSender, Player> {
     /**
      * {@inheritDoc}
      *
-     * <p>If {@code bypass} is {@code true} and LuckPerms is available, temporarily grants
+     * <p>If {@code bypass} is {@code true} and a permission plugin can grant nodes
+     * ({@link Permissions#canModify()}), temporarily grants
      * the {@code *} permission node before dispatching the command via
      * {@link Bukkit#dispatchCommand(CommandSender, String)}, then removes it afterwards.
      *
@@ -172,7 +173,7 @@ public class UserManager implements IUserManager<CommandSender, Player> {
      * @param bypass  whether to temporarily grant all permissions
      * @param command the command string (without leading slash)
      * @return {@code true} if the command was dispatched; {@code false} if the source
-     *         player is offline or bypass was requested but LuckPerms is unavailable
+     *         player is offline or bypass was requested but no permission plugin can grant it
      */
     @Override
     public boolean runAs(CosmicSender player, boolean bypass, String command) {
@@ -188,16 +189,16 @@ public class UserManager implements IUserManager<CommandSender, Player> {
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.addPermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.addPermission(player.getUuid(), "*");
             } else {
                 return false;
             }
         }
         Bukkit.dispatchCommand(source, command);
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.removePermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.removePermission(player.getUuid(), "*");
             } else {
                 return false;
             }

@@ -12,6 +12,11 @@ import net.streamline.apib.SLAPIB;
 import net.streamline.base.runnables.PlayerChecker;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
+import net.streamline.platform.handlers.GameplayHandler;
+import net.streamline.platform.listeners.GameplayListener;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import singularity.permissions.DefaultPermissions;
 import net.streamline.platform.listeners.PlatformListener;
 import net.streamline.platform.messaging.ProxyPluginMessenger;
 import net.streamline.platform.savables.ConsoleHolder;
@@ -231,7 +236,17 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         playerInterface = new PlayerInterface();
         slapi = new SLAPI<>(getFolderName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         SLAPI.setBackendHandler(new BackendHandler());
+        GameplayHandler gameplayHandler = new GameplayHandler();
+        Singularity.setGameplayHandler(gameplayHandler);
         slapiB = new SLAPIB(getSlapi(), this);
+
+        // Unregistered nodes are operator-only in Bukkit, so module defaults are registered
+        // as true for everyone; a permission plugin can still override them.
+        DefaultPermissions.onGrant(node -> {
+            if (getProxy().getPluginManager().getPermission(node) == null) {
+                getProxy().getPluginManager().addPermission(new Permission(node, PermissionDefault.TRUE));
+            }
+        });
 
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
 
@@ -246,6 +261,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
         this.enable();
         registerListener(new PlatformListener());
+        registerListener(new GameplayListener(gameplayHandler));
     }
 
     /**
@@ -617,6 +633,13 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void runOnMainThread(Runnable task) {
+        if (Bukkit.isPrimaryThread()) task.run();
+        else host.plas.bou.scheduling.TaskManager.schedule(task);
     }
 
     /** {@inheritDoc} */

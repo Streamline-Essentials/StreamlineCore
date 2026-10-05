@@ -309,11 +309,9 @@ public class PlatformListener {
         }
         PingedResponse response;
         try {
-            if (ping.getFavicon().isEmpty()) {
-                response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()));
-            } else {
-                response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), ping.getFavicon().get().getBase64Url());
-            }
+            // The favicon arrives as a data URI, not a URL to download.
+            CosmicFavicon favicon = ping.getFavicon().map(f -> CosmicFavicon.fromDataUri(f.getBase64Url())).orElse(null);
+            response = new PingedResponse(protocol, players, Messenger.getInstance().asString(ping.getDescriptionComponent()), favicon);
         } catch (Throwable e) {
             MessageUtils.logWarning("Failed to get favicon from ping: " + e.getMessage());
             MessageUtils.logWarning(e.getStackTrace());
@@ -340,6 +338,8 @@ public class PlatformListener {
             infosServer[i] = new ServerPing.SamplePlayer(MessageUtils.replaceAmpersand(ModuleUtils.replacePlaceholders(info.getName())), info.getUniqueId());
         }
 
+        // asBuilder() copies the original sample and samplePlayers() appends to it.
+        builder.clearSamplePlayers();
         builder.samplePlayers(infosServer);
         builder.onlinePlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
         builder.maximumPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());

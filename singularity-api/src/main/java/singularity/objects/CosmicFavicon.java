@@ -31,6 +31,9 @@ import java.net.URL;
 @Getter @Setter
 public class CosmicFavicon {
 
+    /** The MIME header every encoded favicon starts with. */
+    public static final String DATA_URI_PREFIX = "data:image/png;base64,";
+
     /**
      * Gson {@link TypeAdapter} that serialises a {@link CosmicFavicon} as its
      * Base64 data-URI string and deserialises a data-URI string back into a
@@ -156,6 +159,48 @@ public class CosmicFavicon {
 
         // create
         return new CosmicFavicon( encoded, image );
+    }
+
+    /**
+     * Creates a favicon from encoded PNG bytes, such as a server's
+     * {@code server-icon.png}.
+     *
+     * @param png the PNG file contents
+     * @return the favicon, or {@code null} if the bytes are not a readable image
+     */
+    public static CosmicFavicon fromPng(byte[] png) {
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+            if (image == null) return null;
+            return new CosmicFavicon(DATA_URI_PREFIX + BaseEncoding.base64().encode(png), image);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /**
+     * Creates a favicon from a {@code data:image/png;base64,...} URI, the form
+     * favicons take in a server-list ping.
+     *
+     * @param dataUri the encoded favicon
+     * @return the favicon, or {@code null} if the URI is not a readable PNG data URI
+     */
+    public static CosmicFavicon fromDataUri(String dataUri) {
+        if (dataUri == null || ! dataUri.startsWith(DATA_URI_PREFIX)) return null;
+        try {
+            byte[] png = BaseEncoding.base64().decode(dataUri.substring(DATA_URI_PREFIX.length()));
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
+            return image == null ? null : new CosmicFavicon(dataUri, image);
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return the PNG file contents this favicon encodes
+     */
+    public byte[] toPng() {
+        return BaseEncoding.base64().decode(encoded.substring(DATA_URI_PREFIX.length()));
     }
 
     /**

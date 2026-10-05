@@ -181,6 +181,10 @@ public class CosmicSender implements Loadable<CosmicSender> {
             processed = Singularity.getInstance().getUserManager().getUsername(getUuid());
         }
 
+        // The live lookup finds nothing while the platform has not yet listed the player
+        // (stored data can finish loading before that); a known name is kept rather than lost.
+        if (processed == null && this.currentName != null && ! this.currentName.isBlank()) return this;
+
         this.currentName = processed;
         return this;
     }

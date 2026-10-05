@@ -283,15 +283,15 @@ public class PlatformListener implements Listener {
                 }
             }
         }
-        PingedResponse.Players players = new PingedResponse.Players(ping.getPlayers().getMax(), ping.getPlayers().getOnline(),
-                infos.toArray(new PingedResponse.PlayerInfo[0]));
+        PingedResponse.Players players = ping.getPlayers() == null
+                ? new PingedResponse.Players(0, 0, new PingedResponse.PlayerInfo[0])
+                : new PingedResponse.Players(ping.getPlayers().getMax(), ping.getPlayers().getOnline(),
+                        infos.toArray(new PingedResponse.PlayerInfo[0]));
         PingedResponse response;
         try {
-            if (ping.getFaviconObject() != null) {
-                response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), ping.getFaviconObject().getEncoded());
-            } else {
-                response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText());
-            }
+            // The favicon arrives as a data URI, not a URL to download.
+            CosmicFavicon favicon = ping.getFaviconObject() == null ? null : CosmicFavicon.fromDataUri(ping.getFaviconObject().getEncoded());
+            response = new PingedResponse(protocol, players, ping.getDescriptionComponent().toLegacyText(), favicon);
         } catch (Throwable e) {
             MessageUtils.logWarning("Failed to get favicon from ping response: " + e.getMessage());
             MessageUtils.logWarning(e.getStackTrace());

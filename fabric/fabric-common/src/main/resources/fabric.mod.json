@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "streamlinecore",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "StreamlineCore for Fabric servers.",
+  "authors": ["DrakDv"],
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "server": ["net.streamline.base.StreamlineFabric"]
+  },
+  "depends": {
+    "fabricloader": ">=${fabricLoaderVersion}",
+    "fabric-api": "*",
+    "minecraft": "${minecraftRange}",
+    "java": ">=${javaVersion}"
+  }
+}

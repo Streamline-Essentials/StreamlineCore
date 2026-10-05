@@ -1,6 +1,5 @@
 package singularity;
 
-import ch.qos.logback.classic.LoggerContext;
 import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.SingleSet;
 import gg.drak.thebase.objects.handling.derived.PluginEventable;
@@ -222,6 +221,12 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     @Getter
     private final S platform;
 
+    /**
+     * Root data folder: {@code plugins/<identifier>} on plugin platforms, {@code mods/<identifier>}
+     * on mod loaders. Held here because {@link PluginEventable} always derives a {@code plugins/} path.
+     */
+    private final File mainDataFolder;
+
     /** The user-manager implementation responsible for player lifecycle management. */
     @Getter
     private final U userManager;
@@ -256,6 +261,22 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     /** Handler used to communicate with backend (non-proxy) servers, if applicable. */
     @Getter @Setter
     private static IBackendHandler backendHandler;
+
+    /**
+     * In-game actions on players and worlds (teleports across worlds, healing, flight,
+     * inventories, safe-spot searches). Set by backend platforms only; {@code null} on proxies.
+     */
+    @Getter @Setter
+    private static IGameplayHandler gameplayHandler;
+
+    /**
+     * The {@link #getGameplayHandler() gameplay handler}, if this platform provides one.
+     *
+     * @return the handler, or empty on proxies
+     */
+    public static java.util.Optional<IGameplayHandler> gameplay() {
+        return java.util.Optional.ofNullable(gameplayHandler);
+    }
 
     /** {@code true} if this server is running behind a proxy (i.e., is a backend server). */
     @Getter @Setter
@@ -339,7 +360,10 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
      * @param apiChannel      the plugin-messaging channel name for cross-server communication
      */
     public Singularity(String identifier, S platform, U userManager, M messenger, IConsoleHolder<C> consoleHolder, IPlayerInterface<P> playerInterface, Supplier<CosmicModule> baseModuleGetter, String apiChannel) {
-        super(identifier);
+        super(identifier, false);
+        this.mainDataFolder = resolveDataFolder(identifier, platform);
+        this.mainDataFolder.mkdirs();
+
         instance = this;
         databaseReady = new AtomicBoolean(false);
         platformEnabled = new AtomicBoolean(false);
@@ -529,23 +553,21 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
                 CosmicLogHandler handler = new CosmicLogHandler();
                 rootLogger.addHandler(handler);
             }
-            if (getPlatform().hasSLFLogger()) {
-                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-
-                // Remove existing appenders
-                rootLogger.detachAndStopAllAppenders();
-
-                // Add custom appender
-                CosmicLogbackAppender appender = new CosmicLogbackAppender();
-                appender.setContext(loggerContext);
-                appender.setName("CosmicLogbackAppender");
-                appender.start();
-                rootLogger.addAppender(appender);
+            if (getPlatform().hasSLFLogger() && isLogbackBound()) {
+                CosmicLogbackAppender.installOnRoot();
             }
         } catch (Exception e) {
             // nothing
         }
+    }
+
+    /**
+     * Whether SLF4J is bound to Logback. Mod loaders bind SLF4J to Log4j and ship no Logback
+     * at all, so {@link CosmicLogbackAppender} -- which extends a Logback class -- must not
+     * be touched unless this holds.
+     */
+    private static boolean isLogbackBound() {
+        return LoggerFactory.getILoggerFactory().getClass().getName().startsWith("ch.qos.logback.");
     }
 
     /**
@@ -648,6 +670,38 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
      */
     public static File getMainFolder() {
         return getInstance().getDataFolder();
+    }
+
+    @Override
+    public File getDataFolder() {
+        return mainDataFolder;
+    }
+
+    /**
+     * Picks the server directory that holds this platform's add-ons: {@code mods/} for the mod
+     * loaders, {@code plugins/} for everything else.
+     *
+     * @param identifier the folder name inside that directory
+     * @param platform   the platform being started
+     * @return the root data folder for this instance
+     */
+    public static File resolveDataFolder(String identifier, ISingularityExtension platform) {
+        return new File(gg.drak.thebase.storage.StorageUtils.getEnvironmentFolder(), getAddonsFolderName(platform) + File.separator + identifier + File.separator);
+    }
+
+    /**
+     * @param platform the running platform
+     * @return {@code "mods"} on Fabric, Forge and NeoForge; {@code "plugins"} otherwise
+     */
+    public static String getAddonsFolderName(ISingularityExtension platform) {
+        switch (platform.getPlatformType()) {
+            case FABRIC:
+            case FORGE:
+            case NEOFORGE:
+                return "mods";
+            default:
+                return "plugins";
+        }
     }
 
     /**

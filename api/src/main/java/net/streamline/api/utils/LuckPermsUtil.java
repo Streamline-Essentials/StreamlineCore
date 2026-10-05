@@ -64,9 +64,6 @@ public class LuckPermsUtil {
      */
     public static <N extends ChatMetaNode<N, B>, B extends ChatMetaNode.Builder<N, B>, T extends NodeType<N>> MetaRecord
     grabThing(LuckPerms luckPerms, String username, T type) {
-        String toReturn = "";
-        int priority = 0;
-
         String uuid = "";
         Optional<String> s = UuidManager.getUuidFromName(username);
         if (s.isEmpty()) {
@@ -78,7 +75,30 @@ public class LuckPermsUtil {
 
         if (Objects.equals(uuid, "")) return new MetaRecord("", 0);
 
-        User user = luckPerms.getUserManager().getUser(UUID.fromString(uuid));
+        return grabThing(luckPerms, UUID.fromString(uuid), type);
+    }
+
+    /**
+     * Resolves the highest-priority chat-meta node of the requested type for the loaded
+     * player with the given UUID, as {@link #grabThing(LuckPerms, String, NodeType)} does
+     * once it has resolved a username.
+     *
+     * @param <N>        the concrete {@link ChatMetaNode} type
+     * @param <B>        the builder type for {@code N}
+     * @param <T>        the {@link NodeType} used to filter nodes
+     * @param luckPerms  the LuckPerms API instance to query
+     * @param uuid       the player's UUID
+     * @param type       the node type to query (e.g. {@code NodeType.PREFIX})
+     * @return a {@link MetaRecord} containing the resolved value and its priority;
+     *         returns a record with an empty string and priority 0 when the player
+     *         is not loaded or holds no matching nodes
+     */
+    public static <N extends ChatMetaNode<N, B>, B extends ChatMetaNode.Builder<N, B>, T extends NodeType<N>> MetaRecord
+    grabThing(LuckPerms luckPerms, UUID uuid, T type) {
+        String toReturn;
+        int priority;
+
+        User user = luckPerms.getUserManager().getUser(uuid);
         if (user == null) return new MetaRecord("", 0);
 
         Group group = luckPerms.getGroupManager().getGroup(user.getPrimaryGroup());
@@ -126,5 +146,27 @@ public class LuckPermsUtil {
      */
     public static MetaRecord grabSuffix(LuckPerms luckPerms, String username) {
         return grabThing(luckPerms, username, NodeType.SUFFIX);
+    }
+
+    /**
+     * Resolves the highest-priority prefix for the loaded player with the given UUID.
+     *
+     * @param luckPerms the LuckPerms API instance to query
+     * @param uuid      the player's UUID
+     * @return a {@link MetaRecord} containing the prefix string and its priority
+     */
+    public static MetaRecord grabPrefix(LuckPerms luckPerms, UUID uuid) {
+        return grabThing(luckPerms, uuid, NodeType.PREFIX);
+    }
+
+    /**
+     * Resolves the highest-priority suffix for the loaded player with the given UUID.
+     *
+     * @param luckPerms the LuckPerms API instance to query
+     * @param uuid      the player's UUID
+     * @return a {@link MetaRecord} containing the suffix string and its priority
+     */
+    public static MetaRecord grabSuffix(LuckPerms luckPerms, UUID uuid) {
+        return grabThing(luckPerms, uuid, NodeType.SUFFIX);
     }
 }
