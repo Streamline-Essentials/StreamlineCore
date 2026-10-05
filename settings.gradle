@@ -4,6 +4,11 @@ include ':singularity-api'
 include ':api'
 include ':backend-api'
 
+// Hard Switch for building modules
+// true = run
+// false = don't run
+def HARD_SWITCH = true
+
 if (! isCI()) {
     include ':bungee'
     include ':spigot'
@@ -60,7 +65,7 @@ if (! isCI()) {
 // automatically, so adding a module means dropping its sources in -- nothing to register
 // here. Included on Jenkins so its build produces the module JARs alongside the platform
 // ones; skipped on JitPack, which resolves only the API artifacts.
-if (! isJitPack()) {
+if (! isJitPack() && HARD_SWITCH) {
     def modulesDir = file('modules')
     if (modulesDir.isDirectory()) {
         modulesDir.listFiles()
