@@ -28,6 +28,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 @Getter
 public class ProperCommand implements IProperCommand {
 
+    /**
+     * The mod id. Every label is also registered as {@code streamlinecore:<label>}, so a
+     * command stays reachable when another mod registers the same bare name.
+     */
+    public static final String NAMESPACE = "streamlinecore";
+
     private final CosmicCommand parent;
 
     public ProperCommand(CosmicCommand parent) {
@@ -35,15 +41,21 @@ public class ProperCommand implements IProperCommand {
     }
 
     /**
-     * Every label this command answers to: its base and each of its aliases.
+     * Every label this command answers to: its base and each of its aliases, each both bare
+     * and prefixed with {@code streamlinecore:}.
      */
     public List<String> getLabels() {
-        List<String> labels = new ArrayList<>();
-        labels.add(parent.getBase());
+        List<String> bare = new ArrayList<>();
+        bare.add(parent.getBase());
         if (parent.getAliases() != null) {
             for (String alias : parent.getAliases()) {
-                if (alias != null && ! alias.isEmpty() && ! labels.contains(alias)) labels.add(alias);
+                if (alias != null && ! alias.isEmpty() && ! bare.contains(alias)) bare.add(alias);
             }
+        }
+
+        List<String> labels = new ArrayList<>(bare);
+        for (String label : bare) {
+            labels.add(NAMESPACE + ":" + label);
         }
         return labels;
     }
