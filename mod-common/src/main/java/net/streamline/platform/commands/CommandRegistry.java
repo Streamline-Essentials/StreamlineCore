@@ -6,6 +6,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
@@ -13,9 +15,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import singularity.utils.MessageUtils;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * Tracks every Streamline command and keeps the server's Brigadier dispatcher in step with it.
@@ -26,7 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link #registerAll(CommandDispatcher)} from their command-registration hook so the
  * rebuilt dispatcher gets every command back.</p>
  *
- * <p>Brigadier offers no way to remove a node, so a node, once added, stays in the live
+ * <p>Registering a label that vanilla or another mod already owns would merge into that
+ * foreign node, which keeps the foreign node's requirement and redirect (vanilla {@code /w}
+ * redirects to {@code /msg}), so the foreign command would keep answering. The foreign node
+ * is therefore taken off the root and held in {@link #DISPLACED}, and goes back on the root
+ * once no Streamline command owns the label.</p>
+ *
+ * <p>Streamline's own nodes are never removed: once added, a node stays in the live
  * dispatcher. Each node therefore resolves its label through {@link #ACTIVE} on every use:
  * its requirement passes only while some command owns the label, which makes an
  * unregistered command unknown to parsing and absent from the tree sent to clients, and
@@ -40,12 +52,14 @@ public final class CommandRegistry {
     private static final Map<String, ProperCommand> COMMANDS = new ConcurrentHashMap<>();
     /** Each live label and the command that currently answers to it. */
     private static final Map<String, ProperCommand> ACTIVE = new ConcurrentHashMap<>();
+    /** Foreign root nodes a Streamline label took the place of, by label. */
+    private static final Map<String, CommandNode<CommandSourceStack>> DISPLACED = new ConcurrentHashMap<>();
 
     private CommandRegistry() {}
 
     public static void register(ProperCommand command) {
         ProperCommand previous = COMMANDS.put(command.getParent().getIdentifier(), command);
-        if (previous != null && previous != command) deactivate(previous);
+        List<String> released = previous != null && previous != command ? deactivate(previous) : new ArrayList<>();
         for (String label : command.getLabels()) {
             ACTIVE.put(label, command);
         }
@@ -55,17 +69,22 @@ public final class CommandRegistry {
 
         // Modules start on a worker thread; the dispatcher belongs to the server thread.
         server.execute(() -> {
-            registerInto(server.getCommands().getDispatcher(), command);
+            CommandDispatcher<CommandSourceStack> dispatcher = server.getCommands().getDispatcher();
+            restoreDisplaced(dispatcher, released);
+            registerInto(dispatcher, command);
             resendCommands(server);
         });
     }
 
     public static void unregister(ProperCommand command) {
         COMMANDS.remove(command.getParent().getIdentifier(), command);
-        deactivate(command);
+        List<String> released = deactivate(command);
 
         MinecraftServer server = BasePlugin.getServer();
-        if (server != null) server.execute(() -> resendCommands(server));
+        if (server != null) server.execute(() -> {
+            restoreDisplaced(server.getCommands().getDispatcher(), released);
+            resendCommands(server);
+        });
     }
 
     public static void registerAll(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -85,7 +104,7 @@ public final class CommandRegistry {
      */
     static LiteralArgumentBuilder<CommandSourceStack> buildBrigadier(String label) {
         return Commands.literal(label)
-                .requires(source -> isActive(label))
+                .requires(new LabelRequirement(label))
                 .executes(ctx -> execute(label, ctx, new String[0]))
                 .then(Commands.argument("args", StringArgumentType.greedyString())
                         .suggests((ctx, builder) -> suggest(label, ctx, builder))
@@ -102,14 +121,46 @@ public final class CommandRegistry {
         return command == null ? builder.buildFuture() : command.getSuggestions(ctx, builder);
     }
 
-    /** Drops the labels {@code command} still owns; labels another command took over stay. */
-    private static void deactivate(ProperCommand command) {
-        ACTIVE.values().removeIf(owner -> owner == command);
+    /**
+     * Drops the labels {@code command} still owns; labels another command took over stay.
+     *
+     * @return the labels dropped
+     */
+    private static List<String> deactivate(ProperCommand command) {
+        List<String> released = new ArrayList<>();
+        ACTIVE.entrySet().removeIf(entry -> {
+            if (entry.getValue() != command) return false;
+            released.add(entry.getKey());
+            return true;
+        });
+        return released;
+    }
+
+    /**
+     * Puts the foreign nodes behind {@code labels} back on the root, except for labels a
+     * Streamline command has claimed again since.
+     */
+    private static void restoreDisplaced(CommandDispatcher<CommandSourceStack> dispatcher, List<String> labels) {
+        RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
+        for (String label : labels) {
+            if (isActive(label)) continue;
+            CommandNode<CommandSourceStack> foreign = DISPLACED.remove(label);
+            if (foreign != null && NodeRemoval.remove(root, label)) root.addChild(foreign);
+        }
+    }
+
+    /** Takes a vanilla or other-mod node for {@code label} off the root, keeping it in {@link #DISPLACED}. */
+    private static void displaceForeign(CommandDispatcher<CommandSourceStack> dispatcher, String label) {
+        RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
+        CommandNode<CommandSourceStack> existing = root.getChild(label);
+        if (existing == null || existing.getRequirement() instanceof LabelRequirement) return;
+        if (NodeRemoval.remove(root, label)) DISPLACED.put(label, existing);
     }
 
     private static void registerInto(CommandDispatcher<CommandSourceStack> dispatcher, ProperCommand command) {
         for (String label : command.getLabels()) {
             try {
+                displaceForeign(dispatcher, label);
                 dispatcher.register(buildBrigadier(label));
             } catch (Exception e) {
                 MessageUtils.logWarning("Error registering command '" + label + "': " + e.getMessage());
@@ -122,6 +173,62 @@ public final class CommandRegistry {
         if (server.getPlayerList() == null) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             server.getCommands().sendCommands(player);
+        }
+    }
+
+    /**
+     * The requirement on every Streamline node. Its type is what marks a root node as
+     * Streamline's own, to be merged into rather than displaced.
+     */
+    private static final class LabelRequirement implements Predicate<CommandSourceStack> {
+        private final String label;
+
+        private LabelRequirement(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public boolean test(CommandSourceStack source) {
+            return isActive(label);
+        }
+    }
+
+    /**
+     * Removes a child from a Brigadier node through its private maps, which Brigadier has no
+     * public method for. {@code CommandNode} holds each child in {@code children} and again in
+     * {@code literals} or {@code arguments}; parsing looks literals up in {@code literals}, so
+     * the child must leave all three. Brigadier ships without a module descriptor, so its
+     * packages are open to reflection on the module-layer loaders too.
+     */
+    private static final class NodeRemoval {
+        private static final Field[] MAPS = findMaps();
+
+        private static Field[] findMaps() {
+            try {
+                Field[] fields = {
+                        CommandNode.class.getDeclaredField("children"),
+                        CommandNode.class.getDeclaredField("literals"),
+                        CommandNode.class.getDeclaredField("arguments"),
+                };
+                for (Field field : fields) field.setAccessible(true);
+                return fields;
+            } catch (Exception | LinkageError e) {
+                MessageUtils.logWarning("Streamline commands cannot override vanilla or other mods' commands: " + e);
+                return null;
+            }
+        }
+
+        /**
+         * @return whether {@code name} is no longer a child of {@code parent}
+         */
+        static boolean remove(CommandNode<?> parent, String name) {
+            if (MAPS == null) return false;
+            try {
+                for (Field field : MAPS) ((Map<?, ?>) field.get(parent)).remove(name);
+                return true;
+            } catch (IllegalAccessException e) {
+                return false;
+            }
         }
     }
 }

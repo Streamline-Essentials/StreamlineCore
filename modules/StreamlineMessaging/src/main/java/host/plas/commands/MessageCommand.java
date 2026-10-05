@@ -15,6 +15,28 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter @Setter
 public class MessageCommand extends ModuleCommand {
+    /** The sender's line for /message and /reply. */
+    public static final String DEFAULT_SENDER_FORMAT =
+            "&dYOU &9&l→ &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/* &7(&e*/*streamline_user_server*/*&7)%&7: &f%this_message%";
+    /**
+     * A sender format that early configs were written with, which put the message on a
+     * second line. Configs still holding it exactly are moved to {@link #DEFAULT_SENDER_FORMAT}.
+     */
+    private static final String TWO_LINE_SENDER_FORMAT =
+            "&dYOU &9&l→ &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/* &7(&e*/*streamline_user_server*/*&7)%&7:\n" +
+                    "         &f%this_message%";
+
+    /**
+     * Reads the sender format at {@code messages.success.sender}, moving a config that still
+     * holds {@link #TWO_LINE_SENDER_FORMAT} to {@link #DEFAULT_SENDER_FORMAT}.
+     */
+    public static String loadSenderFormat(ModuleCommand command) {
+        String format = command.getCommandResource().getOrSetDefault("messages.success.sender", DEFAULT_SENDER_FORMAT);
+        if (! TWO_LINE_SENDER_FORMAT.equals(format)) return format;
+        command.getCommandResource().write("messages.success.sender", DEFAULT_SENDER_FORMAT);
+        return DEFAULT_SENDER_FORMAT;
+    }
+
     private String messageSender;
     private String messageRecipient;
 
@@ -25,9 +47,7 @@ public class MessageCommand extends ModuleCommand {
                 "msg", "w", "tell", "whisper"
         );
 
-        messageSender = this.getCommandResource().getOrSetDefault("messages.success.sender",
-                "&dYOU &9&l→ &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/* &7(&e*/*streamline_user_server*/*&7)%&7:\n" +
-                        "         &f%this_message%");
+        messageSender = loadSenderFormat(this);
         messageRecipient = this.getCommandResource().getOrSetDefault("messages.success.recipient",
                 "&d%streamline_user_formatted% &7(&e%streamline_user_server%&7) &9&l→ &dYOU&7: &f%this_message%");
     }
