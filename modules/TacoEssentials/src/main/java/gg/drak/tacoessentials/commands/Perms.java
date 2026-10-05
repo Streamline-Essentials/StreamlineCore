@@ -21,6 +21,13 @@ public final class Perms {
     public static final String RTP_BYPASS_COOLDOWN = PREFIX + "rtp.bypasscooldown";
     public static final String HOMES_UNLIMITED = PREFIX + "homes.unlimited";
 
+    /** Running any custom alias; an alias with its permission toggle on also needs {@link #aliasUse}. */
+    public static final String ALIAS = PREFIX + "alias";
+
+    public static String aliasUse(String alias) {
+        return PREFIX + "alias.use." + alias;
+    }
+
     /** Commands every player may use. */
     public static final String[] EVERYONE = {
             "tpa", "tpahere", "tpaccept", "tpadeny", "back", "dback", "rtp",
@@ -31,5 +38,6 @@ public final class Perms {
 
     public static void registerDefaults() {
         for (String name : EVERYONE) DefaultPermissions.grantByDefault(command(name));
+        DefaultPermissions.grantByDefault(ALIAS);
     }
 }

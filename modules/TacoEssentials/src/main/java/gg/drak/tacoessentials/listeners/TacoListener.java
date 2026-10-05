@@ -1,6 +1,7 @@
 package gg.drak.tacoessentials.listeners;
 
 import gg.drak.tacoessentials.TacoEssentials;
+import gg.drak.tacoessentials.alias.AliasPrompts;
 import gg.drak.tacoessentials.commands.Msg;
 import gg.drak.tacoessentials.data.Loc;
 import gg.drak.tacoessentials.data.Sessions;
@@ -67,6 +68,7 @@ public class TacoListener implements BaseEventListener {
         if (player == null) return;
         String uuid = player.getUuid();
         TpaManager.dropPlayer(uuid);
+        AliasPrompts.drop(uuid);
         try {
             gameplay().getLocation(uuid).ifPresent(here -> TacoDatabase.saveLastLocation(uuid, Loc.of(here)));
         } catch (Exception e) {
@@ -78,7 +80,12 @@ public class TacoListener implements BaseEventListener {
     @BaseProcessor
     public void onChat(CosmicChatEvent event) {
         CosmicPlayer player = event.getPlayer();
-        if (player == null || ! Sessions.isMuted(player.getUuid())) return;
+        if (player == null) return;
+        if (AliasPrompts.answer(player, event.getMessage())) {
+            event.setCanceled(true);
+            return;
+        }
+        if (! Sessions.isMuted(player.getUuid())) return;
         event.setCanceled(true);
         player.sendMessage(Msg.error("You are muted."));
     }
