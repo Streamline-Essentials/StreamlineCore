@@ -105,12 +105,15 @@ tasks.named('shadowJar') {
     }
     mergeServiceFiles()
 
-    // The game already ships these (Forge/NeoForge refuse a second jar exporting the same
-    // package), and Logback must not compete with the game's Log4j for SLF4J.
+    // The game or the loader already ships these (Forge/NeoForge refuse a second jar
+    // exporting the same package), and Logback must not compete with the game's Log4j for
+    // SLF4J. The JetBrains annotations are compile-time only.
     exclude 'com/google/gson/**'
     exclude 'com/google/common/**'
     exclude 'org/slf4j/**'
     exclude 'ch/qos/logback/**'
+    exclude 'org/jetbrains/annotations/**'
+    exclude 'org/intellij/lang/annotations/**'
     exclude 'META-INF/services/org.slf4j.spi.SLF4JServiceProvider'
     exclude 'META-INF/services/ch.qos.logback.**'
     exclude 'logback*.xml'
