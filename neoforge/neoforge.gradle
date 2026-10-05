@@ -27,7 +27,9 @@ if (legacy) {
 } else {
     apply plugin: 'net.neoforged.moddev'
 
-    ext.modSourceDirs = ['neoforge/neoforge-common']
+    // NeoForge's block-break event became BreakBlockEvent in 26.1.
+    def breakListener = project.mcVersion.toString().startsWith('1.') ? 'neoforge-break121' : 'neoforge-break26'
+    ext.modSourceDirs = ['neoforge/neoforge-common', "neoforge/${breakListener}"]
     ext.modJarTask = 'shadowJar'
 
     neoForge {
