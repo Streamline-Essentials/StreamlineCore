@@ -37,61 +37,21 @@ final class Workstations {
     private static AbstractContainerMenu menu(Workstation type, int id, Inventory inventory, ContainerLevelAccess access) {
         switch (type) {
             case CRAFTING:
-                return new CraftingMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Crafting(id, inventory, access);
             case ANVIL:
-                return new AnvilMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Anvil(id, inventory, access);
             case SMITHING:
-                return new SmithingMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Smithing(id, inventory, access);
             case GRINDSTONE:
-                return new GrindstoneMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Grindstone(id, inventory, access);
             case STONECUTTER:
-                return new StonecutterMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Stonecutter(id, inventory, access);
             case CARTOGRAPHY:
-                return new CartographyTableMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Cartography(id, inventory, access);
             case LOOM:
-                return new LoomMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Loom(id, inventory, access);
             default:
-                return new EnchantmentMenu(id, inventory, access) {
-                    @Override
-                    public boolean stillValid(Player player) {
-                        return true;
-                    }
-                };
+                return new Enchanting(id, inventory, access);
         }
     }
 
@@ -106,6 +66,94 @@ final class Workstations {
             case CARTOGRAPHY: return Component.translatable("container.cartography_table");
             case LOOM: return Component.translatable("container.loom");
             default: return Component.translatable("container.enchant");
+        }
+    }
+
+    private static final class Crafting extends CraftingMenu {
+        Crafting(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Anvil extends AnvilMenu {
+        Anvil(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Smithing extends SmithingMenu {
+        Smithing(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Grindstone extends GrindstoneMenu {
+        Grindstone(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Stonecutter extends StonecutterMenu {
+        Stonecutter(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Cartography extends CartographyTableMenu {
+        Cartography(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Loom extends LoomMenu {
+        Loom(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
+    }
+
+    private static final class Enchanting extends EnchantmentMenu {
+        Enchanting(int id, Inventory inventory, ContainerLevelAccess access) {
+            super(id, inventory, access);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
         }
     }
 }
