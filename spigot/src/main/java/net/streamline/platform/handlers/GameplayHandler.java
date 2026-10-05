@@ -6,8 +6,10 @@ import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.HeightMap;
+import org.bukkit.Keyed;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -198,7 +200,7 @@ public class GameplayHandler implements IGameplayHandler {
                     else y = safeInColumn(world, x, z, maxY, minY);
                 }
                 if (y.isEmpty()) continue;
-                if (area.isAvoided(world.getBiome(x, y.getAsInt(), z).getKey().toString())) continue;
+                if (area.isAvoided(biomeKey(world.getBiome(x, y.getAsInt(), z)).toString())) continue;
                 return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
             }
             return Optional.<CosmicLocation>empty();
@@ -397,8 +399,16 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     private static boolean isWater(Biome biome) {
-        String key = biome.getKey().getKey();
+        String key = biomeKey(biome).getKey();
         return key.contains("ocean") || key.contains("river");
+    }
+
+    /**
+     * Biome is an enum before 1.21.3 and an interface after, so calling its methods directly
+     * links against only one of the two. Both implement {@link Keyed}, which links on either.
+     */
+    private static NamespacedKey biomeKey(Biome biome) {
+        return ((Keyed) biome).getKey();
     }
 
     /** True when the feet block and the one above are open and the block below is solid, safe ground. */
