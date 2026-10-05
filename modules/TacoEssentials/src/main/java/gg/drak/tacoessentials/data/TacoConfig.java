@@ -23,8 +23,6 @@ public class TacoConfig extends ModularizedConfig {
         deathHistorySize();
         jumpMaxDistance();
         defaultMaxHomes();
-        rtpMinRadius();
-        rtpMaxRadius();
         rtpMaxAttempts();
         rtpCooldownSeconds();
         nickMaxLength();
@@ -71,16 +69,6 @@ public class TacoConfig extends ModularizedConfig {
     /** Homes a player may own; tacoessentials.homes.unlimited lifts the limit (operators have it). */
     public int defaultMaxHomes() {
         return integer("homes.default-max", 5);
-    }
-
-    /** Minimum distance from the world spawn (or 0,0 outside the main world) that /rtp lands. */
-    public int rtpMinRadius() {
-        return integer("rtp.min-radius", 500);
-    }
-
-    /** Maximum distance from the center that /rtp lands. The world border also applies. */
-    public int rtpMaxRadius() {
-        return integer("rtp.max-radius", 5000);
     }
 
     /** Candidate columns /rtp tries before giving up; each may generate a chunk. */

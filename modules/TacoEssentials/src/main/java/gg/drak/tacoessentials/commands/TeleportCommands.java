@@ -2,12 +2,14 @@ package gg.drak.tacoessentials.commands;
 
 import gg.drak.tacoessentials.TacoEssentials;
 import gg.drak.tacoessentials.data.Loc;
+import gg.drak.tacoessentials.data.RtpConfig;
 import gg.drak.tacoessentials.data.Sessions;
 import gg.drak.tacoessentials.data.TacoDatabase;
 import gg.drak.tacoessentials.teleport.Teleports;
 import gg.drak.tacoessentials.teleport.TpaManager;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
+import singularity.data.players.location.RandomTeleportArea;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
@@ -158,10 +160,12 @@ public final class TeleportCommands {
             throw Msg.fail("You can use /rtp again in " + ((cooldownMs - waited + 999) / 1000) + "s.");
         }
 
+        RtpConfig rtpConfig = TacoEssentials.getRtpConfig();
+        if (! rtpConfig.isEnabled()) throw Msg.fail("Random teleport is disabled.");
         CosmicLocation here = gameplay().getLocation(player.getUuid()).orElseThrow(() -> Msg.fail("You are not online here."));
-        Optional<CosmicLocation> spot = gameplay().findRandomSafeLocation(here.getWorldName(),
-                TacoEssentials.getConfig().rtpMinRadius(), TacoEssentials.getConfig().rtpMaxRadius(),
-                TacoEssentials.getConfig().rtpMaxAttempts());
+        RandomTeleportArea area = rtpConfig.area(here.getWorldName())
+                .orElseThrow(() -> Msg.fail("Random teleport is disabled in this world."));
+        Optional<CosmicLocation> spot = gameplay().findRandomSafeLocation(area, TacoEssentials.getConfig().rtpMaxAttempts());
         if (spot.isEmpty()) throw Msg.fail("Could not find a safe location. Try again.");
         session.setLastRtpMillis(System.currentTimeMillis());
 
