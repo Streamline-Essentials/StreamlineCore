@@ -9,6 +9,24 @@ tracking:
   # `mature-only` count once fully grown either way.
   count-placed-blocks: false
 
+# Syncing from the server's vanilla statistics (world/stats/<uuid>.json). Each collection is
+# raised to at least the sum of its sources' statistics; collections never go down, so play
+# tracked before the module was installed counts too. Statistics follow vanilla rules: "mined"
+# includes blocks the player placed themselves and crops broken before they were grown.
+stat-sync:
+  enabled: true
+  # Sync each player when they join.
+  on-join: true
+  # Sync online players this often, in minutes; 0 turns it off.
+  interval-minutes: 5
+  # The vanilla statistic each source type in collections.yml reads; "none" skips that source.
+  # Statistics: mined, picked_up, crafted, used, broken, dropped, killed, killed_by, custom.
+  sources:
+    blocks: mined
+    drops: picked_up
+    fish: picked_up
+    buckets: none
+
 # How often changed progress is written to the database, in seconds (and always on quit).
 save-interval-seconds: 60
 
@@ -77,6 +95,8 @@ messages:
   claimed: "#00FC88Claimed Level #FFFFFF%level% #00FC88of #FFED6A%collection% #00FC88(%reward%#00FC88)"
   already-claimed: "#AAAAAAThat reward was already claimed."
   rewards-disabled: "#FF5555Collection rewards are currently disabled."
+  # %levels% (newly completed levels), %count% (all levels waiting to be claimed)
+  stats-synced: "#38C1FCYour collections caught up with your server statistics: #FFFFFF%levels% #38C1FCnew level(s) completed!"
   claim-elsewhere: "#FF5555Rewards can only be claimed on a game server."
   locked: "#FF5555You have not completed this level yet."
   # %collection%

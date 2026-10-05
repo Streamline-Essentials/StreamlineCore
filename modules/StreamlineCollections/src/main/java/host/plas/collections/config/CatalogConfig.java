@@ -59,22 +59,25 @@ public class CatalogConfig extends ModularizedConfig {
             long[] tiers = tiers(path + ".tiers");
             if (tiers.length == 0) tiers = defaultTiers;
 
-            catalog.addDefinition(new CollectionDefinition(id, category,
-                    string(path + ".icon", "minecraft:chest"), string(path + ".name", rawId), tiers));
+            CollectionDefinition definition = new CollectionDefinition(id, category,
+                    string(path + ".icon", "minecraft:chest"), string(path + ".name", rawId), tiers);
+            catalog.addDefinition(definition);
 
-            addSources(catalog.getBlocks(), path + ".blocks", id);
-            addSources(catalog.getDrops(), path + ".drops", id);
-            addSources(catalog.getFish(), path + ".fish", id);
-            addSources(catalog.getBuckets(), path + ".buckets", id);
+            addSources(catalog.getBlocks(), definition, path, "blocks");
+            addSources(catalog.getDrops(), definition, path, "drops");
+            addSources(catalog.getFish(), definition, path, "fish");
+            addSources(catalog.getBuckets(), definition, path, "buckets");
         }
 
         return catalog;
     }
 
-    private void addSources(Map<String, String> sources, String path, String collection) {
-        List<String> ids = getResource().getStringList(path);
+    private void addSources(Map<String, String> sources, CollectionDefinition definition, String path, String sourceType) {
+        String collection = definition.getId();
+        List<String> ids = getResource().getStringList(path + "." + sourceType);
         if (ids == null) return;
         for (String source : ids) {
+            definition.addSource(sourceType, Catalog.key(source));
             String previous = sources.put(Catalog.key(source), collection);
             if (previous != null && ! previous.equals(collection)) {
                 StreamlineCollections.getInstance().logWarning("'" + source + "' feeds both '" + previous

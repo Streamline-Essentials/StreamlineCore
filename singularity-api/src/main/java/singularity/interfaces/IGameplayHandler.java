@@ -258,4 +258,25 @@ public interface IGameplayHandler {
      * @return {@code false} for offline players
      */
     boolean isOperator(String uuid);
+
+    /**
+     * Reads the player's vanilla statistics of one type: live for an online player, from the
+     * world's stats file for an offline one.
+     *
+     * <p>{@code type} is a statistic type id — {@code minecraft:mined}, {@code minecraft:picked_up},
+     * {@code minecraft:crafted}, {@code minecraft:used}, {@code minecraft:broken},
+     * {@code minecraft:dropped}, {@code minecraft:killed}, {@code minecraft:killed_by} or
+     * {@code minecraft:custom} — and {@code ids} are the blocks, items, entities or custom
+     * statistics within it, such as {@code minecraft:stone} or {@code minecraft:fish_caught}.
+     * Ids may omit the {@code minecraft:} namespace.</p>
+     *
+     * @param uuid the player's UUID
+     * @param type the statistic type id
+     * @param ids  the ids to read within that type
+     * @return the value of each requested id the player has a statistic for, keyed by its
+     *         namespaced id; empty when the player or type is unknown
+     */
+    default java.util.Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
+        return java.util.Collections.emptyMap();
+    }
 }

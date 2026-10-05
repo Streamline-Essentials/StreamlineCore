@@ -431,6 +431,11 @@ public class GameplayHandler implements IGameplayHandler {
         return player != null && player.isOp();
     }
 
+    @Override
+    public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
+        return callSync(() -> BukkitStatistics.read(uuid, type, ids));
+    }
+
     private static boolean isWater(Biome biome) {
         String key = biomeKey(biome).getKey();
         return key.contains("ocean") || key.contains("river");

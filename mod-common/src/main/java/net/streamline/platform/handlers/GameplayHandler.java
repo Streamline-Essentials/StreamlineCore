@@ -380,6 +380,13 @@ public abstract class GameplayHandler implements IGameplayHandler {
         }, false);
     }
 
+    @Override
+    public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
+        MinecraftServer server = BasePlugin.getServer();
+        if (server == null) return java.util.Collections.emptyMap();
+        return callOnServer(() -> ModStatistics.read(server, uuid, type, ids), java.util.Collections.<String, Long>emptyMap());
+    }
+
     /** Puts the stack into the player's inventory, dropping whatever does not fit at their feet. */
     private static void giveOrDrop(ServerPlayer player, ItemStack stack) {
         if (player.getInventory().add(stack) || stack.isEmpty()) return;
