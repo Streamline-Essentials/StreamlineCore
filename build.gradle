@@ -99,6 +99,9 @@ allprojects {
             url = "https://repo.codemc.io/repository/streamline-essentials/"
         }
 
+        // JitPack
+        maven { url 'https://jitpack.io' }
+
         // Local libs folder as a flat directory repository
         flatDir {
             dirs "${rootDir}/libs"
