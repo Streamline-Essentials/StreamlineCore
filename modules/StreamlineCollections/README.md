@@ -17,7 +17,22 @@ Backends running Spigot can render it; backends on a mod loader cannot yet.
 | `/collectionsleaderboard (overall\|<category> (total\|<collection>)\|<collection>)` (aliases `clb`, `colleaderboard`, `collectionleaderboard`, `collectionslb`) | `streamline.command.collectionsleaderboard.default` |
 | `/collectionsadmin <reload\|give <player> <collection> <amount>\|set <player> <collection> <amount>\|wipe <player>\|sync (player)>` (alias `coladmin`) | `streamline.command.collectionsadmin.default` |
 
-`give`, `set` and `wipe` only work for players online on the server running the command.
+`give`, `set`, `wipe` and `sync` only work for players online on the server running the command.
+
+## Syncing from server statistics
+
+Collections also follow each server's vanilla statistics (`world/stats/<uuid>.json`). With
+`stat-sync` on, a player is synced when they join, every `interval-minutes` while online, and on
+`/collectionsadmin sync`. Each collection is raised to at least the sum of its sources' statistics,
+and never lowered, so whichever is larger wins: the tracked amount or the statistics. Play from
+before the module was installed counts this way, as do sources a platform's events miss, such as
+mob drops and fishing on Fabric.
+
+`stat-sync.sources` picks the statistic each source type reads. By default, blocks read
+`mined` and drops and fish read `picked_up`; buckets read nothing, since vanilla counts every bucket
+use as one statistic. Statistics follow vanilla's rules, not the module's: `mined` counts blocks
+the player placed and crops broken before they were grown, and `picked_up` counts any item picked
+up from the ground. A wiped player is raised back to their statistics on the next sync.
 
 ## Files
 
