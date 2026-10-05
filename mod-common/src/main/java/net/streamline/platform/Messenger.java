@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.streamline.api.SLAPI;
 import net.streamline.platform.compat.McCompat;
+import net.streamline.platform.text.LegacyText;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.IMessenger;
@@ -22,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class Messenger implements IMessenger {
 
-    private static final Pattern COLOR_PATTERN = Pattern.compile("(?i)§[0-9A-FK-ORX]|&[0-9A-FK-ORX]|<[^>]+>");
+    private static final Pattern COLOR_PATTERN = Pattern.compile("(?i)&#[0-9A-F]{6}|\\{#[0-9A-F]{6}}|#[0-9A-F]{6}|§[0-9A-FK-ORX]|&[0-9A-FK-ORX]|<[^>]+>");
 
     @Getter
     private static Messenger instance;
@@ -42,7 +43,7 @@ public class Messenger implements IMessenger {
     private void deliver(CosmicSender to, String message) {
         if (to instanceof CosmicPlayer) {
             ServerPlayer player = BasePlugin.getPlayer(to.getUuid());
-            if (player != null) player.sendSystemMessage(Component.literal(codedString(message)));
+            if (player != null) player.sendSystemMessage(LegacyText.parse(message));
         } else {
             BasePlugin.getInstance().getSlf4jLogger().info(stripColor(message));
         }
@@ -106,11 +107,11 @@ public class Messenger implements IMessenger {
         for (ClickableMessage.Segment segment : message.getSegments()) {
             Style style = Style.EMPTY;
             if (segment.getHover() != null) {
-                style = style.withHoverEvent(McCompat.showText(Component.literal(codedString(segment.getHover()))));
+                style = style.withHoverEvent(McCompat.showText(LegacyText.parse(segment.getHover())));
             }
             ClickEvent click = McCompat.clickEvent(segment.getClickAction(), segment.getClickValue());
             if (click != null) style = style.withClickEvent(click);
-            line.append(Component.literal(codedString(segment.getText())).withStyle(style));
+            line.append(LegacyText.parse(segment.getText()).withStyle(style));
         }
         player.sendSystemMessage(line);
     }
@@ -122,8 +123,8 @@ public class Messenger implements IMessenger {
         if (p == null) return;
         p.connection.send(new ClientboundSetTitlesAnimationPacket(
                 (int) title.getFadeIn(), (int) title.getStay(), (int) title.getFadeOut()));
-        p.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(codedString(resolve(player, title.getSub())))));
-        p.connection.send(new ClientboundSetTitleTextPacket(Component.literal(codedString(resolve(player, title.getMain())))));
+        p.connection.send(new ClientboundSetSubtitleTextPacket(LegacyText.parse(resolve(player, title.getSub()))));
+        p.connection.send(new ClientboundSetTitleTextPacket(LegacyText.parse(resolve(player, title.getMain()))));
     }
 
     @Override

@@ -34,7 +34,7 @@ public class CollectionsCommand extends ModuleCommand {
         Optional<CosmicPlayer> optionalViewer = Commands.menuViewer(context.getSender());
         if (optionalViewer.isEmpty()) return;
         CosmicPlayer viewer = optionalViewer.get();
-        String[] args = context.getArgsArray();
+        String[] args = Commands.args(context);
 
         if (args.length >= 1 && args[0].equalsIgnoreCase("open")) {
             String id = args.length >= 2 ? args[1] : "";

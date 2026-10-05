@@ -31,7 +31,7 @@ public class CollectionsLeaderboardCommand extends ModuleCommand {
         Optional<CosmicPlayer> optionalViewer = Commands.menuViewer(context.getSender());
         if (optionalViewer.isEmpty()) return;
         CosmicPlayer viewer = optionalViewer.get();
-        String[] args = context.getArgsArray();
+        String[] args = Commands.args(context);
         Catalog catalog = CollectionManager.getCatalog();
 
         if (args.length == 0) {

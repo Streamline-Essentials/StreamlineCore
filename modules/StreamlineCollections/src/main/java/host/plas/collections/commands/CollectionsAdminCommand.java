@@ -31,7 +31,7 @@ public class CollectionsAdminCommand extends ModuleCommand {
 
     @Override
     public void run(CommandContext<CosmicCommand> context) {
-        String[] args = context.getArgsArray();
+        String[] args = Commands.args(context);
         if (args.length == 0) {
             context.sendMessage(USAGE);
             return;
