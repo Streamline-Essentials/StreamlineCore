@@ -6,6 +6,8 @@ import net.minecraft.network.chat.HoverEvent;
 import singularity.objects.ClickableMessage;
 import java.net.URI;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.MinecraftServer;
@@ -55,6 +57,11 @@ public final class McCompat {
     /** The level's dimension id, such as {@code minecraft:overworld}. */
     public static String dimensionId(ServerLevel level) {
         return level.dimension().identifier().toString();
+    }
+
+    /** The biome's id, such as {@code minecraft:plains}, or an empty string for an unregistered biome. */
+    public static String biomeId(Holder<Biome> biome) {
+        return biome.unwrapKey().map(key -> key.identifier().toString()).orElse("");
     }
 
     public static void teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {

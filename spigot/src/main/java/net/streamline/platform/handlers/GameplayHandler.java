@@ -14,10 +14,12 @@ import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.PlayerInventory;
 import singularity.Singularity;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.RandomTeleportArea;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
@@ -166,6 +168,55 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public Optional<CosmicLocation> findRandomSafeLocation(RandomTeleportArea area, int maxAttempts) {
+        return callSync(() -> {
+            World world = Bukkit.getWorld(area.getWorld());
+            if (world == null) return Optional.<CosmicLocation>empty();
+            int minY = Math.max(area.getMinY(), world.getMinHeight() + 1);
+            int maxY = Math.min(area.getMaxY(), topY(world) - 1);
+            if (minY > maxY) return Optional.<CosmicLocation>empty();
+            boolean ceiling = world.getEnvironment() == World.Environment.NETHER;
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                int[] column = area.sample(random);
+                if (column == null) continue;
+                int x = column[0];
+                int z = column[1];
+                if (! world.getWorldBorder().isInside(new Location(world, x, 0, z))) continue;
+
+                OptionalInt y;
+                if (ceiling) {
+                    y = nearestSafeY(world, x, z, (minY + maxY) / 2, minY, maxY);
+                } else {
+                    int surface = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+                    // An empty column (the End's void) reports the bottom of the world.
+                    if (surface <= world.getMinHeight() + 1 || surface < minY) continue;
+                    // A surface inside the range is the only candidate, so water and lava
+                    // surfaces are skipped rather than searched through into the caves below.
+                    if (surface <= maxY) y = isSafe(world, x, surface, z) ? OptionalInt.of(surface) : OptionalInt.empty();
+                    else y = safeInColumn(world, x, z, maxY, minY);
+                }
+                if (y.isEmpty()) continue;
+                if (area.isAvoided(world.getBiome(x, y.getAsInt(), z).getKey().toString())) continue;
+                return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
+            }
+            return Optional.<CosmicLocation>empty();
+        });
+    }
+
+    @Override
+    public Optional<CosmicLocation> findSafeLocationInColumn(String worldName, int x, int z, int fromY, int toY) {
+        return callSync(() -> {
+            World world = Bukkit.getWorld(worldName);
+            if (world == null) return Optional.<CosmicLocation>empty();
+            OptionalInt y = safeInColumn(world, x, z, fromY, toY);
+            if (y.isEmpty()) return Optional.<CosmicLocation>empty();
+            return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
+        });
+    }
+
+    @Override
     public Optional<CosmicLocation> findTargetedLocation(String uuid, int maxDistance) {
         return callSync(() -> {
             Player player = BasePlugin.getPlayer(uuid);
@@ -255,6 +306,59 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean openWorkstation(String uuid, Workstation type) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        return callSync(() -> {
+            try {
+                // A view made by MenuType#create does not check that the block is nearby, so
+                // it stays open wherever the player goes. MenuType exists from 1.21.
+                player.openInventory(menuType(type).create(player, type.getTitle()));
+                return true;
+            } catch (LinkageError noMenuTypes) {
+                return openWorkstationLegacy(player, type);
+            }
+        });
+    }
+
+    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
+    private static MenuType.Typed<?, ?> menuType(Workstation type) {
+        switch (type) {
+            case CRAFTING: return MenuType.CRAFTING;
+            case ANVIL: return MenuType.ANVIL;
+            case SMITHING: return MenuType.SMITHING;
+            case GRINDSTONE: return MenuType.GRINDSTONE;
+            case STONECUTTER: return MenuType.STONECUTTER;
+            case CARTOGRAPHY: return MenuType.CARTOGRAPHY_TABLE;
+            case LOOM: return MenuType.LOOM;
+            default: return MenuType.ENCHANTMENT;
+        }
+    }
+
+    /**
+     * Servers older than 1.21: Bukkit opens crafting and enchanting tables; the others need
+     * Paper's methods, and plain Spigot has no way to open them.
+     */
+    @SuppressWarnings("deprecation")
+    private static boolean openWorkstationLegacy(Player player, Workstation type) {
+        try {
+            switch (type) {
+                case CRAFTING: return player.openWorkbench(null, true) != null;
+                case ENCHANTING: return player.openEnchanting(null, true) != null;
+                case ANVIL: return player.openAnvil(null, true) != null;
+                case SMITHING: return player.openSmithingTable(null, true) != null;
+                case GRINDSTONE: return player.openGrindstone(null, true) != null;
+                case STONECUTTER: return player.openStonecutter(null, true) != null;
+                case CARTOGRAPHY: return player.openCartographyTable(null, true) != null;
+                case LOOM: return player.openLoom(null, true) != null;
+                default: return false;
+            }
+        } catch (LinkageError notPaper) {
+            return false;
+        }
+    }
+
+    @Override
     public boolean openInventoryOf(String viewerUuid, String targetUuid) {
         Player viewer = BasePlugin.getPlayer(viewerUuid);
         Player target = BasePlugin.getPlayer(targetUuid);
@@ -316,8 +420,11 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     private static OptionalInt nearestSafeY(World world, int x, int z, int preferredY) {
-        int min = world.getMinHeight() + 1;
-        int max = topY(world) - 1;
+        return nearestSafeY(world, x, z, preferredY, world.getMinHeight() + 1, topY(world) - 1);
+    }
+
+    /** The safe feet Y in [min, max] closest to {@code preferredY}, searching up and down alternately. */
+    private static OptionalInt nearestSafeY(World world, int x, int z, int preferredY, int min, int max) {
         int start = Math.max(min, Math.min(max, preferredY));
         for (int offset = 0; start - offset >= min || start + offset <= max; offset++) {
             int up = start + offset;
@@ -330,6 +437,20 @@ public class GameplayHandler implements IGameplayHandler {
 
     private static OptionalInt firstSafeAbove(World world, int x, int z, int fromY) {
         for (int y = Math.max(fromY, world.getMinHeight() + 1); y < topY(world); y++) {
+            if (isSafe(world, x, y, z)) return OptionalInt.of(y);
+        }
+        return OptionalInt.empty();
+    }
+
+    /** The first safe feet Y from {@code fromY} toward {@code toY}, both inclusive, within the world's height. */
+    private static OptionalInt safeInColumn(World world, int x, int z, int fromY, int toY) {
+        int min = world.getMinHeight() + 1;
+        int max = topY(world) - 1;
+        int low = Math.max(min, Math.min(fromY, toY));
+        int high = Math.min(max, Math.max(fromY, toY));
+        if (low > high) return OptionalInt.empty();
+        boolean up = toY >= fromY;
+        for (int y = up ? low : high; up ? y <= high : y >= low; y += up ? 1 : -1) {
             if (isSafe(world, x, y, z)) return OptionalInt.of(y);
         }
         return OptionalInt.empty();

@@ -21,6 +21,7 @@ import net.streamline.platform.compat.McCompat;
 import singularity.Singularity;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.RandomTeleportArea;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
@@ -158,6 +159,27 @@ public abstract class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public Optional<CosmicLocation> findRandomSafeLocation(RandomTeleportArea area, int maxAttempts) {
+        return callOnServer(() -> {
+            ServerLevel level = level(area.getWorld());
+            if (level == null) return Optional.<CosmicLocation>empty();
+            return SafeSpots.random(level, area, maxAttempts)
+                    .map(pos -> location(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0F, 0F));
+        }, Optional.empty());
+    }
+
+    @Override
+    public Optional<CosmicLocation> findSafeLocationInColumn(String world, int x, int z, int fromY, int toY) {
+        return callOnServer(() -> {
+            ServerLevel level = level(world);
+            if (level == null) return Optional.<CosmicLocation>empty();
+            OptionalInt y = SafeSpots.firstSafeBetween(level, x, z, fromY, toY);
+            if (y.isEmpty()) return Optional.<CosmicLocation>empty();
+            return Optional.of(location(level, x + 0.5, y.getAsInt(), z + 0.5, 0F, 0F));
+        }, Optional.empty());
+    }
+
+    @Override
     public Optional<CosmicLocation> findTargetedLocation(String uuid, int maxDistance) {
         return callOnServer(() -> {
             ServerPlayer player = player(uuid);
@@ -247,6 +269,16 @@ public abstract class GameplayHandler implements IGameplayHandler {
             player.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> new ChestMenu(CHEST_MENUS[r - 1], id, inventory, new SimpleContainer(9 * r), r),
                     Component.literal(coded(title))));
+            return true;
+        }, false);
+    }
+
+    @Override
+    public boolean openWorkstation(String uuid, Workstation type) {
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.openMenu(Workstations.provider(type, (ServerLevel) player.level(), player.blockPosition()));
             return true;
         }, false);
     }
