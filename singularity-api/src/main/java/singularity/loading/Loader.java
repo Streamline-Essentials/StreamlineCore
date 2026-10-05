@@ -90,7 +90,8 @@ public abstract class Loader<L extends Loadable<L>> {
      */
     public Optional<L> get(String identifier) {
         if (identifier == null) return Optional.empty();
-        if (identifier.equals(CosmicSender.getConsoleDiscriminator())) return Optional.of(getConsole());
+        // Loaders whose entities have no console counterpart return null from getConsole().
+        if (identifier.equals(CosmicSender.getConsoleDiscriminator())) return Optional.ofNullable(getConsole());
 
         return getLoaded().stream().filter(a -> a.getIdentifier().equals(identifier)).findFirst();
     }
@@ -172,10 +173,25 @@ public abstract class Loader<L extends Loadable<L>> {
         return CompletableFuture.supplyAsync(() -> {
             Optional<L> optional = getKeeper().load(identifier).join();
             if (optional.isPresent()) {
-                return load(optional.get());
-            } else {
-                return createNew(identifier);
+                L stored = optional.get();
+                stored.setFullyLoaded(true);
+                return load(stored);
             }
+
+            // Another caller may have registered this entity while the lookup ran; its
+            // in-memory state is newer than a blank record and must not be overwritten.
+            Optional<L> existing = get(identifier);
+            if (existing.isPresent()) return existing.get();
+
+            L created = instantiate(identifier);
+            created.setFullyLoaded(true);
+            L registered = load(created);
+            if (registered != created) return registered;
+
+            created.save();
+            fireCreateEvents(created);
+
+            return created;
         });
     }
 
@@ -227,27 +243,32 @@ public abstract class Loader<L extends Loadable<L>> {
      * registers a new one if it is not yet present.
      *
      * <p>If the identifier matches the console discriminator, the console entity is returned
-     * directly.  Otherwise, an async database load is started and the new entity is augmented
-     * once the load completes.</p>
+     * directly.  Otherwise a fresh entity is registered at once and augmented with the stored
+     * record when the async database load completes; the entity is only written back when no
+     * record exists, so a stored record is never replaced by blank defaults.</p>
      *
      * @param identifier the unique identifier of the entity to retrieve or create
-     * @return the existing or newly created entity; never {@code null}
+     * @return the existing or newly created entity; {@code null} only for the console on
+     *         loaders that have no console entity
      */
     public L getOrCreate(String identifier) {
-        Optional<L> optional = getOrLoad(identifier);
+        Optional<L> optional = get(identifier);
         if (optional.isPresent()) return optional.get();
 
         if (identifier.equals(CosmicSender.getConsoleDiscriminator())) {
             return getConsole();
         }
 
+        L created = instantiate(identifier);
+        L registered = load(created);
+        if (registered != created) return registered;
+
         CompletableFuture<Optional<L>> loader = load(identifier);
+        loader.thenAccept(stored -> {
+            if (stored.isEmpty()) fireCreateEvents(created);
+        });
 
-        L toGet = createNew(identifier);
-
-        load(toGet);
-
-        return toGet.augment(loader);
+        return created.augment(loader);
     }
 
     /**
