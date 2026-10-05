@@ -67,10 +67,12 @@ function Get-ModuleFolders {
 }
 
 if ($Build -and -not $Jar) {
-    $tasks = Get-ModuleFolders | ForEach-Object { ":$($_.Name):shadowJar" }
-    Write-Host "Building: $($tasks -join ' ')"
-    & (Join-Path $PSScriptRoot 'gradlew.bat') @tasks
-    if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed.' }
+    # @() keeps a single task an array; splatting a lone string passes it character by character.
+    $tasks = @(Get-ModuleFolders | ForEach-Object { ":modules:$($_.Name):shadowJar" })
+    if ($PSCmdlet.ShouldProcess($tasks -join ' ', 'gradlew')) {
+        & (Join-Path $PSScriptRoot 'gradlew.bat') @tasks
+        if ($LASTEXITCODE -ne 0) { throw 'Gradle build failed.' }
+    }
 }
 
 $jars = if ($Jar) {
@@ -88,8 +90,8 @@ if (-not $jars) { throw 'Nothing to upload.' }
 
 $failed = 0
 foreach ($file in $jars) {
-    # "StreamlineMOTD-1.9.0" -> "StreamlineMOTD"; the version comes from the manifest.
-    $name = $file.BaseName -replace '-[0-9][^-]*$', ''
+    # "StreamlineMOTD-1.9.0" / "Foo-1.0.0-beta" -> module name; the version comes from the manifest.
+    $name = $file.BaseName -replace '-\d+(\.\d+)*([-+.][A-Za-z0-9.+-]*)?$', ''
     $url = "$BaseUrl/api/v1/modules/$([Uri]::EscapeDataString($name))/upload"
 
     if (-not $PSCmdlet.ShouldProcess("$url", "Upload $($file.Name)")) { continue }

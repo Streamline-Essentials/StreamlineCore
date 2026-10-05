@@ -637,6 +637,13 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
 
     /** {@inheritDoc} */
     @Override
+    public void runOnMainThread(Runnable task) {
+        if (Bukkit.isPrimaryThread()) task.run();
+        else host.plas.bou.scheduling.TaskManager.schedule(task);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public ClassLoader getMainClassLoader() {
         return getProxy().getClass().getClassLoader();
     }
