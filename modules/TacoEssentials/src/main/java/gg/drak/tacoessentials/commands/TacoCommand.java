@@ -148,14 +148,16 @@ public class TacoCommand extends ModuleCommand {
     /** An online player by name, case-insensitively. */
     public static CosmicPlayer onlinePlayer(String name) throws Msg.Fail {
         for (CosmicPlayer player : Singularity.getInstance().getPlatform().getOnlinePlayers()) {
-            if (player.getCurrentName().equalsIgnoreCase(name)) return player;
+            if (name.equalsIgnoreCase(player.getCurrentName())) return player;
         }
         throw Msg.fail("No online player named " + name + ".");
     }
 
     public static List<String> onlineNames() {
         List<String> names = new ArrayList<>();
-        Singularity.getInstance().getPlatform().getOnlinePlayers().forEach(p -> names.add(p.getCurrentName()));
+        Singularity.getInstance().getPlatform().getOnlinePlayers().forEach(p -> {
+            if (p.getCurrentName() != null) names.add(p.getCurrentName());
+        });
         return names;
     }
 

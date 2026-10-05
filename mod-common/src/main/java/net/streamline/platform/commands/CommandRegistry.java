@@ -118,6 +118,8 @@ public final class CommandRegistry {
     }
 
     private static void resendCommands(MinecraftServer server) {
+        // Modules can register while the server is still starting, before it has a player list.
+        if (server.getPlayerList() == null) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             server.getCommands().sendCommands(player);
         }
