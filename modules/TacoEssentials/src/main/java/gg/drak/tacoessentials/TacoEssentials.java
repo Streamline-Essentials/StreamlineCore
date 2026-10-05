@@ -19,7 +19,6 @@ import singularity.Singularity;
 import singularity.command.ModuleCommand;
 import singularity.modules.ModuleUtils;
 import singularity.modules.SimpleModule;
-import singularity.scheduler.ModuleDelayedRunnable;
 import singularity.scheduler.ModuleRunnable;
 
 import java.util.ArrayList;
@@ -78,15 +77,17 @@ public class TacoEssentials extends SimpleModule {
                 TpaManager.expire();
             }
         };
+    }
 
-        // A tick later, once this module's own commands are registered, so an alias
-        // can never take a label one of them uses.
-        new ModuleDelayedRunnable(this, 1) {
-            @Override
-            public void runDelayed() {
-                AliasManager.load();
-            }
-        };
+    /**
+     * Aliases load after {@code super.start()} has registered this module's own commands, so
+     * an alias stored under one of their names is skipped rather than taking its label.
+     */
+    @Override
+    public void start() {
+        boolean wasEnabled = isEnabled();
+        super.start();
+        if (! wasEnabled && Singularity.gameplay().isPresent()) AliasManager.load();
     }
 
     @Override

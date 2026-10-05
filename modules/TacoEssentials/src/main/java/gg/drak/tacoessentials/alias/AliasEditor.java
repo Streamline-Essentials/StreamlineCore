@@ -61,7 +61,8 @@ public final class AliasEditor {
         }
         switch (first) {
             case "add":
-                if (args.size() >= 2) createAlias(sender, args.get(1));
+                if (args.size() > 2) throw Msg.fail("An alias name is one word, without spaces.");
+                if (args.size() == 2) createAlias(sender, args.get(1));
                 else promptNewAlias(sender);
                 return;
             case "new":

@@ -37,9 +37,10 @@ public class AliasCommand extends ModuleCommand {
         CommandHandler.registerModuleCommand(this);
     }
 
+    /** Unregisters by identifier, so only while the label is still this command's and not another one's that took it over. */
     @Override
     public void unregister() {
-        CommandHandler.unregisterModuleCommand(this);
+        if (CommandHandler.getModuleCommand(getIdentifier()) == this) CommandHandler.unregisterModuleCommand(this);
     }
 
     @Override
