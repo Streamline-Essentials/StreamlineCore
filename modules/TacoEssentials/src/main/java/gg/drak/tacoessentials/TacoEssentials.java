@@ -6,8 +6,11 @@ import gg.drak.tacoessentials.alias.AliasPrompts;
 import gg.drak.tacoessentials.commands.AdminCommands;
 import gg.drak.tacoessentials.commands.HomeCommands;
 import gg.drak.tacoessentials.commands.Perms;
+import gg.drak.tacoessentials.commands.PositionCommands;
+import gg.drak.tacoessentials.commands.WorkstationCommands;
 import gg.drak.tacoessentials.commands.TeleportCommands;
 import gg.drak.tacoessentials.commands.UtilityCommands;
+import gg.drak.tacoessentials.data.RtpConfig;
 import gg.drak.tacoessentials.data.Sessions;
 import gg.drak.tacoessentials.data.TacoConfig;
 import gg.drak.tacoessentials.data.TacoDatabase;
@@ -41,6 +44,9 @@ public class TacoEssentials extends SimpleModule {
     @Getter
     private static TacoConfig config;
 
+    @Getter
+    private static RtpConfig rtpConfig;
+
     public TacoEssentials(PluginWrapper wrapper) {
         super(wrapper);
     }
@@ -53,6 +59,8 @@ public class TacoEssentials extends SimpleModule {
         commands.addAll(TeleportCommands.create());
         commands.addAll(HomeCommands.create());
         commands.addAll(UtilityCommands.create());
+        commands.addAll(PositionCommands.create());
+        commands.addAll(WorkstationCommands.create());
         commands.addAll(AdminCommands.create());
         commands.add(AliasEditor.create());
         setCommands(commands);
@@ -67,6 +75,7 @@ public class TacoEssentials extends SimpleModule {
         }
 
         config = new TacoConfig();
+        rtpConfig = new RtpConfig();
         TacoDatabase.ensureTables();
         Perms.registerDefaults();
         ModuleUtils.listen(new TacoListener(), this);

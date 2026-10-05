@@ -33,7 +33,7 @@ public final class Perms {
             "tpa", "tpahere", "tpaccept", "tpadeny", "back", "dback", "rtp",
             "sethome", "home", "delhome", "listhomes",
             "warp", "listwarps", "spawn",
-            "kickme", "trashcan", "hat", "nick",
+            "kickme", "trashcan", "hat", "nick", "center", "rotate",
     };
 
     public static void registerDefaults() {
