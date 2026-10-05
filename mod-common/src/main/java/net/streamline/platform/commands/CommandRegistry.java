@@ -34,10 +34,13 @@ public final class CommandRegistry {
         MinecraftServer server = BasePlugin.getServer();
         if (server == null) return;
 
-        registerInto(server.getCommands().getDispatcher(), command);
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            server.getCommands().sendCommands(player);
-        }
+        // Modules start on a worker thread; the dispatcher belongs to the server thread.
+        server.execute(() -> {
+            registerInto(server.getCommands().getDispatcher(), command);
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                server.getCommands().sendCommands(player);
+            }
+        });
     }
 
     public static void unregister(ProperCommand command) {
