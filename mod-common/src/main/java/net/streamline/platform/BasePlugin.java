@@ -116,6 +116,9 @@ public abstract class BasePlugin implements ISingularityExtension {
         TaskManager.init();
 
         enable();
+
+        // External modules load only once the platform reports itself enabled.
+        setPlatformAsEnabled();
     }
 
     public void onServerDisable() {
