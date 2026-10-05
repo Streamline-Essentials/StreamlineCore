@@ -65,7 +65,7 @@ if (! isCI()) {
 // automatically, so adding a module means dropping its sources in -- nothing to register
 // here. Included on Jenkins so its build produces the module JARs alongside the platform
 // ones; skipped on JitPack, which resolves only the API artifacts.
-if (! isJitPack() && HARD_SWITCH) {
+if (! isCI() && HARD_SWITCH) {
     def modulesDir = file('modules')
     if (modulesDir.isDirectory()) {
         modulesDir.listFiles()
