@@ -1,5 +1,6 @@
 package gg.drak.tacoessentials.data;
 
+import gg.drak.tacoessentials.alias.CustomAlias;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
 
@@ -7,8 +8,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -111,7 +115,11 @@ public final class TacoDatabase {
                         + "`kind` VARCHAR(8) NOT NULL, `seq` BIGINT NOT NULL, " + LOC_COLUMNS
                         + ", PRIMARY KEY (`uuid`, `kind`, `seq`));;"
                         + "CREATE TABLE IF NOT EXISTS `" + table("server_locations") + "` (`loc_key` VARCHAR(32) NOT NULL PRIMARY KEY, "
-                        + LOC_COLUMNS + ", `set_by` VARCHAR(36));;",
+                        + LOC_COLUMNS + ", `set_by` VARCHAR(36));;"
+                        + "CREATE TABLE IF NOT EXISTS `" + table("aliases") + "` (`name` VARCHAR(32) NOT NULL PRIMARY KEY, "
+                        + "`requires_perm` INT NOT NULL DEFAULT 0, `tab_complete` INT NOT NULL DEFAULT 1, `tab_completes` TEXT);;"
+                        + "CREATE TABLE IF NOT EXISTS `" + table("alias_commands") + "` (`name` VARCHAR(32) NOT NULL, "
+                        + "`line` INT NOT NULL, `command` TEXT NOT NULL, PRIMARY KEY (`name`, `line`));;",
                 s -> {});
     }
 
@@ -253,6 +261,50 @@ public final class TacoDatabase {
                 TacoDatabase::readLoc, uuid, kind, seq.get());
         update("DELETE FROM `" + table("history") + "` WHERE `uuid` = ? AND `kind` = ? AND `seq` = ?;", uuid, kind, seq.get());
         return loc;
+    }
+
+    // ---- custom aliases ----
+
+    /** Every alias, by name, with its command lines in order. */
+    public static Map<String, CustomAlias> aliases() {
+        Map<String, List<String>> lines = new HashMap<>();
+        queryAll("SELECT `name`, `command` FROM `" + table("alias_commands") + "` ORDER BY `name`, `line`;", rs -> {
+            lines.computeIfAbsent(rs.getString("name"), k -> new ArrayList<>()).add(rs.getString("command"));
+            return null;
+        });
+        Map<String, CustomAlias> out = new TreeMap<>();
+        queryAll("SELECT * FROM `" + table("aliases") + "`;", rs -> {
+            String name = rs.getString("name");
+            out.put(name, new CustomAlias(name, rs.getInt("requires_perm") != 0, rs.getInt("tab_complete") != 0,
+                    splitLines(rs.getString("tab_completes")), lines.get(name)));
+            return null;
+        });
+        return out;
+    }
+
+    /** Writes the alias and replaces its command lines. */
+    public static void saveAlias(CustomAlias alias) {
+        update("REPLACE INTO `" + table("aliases") + "` (`name`, `requires_perm`, `tab_complete`, `tab_completes`) "
+                + "VALUES (?, ?, ?, ?);", alias.getName(), alias.isRequiresPerm() ? 1 : 0, alias.isTabComplete() ? 1 : 0,
+                String.join("\n", alias.getTabCompletes()));
+        update("DELETE FROM `" + table("alias_commands") + "` WHERE `name` = ?;", alias.getName());
+        List<String> commands = alias.getCommands();
+        for (int i = 0; i < commands.size(); i++) {
+            update("INSERT INTO `" + table("alias_commands") + "` (`name`, `line`, `command`) VALUES (?, ?, ?);",
+                    alias.getName(), i, commands.get(i));
+        }
+    }
+
+    public static void deleteAlias(String name) {
+        update("DELETE FROM `" + table("alias_commands") + "` WHERE `name` = ?;", name);
+        update("DELETE FROM `" + table("aliases") + "` WHERE `name` = ?;", name);
+    }
+
+    private static List<String> splitLines(String joined) {
+        List<String> out = new ArrayList<>();
+        if (joined == null) return out;
+        for (String line : joined.split("\n")) if (! line.trim().isEmpty()) out.add(line.trim());
+        return out;
     }
 
     // ---- plumbing ----

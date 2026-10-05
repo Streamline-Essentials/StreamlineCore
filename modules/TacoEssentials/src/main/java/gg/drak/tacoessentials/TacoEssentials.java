@@ -1,5 +1,8 @@
 package gg.drak.tacoessentials;
 
+import gg.drak.tacoessentials.alias.AliasEditor;
+import gg.drak.tacoessentials.alias.AliasManager;
+import gg.drak.tacoessentials.alias.AliasPrompts;
 import gg.drak.tacoessentials.commands.AdminCommands;
 import gg.drak.tacoessentials.commands.HomeCommands;
 import gg.drak.tacoessentials.commands.Perms;
@@ -16,6 +19,7 @@ import singularity.Singularity;
 import singularity.command.ModuleCommand;
 import singularity.modules.ModuleUtils;
 import singularity.modules.SimpleModule;
+import singularity.scheduler.ModuleDelayedRunnable;
 import singularity.scheduler.ModuleRunnable;
 
 import java.util.ArrayList;
@@ -51,6 +55,7 @@ public class TacoEssentials extends SimpleModule {
         commands.addAll(HomeCommands.create());
         commands.addAll(UtilityCommands.create());
         commands.addAll(AdminCommands.create());
+        commands.add(AliasEditor.create());
         setCommands(commands);
     }
 
@@ -73,11 +78,22 @@ public class TacoEssentials extends SimpleModule {
                 TpaManager.expire();
             }
         };
+
+        // A tick later, once this module's own commands are registered, so an alias
+        // can never take a label one of them uses.
+        new ModuleDelayedRunnable(this, 1) {
+            @Override
+            public void runDelayed() {
+                AliasManager.load();
+            }
+        };
     }
 
     @Override
     public void onDisable() {
         TpaManager.clear();
         Sessions.clear();
+        AliasManager.unloadAll();
+        AliasPrompts.clear();
     }
 }
