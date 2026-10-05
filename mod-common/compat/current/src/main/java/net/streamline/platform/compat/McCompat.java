@@ -1,10 +1,13 @@
 package net.streamline.platform.compat;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
+import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.entity.Relative;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
@@ -12,7 +15,10 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.portal.TeleportTransition;
+import singularity.objects.PingedResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -66,6 +72,28 @@ public final class McCompat {
     /** Operator level 2 (gamemaster) or higher. */
     public static boolean isOperator(ServerPlayer player) {
         return player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+    }
+
+    /** The address the client says it connected to, as sent in its handshake. */
+    public static String handshakeHost(ClientIntentionPacket packet) {
+        return packet.hostName();
+    }
+
+    /** The players listed when hovering the player count in the server list. */
+    public static List<PingedResponse.PlayerInfo> readSample(ServerStatus.Players players) {
+        List<PingedResponse.PlayerInfo> sample = new ArrayList<>();
+        for (NameAndId entry : players.sample()) {
+            sample.add(new PingedResponse.PlayerInfo(entry.name(), String.valueOf(entry.id())));
+        }
+        return sample;
+    }
+
+    public static ServerStatus.Players statusPlayers(int max, int online, List<PingedResponse.PlayerInfo> sample) {
+        List<NameAndId> entries = new ArrayList<>();
+        for (PingedResponse.PlayerInfo info : sample) {
+            entries.add(new NameAndId(info.getUniqueId(), info.getName()));
+        }
+        return new ServerStatus.Players(max, online, entries);
     }
 
 

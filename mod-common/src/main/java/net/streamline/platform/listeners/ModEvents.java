@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.commands.CommandRegistry;
 import net.streamline.platform.handlers.GameplayHandler;
+import net.streamline.platform.handlers.StatusPingHandler;
 import net.streamline.platform.handlers.TheBaseShutdown;
 import net.streamline.platform.savables.UserManager;
 import singularity.Singularity;
@@ -44,6 +45,8 @@ public final class ModEvents {
     }
 
     public static void onServerStarted(MinecraftServer server) {
+        // The listening channels are bound by now, which they may not be while starting.
+        StatusPingHandler.install(server);
         try {
             BaseEventHandler.fireEvent(new ServerStartEvent());
         } catch (Exception e) {
