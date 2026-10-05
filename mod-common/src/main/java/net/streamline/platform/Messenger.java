@@ -26,9 +26,15 @@ public class Messenger implements IMessenger {
         instance = this;
     }
 
-    @Override
-    public void sendMessage(CosmicSender to, String message) {
-        if (to == null) return;
+    /**
+     * Resolves placeholders in {@code message} against {@code context}, the way every
+     * other platform's messenger does before sending.
+     */
+    private static String resolve(CosmicSender context, String message) {
+        return SLAPI.isReady() ? MessageUtils.replaceAllPlayerBungee(context, message) : message;
+    }
+
+    private void deliver(CosmicSender to, String message) {
         if (to instanceof CosmicPlayer) {
             ServerPlayer player = BasePlugin.getPlayer(to.getUuid());
             if (player != null) player.sendSystemMessage(Component.literal(codedString(message)));
@@ -37,23 +43,7 @@ public class Messenger implements IMessenger {
         }
     }
 
-    @Override
-    public void sendMessage(CosmicSender to, String otherUUID, String message) {
-        if (to == null) return;
-        String processed = SLAPI.isReady() ? MessageUtils.replaceAllPlayerBungee(otherUUID, message) : message;
-        sendMessage(to, processed);
-    }
-
-    @Override
-    public void sendMessage(CosmicSender to, CosmicSender other, String message) {
-        if (to == null || other == null) return;
-        String processed = SLAPI.isReady() ? MessageUtils.replaceAllPlayerBungee(other, message) : message;
-        sendMessage(to, processed);
-    }
-
-    @Override
-    public void sendMessageRaw(CosmicSender to, String message) {
-        if (to == null) return;
+    private void deliverRaw(CosmicSender to, String message) {
         if (to instanceof CosmicPlayer) {
             ServerPlayer player = BasePlugin.getPlayer(to.getUuid());
             if (player != null) player.sendSystemMessage(Component.literal(message));
@@ -63,13 +53,39 @@ public class Messenger implements IMessenger {
     }
 
     @Override
+    public void sendMessage(CosmicSender to, String message) {
+        if (to == null) return;
+        deliver(to, resolve(to, message));
+    }
+
+    @Override
+    public void sendMessage(CosmicSender to, String otherUUID, String message) {
+        if (to == null) return;
+        deliver(to, SLAPI.isReady() ? MessageUtils.replaceAllPlayerBungee(otherUUID, message) : message);
+    }
+
+    @Override
+    public void sendMessage(CosmicSender to, CosmicSender other, String message) {
+        if (to == null || other == null) return;
+        deliver(to, resolve(other, message));
+    }
+
+    @Override
+    public void sendMessageRaw(CosmicSender to, String message) {
+        if (to == null) return;
+        deliverRaw(to, resolve(to, message));
+    }
+
+    @Override
     public void sendMessageRaw(CosmicSender to, String otherUUID, String message) {
-        sendMessageRaw(to, message);
+        if (to == null) return;
+        deliverRaw(to, SLAPI.isReady() ? MessageUtils.replaceAllPlayerBungee(otherUUID, message) : message);
     }
 
     @Override
     public void sendMessageRaw(CosmicSender to, CosmicSender other, String message) {
-        sendMessageRaw(to, message);
+        if (to == null || other == null) return;
+        deliverRaw(to, resolve(other, message));
     }
 
     @Override
@@ -79,8 +95,8 @@ public class Messenger implements IMessenger {
         if (p == null) return;
         p.connection.send(new ClientboundSetTitlesAnimationPacket(
                 (int) title.getFadeIn(), (int) title.getStay(), (int) title.getFadeOut()));
-        p.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(codedString(title.getSub()))));
-        p.connection.send(new ClientboundSetTitleTextPacket(Component.literal(codedString(title.getMain()))));
+        p.connection.send(new ClientboundSetSubtitleTextPacket(Component.literal(codedString(resolve(player, title.getSub())))));
+        p.connection.send(new ClientboundSetTitleTextPacket(Component.literal(codedString(resolve(player, title.getMain())))));
     }
 
     @Override

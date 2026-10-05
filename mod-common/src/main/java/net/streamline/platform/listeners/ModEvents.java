@@ -135,8 +135,6 @@ public final class ModEvents {
             UserUtils.getOrCreatePlayer(uuid).ifPresent(cp -> {
                 cp.setCurrentName(name);
                 cp.setCurrentIp(ip);
-                MinecraftServer server = BasePlugin.getServer();
-                if (server != null) cp.setServerName(server.getMotd());
                 cp.setLocation(GameplayHandler.locationOf(player));
 
                 ModuleUtils.fireEvent(new LoginCompletedEvent(cp));
