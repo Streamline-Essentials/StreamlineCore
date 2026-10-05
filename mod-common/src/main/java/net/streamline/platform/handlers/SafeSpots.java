@@ -110,7 +110,10 @@ public final class SafeSpots {
             if (ceiling) {
                 y = nearestSafeY(level, x, z, 64);
             } else {
-                int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+                // Level#getHeight reports the bottom of the world for chunks that are not
+                // loaded, so the chunk is loaded (generating it if needed) and asked directly.
+                int surface = level.getChunk(x >> 4, z >> 4)
+                        .getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x & 15, z & 15) + 1;
                 // An empty column (the End's void) reports the bottom of the world.
                 if (surface <= McCompat.minY(level)) continue;
                 y = isSafe(level, new BlockPos(x, surface, z)) ? OptionalInt.of(surface) : OptionalInt.empty();
