@@ -3,7 +3,7 @@ package net.streamline.platform.savables;
 import host.plas.bou.commands.Sender;
 import lombok.Getter;
 import lombok.Setter;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import singularity.interfaces.audiences.IPlayerInterface;
@@ -16,7 +16,7 @@ import java.util.UUID;
  * Spigot implementation of {@link IPlayerInterface} that resolves online Bukkit
  * {@link Player} instances and wraps them in cross-platform {@link RealPlayer} adapters.
  *
- * <p>Permission additions and removals are delegated to {@link LuckPermsHandler}.
+ * <p>Permission additions and removals are delegated to {@link Permissions}.
  * Chat input, commands, and messaging all flow through the Bukkit {@link Sender} utility.
  */
 @Getter @Setter
@@ -53,7 +53,7 @@ public class PlayerInterface implements IPlayerInterface<Player> {
      * {@inheritDoc}
      *
      * <p>Wraps the supplied {@link PlayerGetter} in a {@link RealPlayer} whose action
-     * methods delegate to Bukkit {@link Sender} and {@link LuckPermsHandler}.
+     * methods delegate to Bukkit {@link Sender} and {@link Permissions}.
      *
      * @param playerGetter the supplier that resolves the underlying {@link Player}
      * @return a {@link RealPlayer} adapter for the resolved player
@@ -88,12 +88,12 @@ public class PlayerInterface implements IPlayerInterface<Player> {
 
             @Override
             public void addPermission(String permission) {
-                LuckPermsHandler.addPermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.addPermission(getPlayer().getUniqueId().toString(), permission);
             }
 
             @Override
             public void removePermission(String permission) {
-                LuckPermsHandler.removePermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.removePermission(getPlayer().getUniqueId().toString(), permission);
             }
         };
     }

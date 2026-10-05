@@ -1,55 +1,42 @@
 package net.streamline.api.permissions;
 
-import gg.drak.thebase.objects.AtomicString;
-import gg.drak.thebase.utils.MathUtils;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.model.group.Group;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.NodeType;
-import net.luckperms.api.node.types.ChatMetaNode;
-import net.luckperms.api.node.types.PrefixNode;
-import net.luckperms.api.node.types.SuffixNode;
 import net.streamline.api.SLAPI;
-import net.streamline.api.utils.LuckPermsUtil;
 import singularity.data.players.CosmicPlayer;
-import singularity.data.uuid.UuidManager;
 import singularity.permissions.MetaGrabber;
 import singularity.permissions.MetaKey;
 import singularity.permissions.MetaValue;
-import singularity.utils.UUIDFetcher;
 
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- * LuckPerms-backed implementation of {@link MetaGrabber} that reads chat-meta
- * nodes (prefix and suffix) for {@link CosmicPlayer} instances. Writing meta
- * is not supported through this implementation.
+ * {@link MetaGrabber} that reads chat-meta (prefix and suffix) for {@link CosmicPlayer}
+ * instances from the active {@link PermissionProvider}. Without a permission plugin both
+ * resolve to an empty string. Writing meta is not supported through this implementation.
  */
 public class MetaGrabberImpl implements MetaGrabber {
 
     /**
-     * Ensures the LuckPerms API is resolved and returns the current optional
-     * wrapper. A failed resolution leaves the optional empty.
+     * Hooks LuckPerms if necessary and returns the current optional wrapper.
      *
      * @return an {@link Optional} containing the {@link LuckPerms} API, or
      *         empty if LuckPerms is unavailable
+     * @deprecated use {@link Permissions}, which works without LuckPerms
      */
+    @Deprecated
     public static Optional<LuckPerms> tryGetLuckPerms() {
-        SLAPI.tryGetLuckPerms();
+        Permissions.getProvider();
         return SLAPI.getLpOptional();
     }
 
     /**
-     * Executes the given consumer against the LuckPerms API if it is
-     * available, resolving the API first if necessary.
+     * Executes the given consumer against the LuckPerms API if it is available.
      *
      * @param consumer the action to perform with the {@link LuckPerms} instance
+     * @deprecated use {@link Permissions}, which works without LuckPerms
      */
+    @Deprecated
     public static void withLuckPerms(Consumer<LuckPerms> consumer) {
         SLAPI.withLuckPerms(consumer);
     }
@@ -57,57 +44,31 @@ public class MetaGrabberImpl implements MetaGrabber {
     /**
      * {@inheritDoc}
      * <p>
-     * Retrieves the highest-priority LuckPerms prefix for the player's current
-     * username and wraps it in a {@link MetaValue}.
+     * Retrieves the player's highest-priority prefix and wraps it in a {@link MetaValue}.
      *
      * @param player the player whose prefix should be retrieved
      * @return an {@link Optional} containing the resolved prefix {@link MetaValue},
-     *         or an {@link Optional} with an empty-string value when LuckPerms
-     *         is absent
+     *         holding an empty string when no prefix is set
      */
     @Override
     public Optional<MetaValue> getPrefix(CosmicPlayer player) {
-        String username = player.getCurrentName();
-
-        AtomicString prefix = new AtomicString("");
-        AtomicInteger priority = new AtomicInteger(0);
-        withLuckPerms(luckPerms -> {
-            LuckPermsUtil.MetaRecord metaRecord = LuckPermsUtil.grabPrefix(luckPerms, username);
-            prefix.set(metaRecord.getThing());
-            priority.set(metaRecord.getPriority());
-        });
-
-        MetaValue metaValue = new MetaValue(player.getIdentifier(), MetaKey.PREFIX, prefix.get(), -1, priority.get());
-
-        return Optional.of(metaValue);
+        ChatMeta prefix = Permissions.getPrefix(player.getUuid());
+        return Optional.of(new MetaValue(player.getIdentifier(), MetaKey.PREFIX, prefix.getValue(), -1, prefix.getPriority()));
     }
 
     /**
      * {@inheritDoc}
      * <p>
-     * Retrieves the highest-priority LuckPerms suffix for the player's current
-     * username and wraps it in a {@link MetaValue}.
+     * Retrieves the player's highest-priority suffix and wraps it in a {@link MetaValue}.
      *
      * @param player the player whose suffix should be retrieved
      * @return an {@link Optional} containing the resolved suffix {@link MetaValue},
-     *         or an {@link Optional} with an empty-string value when LuckPerms
-     *         is absent
+     *         holding an empty string when no suffix is set
      */
     @Override
     public Optional<MetaValue> getSuffix(CosmicPlayer player) {
-        String username = player.getCurrentName();
-
-        AtomicString suffix = new AtomicString("");
-        AtomicInteger priority = new AtomicInteger(0);
-        withLuckPerms(luckPerms -> {
-            LuckPermsUtil.MetaRecord metaRecord = LuckPermsUtil.grabSuffix(luckPerms, username);
-            suffix.set(metaRecord.getThing());
-            priority.set(metaRecord.getPriority());
-        });
-
-        MetaValue metaValue = new MetaValue(player.getIdentifier(), MetaKey.SUFFIX, suffix.get(), -1, priority.get());
-
-        return Optional.of(metaValue);
+        ChatMeta suffix = Permissions.getSuffix(player.getUuid());
+        return Optional.of(new MetaValue(player.getIdentifier(), MetaKey.SUFFIX, suffix.getValue(), -1, suffix.getPriority()));
     }
 
     /**

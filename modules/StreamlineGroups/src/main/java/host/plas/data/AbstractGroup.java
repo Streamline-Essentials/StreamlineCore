@@ -9,9 +9,7 @@ import host.plas.data.roles.GroupRoleMap;
 import host.plas.data.roles.SavableGroupRole;
 import lombok.Getter;
 import lombok.Setter;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import singularity.data.console.CosmicSender;
@@ -329,18 +327,15 @@ public class AbstractGroup implements Identified {
         }
 
         try {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                User user = LuckPermsProvider.get().getUserManager().getUser(leader.getCurrentName());
-                if (user == null) {
-                    StreamlineGroups.getInstance().logInfo("Could not get LuckPerms user with name '" + leader.getCurrentName() + "'.");
-                    return StreamlineGroups.getConfigs().baseMax("default");
-                }
-                String group = user.getPrimaryGroup();
+            if (! Permissions.isHooked()) return StreamlineGroups.getConfigs().baseMax("default");
 
-                return StreamlineGroups.getConfigs().baseMax(group);
-            } else {
+            String group = Permissions.getPrimaryGroup(leader.getUuid()).orElse(null);
+            if (group == null) {
+                StreamlineGroups.getInstance().logInfo("Could not get the primary group of '" + leader.getCurrentName() + "'.");
                 return StreamlineGroups.getConfigs().baseMax("default");
             }
+
+            return StreamlineGroups.getConfigs().baseMax(group);
         } catch (Exception e) {
             e.printStackTrace();
             return StreamlineGroups.getConfigs().baseMax("default");

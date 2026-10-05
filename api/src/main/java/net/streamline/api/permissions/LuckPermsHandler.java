@@ -1,18 +1,16 @@
 package net.streamline.api.permissions;
 
-import net.luckperms.api.node.Node;
-import net.luckperms.api.util.Tristate;
-import net.streamline.api.SLAPI;
-import singularity.utils.UuidUtils;
-
 import java.util.Optional;
-import java.util.UUID;
 
 /**
- * Utility class for performing common LuckPerms permission operations through
- * the Streamline API. All methods are no-ops when LuckPerms is not present on
- * the server or when the supplied UUID is invalid.
+ * Convenience permission operations for modules written against LuckPerms. Every method
+ * delegates to {@link Permissions}, so this class does not link against the LuckPerms API
+ * and is safe to call whether or not LuckPerms is installed; without it, every method is a
+ * no-op or reports nothing set.
+ *
+ * @deprecated use {@link Permissions}, which is not tied to one permission plugin
  */
+@Deprecated
 public class LuckPermsHandler {
 
     /**
@@ -24,14 +22,7 @@ public class LuckPermsHandler {
      * @param permission the permission node string to add
      */
     public static void addPermission(String uuid, String permission) {
-        String sUuid = UuidUtils.toUuid(uuid);
-        if (sUuid == null) return;
-
-        UUID playerUuid = UUID.fromString(sUuid);
-
-        SLAPI.getLpOptional().ifPresent(lp -> {
-            lp.getUserManager().modifyUser(playerUuid, user -> user.data().add(Node.builder(permission).build()));
-        });
+        Permissions.addPermission(uuid, permission);
     }
 
     /**
@@ -43,14 +34,7 @@ public class LuckPermsHandler {
      * @param permission the permission node string to remove
      */
     public static void removePermission(String uuid, String permission) {
-        String sUuid = UuidUtils.toUuid(uuid);
-        if (sUuid == null) return;
-
-        UUID playerUuid = UUID.fromString(sUuid);
-
-        SLAPI.getLpOptional().ifPresent(lp -> {
-            lp.getUserManager().modifyUser(playerUuid, user -> user.data().remove(Node.builder(permission).build()));
-        });
+        Permissions.removePermission(uuid, permission);
     }
 
     /**
@@ -64,7 +48,7 @@ public class LuckPermsHandler {
      * @return {@code true} if LuckPerms grants the permission to the loaded player
      */
     public static boolean hasPermission(String uuid, String permission) {
-        return permissionValue(uuid, permission).orElse(false);
+        return Permissions.hasPermission(uuid, permission);
     }
 
     /**
@@ -78,16 +62,7 @@ public class LuckPermsHandler {
      *         loaded, or the node is undefined
      */
     public static Optional<Boolean> permissionValue(String uuid, String permission) {
-        String sUuid = UuidUtils.toUuid(uuid);
-        if (sUuid == null) return Optional.empty();
-
-        UUID playerUuid = UUID.fromString(sUuid);
-
-        return SLAPI.getLpOptional()
-                .map(lp -> lp.getUserManager().getUser(playerUuid))
-                .map(user -> user.getCachedData().getPermissionData().checkPermission(permission))
-                .filter(tristate -> tristate != Tristate.UNDEFINED)
-                .map(Tristate::asBoolean);
+        return Permissions.permissionValue(uuid, permission);
     }
 
     /**
@@ -96,6 +71,6 @@ public class LuckPermsHandler {
      * @return {@code true} if LuckPerms is loaded and reachable, {@code false} otherwise
      */
     public static boolean hasLuckPerms() {
-        return SLAPI.getLpOptional().isPresent();
+        return Permissions.isHooked();
     }
 }
