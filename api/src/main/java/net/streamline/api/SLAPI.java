@@ -3,13 +3,13 @@ package net.streamline.api;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
 import net.streamline.api.base.commands.GivenCommands;
 import net.streamline.api.base.timers.OneSecondTimer;
 import net.streamline.api.base.timers.UserEnsureTimer;
 import net.streamline.api.base.timers.UserSyncTimer;
 import net.streamline.api.holders.HolderCompat;
 import net.streamline.api.permissions.MetaGrabberImpl;
+import net.streamline.api.permissions.Permissions;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
 import singularity.interfaces.IMessenger;
@@ -56,10 +56,23 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
 
     /**
      * An {@link Optional} wrapping the LuckPerms API, or empty when LuckPerms
-     * is not installed or has failed to load.
+     * is not installed or has failed to load. {@link Permissions} keeps it in step
+     * with the active permission provider.
+     *
+     * <p>The element type is erased at runtime, so holding this field does not
+     * require LuckPerms on the classpath; dereferencing a present value does.
      */
-    @Getter @Setter
-    private static Optional<LuckPerms> lpOptional;
+    @Setter
+    private static Optional<LuckPerms> lpOptional = Optional.empty();
+
+    /**
+     * @return the LuckPerms API, hooking it first if it has come up since the
+     *         last attempt; empty when LuckPerms is not installed or not enabled
+     */
+    public static Optional<LuckPerms> getLpOptional() {
+        Permissions.getProvider();
+        return lpOptional;
+    }
 
     /**
      * The {@link MetaGrabberImpl} used to resolve chat-meta (prefix/suffix)
@@ -115,8 +128,6 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
         super(identifier, platform, userManager, messenger, consoleHolder, playerInterface, baseModuleGetter, slApiChannel);
         instance = this;
 
-        lpOptional = Optional.empty();
-
         metaGrabber = new MetaGrabberImpl();
         PermissionUtil.setMetaGrabber(metaGrabber);
 
@@ -130,20 +141,20 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
     }
 
     /**
-     * Called when the platform plugin enables. Attempts to resolve the
-     * LuckPerms API so it is available for the session.
+     * Called when the platform plugin enables. Hooks a permission plugin if one
+     * is installed; see {@link Permissions}.
      */
     public static void onEnable() {
-        tryGetLuckPerms();
+        Permissions.hook();
     }
 
     /**
-     * Called when the platform plugin disables. Clears the cached LuckPerms
-     * reference and closes the main database pool so that its connections and
-     * threads are not leaked across reloads.
+     * Called when the platform plugin disables. Drops the permission hook and
+     * closes the main database pool so that its connections and threads are not
+     * leaked across reloads.
      */
     public static void onDisable() {
-        lpOptional = Optional.empty();
+        Permissions.unhook();
 
         try {
             CoreDBOperator database = Singularity.getMainDatabase();
@@ -154,32 +165,26 @@ public class SLAPI<C, P extends C, S extends ISingularityExtension, U extends IU
     }
 
     /**
-     * Attempts to resolve the LuckPerms API via {@link LuckPermsProvider#get()}
-     * and stores the result in {@link #lpOptional}. Sets the optional to empty
-     * when the LuckPerms class is absent ({@link NoClassDefFoundError}) or any
-     * other exception occurs during resolution.
+     * Hooks LuckPerms if it is installed and not hooked yet, which fills
+     * {@link #lpOptional}.
+     *
+     * @deprecated use {@link Permissions#hook()}
      */
+    @Deprecated
     public static void tryGetLuckPerms() {
-        try {
-            LuckPerms api = LuckPermsProvider.get();
-            lpOptional = Optional.of(api);
-        } catch (NoClassDefFoundError ignored) {
-            lpOptional = Optional.empty();
-        } catch (Exception e) {
-            MessageUtils.logInfo("Could not get LuckPerms API...", e);
-            lpOptional = Optional.empty();
-        }
+        Permissions.hook();
     }
 
     /**
-     * Resolves the LuckPerms API if necessary and then passes it to the
-     * supplied consumer. The consumer is only invoked when LuckPerms is
-     * available.
+     * Passes the LuckPerms API to the supplied consumer when LuckPerms is
+     * hooked; otherwise does nothing.
      *
      * @param consumer the action to perform with the {@link LuckPerms} instance
+     * @deprecated use {@link Permissions}, which works without LuckPerms
      */
+    @Deprecated
     public static void withLuckPerms(Consumer<LuckPerms> consumer) {
-        tryGetLuckPerms();
+        Permissions.getProvider();
         getLpOptional().ifPresent(consumer);
     }
 }

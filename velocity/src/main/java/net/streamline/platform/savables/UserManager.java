@@ -6,7 +6,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import lombok.Getter;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
@@ -152,8 +152,8 @@ public class UserManager implements IUserManager<CommandSource, Player> {
      *
      * <p>Executes {@code command} on behalf of the given user. When {@code bypass}
      * is {@code true} and the player does not already hold the {@code "*"} permission,
-     * that permission is temporarily granted via LuckPerms for the duration of the
-     * command execution and then revoked. If LuckPerms is unavailable and bypass is
+     * that permission is temporarily granted through {@link Permissions} for the duration
+     * of the command execution and then revoked. If no permission plugin can grant it and bypass is
      * required, the method returns {@code false} without executing the command.</p>
      *
      * @param user    the {@link CosmicSender} that should run the command
@@ -177,16 +177,16 @@ public class UserManager implements IUserManager<CommandSource, Player> {
         if (source == null) return false;
         boolean already = source.hasPermission("*");
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.addPermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.addPermission(player.getUuid(), "*");
             } else {
                 return false;
             }
         }
         StreamlineVelocity.getInstance().getProxy().getCommandManager().executeImmediatelyAsync(source, command);
         if (bypass && !already) {
-            if (LuckPermsHandler.hasLuckPerms()) {
-                LuckPermsHandler.removePermission(player.getUuid(), "*");
+            if (Permissions.canModify()) {
+                Permissions.removePermission(player.getUuid(), "*");
             } else {
                 return false;
             }

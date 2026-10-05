@@ -3,6 +3,7 @@ package net.streamline.api.base.commands;
 import singularity.command.CosmicCommand;
 import singularity.command.context.CommandContext;
 import singularity.configs.given.MainMessagesHandler;
+import singularity.modules.ModuleCloud;
 import singularity.modules.ModuleLike;
 import singularity.modules.ModuleManager;
 import singularity.utils.MessageUtils;
@@ -23,6 +24,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
  *   <li>{@code unload [modules...]} — unregisters running modules.</li>
  *   <li>{@code enable [modules...]} — starts disabled modules.</li>
  *   <li>{@code disable [modules...]} — stops running modules.</li>
+ *   <li>{@code ecloud download <module> [version]} — downloads a module from the
+ *       module registry into the module folder and loads it.</li>
  * </ul>
  * When no module identifiers are provided the operation applies to all modules.
  * Registered under {@code streamlinemodules}, {@code module}, {@code modules},
@@ -69,6 +72,21 @@ public class ModulesCommand extends CosmicCommand {
     /** Feedback message listing all currently loaded modules. */
     private final String messageResultListAll;
 
+    /** Sent when an eCloud download starts. */
+    private final String messageEcloudDownloading;
+
+    /** Sent when an eCloud download was saved and loaded. */
+    private final String messageEcloudDownloaded;
+
+    /** Sent when an eCloud download was saved but could not be loaded. */
+    private final String messageEcloudDownloadedNotLoaded;
+
+    /** Sent when an eCloud download fails or is refused. */
+    private final String messageEcloudFailed;
+
+    /** Usage hint for the {@code ecloud} sub-command. */
+    private final String messageEcloudUsage;
+
     /**
      * Registers the modules command with the {@code streamline-base} module and
      * loads all configurable response messages from the command resource file,
@@ -96,6 +114,18 @@ public class ModulesCommand extends CosmicCommand {
                 "&eDisabled all modules&8!");
         this.messageResultListAll = this.getCommandResource().getOrSetDefault("messages.result.list.all",
                 "&eModules: &8%streamline_modules_colorized%&8!");
+
+        ModuleCloud.setBaseUrl(this.getCommandResource().getOrSetDefault("ecloud.url", ModuleCloud.DEFAULT_BASE_URL));
+        this.messageEcloudDownloading = this.getCommandResource().getOrSetDefault("messages.ecloud.downloading",
+                "&eDownloading &7'&c%this_identifier%&7' &efrom the module cloud&8...");
+        this.messageEcloudDownloaded = this.getCommandResource().getOrSetDefault("messages.ecloud.downloaded",
+                "&eDownloaded and loaded &7'&c%this_identifier%&7' &ev&c%this_version% &7(&f%this_file%&7)&8!");
+        this.messageEcloudDownloadedNotLoaded = this.getCommandResource().getOrSetDefault("messages.ecloud.downloaded-not-loaded",
+                "&eDownloaded &7'&c%this_identifier%&7' &ev&c%this_version% &7(&f%this_file%&7)&e, but it could not be loaded&8: &c%this_error%&e. Restart to load it&8.");
+        this.messageEcloudFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.failed",
+                "&cCould not download &7'&c%this_identifier%&7'&8: &c%this_error%");
+        this.messageEcloudUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.usage",
+                "&eUsage&8: &f/modules ecloud download <module> (version)");
 
         this.messageResultReapplyOne = this.getCommandResource().getOrSetDefault("messages.result.reapply.one",
                 "&eRe-applied module &7'&c%this_identifier%&7'&8!");
@@ -213,10 +243,47 @@ public class ModulesCommand extends CosmicCommand {
                     });
                 }
                 break;
+            case "ecloud":
+                runEcloud(context);
+                break;
             default:
                 context.sendMessage(getWithOther(context.getSender(), messageResultListAll, context.getSender()));
                 break;
         }
+    }
+
+    /**
+     * Handles {@code ecloud download <module> (version)}. The download runs off
+     * the command thread; the sender is messaged when it finishes.
+     *
+     * @param context the command context; argument 0 is {@code ecloud}
+     */
+    private void runEcloud(CommandContext<CosmicCommand> context) {
+        if (context.getArgCount() < 3 || ! context.getStringArg(1).equalsIgnoreCase("download")) {
+            context.sendMessage(messageEcloudUsage);
+            return;
+        }
+
+        String name = context.getStringArg(2);
+        String version = context.getArgCount() >= 4 ? context.getStringArg(3) : null;
+        context.sendMessage(messageEcloudDownloading.replace("%this_identifier%", name));
+
+        ModuleCloud.download(name, version).whenComplete((result, error) -> {
+            if (error != null) {
+                Throwable cause = error.getCause() != null ? error.getCause() : error;
+                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                context.sendMessage(messageEcloudFailed
+                        .replace("%this_identifier%", name)
+                        .replace("%this_error%", reason));
+                return;
+            }
+            String message = result.isLoaded() ? messageEcloudDownloaded : messageEcloudDownloadedNotLoaded;
+            context.sendMessage(message
+                    .replace("%this_identifier%", result.getModuleId())
+                    .replace("%this_version%", result.getVersion())
+                    .replace("%this_file%", result.getFile().getFileName().toString())
+                    .replace("%this_error%", String.valueOf(result.getLoadError())));
+        });
     }
 
     /**
@@ -240,7 +307,8 @@ public class ModulesCommand extends CosmicCommand {
                     "unload",
                     "enable",
                     "disable",
-                    "list"
+                    "list",
+                    "ecloud"
             ));
         }
         if (context.getArgCount() == 2) {
@@ -252,6 +320,13 @@ public class ModulesCommand extends CosmicCommand {
             if (context.getStringArg(0).equalsIgnoreCase("load")) {
                 return ModuleManager.getUnloadedExternalModuleIdentifiers();
             }
+            if (context.getStringArg(0).equalsIgnoreCase("ecloud")) {
+                return new ConcurrentSkipListSet<>(List.of("download"));
+            }
+        }
+        if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
+                && context.getStringArg(1).equalsIgnoreCase("download")) {
+            return new ConcurrentSkipListSet<>(ModuleCloud.getCachedModuleNames());
         }
         return new ConcurrentSkipListSet<>();
     }

@@ -7,12 +7,12 @@ website: https://github.com/Streamline-Essentials
 description: True potential is here. A Proxy and Spigot plugin that opens up endless cross-platform possibilities.
 
 depend:
-  - LuckPerms
   - BukkitOfUtils
 # Maven Central libs — downloaded by Spigot/Paper (not shaded into this jar).
 libraries:
 ${librariesBlock}
-soft-depend:
+softdepend:
+  - LuckPerms
   - Geyser-Spigot
   - Geyser-Folia
   - PlaceholderAPI

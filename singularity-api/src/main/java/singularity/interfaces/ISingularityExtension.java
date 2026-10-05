@@ -37,6 +37,8 @@ public interface ISingularityExtension {
         FABRIC,
         /** Forge mod loader platform. */
         FORGE,
+        /** NeoForge mod loader platform. */
+        NEOFORGE,
         ;
     }
 
@@ -273,5 +275,17 @@ public interface ISingularityExtension {
      */
     default void setPlatformAsEnabled() {
         Singularity.platformEnabled(true);
+    }
+
+    /**
+     * Runs a task on the thread that owns game state: the Bukkit main thread
+     * (global region on Folia) on Spigot. Platforms without such a thread
+     * (proxies, and mod loaders, whose command registry hops to the server
+     * thread itself) run it inline on the calling thread.
+     *
+     * @param task the task to run
+     */
+    default void runOnMainThread(Runnable task) {
+        task.run();
     }
 }

@@ -4,40 +4,39 @@ include ':singularity-api'
 include ':api'
 include ':backend-api'
 
+// Hard Switch for building modules
+// true = run
+// false = don't run
+def HARD_SWITCH = true
+
 if (! isCI()) {
     include ':bungee'
     include ':spigot'
     include ':velocity'
+}
 
-    // Fabric versions (shared sources in fabric/fabric-common/ directory, not a compiled subproject)
-//    include ':fabric-1165'
-//    include ':fabric-1201'
-//    include ':fabric-1211'
-//    include ':fabric-12111'
-//    project(':fabric-1165').projectDir = file('fabric/fabric-1165')
-//    project(':fabric-1201').projectDir = file('fabric/fabric-1201')
-//    project(':fabric-1211').projectDir = file('fabric/fabric-1211')
-//    project(':fabric-12111').projectDir = file('fabric/fabric-12111')
+// Mod-loader subprojects: every loader builds for every supported Minecraft version.
+// Each is named <loader>-<version digits> and lives under its loader's folder.
+def MOD_LOADERS = ['fabric', 'forge', 'neoforge']
+def MOD_VERSIONS = ['1201', '1211', '12111', '262', '263']
 
-    // Forge versions (shared sources in forge/forge-common/ directory, not a compiled subproject)
-//    include ':forge-1165'
-//    include ':forge-1201'
-//    project(':forge-1165').projectDir = file('forge/forge-1165')
-//    project(':forge-1201').projectDir = file('forge/forge-1201')
+// Fabric Loom 1.18 runs only on a Java 25 JVM, so the mod subprojects (and the loader
+// plugins in the root buildscript) are included only when Gradle itself runs on Java 25.
+// CI builds just the API artifacts and never includes them.
+gradle.ext.buildMods = ! isCI() && JavaVersion.current() >= JavaVersion.VERSION_25
 
-    // NeoForge versions (shared sources in neoforge/neoforge-common/ directory, not a compiled subproject)
-//    include ':neoforge-1211'
-//    include ':neoforge-12111'
-//    project(':neoforge-1211').projectDir = file('neoforge/neoforge-1211')
-//    project(':neoforge-12111').projectDir = file('neoforge/neoforge-12111')
-
-    // MC 26.1.1 requires Java 25 — only include if available
-    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
-//        include ':fabric-2611'
-//        include ':neoforge-2611'
-//        project(':fabric-2611').projectDir = file('fabric/fabric-2611')
-//        project(':neoforge-2611').projectDir = file('neoforge/neoforge-2611')
+if (gradle.ext.buildMods) {
+    MOD_LOADERS.each { loader ->
+        MOD_VERSIONS.each { mc ->
+            def path = ":${loader}-${mc}"
+            include path
+            project(path).projectDir = file("${loader}/${loader}-${mc}")
+        }
     }
+} else if (! isCI()) {
+    logger.warn("[StreamlineCore] Skipping the Fabric/Forge/NeoForge subprojects: they need Gradle " +
+            "to run on Java 25, but it is running on Java ${JavaVersion.current()}. Point JAVA_HOME " +
+            "at a Java 25 JDK to build them.")
 }
 
 findProject(':backend-api').name = 'bapi'
@@ -52,21 +51,13 @@ if (! isCI()) {
     findProject(':spigot').name = rootProject.name + '-Spigot'
     findProject(':velocity').name = rootProject.name + '-Velocity'
 
-//    findProject(':fabric-1165').name = rootProject.name + '-Fabric-1165'
-//    findProject(':fabric-1201').name = rootProject.name + '-Fabric-1201'
-//    findProject(':fabric-1211').name = rootProject.name + '-Fabric-1211'
-//    findProject(':fabric-12111').name = rootProject.name + '-Fabric-12111'
-    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
-//        findProject(':fabric-2611').name = rootProject.name + '-Fabric-2611'
-    }
-
-//    findProject(':forge-1165').name = rootProject.name + '-Forge-1165'
-//    findProject(':forge-1201').name = rootProject.name + '-Forge-1201'
-
-//    findProject(':neoforge-1211').name = rootProject.name + '-NeoForge-1211'
-//    findProject(':neoforge-12111').name = rootProject.name + '-NeoForge-12111'
-    if (JavaVersion.current() >= JavaVersion.VERSION_25) {
-//        findProject(':neoforge-2611').name = rootProject.name + '-NeoForge-2611'
+    if (gradle.ext.buildMods) {
+        def LOADER_NAMES = [fabric: 'Fabric', forge: 'Forge', neoforge: 'NeoForge']
+        LOADER_NAMES.each { loader, display ->
+            MOD_VERSIONS.each { mc ->
+                findProject(":${loader}-${mc}").name = rootProject.name + "-${display}-${mc}"
+            }
+        }
     }
 }
 
@@ -74,7 +65,7 @@ if (! isCI()) {
 // automatically, so adding a module means dropping its sources in -- nothing to register
 // here. Included on Jenkins so its build produces the module JARs alongside the platform
 // ones; skipped on JitPack, which resolves only the API artifacts.
-if (! isJitPack()) {
+if (! isJitPack() && HARD_SWITCH) {
     def modulesDir = file('modules')
     if (modulesDir.isDirectory()) {
         modulesDir.listFiles()

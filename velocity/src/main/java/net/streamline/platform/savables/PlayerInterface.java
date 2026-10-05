@@ -4,7 +4,7 @@ import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import net.streamline.base.StreamlineVelocity;
 import net.streamline.platform.Messenger;
 import singularity.interfaces.audiences.IPlayerInterface;
@@ -19,7 +19,7 @@ import java.util.UUID;
  *
  * <p>Chat input is spoofed via {@link Player#spoofChatInput(String)}, command execution
  * is delegated to the Velocity {@link com.velocitypowered.api.command.CommandManager},
- * and permission changes are applied through {@link LuckPermsHandler}.
+ * and permission changes are applied through {@link Permissions}.
  */
 @Getter @Setter
 public class PlayerInterface implements IPlayerInterface<Player> {
@@ -55,7 +55,7 @@ public class PlayerInterface implements IPlayerInterface<Player> {
      * {@inheritDoc}
      *
      * <p>Wraps the supplied {@link PlayerGetter} in a {@link RealPlayer} whose action
-     * methods delegate to the Velocity API and {@link LuckPermsHandler}.
+     * methods delegate to the Velocity API and {@link Permissions}.
      *
      * @param playerGetter the supplier that resolves the underlying {@link Player}
      * @return a {@link RealPlayer} adapter for the resolved player
@@ -90,12 +90,12 @@ public class PlayerInterface implements IPlayerInterface<Player> {
 
             @Override
             public void addPermission(String permission) {
-                LuckPermsHandler.addPermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.addPermission(getPlayer().getUniqueId().toString(), permission);
             }
 
             @Override
             public void removePermission(String permission) {
-                LuckPermsHandler.removePermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.removePermission(getPlayer().getUniqueId().toString(), permission);
             }
         };
     }

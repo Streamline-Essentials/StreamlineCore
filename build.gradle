@@ -26,17 +26,30 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.gradleup.shadow:shadow-gradle-plugin:8.3.6") // for shadowing
-        classpath("io.freefair.gradle:lombok-plugin:8.6")
-        classpath("net.fabricmc:fabric-loom:1.13.4")
-        classpath("net.minecraftforge.gradle:ForgeGradle:6.0.+") { changing = true }
-        classpath("net.neoforged.gradle:userdev:7.1.22")
+        classpath("com.gradleup.shadow:shadow-gradle-plugin:9.6.1") // for shadowing
+        classpath("io.freefair.gradle:lombok-plugin:9.8.0")
+
+        // The mod-loader toolchains share this one classloader so every mod subproject
+        // sees the same plugin versions. They are only resolved when settings.gradle
+        // includes the mod subprojects: Loom 1.18 runs on a Java 25 JVM alone, and CI
+        // builds on older JDKs.
+        if (gradle.ext.has('buildMods') && gradle.ext.buildMods) {
+            classpath("net.fabricmc:fabric-loom:${rootProject.properties['loom_version']}")
+            classpath("net.neoforged:moddev-gradle:${rootProject.properties['moddev_version']}")
+            classpath("net.minecraftforge:forgegradle:${rootProject.properties['forgegradle_version']}")
+        }
     }
 }
 
 //plugins {
 //    id "maven-publish"
 //}
+
+// Fabric/Forge/NeoForge subprojects live in a folder named after their loader. They pick
+// their Java version through a toolchain, which Gradle refuses to combine with the
+// project-wide source/target compatibility set below, and they are configured by
+// mod-common/mod.gradle rather than by the platform conventions further down.
+def isModProject = { Project p -> p.projectDir.parentFile.name in ['fabric', 'forge', 'neoforge'] }
 
 allprojects {
     apply plugin: "java"
@@ -47,9 +60,11 @@ allprojects {
     version = rootProject.properties["version"]
     group = rootProject.properties["group"]
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    if (! isModProject(project)) {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
     }
 
     artifacts {
@@ -84,6 +99,9 @@ allprojects {
             url = "https://repo.codemc.io/repository/streamline-essentials/"
         }
 
+        // JitPack
+        maven { url 'https://jitpack.io' }
+
         // Local libs folder as a flat directory repository
         flatDir {
             dirs "${rootDir}/libs"
@@ -93,8 +111,9 @@ allprojects {
 
 // Core platform projects only. Modules under modules/ are configured by
 // modules/module.gradle instead: they have no plugin.yml to expand, are not published
-// to the Streamline Maven repo, and must keep their own version and manifest.
-configure(subprojects.findAll { ! it.path.startsWith(':modules') }) {
+// to the Streamline Maven repo, and must keep their own version and manifest. Mod-loader
+// projects are configured by mod-common/mod.gradle.
+configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProject(it) }) {
     apply from: rootDir.toString() + "/dependencies.gradle"
 
     ext {
@@ -339,6 +358,6 @@ tasks.named("publish").configure {
 }
 
 wrapper {
-    gradleVersion = "8.9"
+    gradleVersion = "9.8.0"
     distributionType = Wrapper.DistributionType.ALL
 }

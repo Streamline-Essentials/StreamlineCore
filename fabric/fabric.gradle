@@ -1,0 +1,47 @@
+// Fabric conventions. A version project sets, besides what mod-common/mod.gradle needs:
+//   fabricApiVersion  Fabric API build for this Minecraft version
+//   obfuscated        true for Minecraft 1.21.11 and older, which ship obfuscated and are
+//                     compiled against Mojang mappings then remapped to intermediary;
+//                     false for 26.x, which ships unobfuscated and needs no remapping
+
+def obfuscated = project.obfuscated as boolean
+
+apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+
+ext.modSourceDirs = ['fabric/fabric-common']
+ext.metadataExtras = [fabricLoaderVersion: rootProject.properties['fabric_loader_version'].toString()]
+// The remapped jar is the one Fabric loads; without remapping the shaded jar ships as is.
+ext.modJarTask = obfuscated ? 'remapJar' : 'shadowJar'
+
+repositories {
+    exclusiveContent {
+        forRepository { maven { url = 'https://maven.fabricmc.net' } }
+        filter { includeGroupAndSubgroups 'net.fabricmc' }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.mcVersion}"
+    if (obfuscated) {
+        mappings loom.officialMojangMappings()
+        modImplementation "net.fabricmc:fabric-loader:${rootProject.properties['fabric_loader_version']}"
+        modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricApiVersion}"
+    } else {
+        implementation "net.fabricmc:fabric-loader:${rootProject.properties['fabric_loader_version']}"
+        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabricApiVersion}"
+    }
+}
+
+apply from: rootProject.file('mod-common/mod.gradle')
+
+if (obfuscated) {
+    tasks.named('shadowJar') {
+        archiveClassifier.set('dev-all')
+    }
+
+    tasks.named('remapJar') {
+        dependsOn tasks.named('shadowJar')
+        inputFile.set(tasks.named('shadowJar').flatMap { it.archiveFile })
+        archiveClassifier.set('')
+    }
+}

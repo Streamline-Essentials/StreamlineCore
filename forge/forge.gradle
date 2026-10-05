@@ -1,0 +1,61 @@
+// Forge conventions. A version project sets, besides what mod-common/mod.gradle needs:
+//   forgeVersion  full Forge version, <minecraft>-<forge>
+//   loaderMajor   Forge major version, the lowest the mod metadata accepts
+//   eventBus      6 or 7: Forge moved from one shared event bus to per-event buses
+//                 (EventBus 7) during 1.21
+//   legacy        true for 1.20.1, which runs on SRG names and is built with ModDevGradle's
+//                 legacy plugin; newer versions run on Mojang names and use ForgeGradle 7
+//   obfuscated    true while Minecraft ships obfuscated (1.21.11 and older), so ForgeGradle
+//                 needs Mojang mappings; 26.x ships unobfuscated
+
+def legacy = project.ext.has('legacy') && project.legacy
+
+ext.modSourceDirs = ['forge/forge-common', "forge/forge-eventbus${project.eventBus}"]
+ext.metadataExtras = [loaderMajor: project.loaderMajor.toString()]
+
+if (legacy) {
+    apply plugin: 'net.neoforged.moddev.legacyforge'
+
+    ext.modJarTask = 'reobfShadowJar'
+
+    legacyForge {
+        enable {
+            forgeVersion = project.forgeVersion
+            disableRecompilation = true
+        }
+    }
+} else {
+    apply plugin: 'net.minecraftforge.gradle'
+
+    ext.modJarTask = 'shadowJar'
+
+    if (project.obfuscated as boolean) {
+        minecraft {
+            mappings channel: 'official', version: project.mcVersion
+        }
+    }
+
+    repositories {
+        minecraft.mavenizer(it)
+        maven fg.forgeMaven
+        maven fg.minecraftLibsMaven
+    }
+
+    dependencies {
+        implementation minecraft.dependency("net.minecraftforge:forge:${project.forgeVersion}")
+    }
+}
+
+apply from: rootProject.file('mod-common/mod.gradle')
+
+if (legacy) {
+    tasks.named('shadowJar') {
+        archiveClassifier.set('dev-all')
+    }
+
+    obfuscation {
+        reobfuscate(tasks.named('shadowJar'), sourceSets.main) {
+            archiveClassifier.set('')
+        }
+    }
+}

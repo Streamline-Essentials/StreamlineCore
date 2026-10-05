@@ -1,0 +1,10 @@
+// Built by fabric/fabric.gradle; see that file and mod-common/mod.gradle for what each value means.
+ext {
+    mcVersion = '26.2'
+    javaVersion = 25
+    minecraftRange = '>=26.2 <26.3'
+    fabricApiVersion = '0.161.0+26.2'
+    obfuscated = false
+}
+
+apply from: rootProject.file('fabric/fabric.gradle')

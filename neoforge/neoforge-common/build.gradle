@@ -1,2 +1,0 @@
-// Source-only module — provides shared Java sources to version-specific NeoForge subprojects.
-configurations.all { resolutionStrategy.deactivateDependencyLocking() }

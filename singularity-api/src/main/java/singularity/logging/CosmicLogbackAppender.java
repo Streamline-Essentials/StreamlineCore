@@ -1,8 +1,11 @@
 package singularity.logging;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import org.slf4j.LoggerFactory;
 import singularity.events.server.ServerLogTextEvent;
 
 /**
@@ -18,6 +21,23 @@ import singularity.events.server.ServerLogTextEvent;
  * is suppressed and not forwarded further.</p>
  */
 public class CosmicLogbackAppender extends AppenderBase<ILoggingEvent> {
+
+    /**
+     * Replaces every appender on Logback's root logger with a started
+     * {@code CosmicLogbackAppender}. Only valid when SLF4J is bound to Logback.
+     */
+    public static void installOnRoot() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+
+        rootLogger.detachAndStopAllAppenders();
+
+        CosmicLogbackAppender appender = new CosmicLogbackAppender();
+        appender.setContext(loggerContext);
+        appender.setName("CosmicLogbackAppender");
+        appender.start();
+        rootLogger.addAppender(appender);
+    }
 
     /**
      * Converts a Logback {@link ILoggingEvent} into a {@link ServerLogTextEvent}
