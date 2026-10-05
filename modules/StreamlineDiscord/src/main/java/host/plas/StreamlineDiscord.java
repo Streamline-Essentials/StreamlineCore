@@ -26,6 +26,7 @@ import host.plas.depends.MessagingDependency;
 import host.plas.discord.DiscordHandler;
 import host.plas.events.MainListener;
 import host.plas.placeholders.DiscordExpansion;
+import singularity.interfaces.ISingularityExtension;
 import singularity.modules.SimpleModule;
 
 import java.io.File;
@@ -120,7 +121,8 @@ public class StreamlineDiscord extends SimpleModule {
         new CreateChannelCommandMC().register();
         new UnVerifyCommandMC().register();
 
-        if (! SLAPI.isProxy()) {
+        // Bukkit classes exist only on Spigot; mod-loader backends are not proxies either.
+        if (SLAPI.getInstance().getPlatform().getPlatformType() == ISingularityExtension.PlatformType.SPIGOT) {
             BukkitAdapter.init();
         }
 
