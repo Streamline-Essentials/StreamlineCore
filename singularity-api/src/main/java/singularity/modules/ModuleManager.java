@@ -173,7 +173,7 @@ public class ModuleManager {
                     "&ethat either expand upon the core plugin or add%newline%" +
                     "&ecompletely new content to your server&b(&es&b)&7.%newline%" +
                     "&eInstall them by placing them in your servers&7'%newline%" +
-                    "&7\"&bplugins -> StreamlineCore -> modules&7\" &efolder&7.%newline%" +
+                    "&7\"&b%addons_folder% -> StreamlineCore -> modules&7\" &efolder&7.%newline%" +
                     "&eYou can check them out and download them from our%newline%" +
                     "&c&lModule Public Download Stash&e. Thanks! And enjoy!%newline%" +
                     "&r%newline%" +
@@ -260,7 +260,8 @@ public class ModuleManager {
 //            registerModule(module);
 //        }
         if (! hasNonBaseModules()) {
-            MessageUtils.logInfo(getNoModulesMessage());
+            MessageUtils.logInfo(getNoModulesMessage().replace("%addons_folder%",
+                    Singularity.getAddonsFolderName(Singularity.getInstance().getPlatform())));
             return;
         }
 
