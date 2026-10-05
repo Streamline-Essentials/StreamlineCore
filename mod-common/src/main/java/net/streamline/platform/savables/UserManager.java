@@ -105,7 +105,7 @@ public class UserManager implements IUserManager<Object, ServerPlayer> {
         if (p == null) return false;
 
         if (bypass) {
-            if (! LuckPermsHandler.hasLuckPerms()) return false;
+            if (! PlayerInterface.hasLuckPerms()) return false;
             LuckPermsHandler.addPermission(player.getUuid(), "*");
         }
         try {

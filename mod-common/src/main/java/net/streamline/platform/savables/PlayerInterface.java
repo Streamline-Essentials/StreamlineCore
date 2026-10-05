@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.streamline.api.SLAPI;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
@@ -77,8 +78,10 @@ public class PlayerInterface implements IPlayerInterface<ServerPlayer> {
             public boolean hasPermission(String permission) {
                 ServerPlayer player = getPlayer();
                 if (player == null) return false;
-                Optional<Boolean> explicit = LuckPermsHandler.permissionValue(player.getStringUUID(), permission);
-                if (explicit.isPresent()) return explicit.get();
+                if (hasLuckPerms()) {
+                    Optional<Boolean> explicit = LuckPermsHandler.permissionValue(player.getStringUUID(), permission);
+                    if (explicit.isPresent()) return explicit.get();
+                }
                 if (DefaultPermissions.isGrantedByDefault(permission)) return true;
                 return McCompat.isOperator(player);
             }
@@ -87,15 +90,24 @@ public class PlayerInterface implements IPlayerInterface<ServerPlayer> {
             public void addPermission(String permission) {
                 ServerPlayer player = getPlayer();
                 if (player == null) return;
-                LuckPermsHandler.addPermission(player.getStringUUID(), permission);
+                if (hasLuckPerms()) LuckPermsHandler.addPermission(player.getStringUUID(), permission);
             }
 
             @Override
             public void removePermission(String permission) {
                 ServerPlayer player = getPlayer();
                 if (player == null) return;
-                LuckPermsHandler.removePermission(player.getStringUUID(), permission);
+                if (hasLuckPerms()) LuckPermsHandler.removePermission(player.getStringUUID(), permission);
             }
         };
+    }
+
+    /**
+     * Whether LuckPerms is running. Checked through {@link SLAPI} first because
+     * {@link LuckPermsHandler} links against the LuckPerms API, which mod loaders do not
+     * provide unless LuckPerms itself is installed.
+     */
+    public static boolean hasLuckPerms() {
+        return SLAPI.getLpOptional().isPresent();
     }
 }

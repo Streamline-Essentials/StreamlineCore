@@ -10,7 +10,7 @@ import singularity.configs.ModularizedConfig;
 public class TacoConfig extends ModularizedConfig {
 
     public TacoConfig() {
-        super(TacoEssentials.getInstance(), "config.yml", true);
+        super(TacoEssentials.getInstance(), "config.yml", false);
         init();
     }
 
