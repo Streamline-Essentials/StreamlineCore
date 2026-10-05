@@ -3,6 +3,7 @@ package host.plas.collections.config;
 import host.plas.collections.StreamlineCollections;
 import host.plas.collections.data.LevelReward;
 import singularity.configs.ModularizedConfig;
+import singularity.gui.CosmicItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,10 @@ public class CollectionsConfig extends ModularizedConfig {
         isTrackFishing();
         isTrackBucketFill();
         isCountPlacedBlocks();
+        isStatSyncEnabled();
+        isStatSyncOnJoin();
+        getStatSyncIntervalMinutes();
+        for (String source : new String[] { "blocks", "drops", "fish", "buckets" }) getStatFor(source);
         getSaveIntervalSeconds();
         isRewardsEnabled();
         isRemindOnJoin();
@@ -55,6 +60,45 @@ public class CollectionsConfig extends ModularizedConfig {
     public boolean isCountPlacedBlocks() {
         reloadResource();
         return getOrSetDefault("tracking.count-placed-blocks", false);
+    }
+
+    public boolean isStatSyncEnabled() {
+        reloadResource();
+        return getOrSetDefault("stat-sync.enabled", true);
+    }
+
+    public boolean isStatSyncOnJoin() {
+        reloadResource();
+        return getOrSetDefault("stat-sync.on-join", true);
+    }
+
+    public int getStatSyncIntervalMinutes() {
+        reloadResource();
+        return Math.max(0, getOrSetDefault("stat-sync.interval-minutes", 5));
+    }
+
+    /**
+     * The vanilla statistic type a source type reads, such as {@code minecraft:mined}, or
+     * {@code null} when that source is not synced.
+     */
+    public String getStatFor(String sourceType) {
+        reloadResource();
+        String fallback;
+        switch (sourceType) {
+            case "blocks":
+                fallback = "mined";
+                break;
+            case "drops":
+            case "fish":
+                fallback = "picked_up";
+                break;
+            default:
+                fallback = "none";
+                break;
+        }
+        String stat = getOrSetDefault("stat-sync.sources." + sourceType, fallback);
+        if (stat == null || stat.trim().isEmpty() || stat.trim().equalsIgnoreCase("none")) return null;
+        return CosmicItem.normalizeKey(stat);
     }
 
     public int getSaveIntervalSeconds() {

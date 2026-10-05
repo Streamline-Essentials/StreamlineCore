@@ -8,6 +8,7 @@ import host.plas.collections.data.Catalog;
 import host.plas.collections.data.CollectionManager;
 import host.plas.collections.data.CollectionPlayer;
 import host.plas.collections.data.PlacedBlocks;
+import host.plas.collections.data.StatSync;
 import singularity.data.players.CosmicPlayer;
 import singularity.events.player.gameplay.PlayerBrokeBlockEvent;
 import singularity.events.player.gameplay.PlayerCaughtFishEvent;
@@ -41,13 +42,40 @@ public class CollectionsListener implements BaseEventListener {
         CollectionPlayer progress = StreamlineCollections.getLoader().getOrCreate(player.getUuid());
         progress.setName(player.getCurrentName());
 
-        if (StreamlineCollections.getMainConfig().isRemindOnJoin()) {
-            new ModuleDelayedRunnable(StreamlineCollections.getInstance(), 40) {
-                @Override
-                public void runDelayed() {
-                    if (player.isOnline()) CollectionManager.remind(player);
-                }
-            };
+        new JoinTask(player, 0);
+    }
+
+    /**
+     * Syncs from statistics and reminds a player shortly after they join, once their stored
+     * progress has loaded; retried a few times while the load is still running.
+     */
+    private static final class JoinTask extends ModuleDelayedRunnable {
+        private static final int MAX_TRIES = 10;
+
+        private final CosmicPlayer player;
+        private final int attempt;
+
+        private JoinTask(CosmicPlayer player, int attempt) {
+            super(StreamlineCollections.getInstance(), 40);
+            this.player = player;
+            this.attempt = attempt;
+        }
+
+        @Override
+        public void runDelayed() {
+            if (! player.isOnline()) return;
+
+            CollectionPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
+            if (progress == null) return;
+            if (! progress.isFullyLoaded()) {
+                if (attempt + 1 < MAX_TRIES) new JoinTask(player, attempt + 1);
+                return;
+            }
+
+            if (StreamlineCollections.getMainConfig().isStatSyncEnabled() && StreamlineCollections.getMainConfig().isStatSyncOnJoin()) {
+                StatSync.sync(player, true);
+            }
+            if (StreamlineCollections.getMainConfig().isRemindOnJoin()) CollectionManager.remind(player);
         }
     }
 

@@ -69,17 +69,28 @@ public final class CollectionManager {
 
     /** Adds to a loaded player's collection, announcing each level it completes. */
     public static void add(CosmicPlayer player, String collection, long delta) {
-        if (delta <= 0) return;
+        add(player, collection, delta, true);
+    }
+
+    /**
+     * Adds to a loaded player's collection, returning how many levels that completed; each is
+     * announced only when {@code announce} is set.
+     */
+    public static int add(CosmicPlayer player, String collection, long delta, boolean announce) {
+        if (delta <= 0) return 0;
         CollectionDefinition definition = catalog.get(collection).orElse(null);
         CollectionPlayer progress = getLoaded(player.getUuid()).orElse(null);
-        if (definition == null || progress == null) return;
+        if (definition == null || progress == null) return 0;
 
         long before = progress.amount(definition.getId());
         long after = progress.add(definition.getId(), delta);
 
-        for (int level = definition.tier(before) + 1; level <= definition.tier(after); level++) {
-            announceLevel(player, definition, level);
+        int from = definition.tier(before) + 1;
+        int to = definition.tier(after);
+        if (announce) {
+            for (int level = from; level <= to; level++) announceLevel(player, definition, level);
         }
+        return Math.max(0, to - from + 1);
     }
 
     private static void announceLevel(CosmicPlayer player, CollectionDefinition definition, int level) {
