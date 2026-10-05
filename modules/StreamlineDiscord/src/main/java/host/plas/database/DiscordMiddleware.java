@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
 
 public class DiscordMiddleware extends ModuleRunnable {
     @Getter @Setter
@@ -47,60 +48,51 @@ public class DiscordMiddleware extends ModuleRunnable {
     // flight instead of skipping it.
     @Override
     public synchronized void run() {
-        try {
-            // Process Drops first
-            if (! droppedRoutes.isEmpty()) {
-                droppedRoutes.forEach(id -> {
-                    Route route = routeCache.remove(id);
-                    StreamlineDiscord.getRouteKeeper().drop(id);
-                    droppedRoutes.remove(id);
-                });
-            }
+        // Drops go first so a record dropped and re-saved in one batch ends up saved.
+        process(droppedRoutes, "drop route", id -> {
+            routeCache.remove(id);
+            StreamlineDiscord.getRouteKeeper().drop(id);
+        });
+        process(droppedEndPoints, "drop endpoint", id -> {
+            endPointCache.remove(id);
+            StreamlineDiscord.getEndPointKeeper().drop(id);
+        });
+        process(droppedVerifiedUsers, "drop verified user", id -> {
+            verifiedUserCache.remove(id);
+            StreamlineDiscord.getVerifiedUserKeeper().drop(id);
+        });
 
-            if (! droppedEndPoints.isEmpty()) {
-                droppedEndPoints.forEach(id -> {
-                    EndPoint endPoint = endPointCache.remove(id);
-                    StreamlineDiscord.getEndPointKeeper().drop(id);
-                    droppedEndPoints.remove(id);
-                });
-            }
+        process(dirtyRoutes, "save route", id -> {
+            Route route = routeCache.get(id);
+            if (route != null) StreamlineDiscord.getRouteKeeper().save(route, false);
+        });
+        process(dirtyEndPoints, "save endpoint", id -> {
+            EndPoint endPoint = endPointCache.get(id);
+            if (endPoint != null) StreamlineDiscord.getEndPointKeeper().save(endPoint, false);
+        });
+        process(dirtyVerifiedUsers, "save verified user", id -> {
+            VerifiedUser user = verifiedUserCache.get(id);
+            if (user != null) StreamlineDiscord.getVerifiedUserKeeper().save(user, false);
+        });
+    }
 
-            if (! droppedVerifiedUsers.isEmpty()) {
-                droppedVerifiedUsers.forEach(id -> {
-                    VerifiedUser user = verifiedUserCache.remove(id);
-                    StreamlineDiscord.getVerifiedUserKeeper().drop(id);
-                    droppedVerifiedUsers.remove(id);
-                });
+    /**
+     * Applies {@code action} to every queued id. Each id is isolated: a failure is logged
+     * at warning level and the rest of the batch still runs. Errors are caught too, since
+     * this also runs on the server thread during module disable, where an escaping
+     * {@link LinkageError} stops the server.
+     */
+    private static void process(ConcurrentSkipListSet<String> queue, String what, Consumer<String> action) {
+        queue.forEach(id -> {
+            try {
+                action.accept(id);
+            } catch (Throwable e) {
+                StreamlineDiscord.getInstance().logWarning("Middleware: failed to " + what + " '" + id + "': " + e);
+                e.printStackTrace();
+            } finally {
+                queue.remove(id);
             }
-
-            // Process Saves
-            if (! dirtyRoutes.isEmpty()) {
-                dirtyRoutes.forEach(id -> {
-                    Route route = routeCache.get(id);
-                    if (route != null) StreamlineDiscord.getRouteKeeper().save(route, false);
-                    dirtyRoutes.remove(id);
-                });
-            }
-
-            if (! dirtyEndPoints.isEmpty()) {
-                dirtyEndPoints.forEach(id -> {
-                    EndPoint endPoint = endPointCache.get(id);
-                    if (endPoint != null) StreamlineDiscord.getEndPointKeeper().save(endPoint, false);
-                    dirtyEndPoints.remove(id);
-                });
-            }
-
-            if (! dirtyVerifiedUsers.isEmpty()) {
-                dirtyVerifiedUsers.forEach(id -> {
-                    VerifiedUser user = verifiedUserCache.get(id);
-                    if (user != null) StreamlineDiscord.getVerifiedUserKeeper().save(user, false);
-                    dirtyVerifiedUsers.remove(id);
-                });
-            }
-        } catch (Exception e) {
-            StreamlineDiscord.getInstance().logWarning("Middleware: Error during batch update: " + e.getMessage());
-            e.printStackTrace();
-        }
+        });
     }
 
     public static void saveRoute(Route route) {

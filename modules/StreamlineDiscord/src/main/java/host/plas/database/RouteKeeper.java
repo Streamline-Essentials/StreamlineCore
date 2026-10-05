@@ -1,7 +1,6 @@
 package host.plas.database;
 
 import host.plas.StreamlineDiscord;
-import host.plas.bou.sql.DbArg;
 import host.plas.discord.data.channeling.EndPoint;
 import host.plas.discord.data.channeling.Route;
 import host.plas.discord.data.channeling.RouteLoader;
@@ -157,17 +156,15 @@ public class RouteKeeper extends DBKeeper<Route> {
         
         getDatabase().execute(s1, stmt -> {
             try {
-                DbArg arg = new DbArg();
+                stmt.setString(1, route.getIdentifier());
 
-                stmt.setString(arg.next(), route.getIdentifier());
+                stmt.setString(2, route.getInput().getIdentifier());
+                stmt.setString(3, route.getOutput().getIdentifier());
+                stmt.setString(4, route.getEnabledEventsAsString());
 
-                stmt.setString(arg.next(), route.getInput().getIdentifier());
-                stmt.setString(arg.next(), route.getOutput().getIdentifier());
-                stmt.setString(arg.next(), route.getEnabledEventsAsString());
-
-                stmt.setString(arg.next(), route.getInput().getIdentifier());
-                stmt.setString(arg.next(), route.getOutput().getIdentifier());
-                stmt.setString(arg.next(), route.getEnabledEventsAsString());
+                stmt.setString(5, route.getInput().getIdentifier());
+                stmt.setString(6, route.getOutput().getIdentifier());
+                stmt.setString(7, route.getEnabledEventsAsString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -197,13 +194,11 @@ public class RouteKeeper extends DBKeeper<Route> {
         
         getDatabase().execute(s1, stmt -> {
             try {
-                DbArg arg = new DbArg();
+                stmt.setString(1, route.getIdentifier());
 
-                stmt.setString(arg.next(), route.getIdentifier());
-
-                stmt.setString(arg.next(), route.getInput().getIdentifier());
-                stmt.setString(arg.next(), route.getOutput().getIdentifier());
-                stmt.setString(arg.next(), route.getEnabledEventsAsString());
+                stmt.setString(2, route.getInput().getIdentifier());
+                stmt.setString(3, route.getOutput().getIdentifier());
+                stmt.setString(4, route.getEnabledEventsAsString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
