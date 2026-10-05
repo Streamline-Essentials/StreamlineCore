@@ -34,9 +34,9 @@ import java.util.function.Predicate;
  *
  * <p>Registering a label that vanilla or another mod already owns would merge into that
  * foreign node, which keeps the foreign node's requirement and redirect (vanilla {@code /w}
- * redirects to {@code /msg}), so the foreign command would keep answering. The foreign node
- * is therefore taken off the root and held in {@link #DISPLACED}, and goes back on the root
- * once no Streamline command owns the label.</p>
+ * redirects to {@code /msg}), so the foreign command would keep answering. A Streamline node
+ * therefore takes the foreign node's place on the root, the foreign node is held in
+ * {@link #DISPLACED}, and it gets its place back once no Streamline command owns the label.</p>
  *
  * <p>Streamline's own nodes are never removed: once added, a node stays in the live
  * dispatcher. Each node therefore resolves its label through {@link #ACTIVE} on every use:
@@ -145,23 +145,29 @@ public final class CommandRegistry {
         for (String label : labels) {
             if (isActive(label)) continue;
             CommandNode<CommandSourceStack> foreign = DISPLACED.remove(label);
-            if (foreign != null && NodeRemoval.remove(root, label)) root.addChild(foreign);
+            if (foreign != null) NodeSwap.replace(root, foreign);
         }
     }
 
-    /** Takes a vanilla or other-mod node for {@code label} off the root, keeping it in {@link #DISPLACED}. */
-    private static void displaceForeign(CommandDispatcher<CommandSourceStack> dispatcher, String label) {
+    /**
+     * Puts a fresh Streamline node in place of a vanilla or other-mod node for {@code label},
+     * keeping the foreign node in {@link #DISPLACED}.
+     *
+     * @return whether the root now holds a Streamline node for {@code label}
+     */
+    private static boolean displaceForeign(CommandDispatcher<CommandSourceStack> dispatcher, String label) {
         RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
         CommandNode<CommandSourceStack> existing = root.getChild(label);
-        if (existing == null || existing.getRequirement() instanceof LabelRequirement) return;
-        if (NodeRemoval.remove(root, label)) DISPLACED.put(label, existing);
+        if (existing == null || existing.getRequirement() instanceof LabelRequirement) return false;
+        if (! NodeSwap.replace(root, buildBrigadier(label).build())) return false;
+        DISPLACED.put(label, existing);
+        return true;
     }
 
     private static void registerInto(CommandDispatcher<CommandSourceStack> dispatcher, ProperCommand command) {
         for (String label : command.getLabels()) {
             try {
-                displaceForeign(dispatcher, label);
-                dispatcher.register(buildBrigadier(label));
+                if (! displaceForeign(dispatcher, label)) dispatcher.register(buildBrigadier(label));
             } catch (Exception e) {
                 MessageUtils.logWarning("Error registering command '" + label + "': " + e.getMessage());
             }
@@ -194,13 +200,17 @@ public final class CommandRegistry {
     }
 
     /**
-     * Removes a child from a Brigadier node through its private maps, which Brigadier has no
-     * public method for. {@code CommandNode} holds each child in {@code children} and again in
-     * {@code literals} or {@code arguments}; parsing looks literals up in {@code literals}, so
-     * the child must leave all three. Brigadier ships without a module descriptor, so its
+     * Swaps a root child for another of the same name through {@code CommandNode}'s private
+     * maps, which Brigadier has no public method for. Root children are literals, held in
+     * both {@code children} and {@code literals}; parsing reads {@code literals}, so both
+     * change. Overwriting the key keeps the child's place in those insertion-ordered maps,
+     * which matters: the server serialises the client's command tree in root order and can
+     * only resolve a redirect to a node it has already written, so a node moved behind the
+     * nodes redirecting to it (vanilla {@code /msg} behind {@code /w} and {@code /tell}) would
+     * reach clients with broken redirects. Brigadier ships without a module descriptor, so its
      * packages are open to reflection on the module-layer loaders too.
      */
-    private static final class NodeRemoval {
+    private static final class NodeSwap {
         private static final Field[] MAPS = findMaps();
 
         private static Field[] findMaps() {
@@ -208,7 +218,6 @@ public final class CommandRegistry {
                 Field[] fields = {
                         CommandNode.class.getDeclaredField("children"),
                         CommandNode.class.getDeclaredField("literals"),
-                        CommandNode.class.getDeclaredField("arguments"),
                 };
                 for (Field field : fields) field.setAccessible(true);
                 return fields;
@@ -219,12 +228,15 @@ public final class CommandRegistry {
         }
 
         /**
-         * @return whether {@code name} is no longer a child of {@code parent}
+         * Puts {@code node} in the place of the root child sharing its name.
+         *
+         * @return whether the swap happened
          */
-        static boolean remove(CommandNode<?> parent, String name) {
-            if (MAPS == null) return false;
+        @SuppressWarnings("unchecked")
+        static boolean replace(RootCommandNode<CommandSourceStack> root, CommandNode<CommandSourceStack> node) {
+            if (MAPS == null || root.getChild(node.getName()) == null) return false;
             try {
-                for (Field field : MAPS) ((Map<?, ?>) field.get(parent)).remove(name);
+                for (Field field : MAPS) ((Map<String, Object>) field.get(root)).replace(node.getName(), node);
                 return true;
             } catch (IllegalAccessException e) {
                 return false;
