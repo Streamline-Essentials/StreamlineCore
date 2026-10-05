@@ -88,6 +88,42 @@ tasks.named('processResources', ProcessResources) {
     }
 }
 
+// Shaded libraries move under net.streamline.libs so they cannot collide with other mods'
+// copies: a package shipped by two mods either stops Forge/NeoForge from starting or, as with
+// C2ME's Reactive Streams, links one mod's classes against the other's and fails with a
+// loader constraint violation. RelocatingModuleTransformer applies the same table to modules
+// at load time, since they are compiled against the original packages; the table reaches it
+// through a generated resource.
+//
+// Left in place: org.sqlite, whose native library binds JNI functions to the original class
+// names; org.pf4j, the module contract; and TheBase, singularity and net.streamline, which
+// are Streamline's own.
+def modRelocations = [
+        'org.reactivestreams'            : 'net.streamline.libs.reactivestreams',
+        'reactor'                        : 'net.streamline.libs.reactor',
+        'io.lettuce'                     : 'net.streamline.libs.lettuce',
+        'redis.clients.authentication'   : 'net.streamline.libs.redis.authentication',
+        'com.github.benmanes.caffeine'   : 'net.streamline.libs.caffeine',
+        'com.github.zafarkhaja.semver'   : 'net.streamline.libs.semver',
+        'com.zaxxer.hikari'              : 'net.streamline.libs.hikari',
+        'com.mysql'                      : 'net.streamline.libs.mysql',
+        'com.google.protobuf'            : 'net.streamline.libs.protobuf',
+        'org.json'                       : 'net.streamline.libs.json',
+        'com.esotericsoftware.yamlbeans' : 'net.streamline.libs.yamlbeans',
+]
+
+def relocationsDir = layout.buildDirectory.dir('generated/relocations')
+def writeRelocations = tasks.register('writeModuleRelocations') {
+    def relocations = modRelocations.collect { from, to -> "${from}=${to}" }.join('\n') + '\n'
+    def outFile = relocationsDir.map { it.file('streamline-relocations.properties') }
+    inputs.property('relocations', relocations)
+    outputs.file(outFile)
+    doLast {
+        outFile.get().asFile.text = relocations
+    }
+}
+sourceSets.main.resources.srcDir(files(relocationsDir).builtBy(writeRelocations))
+
 // The plain jar holds only this project's classes; the shaded jar is the one that runs.
 tasks.named('jar', Jar) {
     archiveClassifier.set('plain')
@@ -108,13 +144,10 @@ tasks.named('shadowJar') {
     }
     mergeServiceFiles()
 
-    // Reactive Streams and Reactor are used only inside Lettuce, and other mods ship their
-    // own copies (C2ME bundles RxJava on Reactive Streams). An unrelocated
-    // org.reactivestreams in this jar is exported to the game layer and shadows those mods'
-    // copy, so their classes link against two different Publisher classes and fail with a
-    // loader constraint violation.
-    relocate('org.reactivestreams', 'net.streamline.libs.reactivestreams')
-    relocate('reactor', 'net.streamline.libs.reactor')
+    modRelocations.each { from, to -> relocate(from, to) }
+
+    // Test-framework leftovers in TheBase's fat jar.
+    exclude 'org/opentest4j/**'
 
     // The game or the loader already ships these (Forge/NeoForge refuse a second jar
     // exporting the same package), and Logback must not compete with the game's Log4j for

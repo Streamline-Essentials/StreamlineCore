@@ -12,6 +12,7 @@ import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.handlers.GameplayHandler;
 import singularity.Singularity;
+import net.streamline.platform.modules.RelocatingModuleTransformer;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
@@ -94,6 +95,7 @@ public abstract class BasePlugin implements ISingularityExtension {
      */
     protected void initialize() {
         instance = this;
+        RelocatingModuleTransformer.install();
         setupProperties();
         load();
     }
