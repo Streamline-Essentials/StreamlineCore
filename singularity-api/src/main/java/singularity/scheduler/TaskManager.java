@@ -4,12 +4,18 @@ import lombok.Getter;
 import lombok.Setter;
 import singularity.utils.MessageUtils;
 
-import javax.swing.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Global scheduler that drives all {@link BaseRunnable} tasks via a
- * {@link javax.swing.Timer} that fires every 50 ms (one Minecraft tick).
+ * Global scheduler that drives all {@link BaseRunnable} tasks from a single daemon
+ * thread that fires every 50 ms (one Minecraft tick).
+ *
+ * <p>The thread is a daemon so it never keeps the JVM alive: mod-loader servers exit
+ * only once every non-daemon thread has finished, unlike Bukkit and the proxies, which
+ * call {@code System.exit}.</p>
  *
  * <p>Tasks are stored in a thread-safe {@link ConcurrentSkipListMap} keyed by their
  * unique index.  {@link #init()} must be called once during server startup to start
@@ -25,11 +31,11 @@ public class TaskManager {
     private static ConcurrentSkipListMap<Integer, BaseRunnable> currentRunnables = new ConcurrentSkipListMap<>();
 
     /**
-     * The Swing timer that fires the tick loop every 50 ms.
-     * Set during {@link #init()} and stopped during {@link #stop()}.
+     * The executor that fires the tick loop every 50 ms.
+     * Created during {@link #init()} and shut down during {@link #stop()}.
      */
     @Getter @Setter
-    private static Timer timer;
+    private static ScheduledExecutorService timer;
 
     /**
      * Registers a {@link BaseRunnable} so it will be ticked on each timer interval.
@@ -79,7 +85,7 @@ public class TaskManager {
      * Should be called during server shutdown.
      */
     public static void stop() {
-        timer.stop();
+        if (timer != null) timer.shutdownNow();
         currentRunnables.clear();
     }
 
@@ -116,12 +122,18 @@ public class TaskManager {
     }
 
     /**
-     * Initialises the task manager by creating and starting the 50 ms Swing timer.
+     * Initialises the task manager by starting the 50 ms tick loop.
      * Must be called once during server startup before any {@link BaseRunnable} is constructed.
      */
     public static void init() {
-        timer = new Timer(50, e -> tick());
-        timer.start();
+        timer = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r, "Streamline-TaskManager");
+            thread.setDaemon(true);
+            return thread;
+        });
+        // tick() already contains each task's failure, so an exception never cancels
+        // the repeating schedule.
+        timer.scheduleAtFixedRate(TaskManager::tick, 50, 50, TimeUnit.MILLISECONDS);
 
         MessageUtils.logInfo("&cTaskManager &fis now initialized!");
     }

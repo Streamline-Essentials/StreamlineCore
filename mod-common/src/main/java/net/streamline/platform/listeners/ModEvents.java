@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.commands.CommandRegistry;
+import net.streamline.platform.handlers.TheBaseShutdown;
 import net.streamline.platform.savables.UserManager;
 import singularity.data.uuid.UuidManager;
 import singularity.events.server.ServerStartEvent;
@@ -48,6 +49,7 @@ public final class ModEvents {
 
     public static void onServerStopped(MinecraftServer server) {
         BasePlugin.setServer(null);
+        TheBaseShutdown.stopQueuedTasks();
     }
 
     public static void onRegisterCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
