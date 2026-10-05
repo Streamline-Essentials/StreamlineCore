@@ -233,7 +233,7 @@ public class DiscordHandler {
 
                     StreamlineDiscord.getInstance().logInfo("Registering Discord commands...");
                     registerCommands();
-                    if (layout.isSlashCommandsEnabled()) pruneSlashCommands();
+                    if (layout.isSlashCommandsEnabled()) syncSlashCommands();
                     StreamlineDiscord.getInstance().logInfo("Registered Discord commands!");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -255,7 +255,7 @@ public class DiscordHandler {
             // compares against them and only sends what changed.
             getRegisteredCommands().clear();
             getRegisteredSlashCommands().clear();
-            existingSlashCommands = null;
+            getPendingSlashCommands().clear();
 
             // JDA's worker threads must be gone before the module's class loader closes;
             // a survivor fails with NoClassDefFoundError on its next lazily loaded class.
@@ -470,24 +470,15 @@ public class DiscordHandler {
     private static ConcurrentSkipListMap<DiscordCommand, Long> registeredSlashCommands = new ConcurrentSkipListMap<>();
 
     /**
-     * The global slash commands Discord already holds for this bot, by name. Fetched once
-     * per login, so each command is compared against it without a request of its own.
-     * {@code null} until first needed.
+     * Commands waiting to be published, by name. A {@link DiscordCommand} lands here as it
+     * registers; {@link #syncSlashCommands()} then publishes the whole set at once.
      */
-    private static volatile ConcurrentSkipListMap<String, Command> existingSlashCommands;
-
-    private static synchronized ConcurrentSkipListMap<String, Command> getExistingSlashCommands() {
-        if (existingSlashCommands == null) {
-            ConcurrentSkipListMap<String, Command> commands = new ConcurrentSkipListMap<>();
-            retrieveCommands().values().forEach(command -> commands.put(command.getName(), command));
-            existingSlashCommands = commands;
-        }
-        return existingSlashCommands;
-    }
+    @Getter
+    private static final ConcurrentSkipListMap<String, DiscordCommand> pendingSlashCommands = new ConcurrentSkipListMap<>();
 
     /**
      * Whether Discord's copy of a command already matches what would be sent. Both sides go
-     * through JDA's own serialization of each part, so equal maps mean an upsert would
+     * through JDA's own serialization of each part, so equal maps mean an update would
      * change nothing.
      */
     private static boolean matches(Command existing, SlashCommandData wanted) {
@@ -508,60 +499,70 @@ public class DiscordHandler {
         return data.stream().map(d -> d.toData().toMap()).collect(Collectors.toList());
     }
 
-    /**
-     * Deletes global slash commands that no enabled {@link DiscordCommand} claims, such as
-     * ones disabled in their config since the last start.
-     */
-    public static void pruneSlashCommands() {
-        getExistingSlashCommands().forEach((name, command) -> {
-            if (isRegistered(name)) return;
-
-            try {
-                command.delete().complete();
-                getExistingSlashCommands().remove(name);
-                StreamlineDiscord.getInstance().logInfo("Removed unused slash command '&d" + name + "&r'.");
-            } catch (Exception e) {
-                StreamlineDiscord.getInstance().logWarning("Could not remove unused slash command '" + name + "': " + e.getMessage());
-            }
-        });
+    public static void registerSlashCommand(DiscordCommand discordCommand) {
+        getPendingSlashCommands().put(discordCommand.getCommandIdentifier(), discordCommand);
     }
 
-    public static CompletableFuture<Command> registerSlashCommand(DiscordCommand discordCommand) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                String name = discordCommand.getCommandIdentifier();
-                CommandCreateAction action = discordCommand.setupOptionData(safeDiscordAPI().upsertCommand(name, discordCommand.getDescription()));
+    /**
+     * Makes the bot's global slash commands match {@link #getPendingSlashCommands()}. Discord's
+     * current set is fetched in one request; only when a command was added, removed or
+     * changed is the full set sent back, as one bulk overwrite, which keeps the IDs of
+     * commands that did not change.
+     *
+     * <p>Blocks on Discord from a single thread. JDA completes requests on
+     * {@link java.util.concurrent.ForkJoinPool#commonPool()}, so many common-pool tasks
+     * blocking on Discord at once can leave no thread to complete any of them.</p>
+     */
+    public static void syncSlashCommands() {
+        JDA jda = getDiscordAPI();
+        if (jda == null) return;
 
-                Command command = getExistingSlashCommands().get(name);
-                if (command != null && matches(command, action)) {
-                    StreamlineDiscord.getInstance().logDebug("Slash command '" + name + "' is unchanged; keeping snowflake '" + command.getIdLong() + "'.");
-                } else {
-                    boolean isNew = command == null;
-                    command = action.complete();
-                    getExistingSlashCommands().put(name, command);
+        try {
+            Map<String, Command> existing = new java.util.HashMap<>();
+            jda.retrieveCommands().complete().forEach(command -> existing.put(command.getName(), command));
 
-                    StreamlineDiscord.getInstance().logInfo((isNew ? "Registered" : "Updated") + " slash command '&d" + name + "&r' with snowflake '&d" + command.getIdLong() + "&r'.");
-                }
+            List<SlashCommandData> wanted = new java.util.ArrayList<>();
+            List<String> changes = new java.util.ArrayList<>();
+            getPendingSlashCommands().forEach((name, discordCommand) -> {
+                SlashCommandData data = discordCommand.setupOptionData(jda.upsertCommand(name, discordCommand.getDescription()));
+                wanted.add(data);
+
+                Command current = existing.get(name);
+                if (current == null) changes.add("+" + name);
+                else if (! matches(current, data)) changes.add("~" + name);
+            });
+            existing.keySet().forEach(name -> {
+                if (! getPendingSlashCommands().containsKey(name)) changes.add("-" + name);
+            });
+
+            java.util.Collection<Command> live;
+            if (changes.isEmpty()) {
+                live = existing.values();
+                StreamlineDiscord.getInstance().logInfo("Slash commands are up to date; nothing sent to Discord.");
+            } else {
+                live = jda.updateCommands().addCommands(wanted).complete();
+                StreamlineDiscord.getInstance().logInfo("Published slash commands to Discord (&d" + String.join(" ", changes) + "&r).");
+            }
+
+            live.forEach(command -> {
+                DiscordCommand discordCommand = getPendingSlashCommands().get(command.getName());
+                if (discordCommand == null) return;
 
                 getRegisteredSlashCommands().put(discordCommand, command.getIdLong());
                 discordCommand.setSlashCommandSnowflake(command.getIdLong());
-
-                return command;
-            } catch (Exception e) {
-                StreamlineDiscord.getInstance().logWarning("Error registering slash command: " + discordCommand.getCommandIdentifier() + " - " + e.getMessage());
-                StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
-
-                return null;
-            }
-        });
+            });
+        } catch (Exception e) {
+            StreamlineDiscord.getInstance().logWarning("Could not sync slash commands with Discord: " + e.getMessage());
+            StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
+        }
     }
 
     public static void unregisterSlashCommand(DiscordCommand discordCommand) {
+        getPendingSlashCommands().remove(discordCommand.getCommandIdentifier());
         if (! getRegisteredSlashCommands().containsValue(discordCommand.getSlashCommandSnowflake())) return;
 
         CompletableFuture.runAsync(() -> {
             safeDiscordAPI().deleteCommandById(discordCommand.getSlashCommandSnowflake()).submit().join();
-            if (existingSlashCommands != null) existingSlashCommands.remove(discordCommand.getCommandIdentifier());
             discordCommand.setSlashCommandSnowflake(-1);
 
             getRegisteredSlashCommands().remove(discordCommand);
