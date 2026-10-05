@@ -4,9 +4,11 @@ import host.plas.collections.StreamlineCollections;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
 import host.plas.collections.data.CollectionPlayer;
+import host.plas.collections.data.StatSync;
 import singularity.command.CosmicCommand;
 import singularity.command.ModuleCommand;
 import singularity.command.context.CommandContext;
+import singularity.data.players.CosmicPlayer;
 import singularity.modules.ModuleUtils;
 import singularity.utils.UserUtils;
 
@@ -16,13 +18,13 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
- * {@code /collectionsadmin <reload|give <player> <collection> <amount>|set <player> <collection> <amount>|wipe <player>>}.
+ * {@code /collectionsadmin <reload|give <player> <collection> <amount>|set <player> <collection> <amount>|wipe <player>|sync (player)>}.
  * Changes to progress apply to players loaded on this server, whose live progress would
  * otherwise overwrite a change made to the database.
  */
 public class CollectionsAdminCommand extends ModuleCommand {
     private static final String USAGE = "&cUsage: /collectionsadmin <reload|give <player> <collection> <amount>"
-            + "|set <player> <collection> <amount>|wipe <player>>";
+            + "|set <player> <collection> <amount>|wipe <player>|sync (player)>";
 
     public CollectionsAdminCommand() {
         super(StreamlineCollections.getInstance(), "collectionsadmin", "streamline.command.collectionsadmin.default",
@@ -46,6 +48,11 @@ public class CollectionsAdminCommand extends ModuleCommand {
 
         if (! StreamlineCollections.isTrackingServer()) {
             context.sendMessage("&cProgress can only be changed on a game server.");
+            return;
+        }
+
+        if (action.equals("sync")) {
+            sync(context, args.length >= 2 ? args[1] : null);
             return;
         }
 
@@ -89,7 +96,7 @@ public class CollectionsAdminCommand extends ModuleCommand {
 
         String id = definition.get().getId();
         if (action.equals("give")) {
-            Optional<singularity.data.players.CosmicPlayer> online = UserUtils.getOrGetPlayer(progress.get().getIdentifier());
+            Optional<CosmicPlayer> online = UserUtils.getOrGetPlayer(progress.get().getIdentifier());
             if (online.isPresent()) CollectionManager.add(online.get(), id, amount);
             else progress.get().add(id, amount);
         } else {
@@ -98,6 +105,30 @@ public class CollectionsAdminCommand extends ModuleCommand {
         context.sendMessage("&e" + args[1] + "&a now has &e" + progress.get().amount(id) + " &ain &e" + definition.get().getDisplayName() + "&a.");
     }
 
+    /** Syncs one online player, or everyone online here, from their vanilla statistics. */
+    private void sync(CommandContext<CosmicCommand> context, String name) {
+        List<CosmicPlayer> players = new ArrayList<>();
+        if (name == null) {
+            players.addAll(UserUtils.getOnlinePlayers().values());
+        } else {
+            Optional<CosmicPlayer> player = UserUtils.getUUIDFromName(name).flatMap(UserUtils::getOrGetPlayer);
+            if (player.isEmpty() || ! player.get().isOnline()) {
+                context.sendMessage("&c" + name + " is not online on this server.");
+                return;
+            }
+            players.add(player.get());
+        }
+
+        int synced = 0;
+        int levels = 0;
+        for (CosmicPlayer player : players) {
+            int gained = StatSync.sync(player, true);
+            if (gained < 0) continue;
+            synced++;
+            levels += gained;
+        }
+        context.sendMessage("&aSynced &e" + synced + " &aplayer(s) from their statistics; &e" + levels + " &anew level(s) completed.");
+    }
     @Override
     public ConcurrentSkipListSet<String> doTabComplete(CommandContext<CosmicCommand> context) {
         String[] args = context.getArgsArray();
@@ -108,6 +139,7 @@ public class CollectionsAdminCommand extends ModuleCommand {
             options.add("give");
             options.add("set");
             options.add("wipe");
+            options.add("sync");
         } else if (args.length == 2 && ! args[0].equalsIgnoreCase("reload")) {
             options.addAll(ModuleUtils.getOnlinePlayerNames());
         } else if (args.length == 3 && (args[0].equalsIgnoreCase("give") || args[0].equalsIgnoreCase("set"))) {

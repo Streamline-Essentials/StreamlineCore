@@ -15,7 +15,7 @@ Backends running Spigot can render it; backends on a mod loader cannot yet.
 |---|---|
 | `/collections ((player)\|open <collection>)` (aliases `collection`, `col`) | `streamline.command.collections.default`; `streamline.command.collections.others` to view another player |
 | `/collectionsleaderboard (overall\|<category> (total\|<collection>)\|<collection>)` (aliases `clb`, `colleaderboard`, `collectionleaderboard`, `collectionslb`) | `streamline.command.collectionsleaderboard.default` |
-| `/collectionsadmin <reload\|give <player> <collection> <amount>\|set <player> <collection> <amount>\|wipe <player>>` (alias `coladmin`) | `streamline.command.collectionsadmin.default` |
+| `/collectionsadmin <reload\|give <player> <collection> <amount>\|set <player> <collection> <amount>\|wipe <player>\|sync (player)>` (alias `coladmin`) | `streamline.command.collectionsadmin.default` |
 
 `give`, `set` and `wipe` only work for players online on the server running the command.
 

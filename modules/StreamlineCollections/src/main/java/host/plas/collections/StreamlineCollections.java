@@ -13,6 +13,7 @@ import host.plas.collections.listeners.CollectionsListener;
 import host.plas.collections.placeholders.CollectionsExpansion;
 import host.plas.collections.timers.RemindTimer;
 import host.plas.collections.timers.SaveTimer;
+import host.plas.collections.timers.StatSyncTimer;
 import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
@@ -54,6 +55,8 @@ public class StreamlineCollections extends SimpleModule {
     private static SaveTimer saveTimer;
     @Getter @Setter
     private static RemindTimer remindTimer;
+    @Getter @Setter
+    private static StatSyncTimer statSyncTimer;
 
     public StreamlineCollections(PluginWrapper wrapper) {
         super(wrapper);
@@ -128,12 +131,17 @@ public class StreamlineCollections extends SimpleModule {
         saveTimer = new SaveTimer(mainConfig.getSaveIntervalSeconds());
         int remindMinutes = mainConfig.getRemindIntervalMinutes();
         if (remindMinutes > 0) remindTimer = new RemindTimer(remindMinutes);
+
+        int syncMinutes = mainConfig.getStatSyncIntervalMinutes();
+        if (mainConfig.isStatSyncEnabled() && syncMinutes > 0) statSyncTimer = new StatSyncTimer(syncMinutes);
     }
 
     private static void stopTimers() {
         if (saveTimer != null) saveTimer.cancel();
         if (remindTimer != null) remindTimer.cancel();
+        if (statSyncTimer != null) statSyncTimer.cancel();
         saveTimer = null;
         remindTimer = null;
+        statSyncTimer = null;
     }
 }
