@@ -28,6 +28,8 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
@@ -61,8 +63,21 @@ public final class ModuleCloud {
     @Getter @Setter
     private static String baseUrl = DEFAULT_BASE_URL;
 
+    /** How soon a failed module-name fetch is retried. */
+    private static final long NAME_RETRY_MILLIS = Duration.ofSeconds(30).toMillis();
+
+    /**
+     * Runs module-name fetches. A daemon thread of its own keeps the request off
+     * the common pool, which mods may saturate, and never holds up shutdown.
+     */
+    private static final Executor NAME_FETCHER = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "Streamline-eCloud");
+        thread.setDaemon(true);
+        return thread;
+    });
+
     private static final ConcurrentSkipListSet<String> cachedNames = new ConcurrentSkipListSet<>();
-    private static volatile long namesFetchedAt = 0L;
+    private static volatile long namesStaleAt = 0L;
     private static final AtomicBoolean namesRefreshing = new AtomicBoolean(false);
 
     private ModuleCloud() {}
@@ -255,35 +270,52 @@ public final class ModuleCloud {
     }
 
     /**
-     * Module names known to the registry, for tab completion. Returns the cached
-     * set immediately and refreshes it in the background when it is stale, so
-     * the first completion after start-up may be empty.
+     * Module names known to the registry, for tab completion. Never blocks:
+     * returns the cached set and, when it is stale, refreshes it in the
+     * background. {@link #refreshModuleNames()} fills it at start-up.
      */
     public static ConcurrentSkipListSet<String> getCachedModuleNames() {
-        if (System.currentTimeMillis() - namesFetchedAt > NAME_CACHE_MILLIS && namesRefreshing.compareAndSet(false, true)) {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
-                            .timeout(Duration.ofSeconds(15))
-                            .header("Accept", "application/json")
-                            .GET().build(), HttpResponse.BodyHandlers.ofString());
-                    if (response.statusCode() != 200) return;
-
-                    ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
-                    for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
-                        names.add(element.getAsJsonObject().get("name").getAsString());
-                    }
-                    cachedNames.retainAll(names);
-                    cachedNames.addAll(names);
-                } catch (Exception ignored) {
-                    // Completion simply keeps the previous list.
-                } finally {
-                    namesFetchedAt = System.currentTimeMillis();
-                    namesRefreshing.set(false);
-                }
-            });
-        }
+        if (System.currentTimeMillis() >= namesStaleAt) refreshModuleNames();
         return cachedNames;
+    }
+
+    /**
+     * Fetches the registry's module names in the background, unless a fetch is
+     * already running. A failed fetch is retried after {@link #NAME_RETRY_MILLIS}
+     * rather than the full cache period, so a registry that was unreachable at
+     * start-up does not leave completion empty for long.
+     */
+    public static void refreshModuleNames() {
+        if (! namesRefreshing.compareAndSet(false, true)) return;
+        try {
+            NAME_FETCHER.execute(ModuleCloud::fetchModuleNames);
+        } catch (RuntimeException e) {
+            namesRefreshing.set(false);
+        }
+    }
+
+    private static void fetchModuleNames() {
+        long nextRefresh = NAME_RETRY_MILLIS;
+        try {
+            HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Accept", "application/json")
+                    .GET().build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) return;
+
+            ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
+            for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
+                names.add(element.getAsJsonObject().get("name").getAsString());
+            }
+            cachedNames.retainAll(names);
+            cachedNames.addAll(names);
+            nextRefresh = NAME_CACHE_MILLIS;
+        } catch (Exception ignored) {
+            // Completion simply keeps the previous list.
+        } finally {
+            namesStaleAt = System.currentTimeMillis() + nextRefresh;
+            namesRefreshing.set(false);
+        }
     }
 
     private static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException {

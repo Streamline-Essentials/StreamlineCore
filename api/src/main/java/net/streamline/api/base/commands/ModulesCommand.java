@@ -116,6 +116,8 @@ public class ModulesCommand extends CosmicCommand {
                 "&eModules: &8%streamline_modules_colorized%&8!");
 
         ModuleCloud.setBaseUrl(this.getCommandResource().getOrSetDefault("ecloud.url", ModuleCloud.DEFAULT_BASE_URL));
+        // Fills the tab-completion cache now, so the first "/modules ecloud download " already has names.
+        ModuleCloud.refreshModuleNames();
         this.messageEcloudDownloading = this.getCommandResource().getOrSetDefault("messages.ecloud.downloading",
                 "&eDownloading &7'&c%this_identifier%&7' &efrom the module cloud&8...");
         this.messageEcloudDownloaded = this.getCommandResource().getOrSetDefault("messages.ecloud.downloaded",
