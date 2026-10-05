@@ -13,6 +13,8 @@ import net.streamline.platform.handlers.TheBaseShutdown;
 import net.streamline.platform.savables.UserManager;
 import singularity.Singularity;
 import singularity.data.players.CosmicPlayer;
+import singularity.data.players.events.UnloadPlayerEvent;
+import singularity.data.players.events.UnloadSenderEvent;
 import singularity.data.uuid.UuidManager;
 import singularity.events.player.CosmicCommandPreprocessEvent;
 import singularity.events.player.CosmicDeathEvent;
@@ -20,6 +22,7 @@ import singularity.events.server.CosmicChatEvent;
 import singularity.events.server.LoginCompletedEvent;
 import singularity.events.server.LogoutEvent;
 import singularity.events.server.ServerStartEvent;
+import singularity.events.server.ServerStopEvent;
 import singularity.modules.ModuleUtils;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
@@ -36,6 +39,46 @@ public final class ModEvents {
 
     private ModEvents() {}
 
+    /**
+     * Classes first touched while the server stops or players leave. A mod loader reads class
+     * bytes lazily from the open jar, so if that jar is replaced on disk while the server runs
+     * (copying a new build into {@code mods/} before restarting), anything not yet loaded fails
+     * with {@code ZipException: invalid LOC header}. Loading these up front keeps the stop path
+     * working in that case; {@link TheBaseShutdown} matters most, since without it TheBase's
+     * Swing timers keep the JVM from exiting.
+     */
+    private static final Class<?>[] STOP_PATH_CLASSES = {
+            TheBaseShutdown.class,
+            LogoutEvent.class,
+            ServerStopEvent.class,
+            UnloadSenderEvent.class,
+            UnloadPlayerEvent.class,
+    };
+
+    private static void preloadStopPath() {
+        ClassLoader loader = ModEvents.class.getClassLoader();
+        for (Class<?> type : STOP_PATH_CLASSES) {
+            try {
+                Class.forName(type.getName(), true, loader);
+            } catch (Throwable t) {
+                MessageUtils.logWarning("Could not preload " + type.getName() + ": " + t);
+            }
+        }
+    }
+
+    /**
+     * A {@link LinkageError} here almost always means the mod jar changed on disk while the
+     * server was running; the message says so instead of leaving a bare stack trace.
+     */
+    private static void logStopFailure(String what, Throwable t) {
+        if (t instanceof LinkageError) {
+            MessageUtils.logWarning(what + " failed: " + t + ". The StreamlineCore jar was likely "
+                    + "replaced while the server was running; replace mod jars only while the server is stopped.");
+        } else {
+            MessageUtils.logWarning(what + " failed: " + t.getMessage());
+        }
+    }
+
     public static void onServerStarting(MinecraftServer server) {
         try {
             BasePlugin.getInstance().onServerEnable(server);
@@ -45,6 +88,7 @@ public final class ModEvents {
     }
 
     public static void onServerStarted(MinecraftServer server) {
+        preloadStopPath();
         // The listening channels are bound by now, which they may not be while starting.
         StatusPingHandler.install(server);
         try {
@@ -57,14 +101,18 @@ public final class ModEvents {
     public static void onServerStopping(MinecraftServer server) {
         try {
             BasePlugin.getInstance().onServerDisable();
-        } catch (Exception e) {
-            MessageUtils.logWarning("Error during server disable: " + e.getMessage());
+        } catch (Throwable t) {
+            logStopFailure("Server disable", t);
         }
     }
 
     public static void onServerStopped(MinecraftServer server) {
         BasePlugin.setServer(null);
-        TheBaseShutdown.stopQueuedTasks();
+        try {
+            TheBaseShutdown.stopQueuedTasks();
+        } catch (Throwable t) {
+            logStopFailure("Stopping TheBase tasks", t);
+        }
     }
 
     public static void onRegisterCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -109,8 +157,8 @@ public final class ModEvents {
                 cp.save();
                 UserUtils.unloadSender(cp);
             });
-        } catch (Exception e) {
-            MessageUtils.logWarning("Error on player quit for " + player.getName().getString() + ": " + e.getMessage());
+        } catch (Throwable t) {
+            logStopFailure("Player quit for " + player.getName().getString(), t);
         }
         Singularity.gameplay().ifPresent(gameplay -> {
             if (gameplay instanceof GameplayHandler) ((GameplayHandler) gameplay).forget(player);
