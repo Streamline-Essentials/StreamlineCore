@@ -1,5 +1,16 @@
 package net.streamline.platform.compat;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.streamline.platform.text.LegacyText;
+import singularity.gui.CosmicItem;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -130,5 +141,61 @@ public final class McCompat {
 
     public static HoverEvent showText(Component text) {
         return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+    }
+
+    /**
+     * The stack a GUI shows for {@code item}. 1.20.1 keeps names, lore, skull owners and model
+     * data in NBT, and glints through a hidden enchantment.
+     */
+    public static ItemStack guiItem(CosmicItem item) {
+        if (item == null || item.isAir()) return ItemStack.EMPTY;
+
+        ResourceLocation id = ResourceLocation.tryParse(item.getMaterialKey());
+        Item type = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+        if (type == null || type == Items.AIR) type = Items.BARRIER;
+
+        ItemStack stack = new ItemStack(type, item.getAmount());
+        if (item.getName() != null) stack.setHoverName(LegacyText.parse(item.getName(), LegacyText.ITEM_NAME));
+
+        if (! item.getLore().isEmpty()) {
+            ListTag lore = new ListTag();
+            for (String line : item.getLore()) {
+                lore.add(StringTag.valueOf(Component.Serializer.toJson(LegacyText.parse(line, LegacyText.ITEM_LORE))));
+            }
+            stack.getOrCreateTagElement("display").put("Lore", lore);
+        }
+
+        if (item.isGlowing()) {
+            stack.enchant(Enchantments.UNBREAKING, 1);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ENCHANTMENTS);
+        }
+
+        if (item.isHideExtras()) {
+            stack.hideTooltipPart(ItemStack.TooltipPart.MODIFIERS);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ENCHANTMENTS);
+            stack.hideTooltipPart(ItemStack.TooltipPart.UNBREAKABLE);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ADDITIONAL);
+        }
+
+        if (item.getCustomModelData() > 0) stack.getOrCreateTag().putInt("CustomModelData", item.getCustomModelData());
+
+        if (item.getSkullOwner() != null && type == Items.PLAYER_HEAD) {
+            java.util.UUID uuid = ownerUuid(item.getSkullOwner());
+            if (uuid != null) {
+                stack.getOrCreateTag().put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), new GameProfile(uuid, null)));
+            } else {
+                stack.getOrCreateTag().putString("SkullOwner", item.getSkullOwner());
+            }
+        }
+
+        return stack;
+    }
+    /** A player's UUID, or {@code null} when {@code owner} is a name. */
+    private static java.util.UUID ownerUuid(String owner) {
+        try {
+            return java.util.UUID.fromString(owner);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

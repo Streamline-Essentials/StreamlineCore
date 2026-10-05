@@ -1,5 +1,16 @@
 package net.streamline.platform.compat;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomModelData;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.item.component.TooltipDisplay;
+import net.streamline.platform.text.LegacyText;
+import singularity.gui.CosmicItem;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -145,5 +156,54 @@ public final class McCompat {
 
     public static HoverEvent showText(Component text) {
         return new HoverEvent.ShowText(text);
+    }
+
+    /** The stack a GUI shows for {@code item}, built from data components. */
+    public static ItemStack guiItem(CosmicItem item) {
+        if (item == null || item.isAir()) return ItemStack.EMPTY;
+
+        Identifier id = Identifier.tryParse(item.getMaterialKey());
+        Item type = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+        if (type == null || type == Items.AIR) type = Items.BARRIER;
+
+        ItemStack stack = new ItemStack(type, item.getAmount());
+        if (item.getName() != null) stack.set(DataComponents.CUSTOM_NAME, LegacyText.parse(item.getName(), LegacyText.ITEM_NAME));
+
+        if (! item.getLore().isEmpty()) {
+            List<Component> lore = new ArrayList<>();
+            for (String line : item.getLore()) lore.add(LegacyText.parse(line, LegacyText.ITEM_LORE));
+            stack.set(DataComponents.LORE, new ItemLore(lore));
+        }
+
+        if (item.isGlowing()) stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+
+        if (item.isHideExtras()) {
+            stack.set(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT
+                    .withHidden(DataComponents.ATTRIBUTE_MODIFIERS, true)
+                    .withHidden(DataComponents.ENCHANTMENTS, true)
+                    .withHidden(DataComponents.UNBREAKABLE, true));
+        }
+
+        if (item.getCustomModelData() > 0) {
+            stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(
+                    List.of((float) item.getCustomModelData()), List.of(), List.of(), List.of()));
+        }
+
+        if (item.getSkullOwner() != null && type == Items.PLAYER_HEAD) {
+            java.util.UUID uuid = ownerUuid(item.getSkullOwner());
+            stack.set(DataComponents.PROFILE, uuid != null
+                    ? ResolvableProfile.createUnresolved(uuid)
+                    : ResolvableProfile.createUnresolved(item.getSkullOwner()));
+        }
+
+        return stack;
+    }
+    /** A player's UUID, or {@code null} when {@code owner} is a name. */
+    private static java.util.UUID ownerUuid(String owner) {
+        try {
+            return java.util.UUID.fromString(owner);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

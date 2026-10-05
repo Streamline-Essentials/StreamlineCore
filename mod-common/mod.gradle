@@ -43,6 +43,10 @@ sourceSets {
         def compat = mc.startsWith('1.20.') ? 'mc1201' : (mc == '1.21.1' ? 'mc1211' : 'current')
         java.srcDir rootProject.file("mod-common/compat/${compat}/src/main/java")
         resources.srcDir rootProject.file("mod-common/compat/${compat}/src/main/resources")
+
+        // Menu clicks arrive as a ClickType up to 1.21.11 and as a ContainerInput from 26.1.
+        def menu = mc.startsWith('1.') ? 'menu-clicktype' : 'menu-containerinput'
+        java.srcDir rootProject.file("mod-common/compat/${menu}/src/main/java")
     }
 }
 

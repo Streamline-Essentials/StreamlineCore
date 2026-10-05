@@ -11,6 +11,7 @@ import net.streamline.api.base.module.BaseModule;
 import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.handlers.GameplayHandler;
+import net.streamline.platform.handlers.gui.ModGuiHandler;
 import singularity.Singularity;
 import net.streamline.platform.modules.RelocatingModuleTransformer;
 import net.streamline.platform.savables.ConsoleHolder;
@@ -23,6 +24,7 @@ import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
 import singularity.events.CosmicEvent;
 import singularity.events.server.ServerStopEvent;
+import singularity.gui.GuiManager;
 import singularity.interfaces.IProperEvent;
 import singularity.interfaces.ISingularityExtension;
 import singularity.objects.CosmicResourcePack;
@@ -117,6 +119,7 @@ public abstract class BasePlugin implements ISingularityExtension {
                 getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         SLAPI.setBackendHandler(new BackendHandler());
         Singularity.setGameplayHandler(createGameplayHandler());
+        GuiManager.setHandler(new ModGuiHandler());
 
         TaskManager.init();
 
