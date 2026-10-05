@@ -9,7 +9,7 @@
   "dependencies": [
     {
       "id": "luckperms",
-      "optional": false
+      "optional": true
     },
     {
       "id": "geyser-velocity",

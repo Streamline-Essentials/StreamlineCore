@@ -5,7 +5,7 @@ import lombok.Setter;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.streamline.api.permissions.LuckPermsHandler;
+import net.streamline.api.permissions.Permissions;
 import net.streamline.platform.Messenger;
 import singularity.interfaces.audiences.IPlayerInterface;
 import singularity.interfaces.audiences.getters.PlayerGetter;
@@ -18,7 +18,7 @@ import java.util.UUID;
  * {@link PlayerGetter}s and {@link RealPlayer} wrappers for
  * {@link ProxiedPlayer} instances.
  *
- * <p>Permission mutations are delegated to {@link LuckPermsHandler}; message
+ * <p>Permission mutations are delegated to {@link Permissions}; message
  * sending uses {@link Messenger#codedText} for colour processing.
  */
 @Getter @Setter
@@ -104,21 +104,21 @@ public class PlayerInterface implements IPlayerInterface<ProxiedPlayer> {
             /**
              * {@inheritDoc}
              *
-             * <p>Delegates to {@link LuckPermsHandler#addPermission}.
+             * <p>Delegates to {@link Permissions#addPermission}.
              */
             @Override
             public void addPermission(String permission) {
-                LuckPermsHandler.addPermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.addPermission(getPlayer().getUniqueId().toString(), permission);
             }
 
             /**
              * {@inheritDoc}
              *
-             * <p>Delegates to {@link LuckPermsHandler#removePermission}.
+             * <p>Delegates to {@link Permissions#removePermission}.
              */
             @Override
             public void removePermission(String permission) {
-                LuckPermsHandler.removePermission(getPlayer().getUniqueId().toString(), permission);
+                Permissions.removePermission(getPlayer().getUniqueId().toString(), permission);
             }
         };
     }
