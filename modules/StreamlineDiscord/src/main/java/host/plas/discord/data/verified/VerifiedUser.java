@@ -95,8 +95,10 @@ public class VerifiedUser implements Loadable<VerifiedUser> {
     }
 
     public void drop() {
+        // Taken out of the loader directly: Loader.unload saves on the way out, which
+        // would queue the user straight back into the database.
+        StreamlineDiscord.getVerifiedUserLoader().getLoaded().remove(this);
         DiscordMiddleware.dropVerifiedUser(this);
-        unload();
         this.discordIds.clear();
         this.preferredDiscordIdOptional = Optional.empty();
     }

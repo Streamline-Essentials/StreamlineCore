@@ -63,11 +63,8 @@ public class ChannelRemoveCommand extends DiscordCommand {
 
     @Override
     public SingleSet<MessageCreateData, BotMessageConfig> executeMore(MessagedString messagedString) {
-        if (! messagedString.hasCommandArgs()) {
-            return messageInfo(messagedString);
-        }
-
-        if (messagedString.getCommandArgs().length == 0) {
+        // getCommandArgs() is [""] when no argument was given.
+        if (messagedString.getCommandArgs()[0].isEmpty()) {
             AtomicReference<SingleSet<MessageCreateData, BotMessageConfig>> data = new AtomicReference<>(DiscordMessenger.simpleMessage("No channel found to remove!"));
 
             // Both directions of the link: Discord -> game and game -> Discord.
