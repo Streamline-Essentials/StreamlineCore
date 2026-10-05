@@ -1,0 +1,13 @@
+// Built by forge/forge.gradle; see that file and mod-common/mod.gradle for what each value means.
+ext {
+    mcVersion = '1.20.1'
+    javaVersion = 17
+    minecraftRange = '[1.20.1,1.20.2)'
+    forgeVersion = '1.20.1-47.4.26'
+    loaderMajor = '47'
+    eventBus = 6
+    legacy = true
+    obfuscated = true
+}
+
+apply from: rootProject.file('forge/forge.gradle')

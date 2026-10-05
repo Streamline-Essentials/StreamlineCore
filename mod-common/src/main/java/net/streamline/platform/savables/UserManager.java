@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.api.permissions.LuckPermsHandler;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
+import net.streamline.platform.compat.McCompat;
 import singularity.configs.given.GivenConfigs;
 import singularity.configs.given.MainMessagesHandler;
 import singularity.data.console.CosmicSender;
@@ -139,7 +140,7 @@ public class UserManager implements IUserManager<Object, ServerPlayer> {
     public double getPlayerPing(String uuid) {
         ServerPlayer player = getPlayer(uuid);
         if (player == null) return 0;
-        return player.connection.latency();
+        return McCompat.getPing(player);
     }
 
     @Override

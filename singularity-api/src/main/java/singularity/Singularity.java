@@ -1,6 +1,5 @@
 package singularity;
 
-import ch.qos.logback.classic.LoggerContext;
 import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.SingleSet;
 import gg.drak.thebase.objects.handling.derived.PluginEventable;
@@ -529,23 +528,21 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
                 CosmicLogHandler handler = new CosmicLogHandler();
                 rootLogger.addHandler(handler);
             }
-            if (getPlatform().hasSLFLogger()) {
-                LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-                ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-
-                // Remove existing appenders
-                rootLogger.detachAndStopAllAppenders();
-
-                // Add custom appender
-                CosmicLogbackAppender appender = new CosmicLogbackAppender();
-                appender.setContext(loggerContext);
-                appender.setName("CosmicLogbackAppender");
-                appender.start();
-                rootLogger.addAppender(appender);
+            if (getPlatform().hasSLFLogger() && isLogbackBound()) {
+                CosmicLogbackAppender.installOnRoot();
             }
         } catch (Exception e) {
             // nothing
         }
+    }
+
+    /**
+     * Whether SLF4J is bound to Logback. Mod loaders bind SLF4J to Log4j and ship no Logback
+     * at all, so {@link CosmicLogbackAppender} -- which extends a Logback class -- must not
+     * be touched unless this holds.
+     */
+    private static boolean isLogbackBound() {
+        return LoggerFactory.getILoggerFactory().getClass().getName().startsWith("ch.qos.logback.");
     }
 
     /**

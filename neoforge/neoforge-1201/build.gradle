@@ -1,11 +1,11 @@
 // Built by neoforge/neoforge.gradle; see that file and mod-common/mod.gradle for what each value means.
 ext {
-    mcVersion = '1.21.11'
-    javaVersion = 21
-    minecraftRange = '[1.21.11,1.21.12)'
-    neoForgeVersion = '21.11.45'
-    loaderMajor = '21.11'
-    legacy = false
+    mcVersion = '1.20.1'
+    javaVersion = 17
+    minecraftRange = '[1.20.1,1.20.2)'
+    neoForgeVersion = '1.20.1-47.1.106'
+    loaderMajor = '47'
+    legacy = true
 }
 
 apply from: rootProject.file('neoforge/neoforge.gradle')

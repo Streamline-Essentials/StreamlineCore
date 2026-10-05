@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[${loaderMajor},)"
+license="MIT"
+
+[[mods]]
+    modId="streamlinecore"
+    version="${version}"
+    displayName="${name}"
+    description="StreamlineCore for Forge servers."
+    # Server-side only: clients connect whether or not they have the mod.
+    displayTest="IGNORE_ALL_VERSION"
+
+[[dependencies.streamlinecore]]
+    modId="forge"
+    mandatory=true
+    versionRange="[${loaderMajor},)"
+    ordering="NONE"
+    side="SERVER"
+
+[[dependencies.streamlinecore]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraftRange}"
+    ordering="NONE"
+    side="SERVER"
