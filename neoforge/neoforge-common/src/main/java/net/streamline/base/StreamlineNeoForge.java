@@ -6,6 +6,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.handlers.GameplayHandler;
+import net.streamline.platform.listeners.NeoForgeBreakListener;
 import net.streamline.platform.listeners.NeoForgeListener;
 
 @Mod("streamlinecore")
@@ -14,6 +15,7 @@ public class StreamlineNeoForge extends BasePlugin {
     public StreamlineNeoForge(IEventBus modBus) {
         initialize();
         NeoForge.EVENT_BUS.register(new NeoForgeListener());
+        NeoForge.EVENT_BUS.register(new NeoForgeBreakListener());
     }
 
     @Override
