@@ -23,13 +23,18 @@ bot:
     # If above is "LISTENING" and this is "your suggestions",
     # it will say "Listening to... your suggestions"
     # under your bot.
-    value: "play.plasmere.net"
+    value: "play.tsmp.lol"
   # The link to the image to use for the Discord bot.
   avatar-url: "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
   # Allows for use of Discord's Slash Commands.
   slash-commands: true
   # The ID of the main Discord server to use for the bot.
   main-guild-id: 0
+  # IDs of Discord roles whose members can run every bot command,
+  # overriding each command's own 'permissions.default'.
+  # Right-click a role with Developer Mode on and pick "Copy Role ID".
+  # --> e.g. super-admin-roles: ["1234567890987654321"]
+  super-admin-roles: []
 
 # For settings regarding linking of Discord channels to Minecraft.
 messaging:

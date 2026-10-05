@@ -23,6 +23,13 @@ public class GroupedPlayer implements Loadable<GroupedPlayer> {
     private String identifier;
     private boolean fullyLoaded;
 
+    /**
+     * Set while {@link #augment} waits on the stored record; a save in that window would
+     * replace the stored chat type with the default, so it is held until the load ends.
+     */
+    private volatile boolean loadInFlight = false;
+    private volatile boolean savePendingAfterLoad = false;
+
     private ChatType chatType;
 
     public String getUuid() {
@@ -47,29 +54,38 @@ public class GroupedPlayer implements Loadable<GroupedPlayer> {
 
     @Override
     public void save(boolean async) {
+        if (loadInFlight) {
+            savePendingAfterLoad = true;
+            return;
+        }
+
         StreamlineGroups.getPlayerKeeper().save(this, async);
     }
 
     @Override
     public GroupedPlayer augment(CompletableFuture<Optional<GroupedPlayer>> loader, boolean isGet) {
         fullyLoaded = false;
+        loadInFlight = true;
 
         loader.whenComplete((optional, throwable) -> {
+            boolean saveNow = savePendingAfterLoad;
+
             if (throwable != null) {
                 throwable.printStackTrace();
-                fullyLoaded = true;
-                return;
-            }
-
-            if (optional.isPresent()) {
-                this.chatType = optional.get().getChatType();
-            } else {
+            } else if (optional.isPresent()) {
+                // A chat type chosen before the load finished is newer than the stored one.
+                if (this.chatType == ChatType.NOT_SET) this.chatType = optional.get().getChatType();
+            } else if (! isGet) {
                 // Nothing stored yet -- write the freshly created defaults so later loads
                 // find a row.
-                if (! isGet) save();
+                saveNow = true;
             }
 
+            loadInFlight = false;
+            savePendingAfterLoad = false;
             fullyLoaded = true;
+
+            if (saveNow) save();
         });
 
         return this;

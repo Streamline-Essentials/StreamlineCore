@@ -1,10 +1,16 @@
 package gg.drak.tacoessentials;
 
+import gg.drak.tacoessentials.alias.AliasEditor;
+import gg.drak.tacoessentials.alias.AliasManager;
+import gg.drak.tacoessentials.alias.AliasPrompts;
 import gg.drak.tacoessentials.commands.AdminCommands;
 import gg.drak.tacoessentials.commands.HomeCommands;
 import gg.drak.tacoessentials.commands.Perms;
+import gg.drak.tacoessentials.commands.PositionCommands;
+import gg.drak.tacoessentials.commands.WorkstationCommands;
 import gg.drak.tacoessentials.commands.TeleportCommands;
 import gg.drak.tacoessentials.commands.UtilityCommands;
+import gg.drak.tacoessentials.data.RtpConfig;
 import gg.drak.tacoessentials.data.Sessions;
 import gg.drak.tacoessentials.data.TacoConfig;
 import gg.drak.tacoessentials.data.TacoDatabase;
@@ -14,6 +20,7 @@ import lombok.Getter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
 import singularity.command.ModuleCommand;
+import singularity.interfaces.IGameplayHandler;
 import singularity.modules.ModuleUtils;
 import singularity.modules.SimpleModule;
 import singularity.scheduler.ModuleRunnable;
@@ -38,19 +45,25 @@ public class TacoEssentials extends SimpleModule {
     @Getter
     private static TacoConfig config;
 
+    @Getter
+    private static RtpConfig rtpConfig;
+
     public TacoEssentials(PluginWrapper wrapper) {
         super(wrapper);
     }
 
     @Override
     public void registerCommands() {
-        if (Singularity.gameplay().isEmpty()) return;
+        if (Singularity.gameplay().isEmpty() || ! coreSupported()) return;
 
         List<ModuleCommand> commands = new ArrayList<>();
         commands.addAll(TeleportCommands.create());
         commands.addAll(HomeCommands.create());
         commands.addAll(UtilityCommands.create());
+        commands.addAll(PositionCommands.create());
+        commands.addAll(WorkstationCommands.create());
         commands.addAll(AdminCommands.create());
+        commands.add(AliasEditor.create());
         setCommands(commands);
     }
 
@@ -61,8 +74,14 @@ public class TacoEssentials extends SimpleModule {
             logWarning("This platform has no worlds to act on (a proxy?); TacoEssentials registers no commands here.");
             return;
         }
+        if (! coreSupported()) {
+            logSevere("This StreamlineCore build is older than TacoEssentials " + getWrapper().getDescriptor().getVersion()
+                    + " needs; TacoEssentials registers no commands. Install the StreamlineCore build released with it.");
+            return;
+        }
 
         config = new TacoConfig();
+        rtpConfig = new RtpConfig();
         TacoDatabase.ensureTables();
         Perms.registerDefaults();
         ModuleUtils.listen(new TacoListener(), this);
@@ -75,9 +94,35 @@ public class TacoEssentials extends SimpleModule {
         };
     }
 
+    /**
+     * Aliases load after {@code super.start()} has registered this module's own commands, so
+     * an alias stored under one of their names is skipped rather than taking its label.
+     */
+    @Override
+    public void start() {
+        boolean wasEnabled = isEnabled();
+        super.start();
+        if (! wasEnabled && Singularity.gameplay().isPresent() && coreSupported()) AliasManager.load();
+    }
+
+    /**
+     * Whether the running core has every gameplay call this module makes. Core builds share a
+     * version string, so the newest call is probed for directly.
+     */
+    private static boolean coreSupported() {
+        try {
+            IGameplayHandler.class.getMethod("setGodMode", String.class, boolean.class);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
     @Override
     public void onDisable() {
         TpaManager.clear();
         Sessions.clear();
+        AliasManager.unloadAll();
+        AliasPrompts.clear();
     }
 }

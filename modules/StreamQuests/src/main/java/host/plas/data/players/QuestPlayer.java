@@ -22,6 +22,14 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
 
     private boolean fullyLoaded = false;
 
+    /**
+     * Set while {@link #augment} waits on the stored record. A save in that window would
+     * replace the stored quests with this instance's partial state, so it is held until
+     * the record has been merged in.
+     */
+    private volatile boolean loadInFlight = false;
+    private volatile boolean savePendingAfterLoad = false;
+
     public QuestPlayer(String identifier) {
         this.identifier = identifier;
 
@@ -32,6 +40,11 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
 
     @Override
     public void save(boolean async) {
+        if (loadInFlight) {
+            savePendingAfterLoad = true;
+            return;
+        }
+
         StreamQuests.getKeeper().save(this, async);
     }
 
@@ -59,27 +72,31 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
     @Override
     public QuestPlayer augment(CompletableFuture<Optional<QuestPlayer>> augmentation, boolean isGet) {
         this.fullyLoaded = false;
+        this.loadInFlight = true;
 
         augmentation.whenComplete((optional, throwable) -> {
+            boolean saveNow = savePendingAfterLoad;
+
             if (throwable != null) {
                 throwable.printStackTrace();
-                this.fullyLoaded = true;
-                return;
-            }
-
-            if (optional.isPresent()) {
+            } else if (optional.isPresent()) {
                 QuestPlayer player = optional.get();
 
-                this.completedQuests.putAll(player.completedQuests);
-                this.questValues.putAll(player.questValues);
+                // Progress made before the load finished is kept on top of the stored
+                // progress.
+                player.completedQuests.forEach(this.completedQuests::putIfAbsent);
+                player.questValues.forEach((type, values) -> values.forEach((value, amount) ->
+                        this.addValue(type, value, amount)));
                 this.points += player.points;
-            } else {
-                if (! isGet) {
-                    save();
-                }
+            } else if (! isGet) {
+                saveNow = true;
             }
 
+            this.loadInFlight = false;
+            this.savePendingAfterLoad = false;
             this.fullyLoaded = true;
+
+            if (saveNow) save();
         });
 
         return this;

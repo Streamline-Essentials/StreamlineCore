@@ -10,6 +10,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
 import net.streamline.api.SLAPI;
+import singularity.text.HexColors;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import net.streamline.base.StreamlineVelocity;
@@ -321,7 +322,7 @@ public class Messenger implements IMessenger {
      * @return the fully processed Adventure {@link Component}
      */
     public Component codedText(String from) {
-        String raw = codedString(from); // Assuming codedString is another method you've implemented
+        String raw = HexColors.normalize(codedString(from));
 
         String legacy = MessageUtils.newLined(MessageUtils.formatted(raw)); // Replace this with your actual legacy converter
 

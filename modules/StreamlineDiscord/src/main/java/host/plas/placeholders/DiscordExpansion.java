@@ -29,11 +29,9 @@ public class DiscordExpansion extends RATExpansion {
         new IdentifiedReplaceable(this, "bot_api", (s) -> "JDA (Java Discord API)").register();
         new IdentifiedReplaceable(this, "bot_prefix", (s) -> StreamlineDiscord.getConfig().getBotLayout().getPrefix()).register();
         new IdentifiedReplaceable(this, "bot_name", (s) -> DiscordHandler.getBotUser().getName()).register();
-        new IdentifiedReplaceable(this, "bot_name_tagged", (s) -> DiscordHandler.getBotUser().getName()
-                + "#" + DiscordHandler.getBotUser().getDiscriminator()).register();
+        new IdentifiedReplaceable(this, "bot_name_tagged", (s) -> DiscordHandler.getTag(DiscordHandler.getBotUser())).register();
         new IdentifiedReplaceable(this, "bot_author_name", (s) -> DiscordHandler.getUser(138397636955865089L).getName()).register();
-        new IdentifiedReplaceable(this, "bot_author_name_tagged", (s) -> DiscordHandler.getUser(138397636955865089L).getName()
-                + "#" + DiscordHandler.getUser(138397636955865089L).getDiscriminator()).register();
+        new IdentifiedReplaceable(this, "bot_author_name_tagged", (s) -> DiscordHandler.getTag(DiscordHandler.getUser(138397636955865089L))).register();
         new IdentifiedReplaceable(this, "bot_avatar_url", (s) -> StreamlineDiscord.getConfig().getBotLayout().getAvatarUrl()).register();
         new IdentifiedReplaceable(this, "bot_joined_guilds", (s) -> String.valueOf(DiscordHandler.getJoinedServers().size())).register();
         new IdentifiedReplaceable(this, "bot_author_avatar_url", (s) -> DiscordHandler.getUser(138397636955865089L).getAvatarUrl()).register();
@@ -61,7 +59,7 @@ public class DiscordExpansion extends RATExpansion {
             long discordId = user.getDiscordId();
             if (discordId == -1L) return MainMessagesHandler.MESSAGES.DEFAULTS.PLACEHOLDERS.IS_NULL.get();
 
-            return DiscordHandler.getUser(discordId).getName() + "#" + DiscordHandler.getUser(discordId).getDiscriminator();
+            return DiscordHandler.getTag(DiscordHandler.getUser(discordId));
         }).register();
     }
 }

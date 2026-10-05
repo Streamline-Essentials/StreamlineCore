@@ -6,7 +6,11 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.player.ItemFishedEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -48,6 +52,24 @@ public final class ForgeListener {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (LivingDeathEvent e) -> {
             if (e.isCanceled() || ! (e.getEntity() instanceof ServerPlayer)) return;
             ModEvents.onDeath((ServerPlayer) e.getEntity());
+        });
+        // Last, so actions another mod cancels are not reported.
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (BlockEvent.BreakEvent e) -> {
+            if (e.isCanceled() || ! (e.getPlayer() instanceof ServerPlayer) || ! (e.getLevel() instanceof Level)) return;
+            GameplayEvents.onBlockBroken((ServerPlayer) e.getPlayer(), (Level) e.getLevel(), e.getPos(), e.getState());
+        });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (BlockEvent.EntityPlaceEvent e) -> {
+            if (e.isCanceled() || ! (e.getEntity() instanceof ServerPlayer) || ! (e.getLevel() instanceof Level)) return;
+            GameplayEvents.onBlockPlaced((ServerPlayer) e.getEntity(), (Level) e.getLevel(), e.getPos(), e.getPlacedBlock());
+        });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (LivingDropsEvent e) -> {
+            if (e.isCanceled() || ! (e.getSource().getEntity() instanceof ServerPlayer)) return;
+            GameplayEvents.onEntityKilled((ServerPlayer) e.getSource().getEntity(), e.getEntity(),
+                    GameplayEvents.stacksOf(e.getDrops()));
+        });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ItemFishedEvent e) -> {
+            if (e.isCanceled() || ! (e.getEntity() instanceof ServerPlayer)) return;
+            GameplayEvents.onFishCaught((ServerPlayer) e.getEntity(), e.getDrops());
         });
         MinecraftForge.EVENT_BUS.addListener((PlayerEvent.NameFormat e) ->
                 GameplayHandler.displayName(e.getEntity().getUUID()).ifPresent(e::setDisplayname));

@@ -33,13 +33,26 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
 
     private boolean fullyLoaded = false;
 
+    /**
+     * Set while {@link #augment} waits on the stored record. A save in that window would
+     * replace the stored homes with this instance's partial set, so it is held until the
+     * record has been merged in.
+     */
+    private volatile boolean loadInFlight = false;
+    private volatile boolean savePendingAfterLoad = false;
+    /** Completes once the stored record has been merged in; already complete when none is loading. */
+    private volatile CompletableFuture<Void> loadedFuture = CompletableFuture.completedFuture(null);
+
+    /**
+     * Builds an unregistered user. {@link MyLoader} registers the instances it hands out;
+     * the keeper also builds throwaway instances while reading rows, and those must not
+     * occupy the loaded set.
+     */
     public UtilitiesUser(String uuid) {
         this.identifier = uuid;
 
         homes = new ConcurrentSkipListSet<>();
         lastServer = "";
-
-        register();
     }
 
     public String computableHomes() {
@@ -85,8 +98,10 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
     public static ConcurrentSkipListSet<StreamlineHome> computableHomes(String homes) {
         ConcurrentSkipListSet<StreamlineHome> r = new ConcurrentSkipListSet<>();
 
+        // Server and world may be empty: a backend running without a proxy reports no
+        // server name.
         Matcher matcher = MatcherUtils.matcherBuilder(
-                "!!!([^:]+)::([^:]+)::([^:]+)::([^:]+)::([^:]+)::([^:]+)::([^:]+)::([^:]+):::",
+                "!!!([^:]+)::([^:]*)::([^:]*)::([^:]+)::([^:]+)::([^:]+)::([^:]+)::([^:]+):::",
                 homes);
         List<String[]> groups = MatcherUtils.getGroups(matcher, 8);
         groups.forEach((group) -> {
@@ -145,6 +160,11 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
 
     @Override
     public void save(boolean async) {
+        if (loadInFlight) {
+            savePendingAfterLoad = true;
+            return;
+        }
+
         try {
             StreamlineUtilities.getKeeper().save(this, async);
 
@@ -158,28 +178,40 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
     @Override
     public UtilitiesUser augment(CompletableFuture<Optional<UtilitiesUser>> completableFuture, boolean isGet) {
         fullyLoaded = false;
+        loadInFlight = true;
+        CompletableFuture<Void> loaded = new CompletableFuture<>();
+        loadedFuture = loaded;
 
         completableFuture.whenComplete((optional, throwable) -> {
+            boolean saveNow = savePendingAfterLoad;
+
             if (throwable != null) {
                 StreamlineUtilities.getInstance().logWarning("Failed to load user " + getUuid() + ": " + throwable.getMessage());
                 StreamlineUtilities.getInstance().logWarning(throwable.getStackTrace());
-
-                fullyLoaded = true;
-                return;
-            }
-
-            if (optional.isPresent()) {
+            } else if (optional.isPresent()) {
                 UtilitiesUser user = optional.get();
 
-                this.homes = user.homes;
-                this.lastServer = user.lastServer;
-            } else {
-                if (! isGet) {
-                    save();
+                // Homes set before the load finished are newer than the stored ones of the
+                // same name.
+                ConcurrentSkipListSet<StreamlineHome> merged = new ConcurrentSkipListSet<>(user.homes);
+                merged.removeAll(this.homes);
+                merged.addAll(this.homes);
+                this.homes = merged;
+
+                if (this.lastServer == null || this.lastServer.isEmpty()) {
+                    this.lastServer = user.lastServer;
                 }
+            } else if (! isGet) {
+                saveNow = true;
             }
 
+            loadInFlight = false;
+            savePendingAfterLoad = false;
             fullyLoaded = true;
+
+            if (saveNow) save();
+
+            loaded.complete(null);
         });
 
         return this;
@@ -216,7 +248,7 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
         if (player == null) return;
 
         String lastServer = getLastServer();
-        if (Objects.equals(lastServer, "null"))
+        if (lastServer == null || lastServer.isEmpty() || Objects.equals(lastServer, "null"))
             lastServer = StreamlineUtilities.getConfigs().lastServerDefaultServer();
 
         ModuleUtils.connect(player, lastServer);
@@ -239,10 +271,6 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
     }
 
     public void setLastServerFromDB(String lastServer) {
-        if (lastServer.isEmpty()) {
-            lastServer = null;
-            return;
-        }
-        this.lastServer = lastServer;
+        this.lastServer = lastServer == null ? "" : lastServer;
     }
 }

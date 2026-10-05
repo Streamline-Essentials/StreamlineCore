@@ -5,7 +5,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.player.ItemFishedEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -45,6 +49,26 @@ public final class ForgeListener {
         // A monitor sees only deaths no other mod cancelled.
         LivingDeathEvent.BUS.addListener(Priority.MONITOR, e -> {
             if (e.getEntity() instanceof ServerPlayer) ModEvents.onDeath((ServerPlayer) e.getEntity());
+        });
+        // Monitors see only actions no other mod cancelled.
+        BlockEvent.BreakEvent.BUS.addListener(Priority.MONITOR, e -> {
+            if (e.getPlayer() instanceof ServerPlayer && e.getLevel() instanceof Level) {
+                GameplayEvents.onBlockBroken((ServerPlayer) e.getPlayer(), (Level) e.getLevel(), e.getPos(), e.getState());
+            }
+        });
+        BlockEvent.EntityPlaceEvent.BUS.addListener(Priority.MONITOR, e -> {
+            if (e.getEntity() instanceof ServerPlayer && e.getLevel() instanceof Level) {
+                GameplayEvents.onBlockPlaced((ServerPlayer) e.getEntity(), (Level) e.getLevel(), e.getPos(), e.getPlacedBlock());
+            }
+        });
+        LivingDropsEvent.BUS.addListener(Priority.MONITOR, e -> {
+            if (e.getSource().getEntity() instanceof ServerPlayer) {
+                GameplayEvents.onEntityKilled((ServerPlayer) e.getSource().getEntity(), e.getEntity(),
+                        GameplayEvents.stacksOf(e.getDrops()));
+            }
+        });
+        ItemFishedEvent.BUS.addListener(Priority.MONITOR, e -> {
+            if (e.getEntity() instanceof ServerPlayer) GameplayEvents.onFishCaught((ServerPlayer) e.getEntity(), e.getDrops());
         });
         PlayerEvent.NameFormat.BUS.addListener(e ->
                 GameplayHandler.displayName(e.getEntity().getUUID()).ifPresent(e::setDisplayname));

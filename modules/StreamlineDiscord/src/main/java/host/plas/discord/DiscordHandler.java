@@ -16,6 +16,9 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
+import net.dv8tion.jda.api.utils.data.SerializableData;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
@@ -34,7 +37,9 @@ import singularity.objects.SingleSet;
 import singularity.utils.UserUtils;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +49,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class DiscordHandler {
 
@@ -136,6 +142,16 @@ public class DiscordHandler {
         return safeDiscordAPI().getVoiceChannelById(id);
     }
 
+    /**
+     * A user's display tag: {@code name#1234} for legacy accounts, just {@code name} for
+     * accounts on Discord's unique-username system, whose discriminator is {@code 0000}.
+     */
+    public static String getTag(User user) {
+        String discriminator = user.getDiscriminator();
+        if (discriminator.isEmpty() || discriminator.equals("0000") || discriminator.equals("0")) return user.getName();
+        return user.getName() + "#" + discriminator;
+    }
+
     public static void registerCommands() {
         new ChannelCommand();
         new ChannelRemoveCommand();
@@ -150,6 +166,50 @@ public class DiscordHandler {
         new VerifyCommand();
     }
 
+    /**
+     * Logs the bot in and waits until it is ready.
+     *
+     * @param layout the bot configuration
+     * @param privileged whether to request the privileged GUILD_MEMBERS and MESSAGE_CONTENT intents.
+     *                   Discord closes the gateway with 4014 when a bot asks for a privileged intent
+     *                   not enabled in its Developer Portal page; in that case the login is retried
+     *                   without them, so the bot still runs with reduced features.
+     * @return the ready JDA instance, or {@code null} if login failed
+     */
+    private static JDA connect(BotLayout layout, boolean privileged) {
+        EnumSet<GatewayIntent> intents = GatewayIntent.getIntents(GatewayIntent.DEFAULT);
+        if (privileged) {
+            intents.add(GatewayIntent.GUILD_MEMBERS);
+            intents.add(GatewayIntent.MESSAGE_CONTENT);
+        }
+
+        JDA jda = null;
+        try {
+            jda = JDABuilder.createDefault(layout.getToken(), intents)
+                    .setMemberCachePolicy(privileged ? MemberCachePolicy.ALL : MemberCachePolicy.DEFAULT)
+                    .setVoiceDispatchInterceptor(new StreamlineVoiceInterceptor())
+                    .setActivity(Activity.of(layout.getActivityType(), layout.getActivityValue()))
+                    .addEventListeners(new DiscordListener())
+                    .build();
+            return jda.awaitReady();
+        } catch (Exception e) {
+            if (jda != null) jda.shutdownNow();
+
+            String message = String.valueOf(e.getMessage());
+            if (privileged && message.contains("intent")) {
+                StreamlineDiscord.getInstance().logWarning(
+                        "&cThe Discord bot is not allowed the privileged intents it needs.&r%newline%" +
+                        "&eEnable '&bServer Members Intent&e' and '&bMessage Content Intent&e' for the bot at " +
+                        "&bhttps://discord.com/developers/applications&e (Bot tab).%newline%" +
+                        "&eRetrying without them; Discord messages will arrive without their text until they are enabled.");
+                return connect(layout, false);
+            }
+
+            StreamlineDiscord.getInstance().logWarning("Discord login failed: " + message);
+            return null;
+        }
+    }
+
     public static CompletableFuture<Boolean> init() {
         getForwardedJsonsFolder().mkdirs();
 
@@ -160,26 +220,20 @@ public class DiscordHandler {
                 StreamlineDiscord.getInstance().logInfo("Bot is initializing...!");
 
                 BotLayout layout = StreamlineDiscord.getConfig().getBotLayout();
-                try {
-                    JDA jda = JDABuilder.createDefault(layout.getToken(), List.of(GatewayIntent.values()))
-                            .setMemberCachePolicy(MemberCachePolicy.ALL)
-                            .setVoiceDispatchInterceptor(new StreamlineVoiceInterceptor())
-                            .setActivity(Activity.of(layout.getActivityType(), layout.getActivityValue()))
-                            .addEventListeners(new DiscordListener())
-                            .build();
-                    jda = jda.awaitReady();
-                    setDiscordAPI(jda);
-
-                    StreamlineDiscord.getInstance().logInfo("Bot is ready!");
-                } catch (Exception e) {
-                    e.printStackTrace();
+                JDA jda = connect(layout, true);
+                if (jda == null) {
+                    StreamlineDiscord.getInstance().logWarning("&cThe Discord bot could not log in; Discord features stay off until the bot is reloaded.");
+                    return false;
                 }
+                setDiscordAPI(jda);
+                StreamlineDiscord.getInstance().logInfo("Bot is ready!");
 
                 try {
                     updateBotAvatar(layout.getAvatarUrl());
 
                     StreamlineDiscord.getInstance().logInfo("Registering Discord commands...");
                     registerCommands();
+                    if (layout.isSlashCommandsEnabled()) syncSlashCommands();
                     StreamlineDiscord.getInstance().logInfo("Registered Discord commands!");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -194,14 +248,22 @@ public class DiscordHandler {
 
     public static CompletableFuture<Boolean> kill() {
         return CompletableFuture.supplyAsync(() -> {
-            if (getDiscordAPI() == null) return false;
+            JDA api = getDiscordAPI();
+            if (api == null) return false;
 
-            getRegisteredCommands().forEach((s, command) -> {
-                command.unregister();
-            });
+            // Slash commands stay registered on Discord across restarts; the next login
+            // compares against them and only sends what changed.
+            getRegisteredCommands().clear();
+            getRegisteredSlashCommands().clear();
+            getPendingSlashCommands().clear();
 
-            if (! StreamlineDiscord.getConfig().moduleForwardsEventsToProxy()) {
-                safeDiscordAPI().shutdownNow();
+            // JDA's worker threads must be gone before the module's class loader closes;
+            // a survivor fails with NoClassDefFoundError on its next lazily loaded class.
+            api.shutdownNow();
+            try {
+                api.awaitShutdown(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
 
             setConcurrentDiscordAPI(null);
@@ -407,31 +469,96 @@ public class DiscordHandler {
     @Getter @Setter
     private static ConcurrentSkipListMap<DiscordCommand, Long> registeredSlashCommands = new ConcurrentSkipListMap<>();
 
-    public static CompletableFuture<Command> registerSlashCommand(DiscordCommand discordCommand) {
-        if (getRegisteredSlashCommands().containsValue(discordCommand.getSlashCommandSnowflake())) {
-            unregisterSlashCommand(discordCommand);
-        }
+    /**
+     * Commands waiting to be published, by name. A {@link DiscordCommand} lands here as it
+     * registers; {@link #syncSlashCommands()} then publishes the whole set at once.
+     */
+    @Getter
+    private static final ConcurrentSkipListMap<String, DiscordCommand> pendingSlashCommands = new ConcurrentSkipListMap<>();
 
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Command command = discordCommand.setupOptionData(safeDiscordAPI().upsertCommand(discordCommand.getCommandIdentifier(), discordCommand.getDescription())).complete();
+    /**
+     * Whether Discord's copy of a command already matches what would be sent. Both sides go
+     * through JDA's own serialization of each part, so equal maps mean an update would
+     * change nothing.
+     */
+    private static boolean matches(Command existing, SlashCommandData wanted) {
+        if (existing.getType() != Command.Type.SLASH) return false;
+
+        SlashCommandData current = SlashCommandData.fromCommand(existing);
+
+        return current.getDescription().equals(wanted.getDescription())
+                && current.isGuildOnly() == wanted.isGuildOnly()
+                && current.isNSFW() == wanted.isNSFW()
+                && Objects.equals(current.getDefaultPermissions().getPermissionsRaw(), wanted.getDefaultPermissions().getPermissionsRaw())
+                && toMaps(current.getOptions()).equals(toMaps(wanted.getOptions()))
+                && toMaps(current.getSubcommands()).equals(toMaps(wanted.getSubcommands()))
+                && toMaps(current.getSubcommandGroups()).equals(toMaps(wanted.getSubcommandGroups()));
+    }
+
+    private static List<Map<String, Object>> toMaps(List<? extends SerializableData> data) {
+        return data.stream().map(d -> d.toData().toMap()).collect(Collectors.toList());
+    }
+
+    public static void registerSlashCommand(DiscordCommand discordCommand) {
+        getPendingSlashCommands().put(discordCommand.getCommandIdentifier(), discordCommand);
+    }
+
+    /**
+     * Makes the bot's global slash commands match {@link #getPendingSlashCommands()}. Discord's
+     * current set is fetched in one request; only when a command was added, removed or
+     * changed is the full set sent back, as one bulk overwrite, which keeps the IDs of
+     * commands that did not change.
+     *
+     * <p>Blocks on Discord from a single thread. JDA completes requests on
+     * {@link java.util.concurrent.ForkJoinPool#commonPool()}, so many common-pool tasks
+     * blocking on Discord at once can leave no thread to complete any of them.</p>
+     */
+    public static void syncSlashCommands() {
+        JDA jda = getDiscordAPI();
+        if (jda == null) return;
+
+        try {
+            Map<String, Command> existing = new java.util.HashMap<>();
+            jda.retrieveCommands().complete().forEach(command -> existing.put(command.getName(), command));
+
+            List<SlashCommandData> wanted = new java.util.ArrayList<>();
+            List<String> changes = new java.util.ArrayList<>();
+            getPendingSlashCommands().forEach((name, discordCommand) -> {
+                SlashCommandData data = discordCommand.setupOptionData(jda.upsertCommand(name, discordCommand.getDescription()));
+                wanted.add(data);
+
+                Command current = existing.get(name);
+                if (current == null) changes.add("+" + name);
+                else if (! matches(current, data)) changes.add("~" + name);
+            });
+            existing.keySet().forEach(name -> {
+                if (! getPendingSlashCommands().containsKey(name)) changes.add("-" + name);
+            });
+
+            java.util.Collection<Command> live;
+            if (changes.isEmpty()) {
+                live = existing.values();
+                StreamlineDiscord.getInstance().logInfo("Slash commands are up to date; nothing sent to Discord.");
+            } else {
+                live = jda.updateCommands().addCommands(wanted).complete();
+                StreamlineDiscord.getInstance().logInfo("Published slash commands to Discord (&d" + String.join(" ", changes) + "&r).");
+            }
+
+            live.forEach(command -> {
+                DiscordCommand discordCommand = getPendingSlashCommands().get(command.getName());
+                if (discordCommand == null) return;
 
                 getRegisteredSlashCommands().put(discordCommand, command.getIdLong());
                 discordCommand.setSlashCommandSnowflake(command.getIdLong());
-
-                StreamlineDiscord.getInstance().logInfo("Registered &cDiscordCommand &rwith identifier '&d" + discordCommand.getCommandIdentifier() + "&r' and snowflake '&d" + command.getIdLong() + "&r'.");
-
-                return command;
-            } catch (Exception e) {
-                StreamlineDiscord.getInstance().logWarning("Error registering slash command: " + discordCommand.getCommandIdentifier() + " - " + e.getMessage());
-                StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
-
-                return null;
-            }
-        });
+            });
+        } catch (Exception e) {
+            StreamlineDiscord.getInstance().logWarning("Could not sync slash commands with Discord: " + e.getMessage());
+            StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
+        }
     }
 
     public static void unregisterSlashCommand(DiscordCommand discordCommand) {
+        getPendingSlashCommands().remove(discordCommand.getCommandIdentifier());
         if (! getRegisteredSlashCommands().containsValue(discordCommand.getSlashCommandSnowflake())) return;
 
         CompletableFuture.runAsync(() -> {

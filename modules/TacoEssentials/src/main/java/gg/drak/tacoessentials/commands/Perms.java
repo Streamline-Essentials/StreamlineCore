@@ -18,18 +18,27 @@ public final class Perms {
 
     public static final String LISTHOMES_OTHERS = command("listhomes.others");
     public static final String DBACK_OTHERS = command("dback.others");
+    public static final String EC_OTHERS = command("ec.others");
     public static final String RTP_BYPASS_COOLDOWN = PREFIX + "rtp.bypasscooldown";
     public static final String HOMES_UNLIMITED = PREFIX + "homes.unlimited";
+
+    /** Running any custom alias; an alias with its permission toggle on also needs {@link #aliasUse}. */
+    public static final String ALIAS = PREFIX + "alias";
+
+    public static String aliasUse(String alias) {
+        return PREFIX + "alias.use." + alias;
+    }
 
     /** Commands every player may use. */
     public static final String[] EVERYONE = {
             "tpa", "tpahere", "tpaccept", "tpadeny", "back", "dback", "rtp",
             "sethome", "home", "delhome", "listhomes",
             "warp", "listwarps", "spawn",
-            "kickme", "trashcan", "hat", "nick",
+            "kickme", "trashcan", "hat", "nick", "center", "rotate",
     };
 
     public static void registerDefaults() {
         for (String name : EVERYONE) DefaultPermissions.grantByDefault(command(name));
+        DefaultPermissions.grantByDefault(ALIAS);
     }
 }

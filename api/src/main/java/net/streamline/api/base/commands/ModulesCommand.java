@@ -8,6 +8,7 @@ import singularity.modules.ModuleLike;
 import singularity.modules.ModuleManager;
 import singularity.utils.MessageUtils;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -116,6 +117,11 @@ public class ModulesCommand extends CosmicCommand {
                 "&eModules: &8%streamline_modules_colorized%&8!");
 
         ModuleCloud.setBaseUrl(this.getCommandResource().getOrSetDefault("ecloud.url", ModuleCloud.DEFAULT_BASE_URL));
+        // Fetches right away, so the first "/modules ecloud download " already has names, then every interval.
+        // An int default: YAML reads small numbers back as Integer, which a Long default would fail to cast.
+        int refreshSeconds = this.getCommandResource().getOrSetDefault("ecloud.refresh-interval-seconds",
+                (int) ModuleCloud.DEFAULT_NAME_REFRESH_INTERVAL.getSeconds());
+        ModuleCloud.startNameRefreshTimer(Duration.ofSeconds(refreshSeconds));
         this.messageEcloudDownloading = this.getCommandResource().getOrSetDefault("messages.ecloud.downloading",
                 "&eDownloading &7'&c%this_identifier%&7' &efrom the module cloud&8...");
         this.messageEcloudDownloaded = this.getCommandResource().getOrSetDefault("messages.ecloud.downloaded",

@@ -108,8 +108,9 @@ public class EndPoint implements Loadable<EndPoint> {
     }
 
     public void drop() {
+        // Loader.unload would save it again on the way out.
+        StreamlineDiscord.getEndPointLoader().getLoaded().remove(this);
         DiscordMiddleware.dropEndPoint(this);
-        unload();
         this.type = null;
         this.endPointIdentifier = null;
         this.toFormat = null;
