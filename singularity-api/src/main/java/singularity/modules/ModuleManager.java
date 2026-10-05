@@ -16,7 +16,12 @@ import singularity.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
+import java.security.CodeSigner;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -70,6 +75,72 @@ public class ModuleManager {
     private static JarPluginManager pluginManager;
 
     /**
+     * Rewrites module class bytes before they are defined, or {@code null} to define them
+     * as they are in the jar. Platforms whose host jar relocates shaded libraries install
+     * one that applies the same relocation, so modules compiled against the libraries'
+     * original packages link against the relocated copies. Must be set before modules load.
+     */
+    @Getter @Setter
+    private static ModuleClassTransformer moduleClassTransformer;
+
+    /**
+     * Rewrites the bytecode of one module class.
+     */
+    @FunctionalInterface
+    public interface ModuleClassTransformer {
+        /**
+         * @param className binary name of the class being defined
+         * @param classBytes the class file as read from the module jar
+         * @return the class file to define
+         */
+        byte[] transform(String className, byte[] classBytes);
+    }
+
+    /**
+     * A {@link PluginClassLoader} that passes every class it defines from the module jar
+     * through a {@link ModuleClassTransformer}.
+     */
+    private static class TransformingPluginClassLoader extends PluginClassLoader {
+        private final ModuleClassTransformer transformer;
+
+        TransformingPluginClassLoader(PluginManager pluginManager, PluginDescriptor descriptor,
+                                      ClassLoader parent, ModuleClassTransformer transformer) {
+            super(pluginManager, descriptor, parent);
+            this.transformer = transformer;
+        }
+
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            URL resource = findResource(name.replace('.', '/') + ".class");
+            if (resource == null) throw new ClassNotFoundException(name);
+
+            byte[] bytes;
+            try (InputStream in = resource.openStream()) {
+                bytes = in.readAllBytes();
+            } catch (IOException e) {
+                throw new ClassNotFoundException(name, e);
+            }
+            bytes = transformer.transform(name, bytes);
+
+            int lastDot = name.lastIndexOf('.');
+            if (lastDot > 0) {
+                String packageName = name.substring(0, lastDot);
+                if (getDefinedPackage(packageName) == null) {
+                    try {
+                        definePackage(packageName, null, null, null, null, null, null, null);
+                    } catch (IllegalArgumentException ignored) {
+                        // Defined concurrently by another thread.
+                    }
+                }
+            }
+
+            URL[] urls = getURLs();
+            CodeSource source = new CodeSource(urls.length > 0 ? urls[0] : null, (CodeSigner[]) null);
+            return defineClass(name, bytes, 0, bytes.length, source);
+        }
+    }
+
+    /**
      * Returns a snapshot of all JAR files present in the module folder, keyed
      * by file name.
      *
@@ -119,7 +190,18 @@ public class ModuleManager {
         manager = new JarPluginManager(Singularity.getModuleFolder().toPath()) {
             @Override
             protected PluginLoader createPluginLoader() {
-                return new JarPluginLoader(this);
+                return new JarPluginLoader(this) {
+                    @Override
+                    public ClassLoader loadPlugin(Path pluginPath, PluginDescriptor pluginDescriptor) {
+                        ModuleClassTransformer transformer = getModuleClassTransformer();
+                        if (transformer == null) return super.loadPlugin(pluginPath, pluginDescriptor);
+
+                        PluginClassLoader loader = new TransformingPluginClassLoader(
+                                pluginManager, pluginDescriptor, ModuleManager.class.getClassLoader(), transformer);
+                        loader.addFile(pluginPath.toFile());
+                        return loader;
+                    }
+                };
             }
 
             @Override
