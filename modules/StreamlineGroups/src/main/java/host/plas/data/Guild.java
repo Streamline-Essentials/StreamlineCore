@@ -106,6 +106,15 @@ public class Guild extends AbstractGroup implements Loadable<Guild> {
                 // from their permissions; the stored cap is applied over that.
                 updateOwner(stored.getOwner());
                 setMaxSize(stored.getMaxSize());
+
+                // Members are matched to this guild's roles by identifier: the stored copy
+                // holds its own role instances.
+                stored.getGroupRoleMap().getRoles().forEach(storedRole ->
+                        getGroupRoleMap().getRoles().stream()
+                                .filter(role -> role.getIdentifier().equals(storedRole.getIdentifier()))
+                                .findFirst()
+                                .ifPresent(role -> stored.getGroupRoleMap().getUsersOf(storedRole)
+                                        .forEach(member -> getGroupRoleMap().applyUser(role, member))));
             } else {
                 // Nothing stored yet -- persist the defaults so later loads find a row.
                 if (! isGet) save();
