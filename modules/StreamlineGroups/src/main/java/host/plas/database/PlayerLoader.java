@@ -49,12 +49,21 @@ public class PlayerLoader extends Loader<GroupedPlayer> {
 
         return CompletableFuture.supplyAsync(() -> {
             Optional<GroupedPlayer> optional = getKeeper().load(uuid).join();
-            if (optional.isPresent()) return optional.get();
+            GroupedPlayer console;
+            if (optional.isPresent()) {
+                console = optional.get();
+            } else {
+                console = instantiate(uuid);
+                console.save();
+            }
+            console.setFullyLoaded(true);
 
-            GroupedPlayer created = instantiate(uuid);
-            created.save();
+            // Added directly: load(...) resolves the console identifier back through
+            // getConsole(), which would recurse. Holding it keeps later lookups from
+            // re-reading the row and its changes from being lost.
+            getLoaded().add(console);
 
-            return created;
+            return console;
         });
     }
 

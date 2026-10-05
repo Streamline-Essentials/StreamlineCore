@@ -10,6 +10,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.chat.ComponentSerializer;
 import net.streamline.api.SLAPI;
+import singularity.text.HexColors;
 import net.streamline.base.StreamlineBungee;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
@@ -303,7 +304,7 @@ public class Messenger implements IMessenger {
      * @return the resulting component array; never {@code null}
      */
     public BaseComponent[] codedText(String from) {
-        String raw = from;
+        String raw = HexColors.toSectionX(from);
 
         List<BaseComponent> componentsList = new ArrayList<>();
 

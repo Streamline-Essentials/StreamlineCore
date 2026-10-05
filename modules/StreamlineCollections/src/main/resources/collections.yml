@@ -1,0 +1,559 @@
+# StreamlineCollections catalog.
+#
+# Every id here (icons and sources) is a Minecraft item or block id. "wheat" means
+# "minecraft:wheat"; modded content uses its full id, such as "create:zinc_ore".
+#
+# Sources:
+#   blocks:  blocks a player breaks (one per block, whatever it drops)
+#   drops:   items dropped by mobs a player kills (each item counts its amount)
+#   fish:    items a player reels in with a fishing rod
+#   buckets: buckets a player fills (one per fill)
+#
+# Not every platform reports every source; see the module README.
+
+# Amounts needed for each level, unless a collection sets its own `tiers`.
+default-tiers:
+  - 50
+  - 100
+  - 250
+  - 500
+  - 1000
+  - 2500
+  - 5000
+  - 10000
+  - 25000
+  - 50000
+
+# Blocks that only count once fully grown.
+mature-only:
+  - wheat
+  - carrots
+  - potatoes
+  - beetroots
+  - nether_wart
+  - cocoa
+
+# Menu order follows this list. `color` tints the category's menus.
+categories:
+  farming:
+    name: "Farming"
+    icon: wheat
+    color: "#FFCC00"
+  mining:
+    name: "Mining"
+    icon: cobblestone
+    color: "#C0C0C0"
+  combat:
+    name: "Combat"
+    icon: bone
+    color: "#FF5555"
+  foraging:
+    name: "Foraging"
+    icon: oak_log
+    color: "#55FF55"
+  fishing:
+    name: "Fishing"
+    icon: cod
+    color: "#55FFFF"
+
+# Menu order within a category follows this list.
+collections:
+  wheat:
+    name: "Wheat"
+    category: farming
+    icon: wheat
+    blocks:
+      - wheat
+  carrot:
+    name: "Carrot"
+    category: farming
+    icon: carrot
+    blocks:
+      - carrots
+  potato:
+    name: "Potato"
+    category: farming
+    icon: potato
+    blocks:
+      - potatoes
+  pumpkin:
+    name: "Pumpkin"
+    category: farming
+    icon: pumpkin
+    blocks:
+      - pumpkin
+  melon:
+    name: "Melon"
+    category: farming
+    icon: melon_slice
+    blocks:
+      - melon
+  sugar_cane:
+    name: "Sugar Cane"
+    category: farming
+    icon: sugar_cane
+    blocks:
+      - sugar_cane
+  cactus:
+    name: "Cactus"
+    category: farming
+    icon: cactus
+    blocks:
+      - cactus
+  cocoa:
+    name: "Cocoa Beans"
+    category: farming
+    icon: cocoa_beans
+    blocks:
+      - cocoa
+  nether_wart:
+    name: "Nether Wart"
+    category: farming
+    icon: nether_wart
+    blocks:
+      - nether_wart
+  bamboo:
+    name: "Bamboo"
+    category: farming
+    icon: bamboo
+    blocks:
+      - bamboo
+      - bamboo_sapling
+  chicken:
+    name: "Raw Chicken"
+    category: farming
+    icon: chicken
+    drops:
+      - chicken
+  pork:
+    name: "Raw Porkchop"
+    category: farming
+    icon: porkchop
+    drops:
+      - porkchop
+  beef:
+    name: "Raw Beef"
+    category: farming
+    icon: beef
+    drops:
+      - beef
+  mutton:
+    name: "Raw Mutton"
+    category: farming
+    icon: mutton
+    drops:
+      - mutton
+  rabbit:
+    name: "Raw Rabbit"
+    category: farming
+    icon: rabbit
+    drops:
+      - rabbit
+  leather:
+    name: "Leather"
+    category: farming
+    icon: leather
+    drops:
+      - leather
+  feather:
+    name: "Feather"
+    category: farming
+    icon: feather
+    drops:
+      - feather
+  cobble:
+    name: "Cobblestone"
+    category: mining
+    icon: cobblestone
+    blocks:
+      - stone
+      - cobblestone
+      - deepslate
+      - cobbled_deepslate
+      - andesite
+      - diorite
+      - granite
+      - tuff
+  coal:
+    name: "Coal"
+    category: mining
+    icon: coal
+    blocks:
+      - coal_ore
+      - deepslate_coal_ore
+  iron:
+    name: "Iron"
+    category: mining
+    icon: iron_ingot
+    blocks:
+      - iron_ore
+      - deepslate_iron_ore
+  gold:
+    name: "Gold"
+    category: mining
+    icon: gold_ingot
+    blocks:
+      - gold_ore
+      - deepslate_gold_ore
+      - nether_gold_ore
+  copper:
+    name: "Copper"
+    category: mining
+    icon: copper_ingot
+    blocks:
+      - copper_ore
+      - deepslate_copper_ore
+  diamond:
+    name: "Diamond"
+    category: mining
+    icon: diamond
+    blocks:
+      - diamond_ore
+      - deepslate_diamond_ore
+  emerald:
+    name: "Emerald"
+    category: mining
+    icon: emerald
+    blocks:
+      - emerald_ore
+      - deepslate_emerald_ore
+  redstone:
+    name: "Redstone"
+    category: mining
+    icon: redstone
+    blocks:
+      - redstone_ore
+      - deepslate_redstone_ore
+  lapis:
+    name: "Lapis Lazuli"
+    category: mining
+    icon: lapis_lazuli
+    blocks:
+      - lapis_ore
+      - deepslate_lapis_ore
+  quartz:
+    name: "Nether Quartz"
+    category: mining
+    icon: quartz
+    blocks:
+      - nether_quartz_ore
+  amethyst:
+    name: "Amethyst"
+    category: mining
+    icon: amethyst_shard
+    blocks:
+      - amethyst_block
+      - amethyst_cluster
+      - large_amethyst_bud
+      - medium_amethyst_bud
+      - small_amethyst_bud
+  obsidian:
+    name: "Obsidian"
+    category: mining
+    icon: obsidian
+    blocks:
+      - obsidian
+      - crying_obsidian
+  netherrack:
+    name: "Netherrack"
+    category: mining
+    icon: netherrack
+    blocks:
+      - netherrack
+  soul_sand:
+    name: "Soul Sand"
+    category: mining
+    icon: soul_sand
+    blocks:
+      - soul_sand
+      - soul_soil
+  basalt:
+    name: "Basalt"
+    category: mining
+    icon: basalt
+    blocks:
+      - basalt
+      - smooth_basalt
+  blackstone:
+    name: "Blackstone"
+    category: mining
+    icon: blackstone
+    blocks:
+      - blackstone
+      - gilded_blackstone
+  magma_block:
+    name: "Magma Block"
+    category: mining
+    icon: magma_block
+    blocks:
+      - magma_block
+  end_stone:
+    name: "End Stone"
+    category: mining
+    icon: end_stone
+    blocks:
+      - end_stone
+  glowstone:
+    name: "Glowstone"
+    category: mining
+    icon: glowstone_dust
+    blocks:
+      - glowstone
+  gravel:
+    name: "Gravel"
+    category: mining
+    icon: gravel
+    blocks:
+      - gravel
+  sand:
+    name: "Sand"
+    category: mining
+    icon: sand
+    blocks:
+      - sand
+      - red_sand
+  dirt:
+    name: "Dirt"
+    category: mining
+    icon: dirt
+    blocks:
+      - dirt
+      - grass_block
+      - dirt_path
+      - coarse_dirt
+      - rooted_dirt
+      - podzol
+      - mycelium
+  lava_bucket:
+    name: "Lava Bucket"
+    category: mining
+    icon: lava_bucket
+    buckets:
+      - lava_bucket
+  rotten_flesh:
+    name: "Rotten Flesh"
+    category: combat
+    icon: rotten_flesh
+    drops:
+      - rotten_flesh
+  bone:
+    name: "Bone"
+    category: combat
+    icon: bone
+    drops:
+      - bone
+  string:
+    name: "String"
+    category: combat
+    icon: string
+    drops:
+      - string
+  spider_eye:
+    name: "Spider Eye"
+    category: combat
+    icon: spider_eye
+    drops:
+      - spider_eye
+  gunpowder:
+    name: "Gunpowder"
+    category: combat
+    icon: gunpowder
+    drops:
+      - gunpowder
+  ender_pearl:
+    name: "Ender Pearl"
+    category: combat
+    icon: ender_pearl
+    drops:
+      - ender_pearl
+  blaze_rod:
+    name: "Blaze Rod"
+    category: combat
+    icon: blaze_rod
+    drops:
+      - blaze_rod
+  ghast_tear:
+    name: "Ghast Tear"
+    category: combat
+    icon: ghast_tear
+    drops:
+      - ghast_tear
+  slime_ball:
+    name: "Slimeball"
+    category: combat
+    icon: slime_ball
+    drops:
+      - slime_ball
+  magma_cream:
+    name: "Magma Cream"
+    category: combat
+    icon: magma_cream
+    drops:
+      - magma_cream
+  oak_log:
+    name: "Oak Log"
+    category: foraging
+    icon: oak_log
+    blocks:
+      - oak_log
+      - oak_wood
+      - stripped_oak_log
+      - stripped_oak_wood
+  birch_log:
+    name: "Birch Log"
+    category: foraging
+    icon: birch_log
+    blocks:
+      - birch_log
+      - birch_wood
+      - stripped_birch_log
+      - stripped_birch_wood
+  spruce_log:
+    name: "Spruce Log"
+    category: foraging
+    icon: spruce_log
+    blocks:
+      - spruce_log
+      - spruce_wood
+      - stripped_spruce_log
+      - stripped_spruce_wood
+  jungle_log:
+    name: "Jungle Log"
+    category: foraging
+    icon: jungle_log
+    blocks:
+      - jungle_log
+      - jungle_wood
+      - stripped_jungle_log
+      - stripped_jungle_wood
+  acacia_log:
+    name: "Acacia Log"
+    category: foraging
+    icon: acacia_log
+    blocks:
+      - acacia_log
+      - acacia_wood
+      - stripped_acacia_log
+      - stripped_acacia_wood
+  dark_oak_log:
+    name: "Dark Oak Log"
+    category: foraging
+    icon: dark_oak_log
+    blocks:
+      - dark_oak_log
+      - dark_oak_wood
+      - stripped_dark_oak_log
+      - stripped_dark_oak_wood
+  mangrove_log:
+    name: "Mangrove Log"
+    category: foraging
+    icon: mangrove_log
+    blocks:
+      - mangrove_log
+      - mangrove_wood
+      - stripped_mangrove_log
+      - stripped_mangrove_wood
+  cherry_log:
+    name: "Cherry Log"
+    category: foraging
+    icon: cherry_log
+    blocks:
+      - cherry_log
+      - cherry_wood
+      - stripped_cherry_log
+      - stripped_cherry_wood
+  crimson_stem:
+    name: "Crimson Stem"
+    category: foraging
+    icon: crimson_stem
+    blocks:
+      - crimson_stem
+      - crimson_hyphae
+      - stripped_crimson_stem
+      - stripped_crimson_hyphae
+  warped_stem:
+    name: "Warped Stem"
+    category: foraging
+    icon: warped_stem
+    blocks:
+      - warped_stem
+      - warped_hyphae
+      - stripped_warped_stem
+      - stripped_warped_hyphae
+  leaves:
+    name: "Leaves"
+    category: foraging
+    icon: oak_leaves
+    blocks:
+      - oak_leaves
+      - birch_leaves
+      - spruce_leaves
+      - jungle_leaves
+      - acacia_leaves
+      - dark_oak_leaves
+      - mangrove_leaves
+      - cherry_leaves
+      - azalea_leaves
+      - flowering_azalea_leaves
+      - pale_oak_leaves
+  cod:
+    name: "Raw Cod"
+    category: fishing
+    icon: cod
+    fish:
+      - cod
+  salmon:
+    name: "Raw Salmon"
+    category: fishing
+    icon: salmon
+    fish:
+      - salmon
+  tropical_fish:
+    name: "Tropical Fish"
+    category: fishing
+    icon: tropical_fish
+    fish:
+      - tropical_fish
+  pufferfish:
+    name: "Pufferfish"
+    category: fishing
+    icon: pufferfish
+    fish:
+      - pufferfish
+  lily_pad:
+    name: "Lily Pad"
+    category: fishing
+    icon: lily_pad
+    fish:
+      - lily_pad
+  ink_sac:
+    name: "Ink Sac"
+    category: fishing
+    icon: ink_sac
+    fish:
+      - ink_sac
+  clay:
+    name: "Clay"
+    category: fishing
+    icon: clay_ball
+    fish:
+      - clay_ball
+      - clay
+  prismarine_shard:
+    name: "Prismarine Shard"
+    category: fishing
+    icon: prismarine_shard
+    fish:
+      - prismarine_shard
+  sponge:
+    name: "Sponge"
+    category: fishing
+    icon: sponge
+    fish:
+      - sponge
+  water_bucket:
+    name: "Water Bucket"
+    category: fishing
+    icon: water_bucket
+    buckets:
+      - water_bucket

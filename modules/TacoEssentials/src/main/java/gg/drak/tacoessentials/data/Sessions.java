@@ -17,7 +17,12 @@ public final class Sessions {
     public static final class Session {
         private volatile boolean muted;
         private volatile boolean fly;
+        private volatile boolean god;
         private volatile long lastRtpMillis;
+
+        public boolean isGod() {
+            return god;
+        }
 
         public boolean isMuted() {
             return muted;
@@ -42,6 +47,7 @@ public final class Sessions {
             session.muted = record.isMuted();
             session.fly = record.isFly();
         });
+        session.god = TacoDatabase.isGod(uuid);
         SESSIONS.put(uuid, session);
         return session;
     }
@@ -68,6 +74,12 @@ public final class Sessions {
         TacoDatabase.setMuted(uuid, muted);
         Session session = SESSIONS.get(uuid);
         if (session != null) session.muted = muted;
+    }
+
+    public static void setGod(String uuid, boolean god) {
+        TacoDatabase.setGod(uuid, god);
+        Session session = SESSIONS.get(uuid);
+        if (session != null) session.god = god;
     }
 
     public static void setFly(String uuid, boolean fly) {

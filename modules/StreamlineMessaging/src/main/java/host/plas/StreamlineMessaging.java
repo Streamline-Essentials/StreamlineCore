@@ -87,6 +87,11 @@ public class StreamlineMessaging extends SimpleModule {
 
     @Override
     public void onDisable() {
-        MyLoader.getInstance().getLoaded().forEach(SavableChatter::unregister);
+        // Saved synchronously: an async save started here may not finish before shutdown.
+        MyLoader.getInstance().getLoaded().forEach(chatter -> {
+            chatter.save(false);
+            chatter.getFriendInvites().forEach((uuid, expiry) -> expiry.cancel());
+        });
+        MyLoader.getInstance().getLoaded().clear();
     }
 }

@@ -19,6 +19,7 @@ public class Config extends ModularizedConfig {
         fullDisable();
 
         getBotLayout();
+        getSuperAdminRoles();
         getAvatarUrl();
 
         getDefaultFormatFromMinecraft();
@@ -78,6 +79,29 @@ public class Config extends ModularizedConfig {
         long mainGuildId = getOrSetDefault("bot.main-guild-id", 0L);
 
         return new BotLayout(token, prefix, activityType, activityValue, avatarUrl, slashCommandsEnabled, mainGuildId);
+    }
+
+    /**
+     * @return IDs of the Discord roles whose members may run every bot command,
+     *         regardless of each command's own {@code permissions.default}
+     */
+    public List<Long> getSuperAdminRoles() {
+        reloadResource();
+
+        List<?> raw = getOrSetDefault("bot.super-admin-roles", new ArrayList<String>());
+
+        // YAML reads unquoted IDs as numbers and quoted ones as strings; accept both.
+        List<Long> roles = new ArrayList<>();
+        for (Object o : raw) {
+            try {
+                long id = Long.parseLong(String.valueOf(o).trim());
+                if (id != 0L) roles.add(id);
+            } catch (Exception e) {
+                // not a role ID
+            }
+        }
+
+        return roles;
     }
 
     public void saveBotLayout(BotLayout layout) {

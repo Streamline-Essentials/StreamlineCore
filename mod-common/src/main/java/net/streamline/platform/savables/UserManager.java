@@ -167,14 +167,18 @@ public class UserManager implements IUserManager<Object, ServerPlayer> {
         return r;
     }
 
+    /**
+     * A mod-loader server is its own server, so an online player is on the server named
+     * in {@code server-config.yml}; an offline player is on none.
+     */
     @Override
     public String getServerPlayerIsOn(ServerPlayer player) {
-        return "--null";
+        return player == null ? "--null" : Singularity.getServerName();
     }
 
     @Override
     public String getServerPlayerIsOn(String uuid) {
-        return "--null";
+        return getServerPlayerIsOn(getPlayer(uuid));
     }
 
     @Override

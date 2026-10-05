@@ -6,6 +6,8 @@ import host.plas.bou.utils.SenderUtils;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.streamline.api.SLAPI;
 import singularity.data.console.CosmicSender;
@@ -17,6 +19,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 import singularity.interfaces.IMessenger;
+import singularity.objects.ClickableMessage;
 import singularity.objects.CosmicTitle;
 import singularity.utils.MessageUtils;
 
@@ -159,6 +162,48 @@ public class Messenger implements IMessenger {
      * @param to      the recipient; does nothing if {@code null}
      * @param message the message to send
      */
+    @Override
+    public void sendClickable(@Nullable CosmicSender to, ClickableMessage message) {
+        if (to == null || message == null || message.isEmpty()) return;
+        Player player = to instanceof CosmicPlayer ? Bukkit.getPlayer(UUID.fromString(to.getUuid())) : null;
+        if (player == null) {
+            sendMessage(to, message.joinedText());
+            return;
+        }
+
+        TextComponent root = new TextComponent("");
+        for (ClickableMessage.Segment segment : message.getSegments()) {
+            BaseComponent[] hover = segment.getHover() == null ? null : colorizeBOU(segment.getHover());
+            ClickEvent click = toClickEvent(segment);
+            for (BaseComponent component : colorizeBOU(segment.getText())) {
+                if (hover != null) component.setHoverEvent(showText(hover));
+                if (click != null) component.setClickEvent(click);
+                root.addExtra(component);
+            }
+        }
+        player.spigot().sendMessage(root);
+    }
+
+    // The BaseComponent[] constructor is the one present on every supported server version.
+    @SuppressWarnings("deprecation")
+    private static HoverEvent showText(BaseComponent[] text) {
+        return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+    }
+
+    private static ClickEvent toClickEvent(ClickableMessage.Segment segment) {
+        if (segment.getClickAction() == null) return null;
+        switch (segment.getClickAction()) {
+            case RUN_COMMAND:
+                return new ClickEvent(ClickEvent.Action.RUN_COMMAND, segment.getClickValue());
+            case SUGGEST_COMMAND:
+                return new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, segment.getClickValue());
+            case OPEN_URL:
+                return new ClickEvent(ClickEvent.Action.OPEN_URL, segment.getClickValue());
+            default:
+                return null;
+        }
+    }
+
     public void sendMessageRaw(CommandSender to, String message) {
         if (to == null) return;
 

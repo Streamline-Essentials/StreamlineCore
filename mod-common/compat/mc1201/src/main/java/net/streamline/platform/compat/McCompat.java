@@ -1,7 +1,24 @@
 package net.streamline.platform.compat;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.streamline.platform.text.LegacyText;
+import singularity.gui.CosmicItem;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import singularity.objects.ClickableMessage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.MinecraftServer;
@@ -43,6 +60,11 @@ public final class McCompat {
     /** The level's dimension id, such as {@code minecraft:overworld}. */
     public static String dimensionId(ServerLevel level) {
         return level.dimension().location().toString();
+    }
+
+    /** The biome's id, such as {@code minecraft:plains}, or an empty string for an unregistered biome. */
+    public static String biomeId(Holder<Biome> biome) {
+        return biome.unwrapKey().map(key -> key.location().toString()).orElse("");
     }
 
     public static void teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
@@ -99,6 +121,81 @@ public final class McCompat {
             this.pos = pos;
             this.yaw = yaw;
             this.pitch = pitch;
+        }
+    }
+
+    /** A click event for a {@link ClickableMessage} segment, or {@code null} when it has none. */
+    public static ClickEvent clickEvent(ClickableMessage.ClickAction action, String value) {
+        if (action == null || value == null) return null;
+        switch (action) {
+            case RUN_COMMAND:
+                return new ClickEvent(ClickEvent.Action.RUN_COMMAND, value);
+            case SUGGEST_COMMAND:
+                return new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, value);
+            case OPEN_URL:
+                return new ClickEvent(ClickEvent.Action.OPEN_URL, value);
+            default:
+                return null;
+        }
+    }
+
+    public static HoverEvent showText(Component text) {
+        return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+    }
+
+    /**
+     * The stack a GUI shows for {@code item}. 1.20.1 keeps names, lore, skull owners and model
+     * data in NBT, and glints through a hidden enchantment.
+     */
+    public static ItemStack guiItem(CosmicItem item) {
+        if (item == null || item.isAir()) return ItemStack.EMPTY;
+
+        ResourceLocation id = ResourceLocation.tryParse(item.getMaterialKey());
+        Item type = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
+        if (type == null || type == Items.AIR) type = Items.BARRIER;
+
+        ItemStack stack = new ItemStack(type, item.getAmount());
+        if (item.getName() != null) stack.setHoverName(LegacyText.parse(item.getName(), LegacyText.ITEM_NAME));
+
+        if (! item.getLore().isEmpty()) {
+            ListTag lore = new ListTag();
+            for (String line : item.getLore()) {
+                lore.add(StringTag.valueOf(Component.Serializer.toJson(LegacyText.parse(line, LegacyText.ITEM_LORE))));
+            }
+            stack.getOrCreateTagElement("display").put("Lore", lore);
+        }
+
+        if (item.isGlowing()) {
+            stack.enchant(Enchantments.UNBREAKING, 1);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ENCHANTMENTS);
+        }
+
+        if (item.isHideExtras()) {
+            stack.hideTooltipPart(ItemStack.TooltipPart.MODIFIERS);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ENCHANTMENTS);
+            stack.hideTooltipPart(ItemStack.TooltipPart.UNBREAKABLE);
+            stack.hideTooltipPart(ItemStack.TooltipPart.ADDITIONAL);
+        }
+
+        if (item.getCustomModelData() > 0) stack.getOrCreateTag().putInt("CustomModelData", item.getCustomModelData());
+
+        if (item.getSkullOwner() != null && type == Items.PLAYER_HEAD) {
+            java.util.UUID uuid = ownerUuid(item.getSkullOwner());
+            if (uuid != null) {
+                stack.getOrCreateTag().put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), new GameProfile(uuid, null)));
+            } else {
+                stack.getOrCreateTag().putString("SkullOwner", item.getSkullOwner());
+            }
+        }
+
+        return stack;
+    }
+    /** A player's UUID, or {@code null} when {@code owner} is a name. */
+    private static java.util.UUID ownerUuid(String owner) {
+        try {
+            return java.util.UUID.fromString(owner);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 }

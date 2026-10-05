@@ -327,15 +327,10 @@ tasks.register("clearDeploys", Delete) {
     // Define the deployment directory
     def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
 
-    deployDir.mkdirs()
-    File[] files = deployDir.listFiles()
-    if (files != null) {
-        files.each { file ->
-            if (file.isFile()) {
-                file.delete()
-            }
-        }
-    }
+    // A lazy spec: deleting while the task is configured would empty the folder on
+    // every Gradle invocation, since clean.finalizedBy realizes this task. '*' matches
+    // top-level files only, so deploy/modules is kept.
+    delete fileTree(deployDir) { include '*' }
 }
 
 clean.finalizedBy(clearDeploys)

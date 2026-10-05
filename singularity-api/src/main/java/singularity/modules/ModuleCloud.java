@@ -28,6 +28,10 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
@@ -47,8 +51,14 @@ public final class ModuleCloud {
     /** Registry root used when nothing else is configured. */
     public static final String DEFAULT_BASE_URL = "https://modules.drak.gg";
 
-    /** How long a fetched module-name list is reused for tab completion. */
-    private static final long NAME_CACHE_MILLIS = Duration.ofMinutes(5).toMillis();
+    /** Default period of the module-name refresh timer. */
+    public static final Duration DEFAULT_NAME_REFRESH_INTERVAL = Duration.ofMinutes(5);
+
+    /**
+     * Minimum gap between fetches triggered by tab completion. Completion fires
+     * on every keystroke; this keeps typing a module name to at most one request.
+     */
+    private static final long COMPLETION_REFRESH_GAP_MILLIS = Duration.ofSeconds(10).toMillis();
 
     private static final Pattern FILENAME = Pattern.compile("filename=\"?([^\";]+)\"?");
     private static final Pattern SAFE_JAR_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*\\.jar");
@@ -61,9 +71,28 @@ public final class ModuleCloud {
     @Getter @Setter
     private static String baseUrl = DEFAULT_BASE_URL;
 
+    /** How soon a failed module-name fetch is retried, independent of the timer period. */
+    private static final long NAME_RETRY_MILLIS = Duration.ofSeconds(30).toMillis();
+
+    /**
+     * Runs module-name fetches and the refresh timer. A daemon thread of its own
+     * keeps requests off the server thread and the common pool (which mods may
+     * saturate), and never holds up shutdown. Being a single thread, two fetches
+     * never run at once.
+     */
+    private static final ScheduledExecutorService NAME_FETCHER = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "Streamline-eCloud");
+        thread.setDaemon(true);
+        return thread;
+    });
+
     private static final ConcurrentSkipListSet<String> cachedNames = new ConcurrentSkipListSet<>();
-    private static volatile long namesFetchedAt = 0L;
+    /** When the last fetch started, for throttling completion-triggered fetches. */
+    private static volatile long namesFetchStartedAt = 0L;
+    /** Set while a fetch is queued or running, so triggers never pile up behind it. */
     private static final AtomicBoolean namesRefreshing = new AtomicBoolean(false);
+    private static ScheduledFuture<?> refreshTimer;
+    private static ScheduledFuture<?> retryTask;
 
     private ModuleCloud() {}
 
@@ -128,8 +157,9 @@ public final class ModuleCloud {
     }
 
     private static Fetched fetch(String name, String version) {
-        String url = moduleUrl(name) + "/download";
-        if (version != null && ! version.isBlank()) url += "?version=" + encode(version);
+        // "latest" is a registry keyword, never a real version.
+        String target = version == null || version.isBlank() ? "latest" : version.trim();
+        String url = apiUrl() + "/" + encode(name) + "/download/" + encode(target);
 
         Path folder = Singularity.getModuleFolder().toPath();
         Path temp;
@@ -153,7 +183,7 @@ public final class ModuleCloud {
             }
 
             String moduleId = response.headers().firstValue("X-Module-Id").orElse(name);
-            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(version);
+            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(target);
             String expected = response.headers().firstValue("X-Checksum-SHA256").orElse(null);
             if (expected != null && ! expected.equalsIgnoreCase(sha256(temp))) {
                 throw new CloudException("Checksum mismatch for '" + moduleId + "'; the download was discarded.");
@@ -254,35 +284,76 @@ public final class ModuleCloud {
     }
 
     /**
-     * Module names known to the registry, for tab completion. Returns the cached
-     * set immediately and refreshes it in the background when it is stale, so
-     * the first completion after start-up may be empty.
+     * Module names known to the registry, for tab completion. Never blocks: it
+     * returns the cache as it is and starts a background fetch (at most one per
+     * {@link #COMPLETION_REFRESH_GAP_MILLIS}), whose result lands in the cache
+     * for the next completion.
      */
     public static ConcurrentSkipListSet<String> getCachedModuleNames() {
-        if (System.currentTimeMillis() - namesFetchedAt > NAME_CACHE_MILLIS && namesRefreshing.compareAndSet(false, true)) {
-            CompletableFuture.runAsync(() -> {
-                try {
-                    HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(baseUrl() + "/api/v1/modules"))
-                            .timeout(Duration.ofSeconds(15))
-                            .header("Accept", "application/json")
-                            .GET().build(), HttpResponse.BodyHandlers.ofString());
-                    if (response.statusCode() != 200) return;
-
-                    ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
-                    for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
-                        names.add(element.getAsJsonObject().get("name").getAsString());
-                    }
-                    cachedNames.retainAll(names);
-                    cachedNames.addAll(names);
-                } catch (Exception ignored) {
-                    // Completion simply keeps the previous list.
-                } finally {
-                    namesFetchedAt = System.currentTimeMillis();
-                    namesRefreshing.set(false);
-                }
-            });
-        }
+        if (System.currentTimeMillis() - namesFetchStartedAt >= COMPLETION_REFRESH_GAP_MILLIS) refreshModuleNames();
         return cachedNames;
+    }
+
+    /**
+     * Starts (or restarts with a new period) the timer that refreshes the
+     * module-name cache. The first fetch runs immediately, in the background.
+     *
+     * @param interval time between fetches; non-positive disables the timer, leaving only completion-triggered fetches
+     */
+    public static synchronized void startNameRefreshTimer(Duration interval) {
+        if (refreshTimer != null) refreshTimer.cancel(false);
+        refreshTimer = null;
+        if (interval == null || interval.isZero() || interval.isNegative()) {
+            refreshModuleNames();
+            return;
+        }
+        long millis = interval.toMillis();
+        refreshTimer = NAME_FETCHER.scheduleWithFixedDelay(ModuleCloud::refreshModuleNames, 0L, millis, TimeUnit.MILLISECONDS);
+    }
+
+    /** Fetches the registry's module names in the background, unless a fetch is already queued or running. */
+    public static void refreshModuleNames() {
+        if (! namesRefreshing.compareAndSet(false, true)) return;
+        namesFetchStartedAt = System.currentTimeMillis();
+        try {
+            NAME_FETCHER.execute(ModuleCloud::fetchModuleNames);
+        } catch (RuntimeException e) {
+            namesRefreshing.set(false);
+        }
+    }
+
+    /**
+     * A failed fetch is retried after {@link #NAME_RETRY_MILLIS} rather than a
+     * full timer period, so a registry that was unreachable at start-up does
+     * not leave completion empty for long.
+     */
+    private static synchronized void scheduleRetry() {
+        if (retryTask != null && ! retryTask.isDone()) return;
+        retryTask = NAME_FETCHER.schedule(ModuleCloud::refreshModuleNames, NAME_RETRY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private static void fetchModuleNames() {
+        boolean ok = false;
+        try {
+            HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Accept", "application/json")
+                    .GET().build(), HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) return;
+
+            ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
+            for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
+                names.add(element.getAsJsonObject().get("name").getAsString());
+            }
+            cachedNames.retainAll(names);
+            cachedNames.addAll(names);
+            ok = true;
+        } catch (Exception ignored) {
+            // Completion simply keeps the previous list.
+        } finally {
+            namesRefreshing.set(false);
+            if (! ok) scheduleRetry();
+        }
     }
 
     private static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException {
@@ -299,8 +370,8 @@ public final class ModuleCloud {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
-    private static String moduleUrl(String name) {
-        return baseUrl() + "/api/v1/modules/" + encode(name);
+    private static String apiUrl() {
+        return baseUrl() + "/api/v1";
     }
 
     private static String encode(String value) {

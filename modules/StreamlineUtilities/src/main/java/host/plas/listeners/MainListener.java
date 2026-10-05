@@ -70,9 +70,11 @@ public class MainListener implements BaseEventListener {
         if (user == null) return;
         if (SLAPI.isProxy()) {
             if (StreamlineUtilities.getConfigs().lastServerEnabled()) {
+                // The stored last server is only known once the user's record has loaded.
                 if (StreamlineUtilities.getConfigs().lastServerPermissionRequired()) {
-                    if (ModuleUtils.hasPermission(event.getSender(), StreamlineUtilities.getConfigs().lastServerPermissionValue())) user.goToLastServer();
-                } else user.goToLastServer();
+                    if (ModuleUtils.hasPermission(event.getSender(), StreamlineUtilities.getConfigs().lastServerPermissionValue()))
+                        user.getLoadedFuture().thenRun(user::goToLastServer);
+                } else user.getLoadedFuture().thenRun(user::goToLastServer);
             }
         }
 

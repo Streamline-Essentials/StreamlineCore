@@ -6,18 +6,22 @@ import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.HeightMap;
+import org.bukkit.Keyed;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.PlayerInventory;
 import singularity.Singularity;
 import singularity.data.players.location.CosmicLocation;
 import singularity.data.players.location.PlayerRotation;
+import singularity.data.players.location.RandomTeleportArea;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
@@ -76,9 +80,33 @@ public class GameplayHandler implements IGameplayHandler {
         };
     }
 
+    /** Players in god mode; {@link net.streamline.platform.listeners.GameplayListener} cancels their damage and hunger loss. */
+    private final Set<UUID> godMode = ConcurrentHashMap.newKeySet();
+
     /** Clears per-session state when the player leaves. */
     public void forget(Player player) {
         flightKept.remove(player.getUniqueId());
+        godMode.remove(player.getUniqueId());
+    }
+
+    public boolean isGod(UUID uuid) {
+        return godMode.contains(uuid);
+    }
+
+    @Override
+    public boolean setGodMode(String uuid, boolean enabled) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        if (enabled) {
+            godMode.add(player.getUniqueId());
+            TaskManager.schedule(player, () -> {
+                player.setFoodLevel(20);
+                player.setFireTicks(0);
+            });
+        } else {
+            godMode.remove(player.getUniqueId());
+        }
+        return true;
     }
 
     @Override
@@ -162,6 +190,55 @@ public class GameplayHandler implements IGameplayHandler {
                 if (y.isPresent()) return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
             }
             return Optional.<CosmicLocation>empty();
+        });
+    }
+
+    @Override
+    public Optional<CosmicLocation> findRandomSafeLocation(RandomTeleportArea area, int maxAttempts) {
+        return callSync(() -> {
+            World world = Bukkit.getWorld(area.getWorld());
+            if (world == null) return Optional.<CosmicLocation>empty();
+            int minY = Math.max(area.getMinY(), world.getMinHeight() + 1);
+            int maxY = Math.min(area.getMaxY(), topY(world) - 1);
+            if (minY > maxY) return Optional.<CosmicLocation>empty();
+            boolean ceiling = world.getEnvironment() == World.Environment.NETHER;
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                int[] column = area.sample(random);
+                if (column == null) continue;
+                int x = column[0];
+                int z = column[1];
+                if (! world.getWorldBorder().isInside(new Location(world, x, 0, z))) continue;
+
+                OptionalInt y;
+                if (ceiling) {
+                    y = nearestSafeY(world, x, z, (minY + maxY) / 2, minY, maxY);
+                } else {
+                    int surface = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+                    // An empty column (the End's void) reports the bottom of the world.
+                    if (surface <= world.getMinHeight() + 1 || surface < minY) continue;
+                    // A surface inside the range is the only candidate, so water and lava
+                    // surfaces are skipped rather than searched through into the caves below.
+                    if (surface <= maxY) y = isSafe(world, x, surface, z) ? OptionalInt.of(surface) : OptionalInt.empty();
+                    else y = safeInColumn(world, x, z, maxY, minY);
+                }
+                if (y.isEmpty()) continue;
+                if (area.isAvoided(biomeKey(world.getBiome(x, y.getAsInt(), z)).toString())) continue;
+                return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
+            }
+            return Optional.<CosmicLocation>empty();
+        });
+    }
+
+    @Override
+    public Optional<CosmicLocation> findSafeLocationInColumn(String worldName, int x, int z, int fromY, int toY) {
+        return callSync(() -> {
+            World world = Bukkit.getWorld(worldName);
+            if (world == null) return Optional.<CosmicLocation>empty();
+            OptionalInt y = safeInColumn(world, x, z, fromY, toY);
+            if (y.isEmpty()) return Optional.<CosmicLocation>empty();
+            return Optional.of(location(new Location(world, x + 0.5, y.getAsInt(), z + 0.5)));
         });
     }
 
@@ -255,6 +332,68 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean openWorkstation(String uuid, Workstation type) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        return callSync(() -> {
+            try {
+                // A view made by MenuType#create does not check that the block is nearby, so
+                // it stays open however far the player walks. MenuType exists from 1.21.
+                player.openInventory(menuType(type).create(player, type.getTitle()));
+                return true;
+            } catch (LinkageError noMenuTypes) {
+                return openWorkstationLegacy(player, type);
+            }
+        });
+    }
+
+    @SuppressWarnings({"UnstableApiUsage", "deprecation"})
+    private static MenuType.Typed<?, ?> menuType(Workstation type) {
+        switch (type) {
+            case CRAFTING: return MenuType.CRAFTING;
+            case ANVIL: return MenuType.ANVIL;
+            case SMITHING: return MenuType.SMITHING;
+            case GRINDSTONE: return MenuType.GRINDSTONE;
+            case STONECUTTER: return MenuType.STONECUTTER;
+            case CARTOGRAPHY: return MenuType.CARTOGRAPHY_TABLE;
+            case LOOM: return MenuType.LOOM;
+            default: return MenuType.ENCHANTMENT;
+        }
+    }
+
+    /**
+     * Servers older than 1.21: Bukkit opens crafting and enchanting tables; the others need
+     * Paper's methods, and plain Spigot has no way to open them.
+     */
+    @SuppressWarnings("deprecation")
+    private static boolean openWorkstationLegacy(Player player, Workstation type) {
+        try {
+            switch (type) {
+                case CRAFTING: return player.openWorkbench(null, true) != null;
+                case ENCHANTING: return player.openEnchanting(null, true) != null;
+                case ANVIL: return player.openAnvil(null, true) != null;
+                case SMITHING: return player.openSmithingTable(null, true) != null;
+                case GRINDSTONE: return player.openGrindstone(null, true) != null;
+                case STONECUTTER: return player.openStonecutter(null, true) != null;
+                case CARTOGRAPHY: return player.openCartographyTable(null, true) != null;
+                case LOOM: return player.openLoom(null, true) != null;
+                default: return false;
+            }
+        } catch (LinkageError notPaper) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean openEnderChest(String viewerUuid, String ownerUuid) {
+        Player viewer = BasePlugin.getPlayer(viewerUuid);
+        Player owner = BasePlugin.getPlayer(ownerUuid);
+        if (viewer == null || owner == null) return false;
+        TaskManager.schedule(viewer, () -> viewer.openInventory(owner.getEnderChest()));
+        return true;
+    }
+
+    @Override
     public boolean openInventoryOf(String viewerUuid, String targetUuid) {
         Player viewer = BasePlugin.getPlayer(viewerUuid);
         Player target = BasePlugin.getPlayer(targetUuid);
@@ -292,9 +431,22 @@ public class GameplayHandler implements IGameplayHandler {
         return player != null && player.isOp();
     }
 
+    @Override
+    public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
+        return callSync(() -> BukkitStatistics.read(uuid, type, ids));
+    }
+
     private static boolean isWater(Biome biome) {
-        String key = biome.getKey().getKey();
+        String key = biomeKey(biome).getKey();
         return key.contains("ocean") || key.contains("river");
+    }
+
+    /**
+     * Biome is an enum before 1.21.3 and an interface after, so calling its methods directly
+     * links against only one of the two. Both implement {@link Keyed}, which links on either.
+     */
+    private static NamespacedKey biomeKey(Biome biome) {
+        return ((Keyed) biome).getKey();
     }
 
     /** True when the feet block and the one above are open and the block below is solid, safe ground. */
@@ -316,8 +468,11 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     private static OptionalInt nearestSafeY(World world, int x, int z, int preferredY) {
-        int min = world.getMinHeight() + 1;
-        int max = topY(world) - 1;
+        return nearestSafeY(world, x, z, preferredY, world.getMinHeight() + 1, topY(world) - 1);
+    }
+
+    /** The safe feet Y in [min, max] closest to {@code preferredY}, searching up and down alternately. */
+    private static OptionalInt nearestSafeY(World world, int x, int z, int preferredY, int min, int max) {
         int start = Math.max(min, Math.min(max, preferredY));
         for (int offset = 0; start - offset >= min || start + offset <= max; offset++) {
             int up = start + offset;
@@ -330,6 +485,20 @@ public class GameplayHandler implements IGameplayHandler {
 
     private static OptionalInt firstSafeAbove(World world, int x, int z, int fromY) {
         for (int y = Math.max(fromY, world.getMinHeight() + 1); y < topY(world); y++) {
+            if (isSafe(world, x, y, z)) return OptionalInt.of(y);
+        }
+        return OptionalInt.empty();
+    }
+
+    /** The first safe feet Y from {@code fromY} toward {@code toY}, both inclusive, within the world's height. */
+    private static OptionalInt safeInColumn(World world, int x, int z, int fromY, int toY) {
+        int min = world.getMinHeight() + 1;
+        int max = topY(world) - 1;
+        int low = Math.max(min, Math.min(fromY, toY));
+        int high = Math.min(max, Math.max(fromY, toY));
+        if (low > high) return OptionalInt.empty();
+        boolean up = toY >= fromY;
+        for (int y = up ? low : high; up ? y <= high : y >= low; y += up ? 1 : -1) {
             if (isSafe(world, x, y, z)) return OptionalInt.of(y);
         }
         return OptionalInt.empty();

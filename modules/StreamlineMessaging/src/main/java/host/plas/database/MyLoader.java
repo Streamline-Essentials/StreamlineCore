@@ -40,18 +40,28 @@ public class MyLoader extends Loader<SavableChatter> {
 
         return CompletableFuture.supplyAsync(() -> {
             Optional<SavableChatter> optional = getKeeper().load(uuid).join();
-            if (optional.isPresent()) return optional.get();
+            SavableChatter console;
+            if (optional.isPresent()) {
+                console = optional.get();
+            } else {
+                console = instantiate(uuid);
+                console.save();
+            }
+            console.setFullyLoaded(true);
 
-            SavableChatter created = instantiate(uuid);
-            created.save();
+            // Added directly: load(...) resolves the console identifier back through
+            // getConsole(), which would recurse. Holding it keeps later lookups from
+            // re-reading the row and its changes from being lost.
+            getLoaded().add(console);
+            console.startStoredInvites();
 
-            return created;
+            return console;
         });
     }
 
     @Override
     public void fireLoadEvents(SavableChatter savableChatter) {
-
+        savableChatter.startStoredInvites();
     }
 
     @Override

@@ -193,7 +193,9 @@ public class StreamlineUtilities extends SimpleModule {
 
     @Override
     public void onDisable() {
-        MyLoader.getInstance().getLoaded().forEach(UtilitiesUser::unregister); // saves as well (built in)
+        // Saved synchronously: an async save started here may not finish before shutdown.
+        MyLoader.getInstance().getLoaded().forEach(user -> user.save(false));
+        MyLoader.getInstance().getLoaded().clear();
 
         ExecutableHandler.unloadAllAliases();
         ExecutableHandler.disableAllFunctions();

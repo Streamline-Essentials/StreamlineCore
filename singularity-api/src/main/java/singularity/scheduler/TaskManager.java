@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Global scheduler that drives all {@link BaseRunnable} tasks from a single daemon
@@ -56,13 +57,19 @@ public class TaskManager {
     }
 
     /**
-     * Returns the next available task index, which is the current number of
-     * registered runnables.
+     * Source of task indices. Indices are never reused: runnables cancel themselves
+     * all the time, and an index derived from the map's size would land on a task
+     * that is still registered and silently replace it.
+     */
+    private static final AtomicInteger nextIndex = new AtomicInteger();
+
+    /**
+     * Returns a task index that no other runnable has been given.
      *
      * @return the next index to assign to a new task
      */
     public static int getNextIndex() {
-        return currentRunnables.size();
+        return nextIndex.getAndIncrement();
     }
 
     /**

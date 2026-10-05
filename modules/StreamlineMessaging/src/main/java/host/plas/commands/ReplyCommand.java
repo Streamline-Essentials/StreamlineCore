@@ -25,9 +25,7 @@ public class ReplyCommand extends ModuleCommand {
                 "re", "r"
         );
 
-        messageSender = this.getCommandResource().getOrSetDefault("messages.success.sender",
-                "&dYOU &9&l→ &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/* &7(&e*/*streamline_user_server*/*&7)%&7:\n" +
-                        "         &f%this_message%");
+        messageSender = MessageCommand.loadSenderFormat(this);
         messageRecipient = this.getCommandResource().getOrSetDefault("messages.success.recipient",
                 "&d%streamline_user_formatted% &7(&e%streamline_user_server%&7) &9&l→ &dYOU&7: &f%this_message%");
     }

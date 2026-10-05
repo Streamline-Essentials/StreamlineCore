@@ -1,14 +1,21 @@
 package host.plas.database;
 
 import host.plas.data.Guild;
+import host.plas.data.roles.SavableGroupRole;
 import net.streamline.api.SLAPI;
 import singularity.data.console.CosmicSender;
 import singularity.database.modules.DBKeeper;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
@@ -132,33 +139,67 @@ public class GuildKeeper extends DBKeeper<Guild> {
      * linger.
      */
     private void saveMembers(Guild obj) {
-        String delete = injectTablePrefix("DELETE FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;;");
-        deleteWith(obj.getUuid(), delete);
+        // One transaction on one connection, so that a concurrent load never reads the
+        // membership between the delete and the inserts.
+        try (Connection connection = getDatabase().getConnection()) {
+            if (connection == null) {
+                MessageUtils.logWarning("Could not obtain a connection to save the members of guild " + obj.getUuid());
+                return;
+            }
 
-        String insert = injectTablePrefix("INSERT INTO `%table_prefix%guild_members` " +
-                "(`GuildUuid`, `MemberUuid`, `RoleIdentifier`) VALUES (?, ?, ?);");
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement stmt = connection.prepareStatement(
+                        injectTablePrefix("DELETE FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;"))) {
+                    stmt.setString(1, obj.getUuid());
+                    stmt.executeUpdate();
+                }
 
-        obj.getGroupRoleMap().getRoles().forEach(role ->
-                obj.getGroupRoleMap().getUsersOf(role).forEach(member ->
-                        getDatabase().execute(insert, stmt -> {
-                            try {
-                                stmt.setString(1, obj.getUuid());
-                                stmt.setString(2, member.getUuid());
-                                stmt.setString(3, role.getIdentifier());
-                            } catch (Exception e) {
-                                MessageUtils.logWarning("Failed to save a member of guild " + obj.getUuid(), e);
-                            }
-                        })));
+                try (PreparedStatement stmt = connection.prepareStatement(injectTablePrefix("INSERT INTO `%table_prefix%guild_members` " +
+                        "(`GuildUuid`, `MemberUuid`, `RoleIdentifier`) VALUES (?, ?, ?);"))) {
+                    // A member sits in one role; the set keeps a stray duplicate from
+                    // failing the primary key and rolling the whole write back.
+                    Set<String> written = new HashSet<>();
+                    for (SavableGroupRole role : obj.getGroupRoleMap().getRoles()) {
+                        for (CosmicSender member : obj.getGroupRoleMap().getUsersOf(role)) {
+                            if (! written.add(member.getUuid())) continue;
+
+                            stmt.setString(1, obj.getUuid());
+                            stmt.setString(2, member.getUuid());
+                            stmt.setString(3, role.getIdentifier());
+                            stmt.addBatch();
+                        }
+                    }
+                    stmt.executeBatch();
+                }
+
+                connection.commit();
+            } catch (Exception e) {
+                connection.rollback();
+                MessageUtils.logWarning("Failed to save the members of guild " + obj.getUuid(), e);
+            } finally {
+                connection.setAutoCommit(autoCommit);
+            }
+        } catch (Exception e) {
+            MessageUtils.logWarning("Failed to save the members of guild " + obj.getUuid(), e);
+        }
     }
 
     /**
      * Restores the guild's members into the roles they held, skipping any role that is no
      * longer configured.
+     *
+     * <p>The rows are read into memory before any member is resolved: resolving a member
+     * may query the database, and doing so inside the result callback would need a second
+     * connection while the first is still held -- which, with SQLite's single-connection
+     * pool, waits out the pool timeout and fails.</p>
      */
     private void loadMembers(Guild guild) {
         String statement = injectTablePrefix(
                 "SELECT `MemberUuid`, `RoleIdentifier` FROM `%table_prefix%guild_members` WHERE `GuildUuid` = ?;");
 
+        Map<String, String> rolesByMember = new LinkedHashMap<>();
         getDatabase().executeQuery(statement, stmt -> {
             try {
                 stmt.setString(1, guild.getUuid());
@@ -168,20 +209,21 @@ public class GuildKeeper extends DBKeeper<Guild> {
         }, result -> {
             try {
                 while (result.next()) {
-                    String memberUuid = result.getString("MemberUuid");
-                    String roleIdentifier = result.getString("RoleIdentifier");
-
-                    Optional<CosmicSender> member = UserUtils.getOrGetSender(memberUuid);
-                    if (member.isEmpty()) continue;
-
-                    guild.getGroupRoleMap().getRoles().stream()
-                            .filter(role -> role.getIdentifier().equals(roleIdentifier))
-                            .findFirst()
-                            .ifPresent(role -> guild.getGroupRoleMap().applyUser(role, member.get()));
+                    rolesByMember.put(result.getString("MemberUuid"), result.getString("RoleIdentifier"));
                 }
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to load members of guild " + guild.getUuid(), e);
             }
+        });
+
+        rolesByMember.forEach((memberUuid, roleIdentifier) -> {
+            Optional<CosmicSender> member = UserUtils.getOrGetSender(memberUuid);
+            if (member.isEmpty()) return;
+
+            guild.getGroupRoleMap().getRoles().stream()
+                    .filter(role -> role.getIdentifier().equals(roleIdentifier))
+                    .findFirst()
+                    .ifPresent(role -> guild.getGroupRoleMap().applyUser(role, member.get()));
         });
     }
 
@@ -200,7 +242,9 @@ public class GuildKeeper extends DBKeeper<Guild> {
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
 
-        AtomicReference<Optional<Guild>> guild = new AtomicReference<>(Optional.empty());
+        // The callback only copies the row out; the owner lookup and the member query run
+        // after it returns, for the reason given on loadMembers.
+        AtomicReference<GuildRow> row = new AtomicReference<>();
         getDatabase().executeQuery(statement, stmt -> {
             try {
                 stmt.setString(1, identifier);
@@ -211,29 +255,59 @@ public class GuildKeeper extends DBKeeper<Guild> {
             try {
                 if (! result.next()) return;
 
-                String uuid = result.getString("Uuid");
-                String ownerUuid = result.getString("OwnerUuid");
-
-                // Constructed with loading disabled, and without a database fetch of its
-                // own, so that building the guild does not re-enter this keeper while the
-                // load is still in flight.
-                Optional<CosmicSender> owner = UserUtils.getOrGetSender(ownerUuid);
-                Guild g = Guild.hydrated(uuid, owner.orElse(null));
-
-                g.setMuted(result.getBoolean("IsMuted"));
-                g.setPublic(result.getBoolean("IsPublic"));
-                g.setMaxSize(result.getInt("MaxSize"));
-                g.setCreateDate(new Date(result.getLong("CreateDate")));
-
-                loadMembers(g);
-
-                guild.set(Optional.of(g));
+                row.set(new GuildRow(
+                        result.getString("Uuid"),
+                        result.getString("OwnerUuid"),
+                        result.getBoolean("IsMuted"),
+                        result.getBoolean("IsPublic"),
+                        result.getInt("MaxSize"),
+                        result.getLong("CreateDate")));
             } catch (Exception e) {
                 MessageUtils.logWarning("Failed to load guild " + identifier, e);
             }
         });
 
-        return guild.get();
+        GuildRow r = row.get();
+        if (r == null) return Optional.empty();
+
+        try {
+            // Constructed with loading disabled, and without a database fetch of its own,
+            // so that building the guild does not re-enter this keeper while the load is
+            // still in flight.
+            Optional<CosmicSender> owner = UserUtils.getOrGetSender(r.ownerUuid);
+            Guild g = Guild.hydrated(r.uuid, owner.orElse(null));
+
+            g.setMuted(r.muted);
+            g.setPublic(r.isPublic);
+            g.setMaxSize(r.maxSize);
+            g.setCreateDate(new Date(r.createDate));
+
+            loadMembers(g);
+
+            return Optional.of(g);
+        } catch (Exception e) {
+            MessageUtils.logWarning("Failed to load guild " + identifier, e);
+            return Optional.empty();
+        }
+    }
+
+    /** The columns of one {@code guilds} row. */
+    private static final class GuildRow {
+        private final String uuid;
+        private final String ownerUuid;
+        private final boolean muted;
+        private final boolean isPublic;
+        private final int maxSize;
+        private final long createDate;
+
+        private GuildRow(String uuid, String ownerUuid, boolean muted, boolean isPublic, int maxSize, long createDate) {
+            this.uuid = uuid;
+            this.ownerUuid = ownerUuid;
+            this.muted = muted;
+            this.isPublic = isPublic;
+            this.maxSize = maxSize;
+            this.createDate = createDate;
+        }
     }
 
     @Override
@@ -247,7 +321,24 @@ public class GuildKeeper extends DBKeeper<Guild> {
     }
 
     public boolean existsBoth(String identifier) {
-        return loadBoth(identifier).isPresent();
+        String statement = injectTablePrefix("SELECT `Uuid` FROM `%table_prefix%guilds` WHERE `Uuid` = ?;");
+
+        AtomicReference<Boolean> exists = new AtomicReference<>(false);
+        getDatabase().executeQuery(statement, stmt -> {
+            try {
+                stmt.setString(1, identifier);
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to bind uuid while checking for a guild", e);
+            }
+        }, result -> {
+            try {
+                exists.set(result.next());
+            } catch (Exception e) {
+                MessageUtils.logWarning("Failed to check for guild " + identifier, e);
+            }
+        });
+
+        return exists.get();
     }
 
     @Override

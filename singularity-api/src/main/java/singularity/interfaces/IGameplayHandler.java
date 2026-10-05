@@ -1,6 +1,7 @@
 package singularity.interfaces;
 
 import singularity.data.players.location.CosmicLocation;
+import singularity.data.players.location.RandomTeleportArea;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,30 @@ public interface IGameplayHandler {
         CURSED_HELMET,
         /** The player is not online on this server. */
         OFFLINE,
+    }
+
+    /** Blocks whose screen {@link #openWorkstation(String, Workstation)} can open. */
+    enum Workstation {
+        CRAFTING("Crafting"),
+        ANVIL("Repair & Name"),
+        SMITHING("Upgrade Gear"),
+        GRINDSTONE("Repair & Disenchant"),
+        STONECUTTER("Stonecutter"),
+        CARTOGRAPHY("Cartography Table"),
+        LOOM("Loom"),
+        ENCHANTING("Enchant"),
+        ;
+
+        /** The screen's title where the platform needs one spelled out, matching vanilla's English title. */
+        private final String title;
+
+        Workstation(String title) {
+            this.title = title;
+        }
+
+        public String getTitle() {
+            return title;
+        }
     }
 
     /**
@@ -91,6 +116,33 @@ public interface IGameplayHandler {
     Optional<CosmicLocation> findRandomSafeLocation(String world, int minRadius, int maxRadius, int maxAttempts);
 
     /**
+     * A random safe standing spot inside the area, at a height within its Y range. In worlds
+     * without a ceiling the spot is on the surface when the surface lies in that range, and
+     * otherwise the highest safe spot below the range's top; in worlds with a ceiling (the
+     * Nether) it is the safe spot nearest the middle of the range. The world border is
+     * respected.
+     *
+     * @param area        where the spot may be
+     * @param maxAttempts candidate columns to try; each may generate a chunk
+     * @return the spot, or empty if the world does not exist or no attempt found one
+     */
+    Optional<CosmicLocation> findRandomSafeLocation(RandomTeleportArea area, int maxAttempts);
+
+    /**
+     * The first safe standing spot in column (x, z), checking each feet Y from {@code fromY}
+     * toward {@code toY}, both inclusive. Either bound may lie outside the world; the search
+     * stops at the world's floor and ceiling. The spot is centered on its block.
+     *
+     * @param world the world name
+     * @param x     block X
+     * @param z     block Z
+     * @param fromY first feet Y to check
+     * @param toY   last feet Y to check; below {@code fromY} to search downward
+     * @return the spot, or empty if the world does not exist or the range holds none
+     */
+    Optional<CosmicLocation> findSafeLocationInColumn(String world, int x, int z, int fromY, int toY);
+
+    /**
      * The first safe standing spot on top of the block the player is looking at.
      *
      * @param uuid        the player's UUID
@@ -120,6 +172,18 @@ public interface IGameplayHandler {
     boolean setFlight(String uuid, boolean allowed);
 
     /**
+     * Turns god mode on or off. While on, the player takes no damage (except what the game lets
+     * bypass invulnerability, such as the void and {@code /kill}) and their hunger stays full.
+     * Like {@link #setFlight(String, boolean)}, it lasts until the player logs out; the caller
+     * re-applies it at the next login if it should persist.
+     *
+     * @param uuid    the player's UUID
+     * @param enabled whether god mode is on
+     * @return {@code false} if the player is not online on this server
+     */
+    boolean setGodMode(String uuid, boolean enabled);
+
+    /**
      * Moves one item from the player's main hand onto their head. The old helmet, if any,
      * goes back into their inventory, or is dropped when the inventory is full.
      *
@@ -137,6 +201,28 @@ public interface IGameplayHandler {
      * @return {@code false} if the player is not online on this server
      */
     boolean openDisposal(String uuid, String title, int rows);
+
+    /**
+     * Opens a workstation's screen as if the player had used that block, without one being
+     * there. The screen stays open however far the player walks; a teleport may still close
+     * it, as Paper closes open inventories on teleport.
+     *
+     * @param uuid the player's UUID
+     * @param type the workstation
+     * @return {@code false} if the player is not online on this server, or the server does not
+     *         support opening that workstation remotely
+     */
+    boolean openWorkstation(String uuid, Workstation type);
+
+    /**
+     * Shows the owner's live ender chest to the viewer, who can move items in and out of it.
+     * The viewer may be the owner.
+     *
+     * @param viewerUuid the viewer's UUID
+     * @param ownerUuid  the UUID of the player whose ender chest is shown
+     * @return {@code false} if either player is not online on this server
+     */
+    boolean openEnderChest(String viewerUuid, String ownerUuid);
 
     /**
      * Shows the target's live inventory (main inventory, hotbar, armor and offhand) to the
@@ -172,4 +258,25 @@ public interface IGameplayHandler {
      * @return {@code false} for offline players
      */
     boolean isOperator(String uuid);
+
+    /**
+     * Reads the player's vanilla statistics of one type: live for an online player, from the
+     * world's stats file for an offline one.
+     *
+     * <p>{@code type} is a statistic type id — {@code minecraft:mined}, {@code minecraft:picked_up},
+     * {@code minecraft:crafted}, {@code minecraft:used}, {@code minecraft:broken},
+     * {@code minecraft:dropped}, {@code minecraft:killed}, {@code minecraft:killed_by} or
+     * {@code minecraft:custom} — and {@code ids} are the blocks, items, entities or custom
+     * statistics within it, such as {@code minecraft:stone} or {@code minecraft:fish_caught}.
+     * Ids may omit the {@code minecraft:} namespace.</p>
+     *
+     * @param uuid the player's UUID
+     * @param type the statistic type id
+     * @param ids  the ids to read within that type
+     * @return the value of each requested id the player has a statistic for, keyed by its
+     *         namespaced id; empty when the player or type is unknown
+     */
+    default java.util.Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
+        return java.util.Collections.emptyMap();
+    }
 }
