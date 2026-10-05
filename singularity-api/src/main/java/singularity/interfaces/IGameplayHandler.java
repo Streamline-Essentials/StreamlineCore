@@ -192,7 +192,8 @@ public interface IGameplayHandler {
 
     /**
      * Opens a workstation's screen as if the player had used that block, without one being
-     * there. The screen stays open wherever the player moves.
+     * there. The screen stays open however far the player walks; a teleport may still close
+     * it, as Paper closes open inventories on teleport.
      *
      * @param uuid the player's UUID
      * @param type the workstation

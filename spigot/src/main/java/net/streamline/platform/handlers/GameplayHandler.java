@@ -314,7 +314,7 @@ public class GameplayHandler implements IGameplayHandler {
         return callSync(() -> {
             try {
                 // A view made by MenuType#create does not check that the block is nearby, so
-                // it stays open wherever the player goes. MenuType exists from 1.21.
+                // it stays open however far the player walks. MenuType exists from 1.21.
                 player.openInventory(menuType(type).create(player, type.getTitle()));
                 return true;
             } catch (LinkageError noMenuTypes) {
