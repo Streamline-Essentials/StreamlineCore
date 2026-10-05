@@ -27,7 +27,10 @@ public class MainListener implements BaseEventListener {
         if (event.isCanceled()) return;
 
         AtomicBoolean handled = new AtomicBoolean(false);
-        Optional<ConfiguredChatChannel> defaultChat = ChatHandler.getDefaultChannel();
+        // The "none" channel is the server's own chat: the message goes through uncancelled
+        // instead of being re-sent, since a sender cannot chat on a player's behalf.
+        Optional<ConfiguredChatChannel> defaultChat = ChatHandler.getDefaultChannel()
+                .filter(channel -> ! channel.getIdentifier().equals("none"));
         if (defaultChat.isPresent()) {
             ConfiguredChatChannel cc = defaultChat.get();
 
