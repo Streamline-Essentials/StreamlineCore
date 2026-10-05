@@ -28,8 +28,10 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
@@ -49,8 +51,14 @@ public final class ModuleCloud {
     /** Registry root used when nothing else is configured. */
     public static final String DEFAULT_BASE_URL = "https://modules.drak.gg";
 
-    /** How long a fetched module-name list is reused for tab completion. */
-    private static final long NAME_CACHE_MILLIS = Duration.ofMinutes(5).toMillis();
+    /** Default period of the module-name refresh timer. */
+    public static final Duration DEFAULT_NAME_REFRESH_INTERVAL = Duration.ofMinutes(5);
+
+    /**
+     * Minimum gap between fetches triggered by tab completion. Completion fires
+     * on every keystroke; this keeps typing a module name to at most one request.
+     */
+    private static final long COMPLETION_REFRESH_GAP_MILLIS = Duration.ofSeconds(10).toMillis();
 
     private static final Pattern FILENAME = Pattern.compile("filename=\"?([^\";]+)\"?");
     private static final Pattern SAFE_JAR_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*\\.jar");
@@ -63,22 +71,28 @@ public final class ModuleCloud {
     @Getter @Setter
     private static String baseUrl = DEFAULT_BASE_URL;
 
-    /** How soon a failed module-name fetch is retried. */
+    /** How soon a failed module-name fetch is retried, independent of the timer period. */
     private static final long NAME_RETRY_MILLIS = Duration.ofSeconds(30).toMillis();
 
     /**
-     * Runs module-name fetches. A daemon thread of its own keeps the request off
-     * the common pool, which mods may saturate, and never holds up shutdown.
+     * Runs module-name fetches and the refresh timer. A daemon thread of its own
+     * keeps requests off the server thread and the common pool (which mods may
+     * saturate), and never holds up shutdown. Being a single thread, two fetches
+     * never run at once.
      */
-    private static final Executor NAME_FETCHER = Executors.newSingleThreadExecutor(runnable -> {
+    private static final ScheduledExecutorService NAME_FETCHER = Executors.newSingleThreadScheduledExecutor(runnable -> {
         Thread thread = new Thread(runnable, "Streamline-eCloud");
         thread.setDaemon(true);
         return thread;
     });
 
     private static final ConcurrentSkipListSet<String> cachedNames = new ConcurrentSkipListSet<>();
-    private static volatile long namesStaleAt = 0L;
+    /** When the last fetch started, for throttling completion-triggered fetches. */
+    private static volatile long namesFetchStartedAt = 0L;
+    /** Set while a fetch is queued or running, so triggers never pile up behind it. */
     private static final AtomicBoolean namesRefreshing = new AtomicBoolean(false);
+    private static ScheduledFuture<?> refreshTimer;
+    private static ScheduledFuture<?> retryTask;
 
     private ModuleCloud() {}
 
@@ -270,23 +284,37 @@ public final class ModuleCloud {
     }
 
     /**
-     * Module names known to the registry, for tab completion. Never blocks:
-     * returns the cached set and, when it is stale, refreshes it in the
-     * background. {@link #refreshModuleNames()} fills it at start-up.
+     * Module names known to the registry, for tab completion. Never blocks: it
+     * returns the cache as it is and starts a background fetch (at most one per
+     * {@link #COMPLETION_REFRESH_GAP_MILLIS}), whose result lands in the cache
+     * for the next completion.
      */
     public static ConcurrentSkipListSet<String> getCachedModuleNames() {
-        if (System.currentTimeMillis() >= namesStaleAt) refreshModuleNames();
+        if (System.currentTimeMillis() - namesFetchStartedAt >= COMPLETION_REFRESH_GAP_MILLIS) refreshModuleNames();
         return cachedNames;
     }
 
     /**
-     * Fetches the registry's module names in the background, unless a fetch is
-     * already running. A failed fetch is retried after {@link #NAME_RETRY_MILLIS}
-     * rather than the full cache period, so a registry that was unreachable at
-     * start-up does not leave completion empty for long.
+     * Starts (or restarts with a new period) the timer that refreshes the
+     * module-name cache. The first fetch runs immediately, in the background.
+     *
+     * @param interval time between fetches; non-positive disables the timer, leaving only completion-triggered fetches
      */
+    public static synchronized void startNameRefreshTimer(Duration interval) {
+        if (refreshTimer != null) refreshTimer.cancel(false);
+        refreshTimer = null;
+        if (interval == null || interval.isZero() || interval.isNegative()) {
+            refreshModuleNames();
+            return;
+        }
+        long millis = interval.toMillis();
+        refreshTimer = NAME_FETCHER.scheduleWithFixedDelay(ModuleCloud::refreshModuleNames, 0L, millis, TimeUnit.MILLISECONDS);
+    }
+
+    /** Fetches the registry's module names in the background, unless a fetch is already queued or running. */
     public static void refreshModuleNames() {
         if (! namesRefreshing.compareAndSet(false, true)) return;
+        namesFetchStartedAt = System.currentTimeMillis();
         try {
             NAME_FETCHER.execute(ModuleCloud::fetchModuleNames);
         } catch (RuntimeException e) {
@@ -294,8 +322,18 @@ public final class ModuleCloud {
         }
     }
 
+    /**
+     * A failed fetch is retried after {@link #NAME_RETRY_MILLIS} rather than a
+     * full timer period, so a registry that was unreachable at start-up does
+     * not leave completion empty for long.
+     */
+    private static synchronized void scheduleRetry() {
+        if (retryTask != null && ! retryTask.isDone()) return;
+        retryTask = NAME_FETCHER.schedule(ModuleCloud::refreshModuleNames, NAME_RETRY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
     private static void fetchModuleNames() {
-        long nextRefresh = NAME_RETRY_MILLIS;
+        boolean ok = false;
         try {
             HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
                     .timeout(Duration.ofSeconds(15))
@@ -309,12 +347,12 @@ public final class ModuleCloud {
             }
             cachedNames.retainAll(names);
             cachedNames.addAll(names);
-            nextRefresh = NAME_CACHE_MILLIS;
+            ok = true;
         } catch (Exception ignored) {
             // Completion simply keeps the previous list.
         } finally {
-            namesStaleAt = System.currentTimeMillis() + nextRefresh;
             namesRefreshing.set(false);
+            if (! ok) scheduleRetry();
         }
     }
 
