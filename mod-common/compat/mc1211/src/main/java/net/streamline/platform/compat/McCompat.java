@@ -1,12 +1,19 @@
 package net.streamline.platform.compat;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
+import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import singularity.objects.PingedResponse;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Minecraft API calls whose shape differs between game versions, for 1.21.1.
@@ -56,6 +63,28 @@ public final class McCompat {
     /** Operator level 2 (gamemaster) or higher. */
     public static boolean isOperator(ServerPlayer player) {
         return player.hasPermissions(2);
+    }
+
+    /** The address the client says it connected to, as sent in its handshake. */
+    public static String handshakeHost(ClientIntentionPacket packet) {
+        return packet.hostName();
+    }
+
+    /** The players listed when hovering the player count in the server list. */
+    public static List<PingedResponse.PlayerInfo> readSample(ServerStatus.Players players) {
+        List<PingedResponse.PlayerInfo> sample = new ArrayList<>();
+        for (GameProfile profile : players.sample()) {
+            sample.add(new PingedResponse.PlayerInfo(profile.getName(), String.valueOf(profile.getId())));
+        }
+        return sample;
+    }
+
+    public static ServerStatus.Players statusPlayers(int max, int online, List<PingedResponse.PlayerInfo> sample) {
+        List<GameProfile> profiles = new ArrayList<>();
+        for (PingedResponse.PlayerInfo info : sample) {
+            profiles.add(new GameProfile(info.getUniqueId(), info.getName()));
+        }
+        return new ServerStatus.Players(max, online, profiles);
     }
 
 

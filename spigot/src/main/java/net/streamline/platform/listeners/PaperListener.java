@@ -13,7 +13,6 @@ import singularity.events.server.ping.PingReceivedEvent;
 import singularity.objects.CosmicFavicon;
 import singularity.objects.PingedResponse;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +41,7 @@ public class PaperListener implements Listener {
     /**
      * Handles the Paper server-list ping event, firing a cross-platform
      * {@link singularity.events.server.ping.PingReceivedEvent} and applying any
-     * modifications (MOTD, player sample, max players, server icon) back onto
+     * modifications (MOTD, version, player sample, player counts, server icon) back onto
      * the Bukkit event before it is sent to the connecting client.
      *
      * @param event the Paper server-list ping event
@@ -56,7 +55,7 @@ public class PaperListener implements Listener {
             hostName = "";
         }
 
-        PingedResponse.Protocol protocol = new PingedResponse.Protocol("latest", 1);
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol(event.getVersion(), event.getProtocolVersion());
 
         List<PingedResponse.PlayerInfo> playerInfos = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -83,7 +82,14 @@ public class PaperListener implements Listener {
 
         event.setMotd(Messenger.getInstance().codedString(pingReceivedEvent.getResponse().getDescription()));
 
-        // Set the sample of the server (the players displayed when hovering over the player count)
+        PingedResponse.Protocol version = pingReceivedEvent.getResponse().getVersion();
+        if (version != null && version.getProtocol() != -1) {
+            event.setVersion(version.getName());
+            event.setProtocolVersion(version.getProtocol());
+        }
+
+        // The players shown when hovering the player count. getListedPlayers() is Paper
+        // 1.20.6+, so older servers throw NoSuchMethodError and keep their own sample.
         try {
             event.getListedPlayers().clear();
 
@@ -98,7 +104,7 @@ public class PaperListener implements Listener {
             }
 
             event.getListedPlayers().addAll(playerSample);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             StreamlineSpigot.getInstance().logWarning("Failed to set player sample: " + e.getMessage());
             StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
         }
@@ -115,13 +121,6 @@ public class PaperListener implements Listener {
                 StreamlineSpigot.getInstance().logWarning("Failed to set server icon: " + e.getMessage());
                 StreamlineSpigot.getInstance().logWarning(e.getStackTrace());
             }
-        }
-
-        try {
-            CachedServerIcon icon = Bukkit.loadServerIcon(Paths.get(pingReceivedEvent.getResponse().getFaviconString()).toFile());
-            event.setServerIcon(icon);
-        } catch (Exception e) {
-            // do nothing.
         }
     }
 }

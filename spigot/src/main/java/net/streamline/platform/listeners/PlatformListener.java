@@ -26,7 +26,6 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.event.server.ServerLoadEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.bukkit.util.CachedServerIcon;
 import org.jetbrains.annotations.NotNull;
 import singularity.configs.given.GivenConfigs;
 import singularity.configs.given.MainMessagesHandler;
@@ -47,12 +46,12 @@ import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleManager;
 import singularity.modules.ModuleUtils;
+import singularity.objects.CosmicFavicon;
 import singularity.objects.PingedResponse;
 import singularity.objects.world.CosmicBlock;
 import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -379,7 +378,8 @@ public class PlatformListener implements Listener {
             hostName = "";
         }
 
-        PingedResponse.Protocol protocol = new PingedResponse.Protocol("latest", 1);
+        // Spigot's ping event exposes no version; protocol -1 marks it unknown.
+        PingedResponse.Protocol protocol = new PingedResponse.Protocol("", -1);
 
         List<PingedResponse.PlayerInfo> playerInfos = new ArrayList<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -406,17 +406,17 @@ public class PlatformListener implements Listener {
 
         event.setMotd(Messenger.getInstance().codedString(pingReceivedEvent.getResponse().getDescription()));
 
-        // Set the sample of the server (the players displayed when hovering over the player count)
-        // does not work right now...
-
+        // Spigot's ping event cannot set the online count, the hover sample or the version;
+        // Paper's can, see PaperListener.
         event.setMaxPlayers(pingReceivedEvent.getResponse().getPlayers().getMax());
-//        event.setNumPlayers(pingReceivedEvent.getResponse().getPlayers().getOnline());
 
-        try {
-            CachedServerIcon icon = Bukkit.loadServerIcon(Paths.get(pingReceivedEvent.getResponse().getFaviconString()).toFile());
-            event.setServerIcon(icon);
-        } catch (Exception e) {
-            // do nothing.
+        CosmicFavicon favicon = pingReceivedEvent.getResponse().getFavicon();
+        if (favicon != null) {
+            try {
+                event.setServerIcon(Bukkit.loadServerIcon(favicon.getImage()));
+            } catch (Throwable e) {
+                StreamlineSpigot.getInstance().logWarning("Failed to set server icon: " + e.getMessage());
+            }
         }
     }
 
