@@ -7,7 +7,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
+import singularity.interfaces.ISingularityExtension;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -27,6 +29,9 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,16 +100,34 @@ public final class ModuleCloud {
 
     /**
      * Downloads a module from the registry into the module folder and loads it.
+     * The transfer and checksum run off-thread; installing and loading the jar
+     * run through {@link ISingularityExtension#runOnMainThread(Runnable)}.
      *
      * @param name    the module name or Plugin-Id, matched case-insensitively by the registry
      * @param version a specific version, or {@code null} for the latest
      * @return a future completed with the result, or exceptionally with a {@link CloudException}
      */
     public static CompletableFuture<Download> download(String name, String version) {
-        return CompletableFuture.supplyAsync(() -> downloadBlocking(name, version));
+        return CompletableFuture.supplyAsync(() -> fetch(name, version))
+                .thenCompose(fetched -> onMainThread(() -> install(fetched)));
     }
 
-    private static Download downloadBlocking(String name, String version) {
+    /** A verified jar sitting in a temporary file in the module folder. */
+    private static final class Fetched {
+        final Path temp;
+        final String moduleId;
+        final String version;
+        final String fileName;
+
+        Fetched(Path temp, String moduleId, String version, String fileName) {
+            this.temp = temp;
+            this.moduleId = moduleId;
+            this.version = version;
+            this.fileName = fileName;
+        }
+    }
+
+    private static Fetched fetch(String name, String version) {
         String url = moduleUrl(name) + "/download";
         if (version != null && ! version.isBlank()) url += "?version=" + encode(version);
 
@@ -118,6 +141,7 @@ public final class ModuleCloud {
             throw new CloudException("Could not write to the module folder: " + e.getMessage(), e);
         }
 
+        boolean keep = false;
         try {
             HttpResponse<Path> response = send(HttpRequest.newBuilder(URI.create(url))
                     .timeout(Duration.ofMinutes(2))
@@ -142,37 +166,90 @@ public final class ModuleCloud {
                     .filter(n -> SAFE_JAR_NAME.matcher(n).matches())
                     .orElse(name + "-" + moduleVersion + ".jar");
 
-            PluginWrapper installed = ModuleManager.safePluginManager().getPlugin(moduleId);
+            keep = true;
+            return new Fetched(temp, moduleId, moduleVersion, fileName);
+        } catch (IOException e) {
+            throw new CloudException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
+        } finally {
+            if (! keep) deleteQuietly(temp);
+        }
+    }
+
+    private static Download install(Fetched fetched) {
+        try {
+            PluginWrapper installed = ModuleManager.safePluginManager().getPlugin(fetched.moduleId);
             if (installed != null) {
                 String installedVersion = installed.getDescriptor().getVersion();
                 String installedJar = installed.getPluginPath().getFileName().toString();
-                if (installedVersion.equals(moduleVersion)) {
-                    throw new CloudException("'" + moduleId + "' " + moduleVersion + " is already installed (" + installedJar + ").");
+                if (installedVersion.equals(fetched.version)) {
+                    throw new CloudException("'" + fetched.moduleId + "' " + fetched.version + " is already installed (" + installedJar + ").");
                 }
                 // PF4J identifies modules by Plugin-Id, so a second jar with the same id
                 // would clash on the next start; replacing a loaded jar needs a restart.
-                throw new CloudException("'" + moduleId + "' " + installedVersion + " is already installed (" + installedJar
-                        + "). Delete that jar and restart to switch to " + moduleVersion + ".");
+                throw new CloudException("'" + fetched.moduleId + "' " + installedVersion + " is already installed (" + installedJar
+                        + "). Delete that jar and restart to switch to " + fetched.version + ".");
             }
 
-            Path target = folder.resolve(fileName);
-            move(temp, target);
+            // Jars PF4J has not loaded (unloaded, or failed to load) still claim their
+            // Plugin-Id on the next start. A jar with the target name is simply replaced.
+            String clash = jarOnDiskWithId(fetched.moduleId, fetched.fileName);
+            if (clash != null) {
+                throw new CloudException("'" + clash + "' in the module folder already has the Plugin-Id '"
+                        + fetched.moduleId + "'. Delete it first.");
+            }
+
+            Path target = Singularity.getModuleFolder().toPath().resolve(fetched.fileName);
+            try {
+                move(fetched.temp, target);
+            } catch (IOException e) {
+                throw new CloudException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
+            }
 
             try {
-                ModuleManager.registerExternalModule(fileName);
+                ModuleManager.registerExternalModule(fetched.fileName);
             } catch (Throwable e) {
-                return new Download(moduleId, moduleVersion, target, false, String.valueOf(e.getMessage()));
+                return new Download(fetched.moduleId, fetched.version, target, false, String.valueOf(e.getMessage()));
             }
-            boolean loaded = ModuleManager.getPluginWrapperByJarName(fileName) != null;
-            return new Download(moduleId, moduleVersion, target, loaded, loaded ? null : "PF4J did not register the jar");
-        } catch (IOException e) {
-            throw new CloudException("Could not reach " + baseUrl + ": " + e.getMessage(), e);
+            boolean loaded = ModuleManager.getPluginWrapperByJarName(fetched.fileName) != null;
+            return new Download(fetched.moduleId, fetched.version, target, loaded, loaded ? null : "PF4J did not register the jar");
         } finally {
-            try {
-                Files.deleteIfExists(temp);
+            deleteQuietly(fetched.temp);
+        }
+    }
+
+    /** The name of a jar in the module folder, other than {@code except}, whose manifest declares {@code pluginId}. */
+    private static String jarOnDiskWithId(String pluginId, String except) {
+        for (File file : ModuleManager.getModuleFiles().values()) {
+            if (file.getName().equals(except)) continue;
+            try (JarFile jar = new JarFile(file)) {
+                Manifest manifest = jar.getManifest();
+                if (manifest == null) continue;
+                String id = manifest.getMainAttributes().getValue("Plugin-Id");
+                if (id != null && id.trim().equalsIgnoreCase(pluginId)) return file.getName();
             } catch (IOException ignored) {
-                // A leftover .part file is harmless; it is never loaded.
+                // Unreadable jars cannot be loaded either, so they cannot clash.
             }
+        }
+        return null;
+    }
+
+    private static <T> CompletableFuture<T> onMainThread(Supplier<T> task) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        Singularity.getInstance().getPlatform().runOnMainThread(() -> {
+            try {
+                future.complete(task.get());
+            } catch (Throwable e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
+    }
+
+    private static void deleteQuietly(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+            // A leftover .part file is harmless; it is never loaded.
         }
     }
 
@@ -192,7 +269,7 @@ public final class ModuleCloud {
                     if (response.statusCode() != 200) return;
 
                     ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
-                    for (JsonElement element : JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
+                    for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
                         names.add(element.getAsJsonObject().get("name").getAsString());
                     }
                     cachedNames.retainAll(names);
@@ -233,7 +310,7 @@ public final class ModuleCloud {
     /** The registry answers errors as {@code {"error": "..."}}; falls back to the status code. */
     private static String errorMessage(int status, String body) {
         try {
-            JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+            JsonObject json = new JsonParser().parse(body).getAsJsonObject();
             if (json.has("error")) return json.get("error").getAsString();
         } catch (Exception ignored) {
             // Not JSON (e.g. a proxy error page).
