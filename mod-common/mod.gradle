@@ -107,6 +107,14 @@ tasks.named('shadowJar') {
     }
     mergeServiceFiles()
 
+    // Reactive Streams and Reactor are used only inside Lettuce, and other mods ship their
+    // own copies (C2ME bundles RxJava on Reactive Streams). An unrelocated
+    // org.reactivestreams in this jar is exported to the game layer and shadows those mods'
+    // copy, so their classes link against two different Publisher classes and fail with a
+    // loader constraint violation.
+    relocate('org.reactivestreams', 'net.streamline.libs.reactivestreams')
+    relocate('reactor', 'net.streamline.libs.reactor')
+
     // The game or the loader already ships these (Forge/NeoForge refuse a second jar
     // exporting the same package), and Logback must not compete with the game's Log4j for
     // SLF4J. The JetBrains annotations are compile-time only.
