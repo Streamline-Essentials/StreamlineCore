@@ -262,6 +262,22 @@ public class Singularity<C, P extends C, S extends ISingularityExtension, U exte
     @Getter @Setter
     private static IBackendHandler backendHandler;
 
+    /**
+     * In-game actions on players and worlds (teleports across worlds, healing, flight,
+     * inventories, safe-spot searches). Set by backend platforms only; {@code null} on proxies.
+     */
+    @Getter @Setter
+    private static IGameplayHandler gameplayHandler;
+
+    /**
+     * The {@link #getGameplayHandler() gameplay handler}, if this platform provides one.
+     *
+     * @return the handler, or empty on proxies
+     */
+    public static java.util.Optional<IGameplayHandler> gameplay() {
+        return java.util.Optional.ofNullable(gameplayHandler);
+    }
+
     /** {@code true} if this server is running behind a proxy (i.e., is a backend server). */
     @Getter @Setter
     private static boolean proxiedServer;

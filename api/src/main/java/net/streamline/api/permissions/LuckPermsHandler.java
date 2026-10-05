@@ -1,9 +1,11 @@
 package net.streamline.api.permissions;
 
 import net.luckperms.api.node.Node;
+import net.luckperms.api.util.Tristate;
 import net.streamline.api.SLAPI;
 import singularity.utils.UuidUtils;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -62,15 +64,30 @@ public class LuckPermsHandler {
      * @return {@code true} if LuckPerms grants the permission to the loaded player
      */
     public static boolean hasPermission(String uuid, String permission) {
+        return permissionValue(uuid, permission).orElse(false);
+    }
+
+    /**
+     * The value LuckPerms explicitly assigns the node for the loaded player. Unlike
+     * {@link #hasPermission(String, String)}, this distinguishes a node LuckPerms leaves
+     * unset (empty) from one it denies, so a caller can apply its own default.
+     *
+     * @param uuid       the player's UUID (any format accepted by {@code UuidUtils.toUuid})
+     * @param permission the permission node string to check
+     * @return the explicit value, or empty when LuckPerms is unavailable, the player is not
+     *         loaded, or the node is undefined
+     */
+    public static Optional<Boolean> permissionValue(String uuid, String permission) {
         String sUuid = UuidUtils.toUuid(uuid);
-        if (sUuid == null) return false;
+        if (sUuid == null) return Optional.empty();
 
         UUID playerUuid = UUID.fromString(sUuid);
 
         return SLAPI.getLpOptional()
                 .map(lp -> lp.getUserManager().getUser(playerUuid))
-                .map(user -> user.getCachedData().getPermissionData().checkPermission(permission).asBoolean())
-                .orElse(false);
+                .map(user -> user.getCachedData().getPermissionData().checkPermission(permission))
+                .filter(tristate -> tristate != Tristate.UNDEFINED)
+                .map(Tristate::asBoolean);
     }
 
     /**
