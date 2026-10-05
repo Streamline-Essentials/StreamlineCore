@@ -57,9 +57,10 @@ public class RouteKeeper extends DBKeeper<Route> {
 
         String table = "%table_prefix%discord_routes".replace("%table_prefix%", getDatabase().getConnectorSet().getTablePrefix());
 
-        addColumnIfNotExistsSQLite(table, "InputUuid", "VARCHAR(36) NOT NULL");
-        addColumnIfNotExistsSQLite(table, "OutputUuid", "VARCHAR(36) NOT NULL");
-        addColumnIfNotExistsSQLite(table, "EnabledEvents", "TEXT NOT NULL");
+        // SQLite rejects ADD COLUMN ... NOT NULL without a default on a table that already has rows.
+        addColumnIfNotExistsSQLite(table, "InputUuid", "VARCHAR(36) NOT NULL DEFAULT ''");
+        addColumnIfNotExistsSQLite(table, "OutputUuid", "VARCHAR(36) NOT NULL DEFAULT ''");
+        addColumnIfNotExistsSQLite(table, "EnabledEvents", "TEXT NOT NULL DEFAULT ''");
     }
 
     // For MySQL - checks if column exists before adding
@@ -105,20 +106,31 @@ public class RouteKeeper extends DBKeeper<Route> {
         addColumnIfNotExistsSQLite(table, column, definition, null);
     }
 
-    private void addColumnIfNotExistsSQLite(String table, String column, String definition, @Nullable String afterColumn) {
-        String alter = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition + (afterColumn != null ? " AFTER " + afterColumn : "");
-
-        try {
-            getDatabase().execute(alter, stmt -> {});
-        } catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-            if (msg.contains("duplicate") || msg.contains("already exists") || msg.contains("duplicate column name")) {
-                // expected - column already exists → ignore silently
-            } else {
-                // unexpected error → at least log it
+    // DBOperator logs and swallows SQL errors itself, so the column has to be checked
+    // up front rather than by catching a "duplicate column" failure.
+    private boolean columnExistsSQLite(String table, String column) {
+        AtomicBoolean exists = new AtomicBoolean(false);
+        getDatabase().executeQuery("PRAGMA table_info(" + table + ");", ps -> {}, rs -> {
+            try {
+                while (rs.next()) {
+                    if (column.equalsIgnoreCase(rs.getString("name"))) {
+                        exists.set(true);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        });
+
+        return exists.get();
+    }
+
+    // SQLite has no AFTER clause; afterColumn is ignored.
+    private void addColumnIfNotExistsSQLite(String table, String column, String definition, @Nullable String afterColumn) {
+        if (columnExistsSQLite(table, column)) return;
+
+        getDatabase().execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition + ";", stmt -> {});
     }
 
     @Override

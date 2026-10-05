@@ -34,6 +34,7 @@ import singularity.objects.SingleSet;
 import singularity.utils.UserUtils;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -150,6 +151,50 @@ public class DiscordHandler {
         new VerifyCommand();
     }
 
+    /**
+     * Logs the bot in and waits until it is ready.
+     *
+     * @param layout the bot configuration
+     * @param privileged whether to request the privileged GUILD_MEMBERS and MESSAGE_CONTENT intents.
+     *                   Discord closes the gateway with 4014 when a bot asks for a privileged intent
+     *                   not enabled in its Developer Portal page; in that case the login is retried
+     *                   without them, so the bot still runs with reduced features.
+     * @return the ready JDA instance, or {@code null} if login failed
+     */
+    private static JDA connect(BotLayout layout, boolean privileged) {
+        EnumSet<GatewayIntent> intents = GatewayIntent.getIntents(GatewayIntent.DEFAULT);
+        if (privileged) {
+            intents.add(GatewayIntent.GUILD_MEMBERS);
+            intents.add(GatewayIntent.MESSAGE_CONTENT);
+        }
+
+        JDA jda = null;
+        try {
+            jda = JDABuilder.createDefault(layout.getToken(), intents)
+                    .setMemberCachePolicy(privileged ? MemberCachePolicy.ALL : MemberCachePolicy.DEFAULT)
+                    .setVoiceDispatchInterceptor(new StreamlineVoiceInterceptor())
+                    .setActivity(Activity.of(layout.getActivityType(), layout.getActivityValue()))
+                    .addEventListeners(new DiscordListener())
+                    .build();
+            return jda.awaitReady();
+        } catch (Exception e) {
+            if (jda != null) jda.shutdownNow();
+
+            String message = String.valueOf(e.getMessage());
+            if (privileged && message.contains("intent")) {
+                StreamlineDiscord.getInstance().logWarning(
+                        "&cThe Discord bot is not allowed the privileged intents it needs.&r%newline%" +
+                        "&eEnable '&bServer Members Intent&e' and '&bMessage Content Intent&e' for the bot at " +
+                        "&bhttps://discord.com/developers/applications&e (Bot tab).%newline%" +
+                        "&eRetrying without them; Discord messages will arrive without their text until they are enabled.");
+                return connect(layout, false);
+            }
+
+            StreamlineDiscord.getInstance().logWarning("Discord login failed: " + message);
+            return null;
+        }
+    }
+
     public static CompletableFuture<Boolean> init() {
         getForwardedJsonsFolder().mkdirs();
 
@@ -160,20 +205,13 @@ public class DiscordHandler {
                 StreamlineDiscord.getInstance().logInfo("Bot is initializing...!");
 
                 BotLayout layout = StreamlineDiscord.getConfig().getBotLayout();
-                try {
-                    JDA jda = JDABuilder.createDefault(layout.getToken(), List.of(GatewayIntent.values()))
-                            .setMemberCachePolicy(MemberCachePolicy.ALL)
-                            .setVoiceDispatchInterceptor(new StreamlineVoiceInterceptor())
-                            .setActivity(Activity.of(layout.getActivityType(), layout.getActivityValue()))
-                            .addEventListeners(new DiscordListener())
-                            .build();
-                    jda = jda.awaitReady();
-                    setDiscordAPI(jda);
-
-                    StreamlineDiscord.getInstance().logInfo("Bot is ready!");
-                } catch (Exception e) {
-                    e.printStackTrace();
+                JDA jda = connect(layout, true);
+                if (jda == null) {
+                    StreamlineDiscord.getInstance().logWarning("&cThe Discord bot could not log in; Discord features stay off until the bot is reloaded.");
+                    return false;
                 }
+                setDiscordAPI(jda);
+                StreamlineDiscord.getInstance().logInfo("Bot is ready!");
 
                 try {
                     updateBotAvatar(layout.getAvatarUrl());
