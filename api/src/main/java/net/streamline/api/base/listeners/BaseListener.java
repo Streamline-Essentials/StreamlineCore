@@ -5,6 +5,8 @@ import gg.drak.thebase.events.BaseEventListener;
 import gg.drak.thebase.events.processing.BaseProcessor;
 import singularity.Singularity;
 import net.streamline.api.base.module.BaseModule;
+import singularity.events.server.LogoutEvent;
+import singularity.gui.GuiManager;
 import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessageManager;
 
@@ -43,5 +45,17 @@ public class BaseListener implements BaseEventListener {
         if (event.getSubChannel() == null) return;
 
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
+    }
+
+    /**
+     * Drops any GUI state held for a player who left.
+     *
+     * @param event the logout event
+     */
+    @BaseProcessor
+    public void onLogout(LogoutEvent event) {
+        if (event.getPlayer() == null) return;
+
+        GuiManager.forget(event.getPlayer().getUuid());
     }
 }
