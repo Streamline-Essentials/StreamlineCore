@@ -79,7 +79,10 @@ public class PaginatedGui extends CosmicGui {
         return entries;
     }
 
-    /** Lays out everything other than the entries and page buttons. */
+    /**
+     * Lays out everything other than the entries and page buttons. Content slots left empty by
+     * the current page keep whatever this puts there.
+     */
     protected void drawFrame(CosmicPlayer viewer) {
     }
 
@@ -96,7 +99,6 @@ public class PaginatedGui extends CosmicGui {
         for (int i = 0; i < contentSlots.size(); i++) {
             int index = start + i;
             if (index < entries.size()) setIcon(contentSlots.get(i), entries.get(index));
-            else removeIcon(contentSlots.get(i));
         }
 
         if (hasPreviousPage()) {
