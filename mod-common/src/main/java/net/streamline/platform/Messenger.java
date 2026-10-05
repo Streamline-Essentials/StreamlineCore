@@ -1,15 +1,20 @@
 package net.streamline.platform;
 
 import lombok.Getter;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.streamline.api.SLAPI;
+import net.streamline.platform.compat.McCompat;
 import singularity.data.console.CosmicSender;
 import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.IMessenger;
+import singularity.objects.ClickableMessage;
 import singularity.objects.CosmicTitle;
 import singularity.utils.MessageUtils;
 
@@ -86,6 +91,28 @@ public class Messenger implements IMessenger {
     public void sendMessageRaw(CosmicSender to, CosmicSender other, String message) {
         if (to == null || other == null) return;
         deliverRaw(to, resolve(other, message));
+    }
+
+    @Override
+    public void sendClickable(CosmicSender to, ClickableMessage message) {
+        if (to == null || message == null || message.isEmpty()) return;
+        ServerPlayer player = to instanceof CosmicPlayer ? BasePlugin.getPlayer(to.getUuid()) : null;
+        if (player == null) {
+            sendMessage(to, message.joinedText());
+            return;
+        }
+
+        MutableComponent line = Component.empty();
+        for (ClickableMessage.Segment segment : message.getSegments()) {
+            Style style = Style.EMPTY;
+            if (segment.getHover() != null) {
+                style = style.withHoverEvent(McCompat.showText(Component.literal(codedString(segment.getHover()))));
+            }
+            ClickEvent click = McCompat.clickEvent(segment.getClickAction(), segment.getClickValue());
+            if (click != null) style = style.withClickEvent(click);
+            line.append(Component.literal(codedString(segment.getText())).withStyle(style));
+        }
+        player.sendSystemMessage(line);
     }
 
     @Override

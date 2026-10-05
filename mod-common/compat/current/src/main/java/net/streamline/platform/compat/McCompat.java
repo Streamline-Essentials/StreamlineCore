@@ -1,5 +1,10 @@
 package net.streamline.platform.compat;
 
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import singularity.objects.ClickableMessage;
+import java.net.URI;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.network.protocol.status.ServerStatus;
@@ -110,5 +115,28 @@ public final class McCompat {
             this.yaw = yaw;
             this.pitch = pitch;
         }
+    }
+
+    /** A click event for a {@link ClickableMessage} segment, or {@code null} when it has none or its URL is malformed. */
+    public static ClickEvent clickEvent(ClickableMessage.ClickAction action, String value) {
+        if (action == null || value == null) return null;
+        switch (action) {
+            case RUN_COMMAND:
+                return new ClickEvent.RunCommand(value);
+            case SUGGEST_COMMAND:
+                return new ClickEvent.SuggestCommand(value);
+            case OPEN_URL:
+                try {
+                    return new ClickEvent.OpenUrl(URI.create(value));
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
+
+    public static HoverEvent showText(Component text) {
+        return new HoverEvent.ShowText(text);
     }
 }
