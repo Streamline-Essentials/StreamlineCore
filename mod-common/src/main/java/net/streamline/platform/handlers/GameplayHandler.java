@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -63,13 +64,52 @@ public abstract class GameplayHandler implements IGameplayHandler {
         new BaseRunnable(10, 10) {
             @Override
             public void run() {
-                if (flightKept.isEmpty()) return;
-                runOnServer(() -> flightKept.forEach(uuid -> {
-                    ServerPlayer player = player(uuid.toString());
-                    if (player != null && ! player.getAbilities().mayfly) applyFlight(player, true);
-                }));
+                if (flightKept.isEmpty() && godMode.isEmpty()) return;
+                runOnServer(() -> {
+                    flightKept.forEach(uuid -> {
+                        ServerPlayer player = player(uuid.toString());
+                        if (player != null && ! player.getAbilities().mayfly) applyFlight(player, true);
+                    });
+                    godMode.forEach(uuid -> {
+                        ServerPlayer player = player(uuid.toString());
+                        if (player != null) applyGod(player, true);
+                    });
+                });
             }
         };
+    }
+
+    /** Players in god mode; vanilla resets invulnerability on respawn and game mode change. */
+    private final Set<UUID> godMode = ConcurrentHashMap.newKeySet();
+
+    @Override
+    public boolean setGodMode(String uuid, boolean enabled) {
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            if (enabled) godMode.add(player.getUUID());
+            else godMode.remove(player.getUUID());
+            applyGod(player, enabled);
+            return true;
+        }, false);
+    }
+
+    /**
+     * Uses the creative-mode invulnerability flag, which vanilla already honours for every
+     * damage source except those that bypass invulnerability (the void, {@code /kill}).
+     * Hunger is topped up instead, as nothing in vanilla stops it draining.
+     */
+    @SuppressWarnings("deprecation")
+    private static void applyGod(ServerPlayer player, boolean enabled) {
+        boolean invulnerable = enabled || player.isCreative() || player.isSpectator();
+        if (player.getAbilities().invulnerable != invulnerable) {
+            player.getAbilities().invulnerable = invulnerable;
+            player.onUpdateAbilities();
+        }
+        if (enabled) {
+            player.getFoodData().setFoodLevel(20);
+            player.clearFire();
+        }
     }
 
     /**
@@ -86,6 +126,7 @@ public abstract class GameplayHandler implements IGameplayHandler {
     /** Clears per-session state when the player leaves. */
     public void forget(ServerPlayer player) {
         flightKept.remove(player.getUUID());
+        godMode.remove(player.getUUID());
         DISPLAY_NAMES.remove(player.getUUID());
     }
 
@@ -279,6 +320,22 @@ public abstract class GameplayHandler implements IGameplayHandler {
             ServerPlayer player = player(uuid);
             if (player == null) return false;
             player.openMenu(Workstations.provider(type, (ServerLevel) player.level(), player.blockPosition()));
+            return true;
+        }, false);
+    }
+
+    @Override
+    public boolean openEnderChest(String viewerUuid, String ownerUuid) {
+        return callOnServer(() -> {
+            ServerPlayer viewer = player(viewerUuid);
+            ServerPlayer owner = player(ownerUuid);
+            if (viewer == null || owner == null) return false;
+            // With no ender chest block attached, the container stays valid wherever the viewer goes.
+            PlayerEnderChestContainer chest = owner.getEnderChestInventory();
+            Component title = viewer == owner
+                    ? Component.translatable("container.enderchest")
+                    : Component.literal(owner.getName().getString() + "'s ender chest");
+            viewer.openMenu(new SimpleMenuProvider((id, inventory, p) -> ChestMenu.threeRows(id, inventory, chest), title));
             return true;
         }, false);
     }

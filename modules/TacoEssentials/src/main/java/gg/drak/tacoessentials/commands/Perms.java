@@ -18,6 +18,7 @@ public final class Perms {
 
     public static final String LISTHOMES_OTHERS = command("listhomes.others");
     public static final String DBACK_OTHERS = command("dback.others");
+    public static final String EC_OTHERS = command("ec.others");
     public static final String RTP_BYPASS_COOLDOWN = PREFIX + "rtp.bypasscooldown";
     public static final String HOMES_UNLIMITED = PREFIX + "homes.unlimited";
 

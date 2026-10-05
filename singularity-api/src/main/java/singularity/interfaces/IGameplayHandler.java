@@ -172,6 +172,18 @@ public interface IGameplayHandler {
     boolean setFlight(String uuid, boolean allowed);
 
     /**
+     * Turns god mode on or off. While on, the player takes no damage (except what the game lets
+     * bypass invulnerability, such as the void and {@code /kill}) and their hunger stays full.
+     * Like {@link #setFlight(String, boolean)}, it lasts until the player logs out; the caller
+     * re-applies it at the next login if it should persist.
+     *
+     * @param uuid    the player's UUID
+     * @param enabled whether god mode is on
+     * @return {@code false} if the player is not online on this server
+     */
+    boolean setGodMode(String uuid, boolean enabled);
+
+    /**
      * Moves one item from the player's main hand onto their head. The old helmet, if any,
      * goes back into their inventory, or is dropped when the inventory is full.
      *
@@ -201,6 +213,16 @@ public interface IGameplayHandler {
      *         support opening that workstation remotely
      */
     boolean openWorkstation(String uuid, Workstation type);
+
+    /**
+     * Shows the owner's live ender chest to the viewer, who can move items in and out of it.
+     * The viewer may be the owner.
+     *
+     * @param viewerUuid the viewer's UUID
+     * @param ownerUuid  the UUID of the player whose ender chest is shown
+     * @return {@code false} if either player is not online on this server
+     */
+    boolean openEnderChest(String viewerUuid, String ownerUuid);
 
     /**
      * Shows the target's live inventory (main inventory, hotbar, armor and offhand) to the

@@ -7,12 +7,13 @@ import singularity.modules.ModuleUtils;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** {@code /kickme}, {@code /trashcan}, {@code /hat}, {@code /nick}, plus nickname handling shared with {@code /nickfor}. */
+/** {@code /kickme}, {@code /trashcan}, {@code /hat}, {@code /nick}, {@code /ec}, plus nickname handling shared with {@code /nickfor}. */
 public final class UtilityCommands {
 
     private static final int TRASH_ROWS = 4;
@@ -27,7 +28,22 @@ public final class UtilityCommands {
                 gameplay().openDisposal(ctx.player().getUuid(), "&8Trash Can - items are deleted on close", TRASH_ROWS)));
         commands.add(new TacoCommand("hat", UtilityCommands::hat));
         commands.add(new TacoCommand("nick", UtilityCommands::nick));
+        commands.add(new TacoCommand("ec", UtilityCommands::enderChest,
+                (ctx, arg) -> arg == 0 && ctx.has(Perms.EC_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList()));
         return commands;
+    }
+
+    /** {@code /ec (player)}: the runner's own ender chest, or {@code (player)}'s with the others permission. */
+    private static void enderChest(TacoCommand.Ctx ctx) throws Msg.Fail {
+        CosmicPlayer viewer = ctx.player();
+        CosmicPlayer owner = viewer;
+        if (ctx.arg(0) != null) {
+            if (! ctx.has(Perms.EC_OTHERS)) throw Msg.fail("You may only open your own ender chest.");
+            owner = TacoCommand.onlinePlayer(ctx.arg(0));
+        }
+        if (! gameplay().openEnderChest(viewer.getUuid(), owner.getUuid())) {
+            throw Msg.fail(owner.getCurrentName() + " is not online here.");
+        }
     }
 
     private static void hat(TacoCommand.Ctx ctx) throws Msg.Fail {

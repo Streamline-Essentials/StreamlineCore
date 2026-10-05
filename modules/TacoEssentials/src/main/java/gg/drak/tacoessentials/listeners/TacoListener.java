@@ -42,6 +42,7 @@ public class TacoListener implements BaseEventListener {
             TacoDatabase.recordPlayer(uuid, player.getCurrentName());
             Sessions.Session session = Sessions.load(uuid);
             if (session.isFly()) gameplay().setFlight(uuid, true);
+            if (session.isGod()) gameplay().setGodMode(uuid, true);
             sendToFirstSpawn(uuid);
         } catch (Exception e) {
             MessageUtils.logWarning("[TacoEssentials] Could not load data for " + player.getCurrentName() + ": " + e.getMessage());

@@ -20,6 +20,7 @@ import lombok.Getter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
 import singularity.command.ModuleCommand;
+import singularity.interfaces.IGameplayHandler;
 import singularity.modules.ModuleUtils;
 import singularity.modules.SimpleModule;
 import singularity.scheduler.ModuleRunnable;
@@ -53,7 +54,7 @@ public class TacoEssentials extends SimpleModule {
 
     @Override
     public void registerCommands() {
-        if (Singularity.gameplay().isEmpty()) return;
+        if (Singularity.gameplay().isEmpty() || ! coreSupported()) return;
 
         List<ModuleCommand> commands = new ArrayList<>();
         commands.addAll(TeleportCommands.create());
@@ -71,6 +72,11 @@ public class TacoEssentials extends SimpleModule {
         instance = this;
         if (Singularity.gameplay().isEmpty()) {
             logWarning("This platform has no worlds to act on (a proxy?); TacoEssentials registers no commands here.");
+            return;
+        }
+        if (! coreSupported()) {
+            logSevere("This StreamlineCore build is older than TacoEssentials " + getWrapper().getDescriptor().getVersion()
+                    + " needs; TacoEssentials registers no commands. Install the StreamlineCore build released with it.");
             return;
         }
 
@@ -96,7 +102,20 @@ public class TacoEssentials extends SimpleModule {
     public void start() {
         boolean wasEnabled = isEnabled();
         super.start();
-        if (! wasEnabled && Singularity.gameplay().isPresent()) AliasManager.load();
+        if (! wasEnabled && Singularity.gameplay().isPresent() && coreSupported()) AliasManager.load();
+    }
+
+    /**
+     * Whether the running core has every gameplay call this module makes. Core builds share a
+     * version string, so the newest call is probed for directly.
+     */
+    private static boolean coreSupported() {
+        try {
+            IGameplayHandler.class.getMethod("setGodMode", String.class, boolean.class);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
     }
 
     @Override

@@ -7,6 +7,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -24,7 +26,7 @@ import singularity.utils.UserUtils;
 
 /**
  * Bridges the Bukkit events behind {@link singularity.interfaces.IGameplayHandler} features:
- * deaths, commands before they run, and nickname display.
+ * deaths, commands before they run, nickname display and god mode.
  */
 public class GameplayListener implements Listener {
 
@@ -57,6 +59,24 @@ public class GameplayListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         TaskManager.schedule(player, () -> handler.refreshDisplayName(player.getUniqueId().toString()), 20L);
+    }
+
+    /**
+     * God mode: no damage except what bypasses invulnerability in vanilla too, so a player in
+     * the void or hit by {@code /kill} is not stuck alive.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onDamage(EntityDamageEvent event) {
+        if (! (event.getEntity() instanceof Player) || ! handler.isGod(event.getEntity().getUniqueId())) return;
+        String cause = event.getCause().name();
+        if (cause.equals("VOID") || cause.equals("KILL") || cause.equals("SUICIDE")) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onHunger(FoodLevelChangeEvent event) {
+        if (! handler.isGod(event.getEntity().getUniqueId())) return;
+        if (event.getFoodLevel() < event.getEntity().getFoodLevel()) event.setCancelled(true);
     }
 
     @EventHandler
