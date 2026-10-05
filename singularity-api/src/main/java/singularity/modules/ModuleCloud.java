@@ -128,8 +128,9 @@ public final class ModuleCloud {
     }
 
     private static Fetched fetch(String name, String version) {
-        String url = moduleUrl(name) + "/download";
-        if (version != null && ! version.isBlank()) url += "?version=" + encode(version);
+        // "latest" is a registry keyword, never a real version.
+        String target = version == null || version.isBlank() ? "latest" : version.trim();
+        String url = apiUrl() + "/" + encode(name) + "/download/" + encode(target);
 
         Path folder = Singularity.getModuleFolder().toPath();
         Path temp;
@@ -153,7 +154,7 @@ public final class ModuleCloud {
             }
 
             String moduleId = response.headers().firstValue("X-Module-Id").orElse(name);
-            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(version);
+            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(target);
             String expected = response.headers().firstValue("X-Checksum-SHA256").orElse(null);
             if (expected != null && ! expected.equalsIgnoreCase(sha256(temp))) {
                 throw new CloudException("Checksum mismatch for '" + moduleId + "'; the download was discarded.");
@@ -262,7 +263,7 @@ public final class ModuleCloud {
         if (System.currentTimeMillis() - namesFetchedAt > NAME_CACHE_MILLIS && namesRefreshing.compareAndSet(false, true)) {
             CompletableFuture.runAsync(() -> {
                 try {
-                    HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(baseUrl() + "/api/v1/modules"))
+                    HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
                             .timeout(Duration.ofSeconds(15))
                             .header("Accept", "application/json")
                             .GET().build(), HttpResponse.BodyHandlers.ofString());
@@ -299,8 +300,8 @@ public final class ModuleCloud {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
-    private static String moduleUrl(String name) {
-        return baseUrl() + "/api/v1/modules/" + encode(name);
+    private static String apiUrl() {
+        return baseUrl() + "/api/v1";
     }
 
     private static String encode(String value) {
