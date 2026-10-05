@@ -1,0 +1,88 @@
+# StreamlineCollections settings. The collections themselves live in collections.yml.
+
+tracking:
+  block-break: true
+  mob-kills: true
+  fishing: true
+  bucket-fill: true
+  # Whether breaking a block a player placed counts. Crops in collections.yml's
+  # `mature-only` count once fully grown either way.
+  count-placed-blocks: false
+
+# How often changed progress is written to the database, in seconds (and always on quit).
+save-interval-seconds: 60
+
+# Completed levels are claimed by clicking them in the collection's menu.
+rewards:
+  enabled: true
+  # Runs as the console of the server the player claims on. %player%, %uuid%, %level%,
+  # %collection% (its name) and %collection_id% are replaced. Levels beyond the last entry
+  # use the last entry.
+  levels:
+    '1':
+      description: "&a+10 XP"
+      commands:
+        - "xp add %player% 10 points"
+    '2':
+      description: "&a+25 XP"
+      commands:
+        - "xp add %player% 25 points"
+    '3':
+      description: "&a+50 XP"
+      commands:
+        - "xp add %player% 50 points"
+    '4':
+      description: "&a+100 XP"
+      commands:
+        - "xp add %player% 100 points"
+    '5':
+      description: "&a+175 XP"
+      commands:
+        - "xp add %player% 175 points"
+    '6':
+      description: "&a+275 XP"
+      commands:
+        - "xp add %player% 275 points"
+    '7':
+      description: "&a+400 XP"
+      commands:
+        - "xp add %player% 400 points"
+    '8':
+      description: "&a+600 XP"
+      commands:
+        - "xp add %player% 600 points"
+    '9':
+      description: "&a+900 XP"
+      commands:
+        - "xp add %player% 900 points"
+    '10':
+      description: "&a+1500 XP"
+      commands:
+        - "xp add %player% 1500 points"
+  remind-on-join: true
+  # Reminds online players with unclaimed levels this often, in minutes; 0 turns it off.
+  remind-interval-minutes: 60
+
+messages:
+  # %level% %collection%
+  level-complete: "#38C1FCYou completed Level #FFFFFF%level% #38C1FCof #FFED6A%collection%#38C1FC. "
+  level-complete-button: "#00FC88&l[CLICK HERE TO CLAIM]"
+  level-complete-hover: "#AAAAAAClaim #00FC88%reward%"
+  level-reached: "#38C1FCYou reached Level #FFFFFF%level% #38C1FCof #FFED6A%collection%#38C1FC!"
+  # %count%
+  remind: "#FFED6AYou still have #FFFFFF%count% #FFED6Acollection reward(s) waiting! "
+  remind-button: "#00FC88&l[CLICK HERE TO CLAIM]"
+  remind-hover: "#FFFFFFOpen collections to claim your rewards"
+  # %level% %collection% %reward%
+  claimed: "#00FC88Claimed Level #FFFFFF%level% #00FC88of #FFED6A%collection% #00FC88(%reward%#00FC88)"
+  already-claimed: "#AAAAAAThat reward was already claimed."
+  rewards-disabled: "#FF5555Collection rewards are currently disabled."
+  claim-elsewhere: "#FF5555Rewards can only be claimed on a game server."
+  locked: "#FF5555You have not completed this level yet."
+  # %collection%
+  unknown: "#FF5555Unknown collection: #FFFFFF%collection%"
+  # %player%
+  unknown-player: "#FF5555No collection data for #FFFFFF%player%#FF5555."
+  no-permission: "#FF5555You do not have permission to do that."
+  players-only: "#FF5555Only players can do that."
+  no-gui: "#FF5555Menus are not available on this server."
