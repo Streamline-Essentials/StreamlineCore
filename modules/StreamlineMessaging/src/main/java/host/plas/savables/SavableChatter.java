@@ -47,9 +47,25 @@ public class SavableChatter implements Loadable<SavableChatter> {
     private ConcurrentSkipListMap<String, FriendInviteExpiry> friendInvites;
     @Getter @Setter
     private ConcurrentSkipListMap<Date, String> bestFriends;
+    /**
+     * Invites read from the database, by invited uuid, with the ticks they had left. Their
+     * expiry timers start only once this chatter is the live, loaded instance -- see
+     * {@link #startStoredInvites()} -- because a timer holds its sender and would otherwise
+     * act on a throwaway copy built while reading the row.
+     */
+    @Getter
+    private ConcurrentSkipListMap<String, Long> storedInvites;
 
     @Getter @Setter
     private boolean fullyLoaded = false;
+
+    /**
+     * Set while {@link #augment} waits on the stored record. Saving rewrites every friend,
+     * ignore and invite row, so a save in that window would erase the stored ones; it is
+     * held until the record has been merged in.
+     */
+    private volatile boolean loadInFlight = false;
+    private volatile boolean savePendingAfterLoad = false;
 
     public void setCurrentChatChannel(ConfiguredChatChannel chatChannel) {
         if (! chatChannel.getIdentifier().equals(StreamlineMessaging.getConfigs().defaultChat())) {
@@ -77,6 +93,7 @@ public class SavableChatter implements Loadable<SavableChatter> {
         this.ignoring = new ConcurrentSkipListMap<>();
         this.friendInvites = new ConcurrentSkipListMap<>();
         this.bestFriends = new ConcurrentSkipListMap<>();
+        this.storedInvites = new ConcurrentSkipListMap<>();
     }
     
     public void setViewed(String channel, boolean viewed) {
@@ -118,7 +135,17 @@ public class SavableChatter implements Loadable<SavableChatter> {
     }
     
     public void setInviteSent(long ticksLeft, String uuid) {
-        FriendInviteExpiry expiry = new FriendInviteExpiry(this, MyLoader.getInstance().getOrCreate(uuid), ticksLeft);
+        storedInvites.put(uuid, ticksLeft);
+    }
+
+    /** Starts the expiry timer of every stored invite that is not already running. */
+    public void startStoredInvites() {
+        storedInvites.forEach((uuid, ticksLeft) -> {
+            if (storedInvites.remove(uuid) == null) return;
+            if (friendInvites.containsKey(uuid)) return;
+
+            friendInvites.put(uuid, new FriendInviteExpiry(this, MyLoader.getInstance().getOrCreate(uuid), ticksLeft));
+        });
     }
 
     public static String getDefaultChannelsViewing() {
@@ -192,21 +219,20 @@ public class SavableChatter implements Loadable<SavableChatter> {
     }
 
     public void save() {
-        StreamlineMessaging.getKeeper().save(this);
+        save(true);
     }
 
     @Override
     public SavableChatter augment(CompletableFuture<Optional<SavableChatter>> completableFuture, boolean isGet) {
         fullyLoaded = false;
+        loadInFlight = true;
 
         completableFuture.whenComplete((optional, throwable) -> {
+            boolean saveNow = savePendingAfterLoad;
+
             if (throwable != null) {
                 throwable.printStackTrace();
-                fullyLoaded = true;
-                return;
-            }
-
-            if (optional.isPresent()) {
+            } else if (optional.isPresent()) {
                 SavableChatter user = optional.get();
 
                 this.currentChatChannel = user.currentChatChannel;
@@ -218,15 +244,19 @@ public class SavableChatter implements Loadable<SavableChatter> {
                 this.viewing.putAll(user.viewing);
                 this.friends.putAll(user.friends);
                 this.ignoring.putAll(user.ignoring);
-                this.friendInvites.putAll(user.friendInvites);
+                user.storedInvites.forEach(this.storedInvites::putIfAbsent);
                 this.bestFriends.putAll(user.bestFriends);
-            } else {
-                if (! isGet) {
-                    save();
-                }
+
+                startStoredInvites();
+            } else if (! isGet) {
+                saveNow = true;
             }
 
+            loadInFlight = false;
+            savePendingAfterLoad = false;
             fullyLoaded = true;
+
+            if (saveNow) save();
         });
 
         return this;
@@ -249,6 +279,11 @@ public class SavableChatter implements Loadable<SavableChatter> {
 
     @Override
     public void save(boolean async) {
+        if (loadInFlight) {
+            savePendingAfterLoad = true;
+            return;
+        }
+
         StreamlineMessaging.getKeeper().save(this, async);
     }
 
