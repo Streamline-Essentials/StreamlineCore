@@ -256,13 +256,13 @@ public class ModuleManager {
                     "&ecompletely new content to your server&b(&es&b)&7.%newline%" +
                     "&eInstall them by placing them in your servers&7'%newline%" +
                     "&7\"&b%addons_folder% -> StreamlineCore -> modules&7\" &efolder&7.%newline%" +
-                    "&eYou can check them out and download them from our%newline%" +
-                    "&c&lModule Public Download Stash&e. Thanks! And enjoy!%newline%" +
+                    "&eYou can browse and download them from the%newline%" +
+                    "&c&lStreamline Modules &esite&7. &eThanks! And enjoy!%newline%" +
                     "&r%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&r%newline%" +
-                    "&fUse the following to download &6Modules &ddirectly &c->%newline%" +
-                    "&6Modules &c&lPublic Download Stash&7: &bhttps://storage.drak.gg/share/75RJ__vUBVQrC_PRfuHeTg%newline%" +
+                    "&6Streamline &c&lModules&7: &bhttps://modules.drak.gg/%newline%" +
+                    "&fOr install one &ddirectly &fwith&7: &b/modules ecloud download <module>%newline%" +
                     "&r%newline%" +
                     "&a&m&l                                                 %newline%" +
                     "&r%newline%" +
