@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
@@ -125,15 +126,7 @@ public abstract class DiscordCommand extends ModularizedConfig {
         }
         Guild guild = ((GuildChannel) messagedString.getChannel()).getGuild();
 
-        if (defaultPermissionIsServerOwner()) {
-            if (guild.getOwnerIdLong() == messagedString.getAuthor().getIdLong()) return executeMore(messagedString);
-            return DiscordMessenger.simpleMessage("Only the server owner can use this command. To open it to a role, set 'permissions.default' in '" + getCommandIdentifier() + ".yml' to that role's ID.");
-        }
-
-        Role role = guild.getRoleById(getRole());
-        if (role == null) {
-            return DiscordMessenger.simpleMessage("Error: the role '" + getRole() + "' configured for this command does not exist. " + CONTACT_SUFFIX);
-        }
+        if (guild.getOwnerIdLong() == messagedString.getAuthor().getIdLong()) return executeMore(messagedString);
 
         Member member = guild.getMember(messagedString.getAuthor());
         if (member == null) {
@@ -143,6 +136,20 @@ public abstract class DiscordCommand extends ModularizedConfig {
             } catch (Exception e) {
                 return DiscordMessenger.simpleMessage("Error: could not look up your server membership. " + CONTACT_SUFFIX);
             }
+        }
+
+        List<Long> superAdminRoles = StreamlineDiscord.getConfig().getSuperAdminRoles();
+        if (member.getRoles().stream().anyMatch(r -> superAdminRoles.contains(r.getIdLong()))) return executeMore(messagedString);
+
+        if (defaultPermissionIsServerOwner()) {
+            return DiscordMessenger.simpleMessage("Only the server owner or a bot super admin can use this command. "
+                    + "Add a role's ID to 'bot.super-admin-roles' in the Discord module's config.yml, "
+                    + "or set 'permissions.default' in '" + getCommandIdentifier() + ".yml' to a role's ID.");
+        }
+
+        Role role = guild.getRoleById(getRole());
+        if (role == null) {
+            return DiscordMessenger.simpleMessage("Error: the role '" + getRole() + "' configured for this command does not exist. " + CONTACT_SUFFIX);
         }
 
         if (member.getRoles().contains(role)) return executeMore(messagedString);
