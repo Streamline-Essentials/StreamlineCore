@@ -269,11 +269,30 @@ public class Route implements Loadable<Route> {
     }
 
     public void drop() {
+        // Taken out of the loader directly: Loader.unload saves on the way out, which
+        // would queue the route straight back into the database.
+        RouteLoader.getLoadedRoutes().remove(this);
         DiscordMiddleware.dropRoute(this);
-        unload();
+
+        // A channel link is two routes over the same pair of endpoints, so an endpoint
+        // goes only once no remaining route uses it.
+        dropIfUnused(this.input);
+        dropIfUnused(this.output);
+
         this.input = null;
         this.output = null;
         this.enabledEvents.clear();
+    }
+
+    private static void dropIfUnused(EndPoint endPoint) {
+        if (endPoint == null) return;
+
+        boolean used = RouteLoader.getLoadedRoutes().stream().anyMatch(route -> uses(route.getInput(), endPoint) || uses(route.getOutput(), endPoint));
+        if (! used) endPoint.drop();
+    }
+
+    private static boolean uses(EndPoint candidate, EndPoint endPoint) {
+        return candidate != null && candidate.getIdentifier().equals(endPoint.getIdentifier());
     }
 
 
@@ -310,6 +329,7 @@ public class Route implements Loadable<Route> {
                 this.setIdentifier(route.getIdentifier());
                 this.setInput(route.getInput());
                 this.setOutput(route.getOutput());
+                this.setEnabledEvents(route.getEnabledEvents());
             } else {
                 if (! isGet) {
                     save();

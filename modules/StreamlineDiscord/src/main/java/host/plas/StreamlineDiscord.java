@@ -132,6 +132,9 @@ public class StreamlineDiscord extends SimpleModule {
 
     @Override
     public void onDisable() {
+        // The middleware writes in batches every 5 seconds; flush whatever is still queued.
+        if (getDiscordMiddleware() != null) getDiscordMiddleware().run();
+
         DiscordHandler.kill().completeOnTimeout(false, 7, TimeUnit.SECONDS).join();
         if (getDiscordExpansion() != null) getDiscordExpansion().stop();
     }

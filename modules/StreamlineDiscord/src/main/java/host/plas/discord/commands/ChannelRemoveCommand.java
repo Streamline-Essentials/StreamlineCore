@@ -70,11 +70,12 @@ public class ChannelRemoveCommand extends DiscordCommand {
         if (messagedString.getCommandArgs().length == 0) {
             AtomicReference<SingleSet<MessageCreateData, BotMessageConfig>> data = new AtomicReference<>(DiscordMessenger.simpleMessage("No channel found to remove!"));
 
-            RouteLoader.getLoadedRoutes().forEach(route -> {
-                if (route.getInput().getType().equals(EndPointType.DISCORD_TEXT) && route.getInput().getEndPointIdentifier().equals(messagedString.getChannel().getId())) {
-                    data.set(messageRemove(messagedString, route.getOutput()));
-                    route.drop();
-                }
+            // Both directions of the link: Discord -> game and game -> Discord.
+            String channelId = messagedString.getChannel().getId();
+            RouteLoader.getRoutesByDiscordChannel(channelId).forEach(route -> {
+                boolean fromHere = route.getInput().getType() == EndPointType.DISCORD_TEXT && route.getInput().getEndPointIdentifier().equals(channelId);
+                data.set(messageRemove(messagedString, fromHere ? route.getOutput() : route.getInput()));
+                route.drop();
             });
 
             return data.get();
