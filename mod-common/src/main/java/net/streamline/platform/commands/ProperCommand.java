@@ -1,14 +1,10 @@
 package net.streamline.platform.commands;
 
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import lombok.Getter;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.streamline.platform.savables.UserManager;
 import singularity.command.CosmicCommand;
 import singularity.command.result.CommandResult;
@@ -22,8 +18,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
- * Adapts a {@link CosmicCommand} to a Brigadier literal taking one greedy string argument,
- * so the command sees the same raw space-split arguments it gets on Bukkit-style platforms.
+ * Adapts a {@link CosmicCommand} to Brigadier: {@link CommandRegistry} registers a literal
+ * per label and sends its execution and suggestions here.
  */
 @Getter
 public class ProperCommand implements IProperCommand {
@@ -60,20 +56,11 @@ public class ProperCommand implements IProperCommand {
         return labels;
     }
 
-    public LiteralArgumentBuilder<CommandSourceStack> buildBrigadier(String label) {
-        LiteralArgumentBuilder<CommandSourceStack> base = Commands.literal(label)
-                .executes(ctx -> execute(ctx, new String[0]));
-
-        RequiredArgumentBuilder<CommandSourceStack, String> argsNode =
-                Commands.argument("args", StringArgumentType.greedyString())
-                        .suggests(this::getSuggestions)
-                        .executes(ctx -> execute(ctx, StringArgumentType.getString(ctx, "args").split(" ")));
-
-        base.then(argsNode);
-        return base;
-    }
-
-    private int execute(CommandContext<CommandSourceStack> ctx, String[] args) {
+    /**
+     * Brigadier nodes for this command are built by {@link CommandRegistry}, which routes
+     * them here for as long as this command owns their label.
+     */
+    int execute(CommandContext<CommandSourceStack> ctx, String[] args) {
         CosmicSender sender = resolveCosmicSender(ctx.getSource());
         if (sender == null) return 0;
         try {
@@ -93,7 +80,7 @@ public class ProperCommand implements IProperCommand {
         return UserManager.getInstance().getOrCreateSender(src).orElse(null);
     }
 
-    private CompletableFuture<Suggestions> getSuggestions(
+    CompletableFuture<Suggestions> getSuggestions(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         CosmicSender sender = resolveCosmicSender(ctx.getSource());
         if (sender == null) return builder.buildFuture();
