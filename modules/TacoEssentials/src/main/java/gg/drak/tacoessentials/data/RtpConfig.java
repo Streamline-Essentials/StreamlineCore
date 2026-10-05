@@ -16,7 +16,8 @@ import java.util.Optional;
 
 /**
  * {@code rtp.yml} in the module's folder: whether /rtp is on, and per world where it may land.
- * Values are re-read on every use, so edits apply without a restart.
+ * The file is re-read on every use, bypassing the library's reload throttle, so edits apply
+ * to the next /rtp without a restart.
  *
  * <p>The file is keyed by world name. A world without a section gets one with defaults the
  * first time it is asked for, picked by whether its name looks like a Nether or End.</p>
@@ -79,7 +80,7 @@ public class RtpConfig extends ModularizedConfig {
 
     /** Whether /rtp is enabled at all. */
     public boolean isEnabled() {
-        reloadResource();
+        reloadResource(true);
         return getOrSetDefault("enabled", true);
     }
 
@@ -89,7 +90,7 @@ public class RtpConfig extends ModularizedConfig {
      * @return the area, or empty when /rtp is disabled in that world
      */
     public Optional<RandomTeleportArea> area(String world) {
-        reloadResource();
+        reloadResource(true);
         Defaults d = Defaults.forWorld(world);
         String p = world + ".";
         if (! getOrSetDefault(p + "enabled", d.enabled)) return Optional.empty();
