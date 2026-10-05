@@ -73,7 +73,7 @@ ext {
             'io.lettuce:lettuce-core:6.8.0.RELEASE',
     ]
     THE_BASE = [
-            'gg.drak:TheBase:1.1.0',
+            'gg.drak:TheBase:1.1.1',
     ]
     COMP_ONLY = [
     ]
