@@ -7,9 +7,10 @@ import gg.drak.thebase.storage.StorageUtils;
 import host.plas.discord.data.channeling.Route;
 import lombok.Getter;
 import lombok.Setter;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.streamline.api.SLAPI;
@@ -111,28 +112,41 @@ public abstract class DiscordCommand extends ModularizedConfig {
         return getRole() == -1L;
     }
 
+    public static final String CONTACT_SUFFIX = "Please tell an administrator to contact @drakdv on Discord.";
+
     public SingleSet<MessageCreateData, BotMessageConfig> execute(MessagedString messagedString) {
         if (hasDefaultPermissions()) {
             return executeMore(messagedString);
         }
+
+        // Any guild channel carries a guild: text, announcement, thread, voice and stage chats alike.
+        if (! (messagedString.getChannel() instanceof GuildChannel)) {
+            return DiscordMessenger.simpleMessage("This command can only be used in a server channel.");
+        }
+        Guild guild = ((GuildChannel) messagedString.getChannel()).getGuild();
+
         if (defaultPermissionIsServerOwner()) {
-            if (messagedString.getChannel() instanceof TextChannel) {
-                TextChannel serverTextChannel = (TextChannel) messagedString.getChannel();
-                if (serverTextChannel.getGuild().getOwnerId().equals(messagedString.getAuthor().getId()))
-                    return executeMore(messagedString);
+            if (guild.getOwnerIdLong() == messagedString.getAuthor().getIdLong()) return executeMore(messagedString);
+            return DiscordMessenger.simpleMessage("Only the server owner can use this command. To open it to a role, set 'permissions.default' in '" + getCommandIdentifier() + ".yml' to that role's ID.");
+        }
+
+        Role role = guild.getRoleById(getRole());
+        if (role == null) {
+            return DiscordMessenger.simpleMessage("Error: the role '" + getRole() + "' configured for this command does not exist. " + CONTACT_SUFFIX);
+        }
+
+        Member member = guild.getMember(messagedString.getAuthor());
+        if (member == null) {
+            // The member cache holds everyone only with the GUILD_MEMBERS intent; otherwise ask Discord.
+            try {
+                member = guild.retrieveMember(messagedString.getAuthor()).complete();
+            } catch (Exception e) {
+                return DiscordMessenger.simpleMessage("Error: could not look up your server membership. " + CONTACT_SUFFIX);
             }
-            return DiscordMessenger.simpleMessage("Error. Please tell an administrator to contact Quaint#0001.");
         }
-        if (messagedString.getChannel() instanceof TextChannel) {
-            TextChannel serverTextChannel = (TextChannel) messagedString.getChannel();
-            Role role = serverTextChannel.getGuild().getRoleById(getRole());
-            if (role == null) return DiscordMessenger.simpleMessage("Error. Please tell an administrator to contact Quaint#0001.");
-            if (! serverTextChannel.getGuild().isMember(messagedString.getAuthor())) return DiscordMessenger.simpleMessage("Error. Please tell an administrator to contact Quaint#0001.");
-            Member member = serverTextChannel.getGuild().getMember(messagedString.getAuthor());
-            if (member == null) return DiscordMessenger.simpleMessage("Error. Please tell an administrator to contact Quaint#0001.");
-            if (member.getRoles().contains(role)) return executeMore(messagedString);
-        }
-        return DiscordMessenger.simpleMessage("Error. Please tell an administrator to contact Quaint#0001.");
+
+        if (member.getRoles().contains(role)) return executeMore(messagedString);
+        return DiscordMessenger.simpleMessage("You need the '" + role.getName() + "' role to use this command.");
     }
 
     public abstract SingleSet<MessageCreateData, BotMessageConfig> executeMore(MessagedString messagedString);

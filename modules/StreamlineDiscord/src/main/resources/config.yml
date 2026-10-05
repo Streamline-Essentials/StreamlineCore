@@ -23,7 +23,7 @@ bot:
     # If above is "LISTENING" and this is "your suggestions",
     # it will say "Listening to... your suggestions"
     # under your bot.
-    value: "play.plasmere.net"
+    value: "play.tsmp.lol"
   # The link to the image to use for the Discord bot.
   avatar-url: "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
   # Allows for use of Discord's Slash Commands.
