@@ -17,8 +17,6 @@ import host.plas.StreamlineUtilities;
 import host.plas.accessors.SpigotAccessor;
 import host.plas.essentials.users.UtilitiesUser;
 
-import java.util.concurrent.CompletableFuture;
-
 public class MainListener implements BaseEventListener {
     @BaseProcessor
     public void onChat(CosmicChatEvent chatEvent) {
@@ -75,8 +73,8 @@ public class MainListener implements BaseEventListener {
                 // The stored last server is only known once the user's record has loaded.
                 if (StreamlineUtilities.getConfigs().lastServerPermissionRequired()) {
                     if (ModuleUtils.hasPermission(event.getSender(), StreamlineUtilities.getConfigs().lastServerPermissionValue()))
-                        CompletableFuture.runAsync(() -> user.onceFullyLoaded(loaded -> user.goToLastServer()));
-                } else CompletableFuture.runAsync(() -> user.onceFullyLoaded(loaded -> user.goToLastServer()));
+                        user.getLoadedFuture().thenRun(user::goToLastServer);
+                } else user.getLoadedFuture().thenRun(user::goToLastServer);
             }
         }
 

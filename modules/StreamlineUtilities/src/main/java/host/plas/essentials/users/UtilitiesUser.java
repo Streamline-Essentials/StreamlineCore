@@ -40,6 +40,8 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
      */
     private volatile boolean loadInFlight = false;
     private volatile boolean savePendingAfterLoad = false;
+    /** Completes once the stored record has been merged in; already complete when none is loading. */
+    private volatile CompletableFuture<Void> loadedFuture = CompletableFuture.completedFuture(null);
 
     /**
      * Builds an unregistered user. {@link MyLoader} registers the instances it hands out;
@@ -177,6 +179,8 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
     public UtilitiesUser augment(CompletableFuture<Optional<UtilitiesUser>> completableFuture, boolean isGet) {
         fullyLoaded = false;
         loadInFlight = true;
+        CompletableFuture<Void> loaded = new CompletableFuture<>();
+        loadedFuture = loaded;
 
         completableFuture.whenComplete((optional, throwable) -> {
             boolean saveNow = savePendingAfterLoad;
@@ -206,6 +210,8 @@ public class UtilitiesUser implements Loadable<UtilitiesUser> {
             fullyLoaded = true;
 
             if (saveNow) save();
+
+            loaded.complete(null);
         });
 
         return this;
