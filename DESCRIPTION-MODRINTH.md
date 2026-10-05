@@ -1,7 +1,7 @@
 ![Deps](https://github.com/Streamline-Essentials/StreamlineWiki/blob/main/website/images/Dependencies.png?raw=true)
 
 MUST HAVE:
-- BukkitOfUtils (__For Bukkit / Spigot / Paper ONLY__). [**[ FOUND HERE ]**](https://www.spigotmc.org/resources/118276/)
+- BukkitOfUtils (__For Bukkit / Spigot / Paper ONLY__). [**[ FOUND HERE ]**](https://modrinth.com/plugin/bukkitofutils)
 - Fabric API (__For Fabric ONLY__). [**[ FOUND HERE ]**](https://modrinth.com/mod/fabric-api)
 
 RECOMMENDED:

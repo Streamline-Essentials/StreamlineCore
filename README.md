@@ -2,7 +2,7 @@
 
 MUST HAVE:
 - LuckPerms. [**[ FOUND HERE ]**](https://luckperms.net/download)
-- BukkitOfUtils (__For Bukkit / Spigot / Paper ONLY__). [**[ FOUND HERE ]**](https://www.spigotmc.org/resources/118276/)
+- BukkitOfUtils (__For Bukkit / Spigot / Paper ONLY__). [**[ FOUND HERE ]**](https://modrinth.com/plugin/bukkitofutils)
 
 ![Discord](https://github.com/Streamline-Essentials/StreamlineWiki/blob/main/website/images/Main.png?raw=true)
 Please join the Streamline Hub Discord in order to get updates and for me to fully assist you with bugs, questions, or suggestions.
