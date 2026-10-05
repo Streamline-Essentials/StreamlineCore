@@ -9,6 +9,8 @@ import host.plas.discord.data.events.EventClassifier;
 import singularity.database.modules.DBKeeper;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -215,110 +217,81 @@ public class RouteKeeper extends DBKeeper<Route> {
 
     @Override
     public Optional<Route> loadMysql(String s) {
-        ensureTables();
-
-        String s1 = "SELECT * FROM %table_prefix%discord_routes WHERE Uuid = ?;";
-        
-        s1 = s1.replace("%table_prefix%", getDatabase().getConnectorSet().getTablePrefix());
-        s1 = s1.replace("%uuid%", s);
-
-        AtomicReference<Optional<Route>> optionalRoute = new AtomicReference<>(Optional.empty());
-        getDatabase().executeQuery(s1, stmt -> {
-            try {
-                stmt.setString(1, s);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }, resultSet -> {
-            try {
-                if (resultSet.next()) {
-                    String uuid = resultSet.getString("Uuid");
-                    String inputUuid = resultSet.getString("InputUuid");
-                    String outputUuid = resultSet.getString("OutputUuid");
-                    String enabledEventsStr = resultSet.getString("EnabledEvents");
-
-                    Optional<EndPoint> input = StreamlineDiscord.getEndPointKeeper().load(inputUuid).join();
-                    if (input.isEmpty()) {
-                        optionalRoute.set(Optional.empty());
-                        return;
-                    }
-                    
-                    Optional<EndPoint> output = StreamlineDiscord.getEndPointKeeper().load(outputUuid).join();
-                    if (output.isEmpty()) {
-                        optionalRoute.set(Optional.empty());
-                        return;
-                    }
-                    
-                    EndPoint in = input.get();
-                    EndPoint out = output.get();
-
-                    Route route = new Route(uuid);
-                    route.setInput(in);
-                    route.setOutput(out);
-                    route.setEnabledEventsFromString(enabledEventsStr);
-                    
-                    optionalRoute.set(Optional.of(route));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        
-        return optionalRoute.get();
+        return loadRoute(s);
     }
 
     @Override
     public Optional<Route> loadSqlite(String s) {
+        return loadRoute(s);
+    }
+
+    /**
+     * One row of the routes table, read out of its {@link java.sql.ResultSet} so the
+     * endpoints can be loaded after the query has released its connection.
+     */
+    private static class RouteRow {
+        final String uuid, inputUuid, outputUuid, enabledEvents;
+
+        RouteRow(java.sql.ResultSet rs) throws java.sql.SQLException {
+            uuid = rs.getString("Uuid");
+            inputUuid = rs.getString("InputUuid");
+            outputUuid = rs.getString("OutputUuid");
+            enabledEvents = rs.getString("EnabledEvents");
+        }
+    }
+
+    // Both dialects share this SELECT.
+    private Optional<Route> loadRoute(String s) {
         ensureTables();
 
-        String s1 = "SELECT * FROM %table_prefix%discord_routes WHERE Uuid = ?;";
-        
-        s1 = s1.replace("%table_prefix%", getDatabase().getConnectorSet().getTablePrefix());
-        s1 = s1.replace("%uuid%", s);
+        List<RouteRow> rows = queryRows("SELECT * FROM %table_prefix%discord_routes WHERE Uuid = ?;", s);
+        if (rows.isEmpty()) return Optional.empty();
 
-        AtomicReference<Optional<Route>> optionalRoute = new AtomicReference<>(Optional.empty());
-        getDatabase().executeQuery(s1, stmt -> {
+        return buildRoute(rows.get(0));
+    }
+
+    /**
+     * Runs a routes query and copies every row out before returning. Endpoints must not be
+     * loaded while the result set is open: SQLite's pool holds a single connection, so a
+     * nested query would wait for the connection its own caller is holding.
+     */
+    private List<RouteRow> queryRows(String sql, @Nullable String uuid) {
+        List<RouteRow> rows = new ArrayList<>();
+
+        getDatabase().executeQuery(injectTablePrefix(sql), stmt -> {
+            if (uuid == null) return;
             try {
-                stmt.setString(1, s);
+                stmt.setString(1, uuid);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, resultSet -> {
+        }, rs -> {
             try {
-                if (resultSet.next()) {
-                    String uuid = resultSet.getString("Uuid");
-                    String inputUuid = resultSet.getString("InputUuid");
-                    String outputUuid = resultSet.getString("OutputUuid");
-                    String enabledEventsStr = resultSet.getString("EnabledEvents");
-
-                    Optional<EndPoint> input = StreamlineDiscord.getEndPointKeeper().load(inputUuid).join();
-                    if (input.isEmpty()) {
-                        optionalRoute.set(Optional.empty());
-                        return;
-                    }
-                    
-                    Optional<EndPoint> output = StreamlineDiscord.getEndPointKeeper().load(outputUuid).join();
-                    if (output.isEmpty()) {
-                        optionalRoute.set(Optional.empty());
-                        return;
-                    }
-                    
-                    EndPoint in = input.get();
-                    EndPoint out = output.get();
-
-                    Route route = new Route(uuid);
-                    route.setInput(in);
-                    route.setOutput(out);
-                    route.setEnabledEventsFromString(enabledEventsStr);
-                    
-                    optionalRoute.set(Optional.of(route));
-                }
+                while (rs.next()) rows.add(new RouteRow(rs));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        
-        return optionalRoute.get();
+
+        return rows;
+    }
+
+    private Optional<Route> buildRoute(RouteRow row) {
+        Optional<EndPoint> input = StreamlineDiscord.getEndPointKeeper().loadRaw(row.inputUuid);
+        Optional<EndPoint> output = StreamlineDiscord.getEndPointKeeper().loadRaw(row.outputUuid);
+        if (input.isEmpty() || output.isEmpty()) {
+            StreamlineDiscord.getInstance().logWarning("Skipping route '" + row.uuid + "': its "
+                    + (input.isEmpty() ? "input endpoint '" + row.inputUuid + "'" : "output endpoint '" + row.outputUuid + "'")
+                    + " is missing from the database.");
+            return Optional.empty();
+        }
+
+        Route route = new Route(row.uuid);
+        route.setInput(input.get());
+        route.setOutput(output.get());
+        route.setEnabledEventsFromString(row.enabledEvents);
+
+        return Optional.of(route);
     }
 
     @Override
@@ -403,37 +376,8 @@ public class RouteKeeper extends DBKeeper<Route> {
     public void loadAllRoutes() {
         ensureTables();
 
-        String s1 = "SELECT * FROM %table_prefix%discord_routes;";
-
-        s1 = s1.replace("%table_prefix%", getDatabase().getConnectorSet().getTablePrefix());
-
-        getDatabase().executeQuery(s1, stmt -> {}, resultSet -> {
-            try {
-                while (resultSet.next()) {
-                    String uuid = resultSet.getString("Uuid");
-                    String inputUuid = resultSet.getString("InputUuid");
-                    String outputUuid = resultSet.getString("OutputUuid");
-                    String enabledEventsStr = resultSet.getString("EnabledEvents");
-
-                    Optional<EndPoint> input = StreamlineDiscord.getEndPointKeeper().load(inputUuid).join();
-                    if (input.isEmpty()) continue;
-
-                    Optional<EndPoint> output = StreamlineDiscord.getEndPointKeeper().load(outputUuid).join();
-                    if (output.isEmpty()) continue;
-
-                    EndPoint in = input.get();
-                    EndPoint out = output.get();
-
-                    Route route = new Route(uuid);
-                    route.setInput(in);
-                    route.setOutput(out);
-                    route.setEnabledEventsFromString(enabledEventsStr);
-
-                    RouteLoader.registerRoute(route);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        for (RouteRow row : queryRows("SELECT * FROM %table_prefix%discord_routes;", null)) {
+            buildRoute(row).ifPresent(RouteLoader::registerRoute);
+        }
     }
 }
