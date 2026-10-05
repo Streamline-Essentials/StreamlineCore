@@ -43,7 +43,7 @@ public final class ForgeListener {
             return ! ModEvents.onCommand(player, e.getParseResults().getReader().getString());
         });
         // A monitor sees only deaths no other mod cancelled.
-        LivingDeathEvent.BUS.addListener(Priority.MONITOR, false, e -> {
+        LivingDeathEvent.BUS.addListener(Priority.MONITOR, e -> {
             if (e.getEntity() instanceof ServerPlayer) ModEvents.onDeath((ServerPlayer) e.getEntity());
         });
         PlayerEvent.NameFormat.BUS.addListener(e ->
