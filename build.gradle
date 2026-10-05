@@ -45,6 +45,12 @@ buildscript {
 //    id "maven-publish"
 //}
 
+// Fabric/Forge/NeoForge subprojects live in a folder named after their loader. They pick
+// their Java version through a toolchain, which Gradle refuses to combine with the
+// project-wide source/target compatibility set below, and they are configured by
+// mod-common/mod.gradle rather than by the platform conventions further down.
+def isModProject = { Project p -> p.projectDir.parentFile.name in ['fabric', 'forge', 'neoforge'] }
+
 allprojects {
     apply plugin: "java"
     apply plugin: "com.gradleup.shadow"
@@ -54,9 +60,11 @@ allprojects {
     version = rootProject.properties["version"]
     group = rootProject.properties["group"]
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    if (! isModProject(project)) {
+        java {
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }
     }
 
     artifacts {
@@ -100,8 +108,9 @@ allprojects {
 
 // Core platform projects only. Modules under modules/ are configured by
 // modules/module.gradle instead: they have no plugin.yml to expand, are not published
-// to the Streamline Maven repo, and must keep their own version and manifest.
-configure(subprojects.findAll { ! it.path.startsWith(':modules') }) {
+// to the Streamline Maven repo, and must keep their own version and manifest. Mod-loader
+// projects are configured by mod-common/mod.gradle.
+configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProject(it) }) {
     apply from: rootDir.toString() + "/dependencies.gradle"
 
     ext {

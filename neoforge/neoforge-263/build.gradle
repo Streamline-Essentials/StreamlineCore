@@ -1,0 +1,13 @@
+// Built by neoforge/neoforge.gradle; see that file and mod-common/mod.gradle for what each value means.
+
+// 26.3 has no stable NeoForge release yet; this builds against the latest beta.
+ext {
+    mcVersion = '26.3'
+    javaVersion = 25
+    minecraftRange = '[26.3,26.4)'
+    neoForgeVersion = '26.3.0.48-beta'
+    loaderMajor = '26.3'
+    legacy = false
+}
+
+apply from: rootProject.file('neoforge/neoforge.gradle')

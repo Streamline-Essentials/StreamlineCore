@@ -1,0 +1,149 @@
+// Conventions shared by every Fabric, Forge and NeoForge subproject.
+//
+// A version project's build.gradle sets its versions in `ext` and applies its loader's
+// script (fabric/fabric.gradle, forge/forge.gradle, neoforge/neoforge.gradle). The loader
+// script applies the loader's Gradle plugin, then this file, and finally names the task
+// whose jar is the shippable mod in `ext.modJarTask`, which deploy copies.
+//
+// Every version project expects in `ext`:
+//   mcVersion       Minecraft version compiled against
+//   javaVersion     Java release the Minecraft version runs on
+//   minecraftRange  Minecraft versions the mod metadata accepts, in the loader's syntax
+//   modSourceDirs   source roots, relative to the repository root, that the loader adds
+//                   on top of mod-common (each holding src/main/java and/or resources)
+// and optionally:
+//   modResourceDirs roots whose src/main/resources alone are added
+//   metadataExtras  further values expanded into the mod metadata files
+
+apply from: "$rootDir/dependencies.gradle"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(project.javaVersion as int)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    main {
+        (['mod-common'] + project.modSourceDirs).each { dir ->
+            java.srcDir rootProject.file("${dir}/src/main/java")
+            resources.srcDir rootProject.file("${dir}/src/main/resources")
+        }
+        (project.ext.has('modResourceDirs') ? project.modResourceDirs : []).each { dir ->
+            resources.srcDir rootProject.file("${dir}/src/main/resources")
+        }
+
+        // Minecraft calls that changed shape between versions, one implementation per era.
+        def compat = project.mcVersion.toString().startsWith('1.20.') ? 'mc1201' : 'current'
+        java.srcDir rootProject.file("mod-common/compat/${compat}/src/main/java")
+    }
+}
+
+configurations {
+    // Everything bundled into the mod jar: mod loaders have no library downloader.
+    // Each dependency is non-transitive, so exactly what is listed ships and nothing the
+    // game already has.
+    modShade {
+        canBeConsumed = false
+    }
+
+    // The mod compiles against exactly what it ships. Pulling the full PLATFORM_LIBRARIES
+    // (or anything transitive) onto the compile classpath would request Netty/SLF4J/Gson
+    // versions that clash with the strict ones the loaders pin for the game.
+    compileOnly.extendsFrom modShade
+}
+
+dependencies {
+    compileOnly "net.luckperms:api:${rootProject.properties['lp_version']}"
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+
+    // The shaded libraries come before TheBase so their copies win over the stale ones
+    // bundled inside TheBase's fat jar.
+    (MOD_SHADED_LIBRARIES + THE_BASE).each { modShade(it) { transitive = false } }
+    modShade(project(path: ':StreamlineCore-API', configuration: 'shadow')) { transitive = false }
+}
+
+tasks.named('compileJava') { dependsOn(':StreamlineCore-API:shadowJar') }
+tasks.matching { it.name == 'delombok' }.configureEach { dependsOn(':StreamlineCore-API:shadowJar') }
+
+def metadataProperties = [
+        name          : rootProject.name.toString(),
+        version       : rootProject.version.toString(),
+        mcVersion     : project.mcVersion.toString(),
+        javaVersion   : project.javaVersion.toString(),
+        minecraftRange: project.minecraftRange.toString(),
+] + (project.ext.has('metadataExtras') ? project.metadataExtras : [:])
+
+tasks.named('processResources', ProcessResources) {
+    inputs.properties(metadataProperties)
+    filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'streamline.properties']) {
+        expand(metadataProperties)
+    }
+}
+
+// The plain jar holds only this project's classes; the shaded jar is the one that runs.
+tasks.named('jar', Jar) {
+    archiveClassifier.set('plain')
+}
+
+tasks.named('shadowJar') {
+    configurations = [project.configurations.modShade]
+    archiveBaseName.set(project.name)
+    archiveClassifier.set('')
+
+    // Several shaded jars register services under the same file (JDBC drivers above all).
+    // Gradle drops duplicate paths before Shadow's transformers see them, so service files
+    // keep every copy for mergeServiceFiles() while all other duplicates keep the first.
+    // Kotlin module metadata likewise goes through Shadow's merging transformer.
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    filesNotMatching(['META-INF/services/**', 'META-INF/*.kotlin_module']) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+    mergeServiceFiles()
+
+    // The game already ships these (Forge/NeoForge refuse a second jar exporting the same
+    // package), and Logback must not compete with the game's Log4j for SLF4J.
+    exclude 'com/google/gson/**'
+    exclude 'com/google/common/**'
+    exclude 'org/slf4j/**'
+    exclude 'ch/qos/logback/**'
+    exclude 'META-INF/services/org.slf4j.spi.SLF4JServiceProvider'
+    exclude 'META-INF/services/ch.qos.logback.**'
+    exclude 'logback*.xml'
+
+    // TheBase's fat jar carries its own relocated database drivers and test classes.
+    exclude 'org/junit/**'
+    exclude 'gg/drak/thebase/lib/mysql/**'
+    exclude 'gg/drak/thebase/lib/hikari/**'
+    exclude 'gg/drak/thebase/lib/sqlite/**'
+
+    // A module descriptor would turn the mod into an explicit JPMS module on Forge/NeoForge,
+    // and leftover signatures would fail verification once the jar is repacked.
+    exclude 'module-info.class'
+    exclude 'META-INF/versions/*/module-info.class'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/maven/**'
+}
+
+tasks.register('deploy', Copy) {
+    def deployDir = file(System.getenv("DEPLOY_DIR") ?: "$rootDir/deploy")
+    def modJar = tasks.named(project.modJarTask)
+
+    dependsOn modJar
+    from modJar.map { it.outputs.files.filter { it.name.endsWith('.jar') } }
+    into deployDir
+
+    doFirst {
+        println "Deploying ${project.name} to: $deployDir"
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('deploy')
+}
