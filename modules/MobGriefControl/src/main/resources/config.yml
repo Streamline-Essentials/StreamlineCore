@@ -1,0 +1,32 @@
+# MobGriefControl
+# false = disabled (the mob cannot do that thing), true = vanilla behaviour.
+
+creeper:
+  explosion:
+    # Whether creeper explosions break blocks.
+    block-damage: false
+    # Whether creeper explosions hurt entities (players, mobs, items, armor stands...).
+    entity-damage: true
+
+ghast:
+  fireball:
+    # Whether ghast fireballs break blocks and start fires.
+    block-damage: false
+    # Whether ghast fireballs hurt entities, both the direct hit and the blast.
+    entity-damage: true
+
+enderman:
+  # Whether endermen can pick up blocks. Blocks an enderman is already carrying
+  # can still be placed back down.
+  pick-up-blocks: false
+
+wither:
+  skulls:
+    # Whether wither skulls break blocks.
+    block-damage: false
+    # Whether wither skulls hurt entities (cancelling the hit also stops the Wither effect).
+    entity-damage: true
+  self:
+    # Whether the wither itself breaks blocks: the blocks it smashes while moving
+    # around (e.g. in caves) and the blast when it is spawned.
+    block-damage: false
