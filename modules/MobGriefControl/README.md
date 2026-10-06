@@ -14,10 +14,19 @@ attacks intact (each toggle is configurable).
 `false` disables the behaviour. Defaults: no block damage anywhere, entity damage on.
 
 Block damage is removed by clearing the explosion's block list, so blasts still hurt
-and knock back entities.
+and knock back entities. Endermen may still put down a block they already carry.
 
-**Platform:** Spigot/Paper only. On proxies and mod loaders the module loads but
-does nothing (and logs a warning).
+## Platforms
 
-**Command:** `/mobgrief reload` (alias `/mgc`), permission
-`streamline.command.mobgrief.default`.
+Built on StreamlineCore's cross-platform entity events (`singularity.events.entity`):
+
+- **Spigot/Paper** — everything.
+- **NeoForge** (1.20.1 – 26.3) and **Forge 1.20.1 / 1.21.1** — everything, except that
+  `entity-damage: false` only protects living entities (mobs, players, armor stands):
+  the loaders have no damage hook for item frames, paintings or dropped items.
+- **Forge 1.21.11+, Fabric, proxies** — the core does not fire these events there; the
+  module loads but blocks nothing.
+
+## Command
+
+`/mobgrief reload` (alias `/mgc`), permission `streamline.command.mobgrief.default`.

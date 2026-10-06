@@ -47,6 +47,10 @@ sourceSets {
         // Menu clicks arrive as a ClickType up to 1.21.11 and as a ContainerInput from 26.1.
         def menu = mc.startsWith('1.') ? 'menu-clicktype' : 'menu-containerinput'
         java.srcDir rootProject.file("mod-common/compat/${menu}/src/main/java")
+
+        // Mojang renamed EnderMan to Enderman in 26.3.
+        def enderman = (mc.startsWith('1.') || mc.startsWith('26.1') || mc.startsWith('26.2')) ? 'enderman-upto262' : 'enderman-263'
+        java.srcDir rootProject.file("mod-common/compat/${enderman}/src/main/java")
     }
 }
 
