@@ -1,8 +1,9 @@
 package host.plas;
 
-import host.plas.bukkit.GriefListener;
+import gg.drak.thebase.events.BaseEventHandler;
 import host.plas.commands.MobGriefCommand;
 import host.plas.config.GriefConfig;
+import host.plas.events.GriefListener;
 import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
@@ -11,20 +12,25 @@ import singularity.modules.ModuleUtils;
 import singularity.modules.SimpleModule;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public class MobGriefControl extends SimpleModule {
+    /** The platforms that fire the {@code singularity.events.entity} events this module relies on. */
+    private static final Set<ISingularityExtension.PlatformType> SUPPORTED = EnumSet.of(
+            ISingularityExtension.PlatformType.SPIGOT,
+            ISingularityExtension.PlatformType.FORGE,
+            ISingularityExtension.PlatformType.NEOFORGE
+    );
+
     @Getter @Setter
     private static MobGriefControl instance;
 
     @Getter @Setter
     private static GriefConfig griefConfig;
 
-    /**
-     * Held as {@link Object} so this class never links against Bukkit: the module also
-     * loads on proxies and mod loaders, where {@link GriefListener} cannot be resolved.
-     */
-    private Object listener;
+    private GriefListener listener;
 
     public MobGriefControl(PluginWrapper wrapper) {
         super(wrapper);
@@ -43,18 +49,20 @@ public class MobGriefControl extends SimpleModule {
 
         griefConfig = new GriefConfig();
 
-        if (ModuleUtils.getPlatformType() == ISingularityExtension.PlatformType.SPIGOT) {
-            listener = new GriefListener();
-        } else {
-            logWarning("Mob grief control only works on Spigot/Paper servers; "
-                    + ModuleUtils.getPlatformType() + " is not supported, so nothing will be blocked here.");
+        if (! SUPPORTED.contains(ModuleUtils.getPlatformType())) {
+            logWarning("Mob grief control works on Spigot/Paper, Forge and NeoForge servers; "
+                    + ModuleUtils.getPlatformType() + " does not report mob griefing, so nothing will be blocked here.");
+            return;
         }
+
+        listener = new GriefListener();
+        ModuleUtils.listen(listener, this);
     }
 
     @Override
     public void onDisable() {
         if (listener != null) {
-            ((GriefListener) listener).unregister();
+            BaseEventHandler.unbake(listener);
             listener = null;
         }
     }

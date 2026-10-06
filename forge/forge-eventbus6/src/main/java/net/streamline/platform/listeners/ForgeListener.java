@@ -7,7 +7,11 @@ import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.event.entity.EntityMobGriefingEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.player.ItemFishedEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -70,6 +74,20 @@ public final class ForgeListener {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (ItemFishedEvent e) -> {
             if (e.isCanceled() || ! (e.getEntity() instanceof ServerPlayer)) return;
             GameplayEvents.onFishCaught((ServerPlayer) e.getEntity(), e.getDrops());
+        });
+        // High, so mods at the lower priorities see what Streamline modules decided.
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, (ExplosionEvent.Detonate e) -> {
+            // Fire is lit on the same positions, so clearing them also keeps an incendiary blast from burning.
+            if (! EntityEvents.onExplosion(e.getExplosion().getDirectSourceEntity(), e.getExplosion().getIndirectSourceEntity())) {
+                e.getAffectedBlocks().clear();
+            }
+        });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, (EntityMobGriefingEvent e) -> {
+            if (e.getResult() != Event.Result.DENY && ! EntityEvents.onMobGrief(e.getEntity())) e.setResult(Event.Result.DENY);
+        });
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, (LivingAttackEvent e) -> {
+            if (e.isCanceled()) return;
+            if (! EntityEvents.onDamaged(e.getEntity(), e.getSource(), e.getAmount())) e.setCanceled(true);
         });
         MinecraftForge.EVENT_BUS.addListener((PlayerEvent.NameFormat e) ->
                 GameplayHandler.displayName(e.getEntity().getUUID()).ifPresent(e::setDisplayname));
