@@ -38,7 +38,7 @@ public class ProgressionConfig extends ModularizedConfig {
         reloadResource();
         enabled = getOrSetDefault("enabled", true);
         syncStats = getOrSetDefault("sync-stats", true);
-        refreshIntervalSeconds = Math.max(5, getOrSetDefault("refresh-interval-seconds", 30));
+        refreshIntervalSeconds = Math.max(5, getOrSetDefault("refresh-interval-seconds", 60));
         formulaMultiplier = nonNegative("formula-multiplier", 250.0D);
         formulaBase = nonNegative("formula-base", 500.0D);
         maxNeeded = nonNegative("max-needed", 5000.0D);

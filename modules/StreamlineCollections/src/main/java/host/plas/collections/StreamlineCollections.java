@@ -32,6 +32,7 @@ import lombok.Setter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
 import singularity.modules.SimpleModule;
+import singularity.permissions.DefaultPermissions;
 import singularity.scheduler.ModuleRunnable;
 
 import java.util.ArrayList;
@@ -95,6 +96,12 @@ public class StreamlineCollections extends SimpleModule {
         if (isTrackingServer()) {
             placedBlocks = new PlacedBlocks(getDataFolder());
         }
+
+        // Admin commands stay operator-only; everyone may browse their own progress and the boards.
+        DefaultPermissions.grantByDefault(
+                "streamline.command.collections.default", "streamline.command.collectionsleaderboard.default",
+                "streamline.command.slayer.default", "streamline.command.slayerlb.default",
+                "streamline.command.progression.default", "streamline.command.progressionleaderboard.default");
 
         listener = new CollectionsListener();
         expansions.add(new CollectionsExpansion("streamlinecollections"));

@@ -303,6 +303,23 @@ public final class TagStore {
         });
     }
 
+    /**
+     * Re-reads definitions and the given players' grants and selections on the writer thread, after
+     * any writes already queued, so a read never brings back a value a pending write replaces.
+     */
+    public static CompletableFuture<Void> refresh(Iterable<String> uuids) {
+        Runnable read = () -> {
+            loadDefinitions();
+            for (String uuid : uuids) loadPlayer(uuid);
+        };
+        ExecutorService current = writer;
+        if (current == null) {
+            read.run();
+            return CompletableFuture.completedFuture(null);
+        }
+        return CompletableFuture.runAsync(read, current);
+    }
+
     /** Starts the writer thread; writes run on it one at a time, in the order they were made. */
     public static void start() {
         stop();

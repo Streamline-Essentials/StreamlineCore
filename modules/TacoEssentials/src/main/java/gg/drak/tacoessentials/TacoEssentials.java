@@ -86,12 +86,19 @@ public class TacoEssentials extends SimpleModule {
         TacoDatabase.ensureTables();
         Perms.registerDefaults();
         ModuleUtils.listen(new TacoListener(), this);
+        ChatFormatter.reloadSettings();
         ModuleUtils.listen(new ChatFormatter(), this);
 
         new ModuleRunnable(this, 20, 20) {
             @Override
             public void run() {
                 TpaManager.expire();
+            }
+        };
+        new ModuleRunnable(this, 100, 100) {
+            @Override
+            public void run() {
+                ChatFormatter.reloadSettings();
             }
         };
     }

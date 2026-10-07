@@ -4,9 +4,10 @@
 # /tag grant, or hold streamline.tags.group.<group> for a group that contains it.
 # Tags themselves are made in game with /tag create and stored in Streamline's database.
 
-# How often tags and groups are re-read from the database, in seconds, so tags made on
-# another server of the network show up here. 0 turns it off (/tag reload still works).
-refresh-interval-seconds: 300
+# How often tags, groups and online players' grants and active tags are re-read from the
+# database, in seconds, so changes made on another server of the network show up here.
+# 0 turns it off (/tag reload still works).
+refresh-interval-seconds: 60
 
 menu:
   title: "#38C1FCᴄʜᴀᴛ ᴛᴀɢѕ"

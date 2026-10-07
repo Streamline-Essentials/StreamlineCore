@@ -6,6 +6,7 @@ import singularity.command.CosmicCommand;
 import singularity.command.ModuleCommand;
 import singularity.command.context.CommandContext;
 import singularity.data.players.CosmicPlayer;
+import singularity.interfaces.ISingularityExtension;
 import singularity.modules.ModuleUtils;
 import singularity.utils.UserUtils;
 
@@ -19,15 +20,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
- * {@code /tag (create <id> <display>|set <id> <display>|remove <id>|grant <player> <id>|revoke <player> <id>|list
+ * The tag admin command. It is {@code /tag} on Spigot and proxies; on the mod loaders a Streamline
+ * label replaces the vanilla command of the same name for commands and datapack functions alike,
+ * so there it is only {@code /tagadmin}, leaving vanilla's {@code /tag} alone.
+ *
+ * <p>{@code /tag (create <id> <display>|set <id> <display>|remove <id>|grant <player> <id>|revoke <player> <id>|list
  * |group create <group>|group delete <group>|group add <group> <id>|group remove <group> <id>
- * |group grant <player> <group>|reload)}
+ * |group grant <player> <group>|reload)}</p>
  */
 public class TagCommand extends ModuleCommand {
     private static final String ID_PATTERN = "[a-z0-9_-]+";
 
     public TagCommand() {
-        super(StreamlineTags.getInstance(), "tag", "streamline.command.tag.default", "tagadmin");
+        super(StreamlineTags.getInstance(), modLoader() ? "tagadmin" : "tag", "streamline.command.tagadmin.default",
+                modLoader() ? new String[0] : new String[] { "tagadmin" });
+    }
+
+    private static boolean modLoader() {
+        ISingularityExtension.PlatformType platform = ModuleUtils.getPlatformType();
+        return platform == ISingularityExtension.PlatformType.FABRIC
+                || platform == ISingularityExtension.PlatformType.FORGE
+                || platform == ISingularityExtension.PlatformType.NEOFORGE;
     }
 
     @Override
@@ -63,7 +76,7 @@ public class TagCommand extends ModuleCommand {
                 group(context, args);
                 break;
             case "reload":
-                CompletableFuture.runAsync(TagStore::loadDefinitions).thenRun(() -> {
+                TagStore.refresh(new ArrayList<>(UserUtils.getOnlinePlayers().keySet())).thenRun(() -> {
                     StreamlineTags.getInstance().restartRefresh();
                     send(context, "reloaded", "%count%", String.valueOf(TagStore.ids().size()));
                 });

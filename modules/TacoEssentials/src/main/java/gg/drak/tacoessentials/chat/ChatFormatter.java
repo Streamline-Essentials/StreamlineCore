@@ -38,6 +38,38 @@ public class ChatFormatter implements BaseEventListener {
     private static final Pattern ACTIVE_CODE = Pattern.compile(
             "(?i)&#[0-9a-f]{6}|\\{#[0-9a-f]{6}}|<#[0-9a-f]{6}>|[&§]x(?:[&§][0-9a-f]){6}|[&§][0-9a-fk-or]|#[0-9a-f]{6}");
     private static final String MESSAGE = "%message%";
+    /** Placeholders of modules that may not be installed; any left unresolved are removed. */
+    private static final Pattern OPTIONAL_PLACEHOLDERS = Pattern.compile("%(?:streamlinecollections|streamlinetags)_[^%\\s]*%");
+
+    /**
+     * The chat settings, read by {@link #reloadSettings()} on Streamline's task thread, so chat
+     * threads never touch the config file.
+     */
+    private static volatile Settings settings;
+
+    private static final class Settings {
+        private final boolean enabled;
+        private final String format;
+        private final boolean hoverEnabled;
+        private final List<String> hover;
+        private final boolean clickableLinks;
+        private final String displayNameFormat;
+
+        private Settings(TacoConfig config) {
+            this.enabled = config.chatEnabled();
+            this.format = config.chatFormat();
+            this.hoverEnabled = config.chatHoverEnabled();
+            this.hover = new ArrayList<>(config.chatHover());
+            this.clickableLinks = config.chatClickableLinks();
+            this.displayNameFormat = config.displayNameFormat();
+        }
+    }
+
+    /** Re-reads the chat settings from {@code config.yml}. */
+    public static void reloadSettings() {
+        TacoConfig config = TacoEssentials.getConfig();
+        if (config != null) settings = new Settings(config);
+    }
 
     /** Short tokens from the documented format, and the module placeholders they stand for. */
     private static final Map<String, String> ALIASES = new LinkedHashMap<>();
@@ -52,8 +84,8 @@ public class ChatFormatter implements BaseEventListener {
     @BaseProcessor(priority = BaseEventPriority.HIGH)
     public void onChat(CosmicChatEvent event) {
         if (event.isCanceled()) return;
-        TacoConfig config = TacoEssentials.getConfig();
-        if (config == null || ! config.chatEnabled()) return;
+        Settings config = settings;
+        if (config == null || ! config.enabled) return;
         if (! (event.getSender() instanceof CosmicPlayer)) return;
         CosmicPlayer sender = (CosmicPlayer) event.getSender();
         String message = event.getMessage();
@@ -61,20 +93,20 @@ public class ChatFormatter implements BaseEventListener {
 
         if (! allowed(sender, Perms.CHAT_COLOR)) message = COLOR_CODES.matcher(message).replaceAll("");
 
-        String format = resolve(sender, config.chatFormat());
+        String format = resolve(sender, config.format);
         int at = format.indexOf(MESSAGE);
         String before = at < 0 ? format : format.substring(0, at);
         String after = at < 0 ? "" : format.substring(at + MESSAGE.length());
 
         ClickableMessage line = new ClickableMessage().text(before);
-        if (config.chatHoverEnabled() && ! before.isEmpty()) {
+        if (config.hoverEnabled && ! before.isEmpty()) {
             List<String> hover = new ArrayList<>();
-            for (String hoverLine : config.chatHover()) hover.add(resolve(sender, hoverLine));
+            for (String hoverLine : config.hover) hover.add(resolve(sender, hoverLine));
             line.hover(hover).suggest("/msg " + sender.getCurrentName() + " ");
         }
         if (at >= 0) {
             String body = activeCodes(before) + message;
-            if (config.chatClickableLinks()) line.textWithLinks(body, false, "&7Open &f%url%");
+            if (config.clickableLinks) line.textWithLinks(body, false, "&7Open &f%url%");
             else line.text(body);
             line.text(after.isEmpty() ? after : activeCodes(before + message) + after);
         }
@@ -112,6 +144,7 @@ public class ChatFormatter implements BaseEventListener {
 
         text = ModuleUtils.replacePlaceholders(sender, text);
         text = PapiBridge.apply(sender.getUuid(), text);
+        text = OPTIONAL_PLACEHOLDERS.matcher(text).replaceAll("");
 
         for (int i = 0; i < values.size(); i++) text = text.replace("\u0000" + i + "\u0000", values.get(i));
         return text;
@@ -123,7 +156,9 @@ public class ChatFormatter implements BaseEventListener {
         if (nickname == null || nickname.trim().isEmpty()) nickname = sender.getCurrentName();
         String prefix = UserUtils.getPrefix(sender);
         String suffix = UserUtils.getSuffix(sender);
-        return TacoEssentials.getConfig().displayNameFormat()
+        Settings current = settings;
+        String format = current == null ? "%prefix%%nickname%%suffix%" : current.displayNameFormat;
+        return format
                 .replace("%prefix%", prefix == null ? "" : prefix)
                 .replace("%suffix%", suffix == null ? "" : suffix)
                 .replace("%nickname%", nickname)

@@ -88,7 +88,8 @@ by a piston, or removed by an explosion, fire or decay, keeps its mark at the ol
 ## Placeholders
 
 These only resolve for players loaded on the server parsing them, from memory. Each also works
-with the older `%collections_...%` prefix.
+with the older `%collections_...%` prefix. Through PlaceholderAPI (Spigot), write them as
+`%streamline_!streamlinecollections_stars%`.
 
 | Placeholder | Value |
 |---|---|
