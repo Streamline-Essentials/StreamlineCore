@@ -268,7 +268,9 @@ public interface IGameplayHandler {
      * {@code minecraft:dropped}, {@code minecraft:killed}, {@code minecraft:killed_by} or
      * {@code minecraft:custom} — and {@code ids} are the blocks, items, entities or custom
      * statistics within it, such as {@code minecraft:stone} or {@code minecraft:fish_caught}.
-     * Ids may omit the {@code minecraft:} namespace.</p>
+     * Ids may omit the {@code minecraft:} namespace. The id {@code *} stands for every entry of
+     * the type, so a caller can total a type without knowing which ids exist; for an offline
+     * player it may be slow, as each entry can mean a read of the stats file.</p>
      *
      * @param uuid the player's UUID
      * @param type the statistic type id
