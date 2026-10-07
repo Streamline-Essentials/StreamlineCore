@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Path;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -115,7 +116,17 @@ public class ModuleManager {
             if (resource == null) throw new ClassNotFoundException(name);
 
             byte[] bytes;
-            try (InputStream in = resource.openStream()) {
+            // Read without the JVM's shared jar cache: it is keyed by path, so after a module is
+            // unloaded and its jar replaced or reloaded, a cached handle to the earlier (closed or
+            // rewritten) file would be read instead of this loader's jar.
+            URLConnection connection;
+            try {
+                connection = resource.openConnection();
+            } catch (IOException e) {
+                throw new ClassNotFoundException(name, e);
+            }
+            connection.setUseCaches(false);
+            try (InputStream in = connection.getInputStream()) {
                 bytes = in.readAllBytes();
             } catch (IOException e) {
                 throw new ClassNotFoundException(name, e);

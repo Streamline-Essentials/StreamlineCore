@@ -21,7 +21,11 @@ public class ProgressionConfig extends ModularizedConfig {
     private double maxNeeded;
     private boolean chatStarsEnabled;
     private double skillXpPerLevel;
-    private final Map<ProgressionStat, Double> weights = new EnumMap<>(ProgressionStat.class);
+    /**
+     * Assigned only in {@link #load()}, with no initialiser: the superclass constructor calls
+     * {@link #init()} before this class's field initialisers run, and one would overwrite it.
+     */
+    private volatile Map<ProgressionStat, Double> weights;
 
     public ProgressionConfig() {
         super(StreamlineCollections.getInstance(), "progression.yml", true);
@@ -47,14 +51,12 @@ public class ProgressionConfig extends ModularizedConfig {
 
         Map<ProgressionStat, Double> read = new EnumMap<>(ProgressionStat.class);
         for (ProgressionStat stat : ProgressionStat.values()) read.put(stat, nonNegative("weights." + stat.key(), stat.getDefaultWeight()));
-        synchronized (weights) {
-            weights.clear();
-            weights.putAll(read);
-        }
+        weights = read;
     }
 
     public double weight(ProgressionStat stat) {
-        Double weight = weights.get(stat);
+        Map<ProgressionStat, Double> current = weights;
+        Double weight = current == null ? null : current.get(stat);
         return weight == null ? stat.getDefaultWeight() : weight;
     }
 
