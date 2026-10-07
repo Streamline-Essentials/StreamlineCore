@@ -127,7 +127,7 @@ public class CatalogConfig extends ModularizedConfig {
     // ---- upgrades of files written by older versions --------------------------------------------
 
     /** The layout {@code collections.yml} files written by this version have. */
-    private static final int CATALOG_VERSION = 2;
+    private static final int CATALOG_VERSION = 3;
 
     private static final long[] DISTANCE = {1_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 2_500_000};
     private static final long[] SHORT_DISTANCE = {250, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000};
@@ -151,6 +151,8 @@ public class CatalogConfig extends ModularizedConfig {
      *     <li>2: the Miscellaneous category and its collections, where those ids are free; clay
      *     moves from Fishing (fished clay) to Mining (clay blocks broken), but only while it is
      *     still exactly the old default.</li>
+     *     <li>3: the Water Bucket collection moves from Fishing to Mining, beside Lava Bucket, while
+     *     it is still in Fishing; Combat gains Wither Skeleton Skull where that id is free.</li>
      * </ul>
      */
     private void upgrade() {
@@ -191,9 +193,20 @@ public class CatalogConfig extends ModularizedConfig {
             }
         }
 
+        if (version < 3) {
+            if ("fishing".equalsIgnoreCase(string("collections.water_bucket.category", ""))) {
+                write("collections.water_bucket.category", "mining");
+            }
+            if (! getResource().singleLayerKeySet("collections").contains("wither_skeleton_skull")) {
+                write("collections.wither_skeleton_skull.name", "Wither Skeleton Skull");
+                write("collections.wither_skeleton_skull.category", "combat");
+                write("collections.wither_skeleton_skull.icon", "wither_skeleton_skull");
+                write("collections.wither_skeleton_skull.drops", new java.util.ArrayList<>(List.of("wither_skeleton_skull")));
+            }
+        }
+
         write("catalog-version", CATALOG_VERSION);
-        StreamlineCollections.getInstance().logInfo("Upgraded collections.yml to catalog version " + CATALOG_VERSION
-                + " (Miscellaneous collections; clay counted from mining).");
+        StreamlineCollections.getInstance().logInfo("Upgraded collections.yml to catalog version " + CATALOG_VERSION + ".");
     }
 
     private String string(String path, String fallback) {

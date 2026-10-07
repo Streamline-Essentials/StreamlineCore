@@ -64,11 +64,11 @@ public final class Menus {
     }
 
     public static GuiIcon back(Runnable action) {
-        return GuiIcon.of(CosmicItem.of("minecraft:arrow", "#00FC88Back", "#FFFFFFClick to go back"), click -> action.run());
+        return GuiIcon.of(CosmicItem.of("minecraft:arrow", "#00FC88ʙᴀᴄᴋ", "#FFFFFFClick to go back"), click -> action.run());
     }
 
     public static GuiIcon close() {
-        return GuiIcon.close(CosmicItem.of("minecraft:barrier", "&c&lClose", "&7Close this menu."));
+        return GuiIcon.close(CosmicItem.of("minecraft:barrier", "&c&lClose", "&7Close this GUI."));
     }
 
     public static String grouped(long value) {

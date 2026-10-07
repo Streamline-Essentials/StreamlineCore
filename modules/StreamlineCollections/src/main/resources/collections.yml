@@ -12,7 +12,7 @@
 # Not every platform reports every source; see the module README.
 
 # Which catalog layout this file has; files from older versions are upgraded in place on load.
-catalog-version: 2
+catalog-version: 3
 
 # Amounts needed for each level, unless a collection sets its own `tiers`.
 default-tiers:
@@ -346,6 +346,12 @@ collections:
     icon: lava_bucket
     buckets:
       - lava_bucket
+  water_bucket:
+    name: "Water Bucket"
+    category: mining
+    icon: water_bucket
+    buckets:
+      - water_bucket
   rotten_flesh:
     name: "Rotten Flesh"
     category: combat
@@ -406,6 +412,12 @@ collections:
     icon: magma_cream
     drops:
       - magma_cream
+  wither_skeleton_skull:
+    name: "Wither Skeleton Skull"
+    category: combat
+    icon: wither_skeleton_skull
+    drops:
+      - wither_skeleton_skull
   oak_log:
     name: "Oak Log"
     category: foraging
@@ -560,12 +572,6 @@ collections:
     icon: sponge
     fish:
       - sponge
-  water_bucket:
-    name: "Water Bucket"
-    category: fishing
-    icon: water_bucket
-    buckets:
-      - water_bucket
   # These follow a vanilla statistic (`statistic`, of type `statistic-type`, `custom` unless
   # set) divided by `divisor`: ticks to hours, centimetres to blocks. What the statistic gains
   # while the player is online is added at every save.

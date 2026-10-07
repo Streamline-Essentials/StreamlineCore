@@ -17,12 +17,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 /**
  * Helpers shared by the collections commands.
  */
-final class Commands {
+public final class Commands {
     private Commands() {
     }
 
     /** The sender as a player who can be shown a menu, telling them why not otherwise. */
-    static Optional<CosmicPlayer> menuViewer(CosmicSender sender) {
+    public static Optional<CosmicPlayer> menuViewer(CosmicSender sender) {
         if (sender == null || sender.isConsole()) {
             ModuleUtils.sendMessage(sender, host.plas.collections.data.CollectionManager.message("players-only"));
             return Optional.empty();
@@ -38,7 +38,7 @@ final class Commands {
      * The arguments typed, without blank ones: a trailing or doubled space arrives as an empty
      * argument on some platforms, and would otherwise be read as a player or collection name.
      */
-    static String[] args(CommandContext<CosmicCommand> context) {
+    public static String[] args(CommandContext<CosmicCommand> context) {
         List<String> args = new ArrayList<>();
         for (String arg : context.getArgsArray()) {
             if (arg != null && ! arg.trim().isEmpty()) args.add(arg.trim());
@@ -46,8 +46,13 @@ final class Commands {
         return args.toArray(new String[0]);
     }
 
+    /** The UUID of a player who has joined, by name. */
+    public static Optional<String> uuidOf(String name) {
+        return UserUtils.getUUIDFromName(name);
+    }
+
     /** The options that start with what is typed so far. */
-    static ConcurrentSkipListSet<String> complete(Collection<String> options, String[] args) {
+    public static ConcurrentSkipListSet<String> complete(Collection<String> options, String[] args) {
         String partial = args.length == 0 ? "" : args[args.length - 1];
         return ModuleUtils.getCompletion(new ConcurrentSkipListSet<>(options), partial);
     }

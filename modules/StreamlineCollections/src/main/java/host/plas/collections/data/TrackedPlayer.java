@@ -12,11 +12,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * One player's collection progress: the amount collected per collection and the levels claimed.
- * Claims are keyed {@code <collection>:<level>}.
+ * One player's progress on one {@link Track}: an amount per id (collection, mob or progression
+ * key) and the levels claimed. Claims are keyed {@code <id>:<level>}.
  */
 @Getter @Setter
-public class CollectionPlayer implements Loadable<CollectionPlayer> {
+public class TrackedPlayer implements Loadable<TrackedPlayer> {
+    private final Track track;
     private String identifier;
     private String name;
     private Map<String, Long> amounts;
@@ -39,7 +40,8 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
     private volatile boolean loadInFlight = false;
     private volatile boolean savePendingAfterLoad = false;
 
-    public CollectionPlayer(String identifier) {
+    public TrackedPlayer(Track track, String identifier) {
+        this.track = track;
         this.identifier = identifier;
         this.name = "";
         this.amounts = new ConcurrentHashMap<>();
@@ -79,6 +81,13 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
         return added;
     }
 
+    /** Clears one id's amount and claimed levels. */
+    public void reset(String id) {
+        amounts.remove(id);
+        claimed.removeIf(key -> key.startsWith(id + ":"));
+        dirty = true;
+    }
+
     public void wipe() {
         amounts.clear();
         claimed.clear();
@@ -93,22 +102,22 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
         }
 
         dirty = false;
-        StreamlineCollections.getKeeper().save(this, async);
+        track.getKeeper().save(this, async);
     }
 
     @Override
     public void unload() {
-        StreamlineCollections.getLoader().unload(this);
+        track.getLoader().unload(this);
     }
 
     @Override
     public void load() {
-        StreamlineCollections.getLoader().load(this);
+        track.getLoader().load(this);
     }
 
     @Override
     public boolean isLoaded() {
-        return StreamlineCollections.getLoader().isLoaded(getIdentifier());
+        return track.getLoader().isLoaded(getIdentifier());
     }
 
     @Override
@@ -118,7 +127,7 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
     }
 
     @Override
-    public CollectionPlayer augment(CompletableFuture<Optional<CollectionPlayer>> augmentation, boolean isGet) {
+    public TrackedPlayer augment(CompletableFuture<Optional<TrackedPlayer>> augmentation, boolean isGet) {
         this.fullyLoaded = false;
         this.loadInFlight = true;
 
@@ -126,9 +135,9 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
             boolean saveNow = savePendingAfterLoad;
 
             if (throwable != null) {
-                StreamlineCollections.getInstance().logWarning("Failed to load collections for " + identifier + ": " + throwable.getMessage());
+                StreamlineCollections.getInstance().logWarning("Failed to load " + track.getAmountsTable() + " for " + identifier + ": " + throwable.getMessage());
             } else if (optional.isPresent()) {
-                CollectionPlayer stored = optional.get();
+                TrackedPlayer stored = optional.get();
 
                 // Progress made before the load finished is kept on top of the stored progress.
                 stored.amounts.forEach((collection, amount) -> this.amounts.merge(collection, amount, Long::sum));
