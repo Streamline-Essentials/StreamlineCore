@@ -117,6 +117,121 @@ public final class ModuleCloud {
     }
 
     /** A download that was refused or failed; the message is meant for the command sender. */
+    /** One version of a module, as the registry lists it. */
+    @Getter
+    public static final class VersionInfo {
+        private final String version;
+        private final long size;
+        private final String sha256;
+        private final String uploadedAt;
+        private final long downloads;
+
+        VersionInfo(String version, long size, String sha256, String uploadedAt, long downloads) {
+            this.version = version;
+            this.size = size;
+            this.sha256 = sha256;
+            this.uploadedAt = uploadedAt;
+            this.downloads = downloads;
+        }
+    }
+
+    /** A module's registry entry: its metadata, total downloads and versions, newest first. */
+    @Getter
+    public static final class ModuleInfo {
+        private final String name;
+        private final String id;
+        private final String description;
+        private final String version;
+        private final String author;
+        private final String license;
+        private final String requires;
+        private final java.util.List<String> dependencies;
+        private final long size;
+        private final String sha256;
+        private final String createdAt;
+        private final String updatedAt;
+        private final long downloads;
+        private final String downloadUrl;
+        private final java.util.List<VersionInfo> versions;
+
+        ModuleInfo(JsonObject json) {
+            this.name = string(json, "name");
+            this.id = string(json, "id");
+            this.description = string(json, "description");
+            this.version = string(json, "version");
+            this.author = string(json, "author");
+            this.license = string(json, "license");
+            this.requires = string(json, "requires");
+            this.dependencies = new java.util.ArrayList<>();
+            if (json.has("dependencies") && json.get("dependencies").isJsonArray()) {
+                for (JsonElement element : json.getAsJsonArray("dependencies")) {
+                    if (element.isJsonPrimitive()) {
+                        dependencies.add(element.getAsString());
+                    } else if (element.isJsonObject()) {
+                        JsonObject dependency = element.getAsJsonObject();
+                        String depId = dependency.has("id") ? string(dependency, "id") : string(dependency, "name");
+                        if (! depId.isEmpty()) dependencies.add(depId);
+                    }
+                }
+            }
+            this.size = number(json, "size");
+            this.sha256 = string(json, "sha256");
+            this.createdAt = string(json, "createdAt");
+            this.updatedAt = string(json, "updatedAt");
+            this.downloads = number(json, "downloads");
+            this.downloadUrl = string(json, "downloadUrl");
+            this.versions = new java.util.ArrayList<>();
+            if (json.has("versions") && json.get("versions").isJsonArray()) {
+                for (JsonElement element : json.getAsJsonArray("versions")) {
+                    if (! element.isJsonObject()) continue;
+                    JsonObject v = element.getAsJsonObject();
+                    versions.add(new VersionInfo(string(v, "version"), number(v, "size"), string(v, "sha256"),
+                            string(v, "uploadedAt"), number(v, "downloads")));
+                }
+            }
+        }
+
+        private static String string(JsonObject json, String key) {
+            JsonElement element = json.get(key);
+            return element == null || element.isJsonNull() ? "" : element.getAsString();
+        }
+
+        private static long number(JsonObject json, String key) {
+            JsonElement element = json.get(key);
+            try {
+                return element == null || element.isJsonNull() ? 0L : element.getAsLong();
+            } catch (RuntimeException e) {
+                return 0L;
+            }
+        }
+    }
+
+    /**
+     * Looks a module up in the registry by name or Plugin-Id, ignoring case.
+     *
+     * @param name the module's registry name or Plugin-Id
+     * @return the module's registry entry; fails with a {@link CloudException} when the
+     *         registry does not know it or cannot be reached
+     */
+    public static CompletableFuture<ModuleInfo> info(String name) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules/" + encode(name)))
+                        .timeout(Duration.ofSeconds(15))
+                        .header("Accept", "application/json")
+                        .GET().build(), HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    throw new CloudException(errorMessage(response.statusCode(), response.body()));
+                }
+                return new ModuleInfo(new JsonParser().parse(response.body()).getAsJsonObject());
+            } catch (IOException e) {
+                throw new CloudException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
+            } catch (IllegalStateException | com.google.gson.JsonParseException e) {
+                throw new CloudException("The module registry sent an unreadable answer.", e);
+            }
+        });
+    }
+
     public static final class CloudException extends RuntimeException {
         public CloudException(String message) {
             super(message);

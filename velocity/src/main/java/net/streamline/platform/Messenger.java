@@ -4,6 +4,9 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import singularity.objects.ClickableMessage;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -241,6 +244,44 @@ public class Messenger implements IMessenger {
         if (to == null) return;
         if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineVelocity.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(StreamlineVelocity.getInstance().getProxy().getConsoleCommandSource(), other, message);
+    }
+
+    /**
+     * Sends the segments as one chat line, each with its own tooltip and click action.
+     * Console recipients get the joined text.
+     */
+    @Override
+    public void sendClickable(@Nullable CosmicSender to, ClickableMessage message) {
+        if (to == null || message == null || message.isEmpty()) return;
+        Player player = to instanceof CosmicPlayer ? StreamlineVelocity.getPlayer(to.getUuid()) : null;
+        if (player == null) {
+            sendMessage(to, message.joinedText());
+            return;
+        }
+
+        List<Component> parts = new ArrayList<>();
+        for (ClickableMessage.Segment segment : message.getSegments()) {
+            Component part = codedText(segment.getText());
+            if (segment.getHover() != null) part = part.hoverEvent(HoverEvent.showText(codedText(segment.getHover())));
+            ClickEvent click = toClickEvent(segment);
+            if (click != null) part = part.clickEvent(click);
+            parts.add(part);
+        }
+        player.sendMessage(Component.empty().children(parts));
+    }
+
+    private static ClickEvent toClickEvent(ClickableMessage.Segment segment) {
+        if (segment.getClickAction() == null) return null;
+        switch (segment.getClickAction()) {
+            case RUN_COMMAND:
+                return ClickEvent.runCommand(segment.getClickValue());
+            case SUGGEST_COMMAND:
+                return ClickEvent.suggestCommand(segment.getClickValue());
+            case OPEN_URL:
+                return ClickEvent.openUrl(segment.getClickValue());
+            default:
+                return null;
+        }
     }
 
     @Override
