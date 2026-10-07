@@ -23,7 +23,7 @@ public class TagsConfig extends ModularizedConfig {
 
     public int getRefreshIntervalSeconds() {
         reloadResource();
-        return Math.max(0, getOrSetDefault("refresh-interval-seconds", 300));
+        return Math.max(0, getOrSetDefault("refresh-interval-seconds", 60));
     }
 
     public String getMenuTitle() {

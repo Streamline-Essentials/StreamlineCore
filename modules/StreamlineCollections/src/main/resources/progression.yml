@@ -13,7 +13,7 @@ enabled: true
 sync-stats: true
 
 # How often online players' statistics are read, in seconds.
-refresh-interval-seconds: 30
+refresh-interval-seconds: 60
 
 # Star cost from n to n+1: min(max-needed, n * formula-multiplier + formula-base).
 formula-multiplier: 250

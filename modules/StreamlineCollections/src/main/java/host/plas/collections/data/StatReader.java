@@ -17,7 +17,11 @@ public final class StatReader {
     private StatReader() {
     }
 
-    private static final int THREADS = 4;
+    /**
+     * Reads in flight at once. Each read that totals a whole statistic type runs over every block or
+     * item on the server thread, so this also caps how many of those land in one tick.
+     */
+    private static final int THREADS = 2;
     private static volatile ExecutorService executor;
 
     public static void start() {

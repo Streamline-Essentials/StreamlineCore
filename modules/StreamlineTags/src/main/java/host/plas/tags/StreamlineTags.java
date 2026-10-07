@@ -8,9 +8,11 @@ import lombok.Getter;
 import org.pf4j.PluginWrapper;
 import singularity.data.players.CosmicPlayer;
 import singularity.modules.SimpleModule;
+import singularity.permissions.DefaultPermissions;
 import singularity.scheduler.ModuleRunnable;
 import singularity.utils.UserUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -42,6 +44,7 @@ public class StreamlineTags extends SimpleModule {
         TagStore.ensureTables();
         TagStore.loadDefinitions();
 
+        DefaultPermissions.grantByDefault("streamline.command.tags.default");
         listener = new TagsListener();
         expansion = new TagsExpansion();
 
@@ -67,7 +70,10 @@ public class StreamlineTags extends SimpleModule {
         setCommands(List.of(new TagsCommand(), new TagCommand()));
     }
 
-    /** Re-reads tags and groups from the database every {@code refresh-interval-seconds}. */
+    /**
+     * Re-reads tags, groups and online players' grants and selections from the database every
+     * {@code refresh-interval-seconds}, so changes made on another server of a network show up here.
+     */
     public void restartRefresh() {
         if (refreshTimer != null) refreshTimer.cancel();
         refreshTimer = null;
@@ -77,7 +83,8 @@ public class StreamlineTags extends SimpleModule {
         refreshTimer = new ModuleRunnable(this, seconds * 20L, seconds * 20L) {
             @Override
             public void run() {
-                CompletableFuture.runAsync(TagStore::loadDefinitions);
+                List<String> online = new ArrayList<>(UserUtils.getOnlinePlayers().keySet());
+                TagStore.refresh(online);
             }
         };
     }

@@ -18,8 +18,8 @@ A tag the player loses access to stops showing, even while it is still selected.
 
 | Command | Permission |
 |---|---|
-| `/tags` (alias `chattags`) | `streamline.command.tags.default` |
-| `/tag (create <id> <display>\|set <id> <display>\|remove <id>\|grant <player> <id>\|revoke <player> <id>\|list\|group create <group>\|group delete <group>\|group add <group> <id>\|group remove <group> <id>\|group grant <player> <group>\|reload)` (alias `tagadmin`) | `streamline.command.tag.default` |
+| `/tags` (alias `chattags`) | `streamline.command.tags.default` (everyone by default) |
+| `/tag (create <id> <display>\|set <id> <display>\|remove <id>\|grant <player> <id>\|revoke <player> <id>\|list\|group create <group>\|group delete <group>\|group add <group> <id>\|group remove <group> <id>\|group grant <player> <group>\|reload)` (alias `tagadmin`; only `/tagadmin` on Fabric, Forge and NeoForge, where `/tag` would replace vanilla's) | `streamline.command.tagadmin.default` |
 
 Ids are lowercase letters, numbers, `_` and `-`. A display may be wrapped in quotes and uses `&`
 and `#RRGGBB` colours, e.g. `/tag create vip "&8[#FFD700VIP&8]"`.
@@ -33,11 +33,12 @@ and `#RRGGBB` colours, e.g. `/tag create vip "&8[#FFD700VIP&8]"`.
 | `%streamlinetags_tag_right%` | The tag then a space (for before a name), or nothing |
 | `%streamlinetags_tag_id%` | The active tag's id, or nothing |
 
-They read a per-player cache, filled when the player joins.
+They read a per-player cache, filled when the player joins. Through PlaceholderAPI (Spigot),
+write them as `%streamline_!streamlinetags_tag%`.
 
 ## Storage and networks
 
 Tags live in Streamline's main database (`tags`, `tag_groups`, `tag_group_members`,
 `tag_grants`, `tag_active`, with the core's table prefix). Every server re-reads tags and groups
-every `refresh-interval-seconds` (default 300), and `/tag reload` does so at once, so a tag made
-on one server of a network reaches the others.
+every `refresh-interval-seconds` (default 60), and `/tag reload` does so at once, so a tag made
+on one server of a network reaches the others. Online players' grants and selections are re-read on the same interval.
