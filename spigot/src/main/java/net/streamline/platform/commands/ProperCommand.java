@@ -13,6 +13,7 @@ import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import singularity.command.CosmicCommand;
+import singularity.command.ModuleCommand;
 import singularity.command.result.CommandResult;
 import singularity.data.console.CosmicSender;
 import singularity.interfaces.IProperCommand;
@@ -20,6 +21,7 @@ import singularity.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
@@ -61,10 +63,17 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
      * @return a configured {@link CommandBuilder} ready to build this command
      */
     public static CommandBuilder builder(CosmicCommand parent) {
-        return new CommandBuilder(parent.getBase(), StreamlineSpigot.getInstance())
+        CommandBuilder builder = new CommandBuilder(parent.getBase(), StreamlineSpigot.getInstance())
                 .setDescription("Not defined.")
                 .setUsage("Not defined.")
                 .setAliases(parent.getAliases());
+        // BOU registers with the label as Bukkit's fallback prefix, so Bukkit itself adds
+        // <module-id>:<base> and <module-id>:<alias> for every label of a module command.
+        if (parent instanceof ModuleCommand) {
+            String moduleId = ((ModuleCommand) parent).getOwningModule().getIdentifier();
+            if (moduleId != null && ! moduleId.isEmpty()) builder.setLabel(moduleId.toLowerCase(Locale.ROOT));
+        }
+        return builder;
     }
 
     /**

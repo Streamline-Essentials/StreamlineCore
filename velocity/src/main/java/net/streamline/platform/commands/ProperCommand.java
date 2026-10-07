@@ -158,7 +158,7 @@ public class ProperCommand implements SimpleCommand, IProperCommand {
     public CommandMeta getMeta() {
         return StreamlineVelocity.getInstance().getProxy().getCommandManager().metaBuilder(this.getParent().getBase())
                 .plugin(StreamlineVelocity.getInstance())
-                .aliases(this.getParent().getAliases())
+                .aliases(this.getParent().getAliasesWithNamespaced())
                 .build();
     }
 }
