@@ -26,6 +26,7 @@ public class StreamerConfig extends SimpleConfiguration {
         getResource().remove(uuid + ".go-live");
         getResource().remove(uuid + ".go-offline");
         getResource().remove(uuid + ".stream-link");
+        getResource().remove(uuid);
     }
 
     public List<StreamerSetup> getSetups() {
