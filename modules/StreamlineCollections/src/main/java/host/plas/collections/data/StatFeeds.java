@@ -56,7 +56,7 @@ public final class StatFeeds {
 
     /** Sets a loaded player's baselines to their statistics now, so only what follows counts. */
     public static void baseline(CosmicPlayer player) {
-        CollectionPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
+        TrackedPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
         if (progress == null) return;
         progress.getBaselines().putAll(read(player.getUuid()));
     }
@@ -69,7 +69,7 @@ public final class StatFeeds {
      */
     public static int refresh(CosmicPlayer player) {
         if (! StreamlineCollections.isTrackingServer()) return 0;
-        CollectionPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
+        TrackedPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
         if (progress == null || ! progress.isFullyLoaded()) return 0;
 
         int levels = 0;

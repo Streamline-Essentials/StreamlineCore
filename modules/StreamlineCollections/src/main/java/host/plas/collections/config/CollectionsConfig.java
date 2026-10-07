@@ -5,9 +5,6 @@ import host.plas.collections.data.LevelReward;
 import singularity.configs.ModularizedConfig;
 import singularity.gui.CosmicItem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -130,30 +127,12 @@ public class CollectionsConfig extends ModularizedConfig {
 
     /** The configured rewards, by level. */
     public TreeMap<Integer, LevelReward> getRewards() {
-        reloadResource();
-        TreeMap<Integer, LevelReward> rewards = new TreeMap<>();
-        for (String key : singleLayerKeySet("rewards.levels")) {
-            int level;
-            try {
-                level = Integer.parseInt(key.trim());
-            } catch (NumberFormatException e) {
-                continue;
-            }
-            String path = "rewards.levels." + key;
-            String description = getResource().getString(path + ".description");
-            List<String> commands = getResource().getStringList(path + ".commands");
-            rewards.put(level, new LevelReward(description == null ? "" : description,
-                    commands == null ? new ArrayList<>() : commands));
-        }
-        return rewards;
+        return LevelReward.parse(this, "rewards.levels");
     }
 
     /** The reward for {@code level}: its own entry, or the highest configured one below it. */
     public LevelReward getReward(int level) {
-        TreeMap<Integer, LevelReward> rewards = getRewards();
-        Map.Entry<Integer, LevelReward> entry = rewards.floorEntry(level);
-        if (entry == null) entry = rewards.firstEntry();
-        return entry == null ? LevelReward.NONE : entry.getValue();
+        return LevelReward.pick(getRewards(), level);
     }
 
     public String getMessage(String key) {

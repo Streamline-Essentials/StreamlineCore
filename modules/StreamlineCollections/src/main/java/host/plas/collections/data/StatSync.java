@@ -31,7 +31,7 @@ public final class StatSync {
     public static int sync(CosmicPlayer player, boolean tellPlayer) {
         if (! StreamlineCollections.isTrackingServer()) return -1;
         IGameplayHandler gameplay = Singularity.gameplay().orElse(null);
-        CollectionPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
+        TrackedPlayer progress = CollectionManager.getLoaded(player.getUuid()).orElse(null);
         if (gameplay == null || progress == null || ! progress.isFullyLoaded()) return -1;
 
         CollectionsConfig config = StreamlineCollections.getMainConfig();

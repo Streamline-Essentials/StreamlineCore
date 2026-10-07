@@ -1,0 +1,77 @@
+# Progression: cosmetic stars and skills, with no gameplay effect.
+#
+# Every category is worth amount * weight XP; the total XP gives the star level, which is never
+# stored. Chat messages, joins, leaves and blocks broken or placed are counted from events; the
+# rest follow the server's vanilla statistics, gaining what the statistic gained while the
+# player was online. Skills train one XP per matching action.
+
+enabled: true
+
+# Raise categories backed by a vanilla statistic (blocks broken, leaves, and every category
+# read from statistics) to at least this server's statistic when a player joins and at each
+# refresh, so play from before the module was installed counts. Staff changes still apply.
+sync-stats: true
+
+# How often online players' statistics are read, in seconds.
+refresh-interval-seconds: 30
+
+# Star cost from n to n+1: min(max-needed, n * formula-multiplier + formula-base).
+formula-multiplier: 250
+formula-base: 500
+max-needed: 5000
+
+# Show the star level in chat through %streamlinecollections_stars%.
+chat-stars-enabled: true
+
+skill-xp-per-level: 1000
+
+# How much one unit of each category is worth. Distances are per block.
+weights:
+  broken_blocks: 1.0
+  placed_blocks: 0.5
+  kills: 5.0
+  mob_kills: 2.0
+  fish_caught: 10.0
+  items_enchanted: 1.5
+  chat_messages: 0.5
+  items_crafted: 10.0
+  joins: 0.5
+  leaves: 0.5
+  elytra_flight: 1.0
+  walking: 1.0
+  swimming: 1.0
+  items_picked_up: 0.5
+  items_dropped: 0.5
+
+messages:
+  usage: "#FF5555Usage: /progression (gui|stars get (player)|exp <get|set|add|remove> ...|skills (player))"
+  # %stars%
+  star-up: "#FFFFFF&lLEVEL UP#AAAAAA! #AAAAAA&oYou are now #FFD700★ #00FC88%stars% #AAAAAA&o!"
+  # What %streamlinecollections_stars% becomes in chat; here %stars% is the star level.
+  chat-prefix: "#FFD700★ %stars% "
+  star-emoji: "#FFD700★"
+  # %player% %stars%
+  stars-get: "#FFFFFF%player% #FFD700has #00FC88%stars% #FFD700stars#AAAAAA."
+  stars-usage: "#FF5555Usage: /progression stars get (player)"
+  stars-derived: "#FF5555Stars are calculated from total experience and cannot be set directly. #AAAAAAUse #FFFFFF/progression exp <set|add|remove> #AAAAAAinstead."
+  exp-usage: "#FF5555Usage: /progression exp get <category> (player) #AAAAAAor #FF5555/progression exp <set|add|remove> <amount> <player> <category>"
+  # %player% %category% %amount%
+  exp-get: "#FFFFFF%player% #AAAAAA%category%: #00FC88%amount%"
+  exp-changed: "#FFD700%player%#AAAAAA's %category% is now #00FC88%amount%#AAAAAA."
+  # %category%
+  unknown-category: "#FF5555Unknown category: #FFFFFF%category%"
+  # %amount%
+  invalid-amount: "#FF5555Invalid amount: #FFFFFF%amount%"
+  # %player%
+  skills-header: "#38C1FC&lSkills for #FFFFFF%player%"
+  # %skill% %level% %xp%
+  skills-entry: "#AAAAAA- #FFFFFF%skill%#AAAAAA: #00FC88Level %level% #AAAAAA(#FFFFFF%xp% XP#AAAAAA)"
+  console-player: "#FF5555Name a player when running this from the console."
+  # %player%
+  unknown-player: "#FF5555No progression data for #FFFFFF%player%#FF5555."
+  no-permission: "#FF5555You do not have permission to do that."
+  admin-usage: "#FF5555Usage: /progressionadmin sync <all|<player>>"
+  # %count%
+  sync-done: "#00FC88Synced progression for #FFFFFF%count% #00FC88player(s) with their vanilla statistics."
+  # %player%
+  not-online: "#FF5555#FFFFFF%player% #FF5555is not online on this server."

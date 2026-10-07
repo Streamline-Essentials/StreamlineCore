@@ -1,6 +1,7 @@
 package host.plas.collections.timers;
 
 import host.plas.collections.StreamlineCollections;
+import host.plas.collections.data.StatReader;
 import host.plas.collections.data.StatSync;
 import singularity.data.players.CosmicPlayer;
 import singularity.scheduler.ModuleRunnable;
@@ -18,11 +19,7 @@ public class StatSyncTimer extends ModuleRunnable {
     @Override
     public void run() {
         for (CosmicPlayer player : UserUtils.getOnlinePlayers().values()) {
-            try {
-                StatSync.sync(player, true);
-            } catch (Throwable t) {
-                StreamlineCollections.getInstance().logWarning("Stat sync failed for " + player.getCurrentName() + ": " + t.getMessage());
-            }
+            StatReader.submit("sync collections for " + player.getCurrentName(), () -> StatSync.sync(player, true));
         }
     }
 }
