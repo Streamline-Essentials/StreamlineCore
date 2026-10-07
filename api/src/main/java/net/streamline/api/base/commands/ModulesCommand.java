@@ -4,11 +4,13 @@ import singularity.command.CosmicCommand;
 import singularity.command.context.CommandContext;
 import singularity.configs.given.MainMessagesHandler;
 import singularity.modules.ModuleCloud;
+import singularity.objects.ClickableMessage;
 import singularity.modules.ModuleLike;
 import singularity.modules.ModuleManager;
 import singularity.utils.MessageUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -88,6 +90,30 @@ public class ModulesCommand extends CosmicCommand {
     /** Usage hint for the {@code ecloud} sub-command. */
     private final String messageEcloudUsage;
 
+    /** Usage hint for {@code ecloud get}. */
+    private final String messageEcloudGetUsage;
+
+    /** Sent while an {@code ecloud get} lookup runs. */
+    private final String messageEcloudGetLooking;
+
+    /** Sent when an {@code ecloud get} lookup fails. */
+    private final String messageEcloudGetFailed;
+
+    /** {@code ecloud get downloads} answer. */
+    private final String messageEcloudGetDownloads;
+
+    /** {@code ecloud get version} answer. */
+    private final String messageEcloudGetVersion;
+
+    /** {@code ecloud get all} answer, one entry per line; a {@code %this_versions%} line expands to the version lines. */
+    private final List<String> messageEcloudGetAll;
+
+    /** One line of {@code %this_versions%} in the {@code ecloud get all} answer. */
+    private final String messageEcloudGetAllVersion;
+
+    /** How many versions {@code ecloud get all} lists, newest first. */
+    private final int ecloudGetAllVersions;
+
     /**
      * Registers the modules command with the {@code streamline-base} module and
      * loads all configurable response messages from the command resource file,
@@ -131,7 +157,35 @@ public class ModulesCommand extends CosmicCommand {
         this.messageEcloudFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.failed",
                 "&cCould not download &7'&c%this_identifier%&7'&8: &c%this_error%");
         this.messageEcloudUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.usage",
-                "&eUsage&8: &f/modules ecloud download <module> (version)");
+                "&eUsage&8: &f/modules ecloud <download <module> (version)|get <downloads|version|all> <module>>");
+        this.messageEcloudGetUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.get.usage",
+                "&eUsage&8: &f/modules ecloud get <downloads|version|all> <module>");
+        this.messageEcloudGetLooking = this.getCommandResource().getOrSetDefault("messages.ecloud.get.looking",
+                "&eLooking up &7'&c%this_identifier%&7' &ein the module cloud&8...");
+        this.messageEcloudGetFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.get.failed",
+                "&cCould not look up &7'&c%this_identifier%&7'&8: &c%this_error%");
+        this.messageEcloudGetDownloads = this.getCommandResource().getOrSetDefault("messages.ecloud.get.downloads",
+                "&6%this_name% &7has been downloaded &a%this_downloads% &7time(s) across &f%this_version_count% &7version(s)&8.");
+        this.messageEcloudGetVersion = this.getCommandResource().getOrSetDefault("messages.ecloud.get.version",
+                "&6%this_name% &7latest version&8: &a%this_version% &8(&7installed here&8: %this_installed%&8)");
+        this.messageEcloudGetAll = this.getCommandResource().getOrSetDefault("messages.ecloud.get.all", new ArrayList<>(List.of(
+                "&8&m                                                    ",
+                "&6&l%this_name% &8» &a%this_version% &8(&7%this_id%&8)",
+                "&7&o%this_description%",
+                "&8▸ &7Author&8: &f%this_author%   &7License&8: &f%this_license%",
+                "&8▸ &7Downloads&8: &a%this_downloads%   &7Size&8: &f%this_size%",
+                "&8▸ &7Requires&8: &f%this_requires%   &7Dependencies&8: &f%this_dependencies%",
+                "&8▸ &7Published&8: &f%this_created%   &7Updated&8: &f%this_updated%",
+                "&8▸ &7Installed here&8: %this_installed%",
+                "&8▸ &7SHA-256&8: &7%this_sha256_short%",
+                "&8▸ &7Download&8: &b%this_download_url%",
+                "&8▸ &7Versions &8(&f%this_version_count%&8):",
+                "%this_versions%",
+                "&8&m                                                    "
+        )));
+        this.messageEcloudGetAllVersion = this.getCommandResource().getOrSetDefault("messages.ecloud.get.all-version",
+                "   &8- &e%this_version% &8| &a%this_downloads% &7downloads &8| &f%this_size% &8| &7%this_uploaded%");
+        this.ecloudGetAllVersions = this.getCommandResource().getOrSetDefault("ecloud.get-all-versions-shown", 5);
 
         this.messageResultReapplyOne = this.getCommandResource().getOrSetDefault("messages.result.reapply.one",
                 "&eRe-applied module &7'&c%this_identifier%&7'&8!");
@@ -265,6 +319,10 @@ public class ModulesCommand extends CosmicCommand {
      * @param context the command context; argument 0 is {@code ecloud}
      */
     private void runEcloud(CommandContext<CosmicCommand> context) {
+        if (context.getArgCount() >= 2 && context.getStringArg(1).equalsIgnoreCase("get")) {
+            runEcloudGet(context);
+            return;
+        }
         if (context.getArgCount() < 3 || ! context.getStringArg(1).equalsIgnoreCase("download")) {
             context.sendMessage(messageEcloudUsage);
             return;
@@ -290,6 +348,137 @@ public class ModulesCommand extends CosmicCommand {
                     .replace("%this_file%", result.getFile().getFileName().toString())
                     .replace("%this_error%", String.valueOf(result.getLoadError())));
         });
+    }
+
+    /** What {@code ecloud get} can report. */
+    private static final List<String> GET_KINDS = List.of("downloads", "version", "all");
+
+    /**
+     * Handles {@code ecloud get <downloads|version|all> <module>}. The lookup runs off the
+     * command thread; the sender is messaged when it finishes.
+     *
+     * @param context the command context; arguments 0 and 1 are {@code ecloud get}
+     */
+    private void runEcloudGet(CommandContext<CosmicCommand> context) {
+        if (context.getArgCount() < 4 || ! GET_KINDS.contains(context.getStringArg(2).toLowerCase(Locale.ROOT))) {
+            context.sendMessage(messageEcloudGetUsage);
+            return;
+        }
+
+        String kind = context.getStringArg(2).toLowerCase(Locale.ROOT);
+        String name = context.getStringArg(3);
+        context.sendMessage(messageEcloudGetLooking.replace("%this_identifier%", name));
+
+        ModuleCloud.info(name).whenComplete((info, error) -> {
+            if (error != null) {
+                Throwable cause = error.getCause() != null ? error.getCause() : error;
+                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                context.sendMessage(messageEcloudGetFailed
+                        .replace("%this_identifier%", name)
+                        .replace("%this_error%", reason));
+                return;
+            }
+
+            switch (kind) {
+                case "downloads":
+                    sendLinked(context, fillInfo(messageEcloudGetDownloads, info));
+                    break;
+                case "version":
+                    sendLinked(context, fillInfo(messageEcloudGetVersion, info));
+                    break;
+                default:
+                    for (String line : messageEcloudGetAll) {
+                        if (line.trim().equals("%this_versions%")) {
+                            List<ModuleCloud.VersionInfo> versions = info.getVersions();
+                            int shown = Math.min(versions.size(), Math.max(0, ecloudGetAllVersions));
+                            for (int i = 0; i < shown; i++) sendLinked(context, fillVersion(messageEcloudGetAllVersion, versions.get(i)));
+                            if (versions.size() > shown) sendLinked(context, "   &8... &7and &f" + (versions.size() - shown) + " &7more");
+                            continue;
+                        }
+                        String filled = fillInfo(line, info);
+                        // Optional fields such as the description leave no blank line behind.
+                        if (! line.trim().isEmpty() && stripCodes(filled).isEmpty()) continue;
+                        sendLinked(context, filled);
+                    }
+                    break;
+            }
+        });
+    }
+
+    /** Sends {@code line} with any link in it clickable, on every platform. */
+    private static void sendLinked(CommandContext<CosmicCommand> context, String line) {
+        if (line.isEmpty()) {
+            context.sendMessage(" ");
+            return;
+        }
+        ClickableMessage.linkified(line).send(context.getSender());
+    }
+
+    private static String stripCodes(String text) {
+        return text.replaceAll("(?i)&#[0-9a-f]{6}|[&§][0-9a-fk-or]", "").trim();
+    }
+
+    private static String fillInfo(String template, ModuleCloud.ModuleInfo info) {
+        String installed = installedVersion(info.getId());
+        String installedText;
+        if (installed == null) installedText = "&cnot installed";
+        else if (installed.equals(info.getVersion())) installedText = "&a" + installed + " &7(latest)";
+        else installedText = "&e" + installed + " &7(update available)";
+
+        String sha = info.getSha256();
+        return template
+                .replace("%this_name%", info.getName())
+                .replace("%this_id%", info.getId())
+                .replace("%this_description%", info.getDescription())
+                .replace("%this_version%", orNone(info.getVersion()))
+                .replace("%this_author%", orNone(info.getAuthor()))
+                .replace("%this_license%", orNone(info.getLicense()))
+                .replace("%this_requires%", orNone(info.getRequires()))
+                .replace("%this_dependencies%", info.getDependencies().isEmpty() ? "none" : String.join(", ", info.getDependencies()))
+                .replace("%this_downloads%", String.format(Locale.ROOT, "%,d", info.getDownloads()))
+                .replace("%this_size%", humanSize(info.getSize()))
+                .replace("%this_created%", date(info.getCreatedAt()))
+                .replace("%this_updated%", date(info.getUpdatedAt()))
+                .replace("%this_installed%", installedText)
+                .replace("%this_sha256_short%", sha.length() > 16 ? sha.substring(0, 16) + "…" : orNone(sha))
+                .replace("%this_sha256%", orNone(sha))
+                .replace("%this_download_url%", orNone(info.getDownloadUrl()))
+                .replace("%this_version_count%", String.valueOf(info.getVersions().size()));
+    }
+
+    private static String fillVersion(String template, ModuleCloud.VersionInfo version) {
+        return template
+                .replace("%this_version%", version.getVersion())
+                .replace("%this_downloads%", String.format(Locale.ROOT, "%,d", version.getDownloads()))
+                .replace("%this_size%", humanSize(version.getSize()))
+                .replace("%this_uploaded%", date(version.getUploadedAt()));
+    }
+
+    /** The version of the module with Plugin-Id {@code id} loaded on this server, or {@code null}. */
+    private static String installedVersion(String id) {
+        try {
+            org.pf4j.PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(id);
+            return wrapper == null ? null : wrapper.getDescriptor().getVersion();
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    private static String orNone(String value) {
+        return value == null || value.isEmpty() ? "none" : value;
+    }
+
+    /** The date part of an ISO-8601 timestamp ({@code 2026-10-07T03:26:36Z} → {@code 2026-10-07}). */
+    private static String date(String timestamp) {
+        if (timestamp == null || timestamp.isEmpty()) return "unknown";
+        int t = timestamp.indexOf('T');
+        return t > 0 ? timestamp.substring(0, t) : timestamp;
+    }
+
+    private static String humanSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024L * 1024L) return String.format(Locale.ROOT, "%.1f KB", bytes / 1024.0);
+        return String.format(Locale.ROOT, "%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
     /**
@@ -327,11 +516,19 @@ public class ModulesCommand extends CosmicCommand {
                 return ModuleManager.getUnloadedExternalModuleIdentifiers();
             }
             if (context.getStringArg(0).equalsIgnoreCase("ecloud")) {
-                return new ConcurrentSkipListSet<>(List.of("download"));
+                return new ConcurrentSkipListSet<>(List.of("download", "get"));
             }
         }
         if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
                 && context.getStringArg(1).equalsIgnoreCase("download")) {
+            return new ConcurrentSkipListSet<>(ModuleCloud.getCachedModuleNames());
+        }
+        if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
+                && context.getStringArg(1).equalsIgnoreCase("get")) {
+            return new ConcurrentSkipListSet<>(GET_KINDS);
+        }
+        if (context.getArgCount() == 4 && context.getStringArg(0).equalsIgnoreCase("ecloud")
+                && context.getStringArg(1).equalsIgnoreCase("get")) {
             return new ConcurrentSkipListSet<>(ModuleCloud.getCachedModuleNames());
         }
         return new ConcurrentSkipListSet<>();

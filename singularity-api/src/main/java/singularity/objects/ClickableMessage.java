@@ -2,10 +2,13 @@ package singularity.objects;
 
 import singularity.Singularity;
 import singularity.data.console.CosmicSender;
+import singularity.utils.Links;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * One chat line built from segments, each with its own colour-coded text and an optional
@@ -91,6 +94,76 @@ public class ClickableMessage {
 
     public ClickableMessage url(String url) {
         return click(ClickAction.OPEN_URL, url == null ? null : url.trim());
+    }
+
+    /**
+     * Adds {@code text} with every link in it made clickable, as {@link #linkified} does.
+     *
+     * @param text        the text, with colour codes
+     * @param bareDomains whether links without {@code https://} or {@code www.} count
+     * @param linkHover   the tooltip on each link, {@code %url%} replaced by its URL; {@code null} for none
+     */
+    public ClickableMessage textWithLinks(String text, boolean bareDomains, String linkHover) {
+        if (text == null || text.isEmpty()) return this;
+        List<Links.Found> links = Links.find(text, bareDomains);
+        int at = 0;
+        for (Links.Found link : links) {
+            if (link.getStart() > at) text(activeCodes(text, at) + text.substring(at, link.getStart()));
+            text(activeCodes(text, link.getStart()) + link.getText());
+            url(link.getUrl());
+            if (linkHover != null) hover(linkHover.replace("%url%", link.getUrl()));
+            at = link.getEnd();
+        }
+        if (at < text.length()) text(activeCodes(text, at) + text.substring(at));
+        return this;
+    }
+
+    /**
+     * A message of {@code text} in which every link opens in the browser when clicked. Each
+     * segment starts with the colour and formatting in effect where it begins, since segments
+     * do not inherit them from the one before.
+     *
+     * @param text        the text, with colour codes
+     * @param bareDomains whether links without {@code https://} or {@code www.} count
+     * @param linkHover   the tooltip on each link, {@code %url%} replaced by its URL; {@code null} for none
+     */
+    public static ClickableMessage linkified(String text, boolean bareDomains, String linkHover) {
+        return new ClickableMessage().textWithLinks(text, bareDomains, linkHover);
+    }
+
+    /** Links with {@code https://} or {@code www.}, with no tooltip. */
+    public static ClickableMessage linkified(String text) {
+        return linkified(text, false, null);
+    }
+
+    /** Legacy and hex colour codes, and the formatting codes k-o and r. */
+    private static final Pattern CODE = Pattern.compile(
+            "(?i)&#[0-9a-f]{6}|\\{#[0-9a-f]{6}}|<#[0-9a-f]{6}>|[&§]x(?:[&§][0-9a-f]){6}|[&§][0-9a-fk-or]|#[0-9a-f]{6}");
+
+    /**
+     * The colour code and formatting codes in effect at {@code index} of {@code text}: the last
+     * colour, then every formatting code after it. A colour clears formatting, as in vanilla,
+     * and {@code r} clears both.
+     */
+    static String activeCodes(String text, int index) {
+        Matcher matcher = CODE.matcher(text.substring(0, Math.min(index, text.length())));
+        String colour = "";
+        StringBuilder formats = new StringBuilder();
+        while (matcher.find()) {
+            String code = matcher.group();
+            char last = Character.toLowerCase(code.charAt(code.length() - 1));
+            boolean legacy = code.length() == 2;
+            if (legacy && last == 'r') {
+                colour = "";
+                formats.setLength(0);
+            } else if (legacy && last >= 'k' && last <= 'o') {
+                formats.append(code);
+            } else {
+                colour = code;
+                formats.setLength(0);
+            }
+        }
+        return colour + formats;
     }
 
     private ClickableMessage click(ClickAction action, String value) {
