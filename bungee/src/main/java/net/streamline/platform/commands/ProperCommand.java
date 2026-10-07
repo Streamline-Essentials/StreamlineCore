@@ -38,7 +38,7 @@ public class ProperCommand extends Command implements TabExecutor, IProperComman
      * @param parent the cross-platform command definition to wrap
      */
     public ProperCommand(CosmicCommand parent) {
-        super(parent.getBase(), parent.getPermission(), parent.getAliases());
+        super(parent.getBase(), parent.getPermission(), parent.getAliasesWithNamespaced());
         this.parent = parent;
     }
 
