@@ -89,6 +89,13 @@ public final class Menus {
     public static int[] centredRow(int row, int count) {
         count = Math.max(0, Math.min(9, count));
         int[] slots = new int[count];
+        if (count % 2 == 0 && count < 9) {
+            // An even count leaves the middle column free, half on each side of it.
+            int half = count / 2;
+            for (int i = 0; i < half; i++) slots[i] = GuiLayout.slot(row, 4 - half + i);
+            for (int i = 0; i < half; i++) slots[half + i] = GuiLayout.slot(row, 5 + i);
+            return slots;
+        }
         int start = (9 - count) / 2;
         for (int i = 0; i < count; i++) slots[i] = GuiLayout.slot(row, start + i);
         return slots;

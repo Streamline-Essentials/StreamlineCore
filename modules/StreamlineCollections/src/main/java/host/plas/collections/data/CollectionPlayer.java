@@ -23,6 +23,11 @@ public class CollectionPlayer implements Loadable<CollectionPlayer> {
     private Set<String> claimed;
     /** Set when progress changed since the last save. */
     private volatile boolean dirty;
+    /**
+     * For each statistic-fed collection, the amount its statistic stood for when last counted
+     * on this server. Kept in memory only; see {@link StatFeeds}.
+     */
+    private final transient Map<String, Long> baselines = new ConcurrentHashMap<>();
 
     private boolean fullyLoaded = false;
 

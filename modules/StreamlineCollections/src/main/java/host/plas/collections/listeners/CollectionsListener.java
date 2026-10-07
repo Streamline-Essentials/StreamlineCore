@@ -8,6 +8,7 @@ import host.plas.collections.data.Catalog;
 import host.plas.collections.data.CollectionManager;
 import host.plas.collections.data.CollectionPlayer;
 import host.plas.collections.data.PlacedBlocks;
+import host.plas.collections.data.StatFeeds;
 import host.plas.collections.data.StatSync;
 import singularity.data.players.CosmicPlayer;
 import singularity.events.player.gameplay.PlayerBrokeBlockEvent;
@@ -72,6 +73,7 @@ public class CollectionsListener implements BaseEventListener {
                 return;
             }
 
+            StatFeeds.baseline(player);
             if (StreamlineCollections.getMainConfig().isStatSyncEnabled() && StreamlineCollections.getMainConfig().isStatSyncOnJoin()) {
                 StatSync.sync(player, true);
             }
@@ -85,7 +87,16 @@ public class CollectionsListener implements BaseEventListener {
         CosmicPlayer player = event.getPlayer();
         if (player == null) return;
 
-        CollectionManager.getLoaded(player.getUuid()).ifPresent(progress -> progress.saveAndUnload(true));
+        CollectionManager.getLoaded(player.getUuid()).ifPresent(progress -> {
+            if (StreamlineCollections.getMainConfig().isTrackStatistics()) {
+                try {
+                    StatFeeds.refresh(player);
+                } catch (Throwable t) {
+                    StreamlineCollections.getInstance().logWarning("Could not count statistics for " + player.getCurrentName() + " on quit: " + t.getMessage());
+                }
+            }
+            progress.saveAndUnload(true);
+        });
     }
 
     @BaseProcessor

@@ -51,8 +51,6 @@ public final class StatSync {
                 if (stat != null) wanted.computeIfAbsent(stat, k -> new HashSet<>()).addAll(source.getValue());
             }
         }
-        if (wanted.isEmpty()) return 0;
-
         Map<String, Map<String, Long>> values = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : wanted.entrySet()) {
             values.put(entry.getKey(), gameplay.statistics(player.getUuid(), entry.getKey(), entry.getValue()));
@@ -71,6 +69,12 @@ public final class StatSync {
 
             long current = progress.amount(definition.getId());
             if (total > current) levels += CollectionManager.add(player, definition.getId(), total - current, false);
+        }
+
+        // Statistic-fed collections are raised to what this server's statistic stands for.
+        for (Map.Entry<String, Long> entry : StatFeeds.read(player.getUuid()).entrySet()) {
+            long current = progress.amount(entry.getKey());
+            if (entry.getValue() > current) levels += CollectionManager.add(player, entry.getKey(), entry.getValue() - current, false);
         }
 
         if (levels > 0) {
