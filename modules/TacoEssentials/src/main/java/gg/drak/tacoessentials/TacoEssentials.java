@@ -3,6 +3,7 @@ package gg.drak.tacoessentials;
 import gg.drak.tacoessentials.alias.AliasEditor;
 import gg.drak.tacoessentials.alias.AliasManager;
 import gg.drak.tacoessentials.alias.AliasPrompts;
+import gg.drak.tacoessentials.chat.ChatFormatter;
 import gg.drak.tacoessentials.commands.AdminCommands;
 import gg.drak.tacoessentials.commands.HomeCommands;
 import gg.drak.tacoessentials.commands.Perms;
@@ -30,7 +31,7 @@ import java.util.List;
 
 /**
  * Essential commands -- teleport requests, homes, warps, /back, /rtp, utilities and
- * moderation -- on any backend Streamline platform. Everything in-game goes through
+ * moderation -- and configurable public chat, on any backend Streamline platform. Everything in-game goes through
  * Streamline's gameplay API, so the module itself never touches a platform's classes; data
  * lives in Streamline's main database.
  *
@@ -85,6 +86,7 @@ public class TacoEssentials extends SimpleModule {
         TacoDatabase.ensureTables();
         Perms.registerDefaults();
         ModuleUtils.listen(new TacoListener(), this);
+        ModuleUtils.listen(new ChatFormatter(), this);
 
         new ModuleRunnable(this, 20, 20) {
             @Override

@@ -1,0 +1,53 @@
+# TacoEssentials settings. Values are re-read on every use, so edits apply without a restart.
+
+teleport:
+  # Seconds before a pending /tpa or /tpahere request expires.
+  tpa-timeout-seconds: 120
+  # How many previous locations /back remembers per player.
+  back-history-size: 10
+  # Whether dying records the death location for /back.
+  back-on-death: true
+  # How many past death locations /dback remembers per player.
+  death-history-size: 10
+  # Maximum reach, in blocks, of /jump.
+  jump-max-distance: 256
+
+homes:
+  # Homes a player may own; tacoessentials.homes.unlimited lifts the limit.
+  default-max: 5
+
+rtp:
+  # Candidate columns /rtp tries before giving up; each may generate a chunk.
+  max-attempts: 24
+  # Seconds between uses of /rtp; tacoessentials.rtp.bypasscooldown skips it.
+  cooldown-seconds: 300
+
+# ---------------------------------------------------------------------------
+# Chat, display names and messages
+# ---------------------------------------------------------------------------
+chat:
+  # Whether TacoEssentials formats public chat at all.
+  enabled: true
+  # %prefix% %suffix% (LuckPerms), %player%, %displayname%, %stars% (progression
+  # star prefix), %tag%, %tag-left%, %tag-right%, %message%, plus any
+  # PlaceholderAPI placeholder when installed.
+  format: "%streamlinecollections_stars%%displayname%%streamlinetags_tag_left% &8» &r%message%"
+  hover-enabled: true
+  # Shown when hovering the sender's name; clicking it starts a /msg. Same tokens as format.
+  hover:
+    - "&7%displayname%"
+    - "&7&m------------"
+    - "#FFD700★ &fStars #FFD700%streamlinecollections_star_level%"
+    - "&7&m------------"
+    - "&7Click to message"
+  # Whether links in chat messages are clickable.
+  clickable-links: true
+
+display-name:
+  # %prefix% / %suffix% come from LuckPerms; %nickname% is the /nick name or the username.
+  format: "%prefix%%nickname%%suffix%"
+
+nick:
+  max-length: 16
+  # Whether nicknames may use &-style color and format codes.
+  allow-colors: true
