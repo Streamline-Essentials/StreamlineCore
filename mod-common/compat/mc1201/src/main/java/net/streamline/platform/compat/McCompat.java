@@ -181,7 +181,14 @@ public final class McCompat {
 
         if (item.getSkullOwner() != null && type == Items.PLAYER_HEAD) {
             java.util.UUID uuid = ownerUuid(item.getSkullOwner());
-            if (uuid != null) {
+            if (item.getSkinTexture() != null) {
+                // With textures on the profile nothing needs to look the skin up.
+                java.util.UUID profileId = uuid != null ? uuid
+                        : java.util.UUID.nameUUIDFromBytes(item.getSkinTexture().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                GameProfile profile = new GameProfile(profileId, headName(item.getSkullOwner()));
+                profile.getProperties().put("textures", new com.mojang.authlib.properties.Property("textures", item.getSkinTexture()));
+                stack.getOrCreateTag().put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), profile));
+            } else if (uuid != null) {
                 stack.getOrCreateTag().put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), new GameProfile(uuid, null)));
             } else {
                 stack.getOrCreateTag().putString("SkullOwner", item.getSkullOwner());
@@ -190,6 +197,11 @@ public final class McCompat {
 
         return stack;
     }
+    /** {@code owner} when it is a valid Java player name, which a game profile can carry; otherwise {@code null}. */
+    private static String headName(String owner) {
+        return owner != null && owner.matches("[A-Za-z0-9_]{1,16}") ? owner : null;
+    }
+
     /** A player's UUID, or {@code null} when {@code owner} is a name. */
     private static java.util.UUID ownerUuid(String owner) {
         try {

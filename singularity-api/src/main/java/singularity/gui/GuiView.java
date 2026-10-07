@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
  */
 @Getter @Setter
 public class GuiView {
-    private static final int FORMAT_VERSION = 1;
+    private static final int FORMAT_VERSION = 2;
 
     private String id;
     private String title;

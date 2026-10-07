@@ -39,6 +39,12 @@ public class CosmicItem {
     private boolean hideExtras;
     /** A player's UUID or name; only meaningful for {@code minecraft:player_head}. */
     private String skullOwner;
+    /**
+     * The skin a player head shows: the base64 {@code textures} property value. Renderers use
+     * it as is and never ask a session server for {@link #skullOwner}'s skin. {@link GuiManager}
+     * fills it from {@link singularity.utils.profiles.PlayerLookup} when it is not set.
+     */
+    private String skinTexture;
     /** The custom model data value, or {@code 0} for none. */
     private int customModelData;
 
@@ -130,6 +136,7 @@ public class CosmicItem {
         item.glowing = glowing;
         item.hideExtras = hideExtras;
         item.skullOwner = skullOwner;
+        item.skinTexture = skinTexture;
         item.customModelData = customModelData;
         return item;
     }
@@ -143,6 +150,7 @@ public class CosmicItem {
         out.writeBoolean(glowing);
         out.writeBoolean(hideExtras);
         writeNullable(out, skullOwner);
+        writeNullable(out, skinTexture);
         out.writeInt(customModelData);
     }
 
@@ -155,6 +163,7 @@ public class CosmicItem {
         item.glowing = in.readBoolean();
         item.hideExtras = in.readBoolean();
         item.skullOwner = readNullable(in);
+        item.skinTexture = readNullable(in);
         item.customModelData = in.readInt();
         return item;
     }

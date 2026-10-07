@@ -174,13 +174,34 @@ public final class McCompat {
 
         if (item.getSkullOwner() != null && type == Items.PLAYER_HEAD) {
             java.util.UUID uuid = ownerUuid(item.getSkullOwner());
-            stack.set(DataComponents.PROFILE, new ResolvableProfile(
-                    uuid == null ? java.util.Optional.of(item.getSkullOwner()) : java.util.Optional.empty(),
-                    java.util.Optional.ofNullable(uuid), new PropertyMap()));
+            if (item.getSkinTexture() != null) {
+                // A profile with textures counts as resolved: the server never asks a session server for it.
+                java.util.UUID profileId = uuid != null ? uuid
+                        : java.util.UUID.nameUUIDFromBytes(item.getSkinTexture().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                PropertyMap properties = new PropertyMap();
+                properties.put("textures", new com.mojang.authlib.properties.Property("textures", item.getSkinTexture()));
+                stack.set(DataComponents.PROFILE, new ResolvableProfile(
+                        java.util.Optional.ofNullable(headName(item.getSkullOwner())), java.util.Optional.of(profileId), properties));
+            } else if (uuid == null) {
+                stack.set(DataComponents.PROFILE, new ResolvableProfile(
+                        java.util.Optional.of(item.getSkullOwner()), java.util.Optional.empty(), new PropertyMap()));
+            } else if (! singularity.utils.profiles.PlayerLookup.isEnabled()
+                    && ! singularity.utils.profiles.PlayerLookup.isBedrock(uuid)
+                    && ! singularity.utils.profiles.PlayerLookup.isOfflineModeUuid(uuid)) {
+                // Only with lookups off: the server resolves the UUID itself. Mojang's session
+                // server knows no Bedrock or offline-mode player, so those keep the default head.
+                stack.set(DataComponents.PROFILE, new ResolvableProfile(
+                        java.util.Optional.empty(), java.util.Optional.of(uuid), new PropertyMap()));
+            }
         }
 
         return stack;
     }
+    /** {@code owner} when it is a valid Java player name, which a game profile can carry; otherwise {@code null}. */
+    private static String headName(String owner) {
+        return owner != null && owner.matches("[A-Za-z0-9_]{1,16}") ? owner : null;
+    }
+
     /** A player's UUID, or {@code null} when {@code owner} is a name. */
     private static java.util.UUID ownerUuid(String owner) {
         try {

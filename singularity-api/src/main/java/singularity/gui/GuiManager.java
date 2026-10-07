@@ -13,7 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import singularity.utils.profiles.CosmicProfile;
+import singularity.utils.profiles.PlayerLookup;
 
 /**
  * Opens {@link CosmicGui}s and routes what players do in them back to the GUI's handlers.
@@ -253,10 +257,56 @@ public final class GuiManager {
     private static GuiView drawView(CosmicPlayer viewer, CosmicGui gui) {
         try {
             gui.draw(viewer);
-            return gui.snapshot();
+            GuiView view = gui.snapshot();
+            applySkins(gui, view);
+            return view;
         } catch (Throwable t) {
             MessageUtils.logWarning("Failed to draw GUI '" + gui.getTitle() + "' for " + viewer.getCurrentName(), t);
             return null;
         }
+    }
+
+    /**
+     * Gives every player head in {@code view} the skin {@link PlayerLookup} has cached for its
+     * owner, so renderers never ask a session server for it (Mojang's knows no Bedrock player
+     * and rate-limits busy servers). Heads whose owner is not cached yet show the default skin;
+     * once their lookups finish with a skin, the GUI is redrawn for whoever still has it open.
+     */
+    private static void applySkins(CosmicGui gui, GuiView view) {
+        List<CompletableFuture<Optional<CosmicProfile>>> pending = new ArrayList<>();
+        for (Map.Entry<Integer, CosmicItem> entry : new ArrayList<>(view.getItems().entrySet())) {
+            int slot = entry.getKey();
+            CosmicItem item = entry.getValue();
+            if (item == null || item.getSkullOwner() == null || item.getSkinTexture() != null) continue;
+
+            CompletableFuture<Optional<CosmicProfile>> profile = profileOf(item.getSkullOwner());
+            if (profile.isDone()) {
+                profile.getNow(Optional.empty()).filter(CosmicProfile::hasTextures)
+                        .ifPresent(found -> view.getItems().put(slot, item.copy().setSkinTexture(found.getTexturesValue())));
+            } else {
+                pending.add(profile);
+            }
+        }
+        if (pending.isEmpty()) return;
+
+        CompletableFuture.allOf(pending.toArray(new CompletableFuture[0])).thenRun(() -> {
+            boolean found = false;
+            for (CompletableFuture<Optional<CosmicProfile>> profile : pending) {
+                if (profile.getNow(Optional.empty()).filter(CosmicProfile::hasTextures).isPresent()) found = true;
+            }
+            if (found && ! getViewers(gui).isEmpty()) redraw(gui);
+        });
+    }
+
+    /** The profile of a head's owner, a UUID or a name. Offline-mode UUIDs are looked up through their loaded name. */
+    private static CompletableFuture<Optional<CosmicProfile>> profileOf(String owner) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(owner);
+        } catch (IllegalArgumentException notUuid) {
+            return PlayerLookup.lookupByName(owner);
+        }
+        String name = UserUtils.getLoadedSenders().containsKey(owner) ? UserUtils.getLoadedSenders().get(owner).getCurrentName() : null;
+        return PlayerLookup.lookup(uuid, name);
     }
 }
