@@ -109,6 +109,12 @@ Two layers: platform-native events (Velocity `@Subscribe`, Bungee `Listener`, Bu
 
 `CosmicGui` (title, rows, slot → `GuiIcon` of `CosmicItem` + click handler; override `draw(viewer)` to lay out per open/redraw) and `PaginatedGui` are platform-agnostic. `GuiManager` opens them through the platform's `IGuiHandler`: `SpigotGuiHandler` (BOU `ScreenInstance`) on Spigot, `ModGuiHandler` (vanilla `ChestMenu`) on the mod loaders. A proxy has no handler: it sends the render-only `GuiView` (gzip + base64url, kept under the 32767-byte serverbound payload cap) to the player's backend over `gui-*` `ProxiedMessage`s (`singularity.gui.transport.GuiMessages`); the backend reports clicks and closes back and the handlers run on the proxy. Mod backends have no proxy messenger, so proxy-sent GUIs reach Spigot backends only. Clicks and closes carry the GUI instance id and are ignored unless it is the viewer's current one.
 
+### Player lookups and clickable links
+
+`singularity.utils.profiles.PlayerLookup` resolves names, UUIDs and skins without Mojang (live platform profile → Floodgate → GeyserMC API for Bedrock → playerdb.co / ashcon for Java), cached, backed off on failures, and off under `no-internet` or `player-lookups.enabled: false`. `UUIDFetcher` delegates to it. GUI player heads get their texture from it (`CosmicItem.skinTexture`), so no head ever makes the server ask Mojang's session server. Links: `ClickableMessage.linkified(...)` / `singularity.utils.Links`; only Spigot auto-links plain messages.
+
+Module commands also register as `/<module-id>:<label>` (`CosmicCommand.getNamespacedLabels()`), never written to the command's YAML.
+
 ### Platform Entry Points
 
 Each platform has `net.streamline.platform.BasePlugin`:
