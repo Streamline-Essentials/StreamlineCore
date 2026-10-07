@@ -9,7 +9,9 @@ import singularity.gui.CosmicItem;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -34,7 +36,7 @@ final class BukkitStatistics {
         if (! player.isOnline() && ! player.hasPlayedBefore()) return values;
 
         String kind = CosmicItem.keyPath(type);
-        for (String raw : ids) {
+        for (String raw : expand(kind, ids)) {
             String key = CosmicItem.normalizeKey(raw);
             try {
                 long value = value(player, kind, key);
@@ -44,6 +46,35 @@ final class BukkitStatistics {
             }
         }
         return values;
+    }
+
+    /** The ids asked for, with {@code *} replaced by every id the statistic type has. */
+    private static Collection<String> expand(String kind, Collection<String> ids) {
+        if (! ids.contains("*")) return ids;
+        Set<String> all = new HashSet<>();
+        for (String raw : ids) {
+            if (! raw.equals("*")) all.add(raw);
+        }
+        switch (kind) {
+            case "killed":
+            case "killed_by":
+                for (EntityType type : EntityType.values()) {
+                    if (type != EntityType.UNKNOWN && type.isAlive()) all.add(type.getKey().toString());
+                }
+                break;
+            case "custom":
+                for (Statistic statistic : Statistic.values()) {
+                    if (statistic.getType() == Statistic.Type.UNTYPED) all.add(statistic.getKey().toString());
+                }
+                break;
+            default:
+                for (Material material : Material.values()) {
+                    if (material.isLegacy()) continue;
+                    if (kind.equals("mined") ? material.isBlock() : material.isItem()) all.add(material.getKey().toString());
+                }
+                break;
+        }
+        return all;
     }
 
     private static long value(OfflinePlayer player, String kind, String key) {
