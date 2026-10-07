@@ -2,6 +2,7 @@ package host.plas.accessors;
 
 import host.plas.bou.utils.ColorUtils;
 import net.streamline.api.SLAPI;
+import singularity.Singularity;
 import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.ISingularityExtension;
 import org.bukkit.Bukkit;
@@ -9,9 +10,14 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
+/**
+ * Bukkit-only name updates. Fabric, Forge and NeoForge servers are backends too but have no Bukkit
+ * classes, so everything here is gated on the Spigot platform; there the core's own
+ * {@code refreshDisplayName} shows the nickname instead.
+ */
 public class SpigotAccessor {
     public static boolean ensureSafe() {
-        return SLAPI.getInstance().getPlatform().getServerType().equals(ISingularityExtension.ServerType.BACKEND);
+        return SLAPI.getInstance().getPlatform().getPlatformType() == ISingularityExtension.PlatformType.SPIGOT;
     }
 
     public static Player getPlayer(String uuid) {
@@ -21,7 +27,10 @@ public class SpigotAccessor {
     }
 
     public static void updateCustomName(CosmicPlayer player, String name) {
-        if (! ensureSafe()) return;
+        if (! ensureSafe()) {
+            Singularity.gameplay().ifPresent(gameplay -> gameplay.refreshDisplayName(player.getUuid()));
+            return;
+        }
 
         updateCustomName(player, name, true);
     }
