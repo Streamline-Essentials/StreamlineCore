@@ -1,0 +1,61 @@
+# StreamlineTags settings.
+#
+# A player can use a tag when they hold streamline.tags.tag.<id>, were granted it with
+# /tag grant, or hold streamline.tags.group.<group> for a group that contains it.
+# Tags themselves are made in game with /tag create and stored in Streamline's database.
+
+# How often tags and groups are re-read from the database, in seconds, so tags made on
+# another server of the network show up here. 0 turns it off (/tag reload still works).
+refresh-interval-seconds: 300
+
+menu:
+  title: "#38C1FCᴄʜᴀᴛ ᴛᴀɢѕ"
+
+messages:
+  # %tag% (the tag as it shows)
+  selected: "#00FC88Active tag set to %tag%"
+  cleared: "#00FC88Your chat tag has been cleared."
+  no-access: "#FF5555You no longer have access to that tag."
+  received: "#00FC88You received a new chat tag. Use &f/tags #00FC88to equip it."
+  usage:
+    - "#FF5555Tag admin commands:"
+    - "#AAAAAA/tag create <id> <display>"
+    - "#AAAAAA/tag set <id> <display>"
+    - "#AAAAAA/tag remove <id>"
+    - "#AAAAAA/tag grant|revoke <player> <id>"
+    - "#AAAAAA/tag list"
+    - "#AAAAAA/tag group create|delete <group>"
+    - "#AAAAAA/tag group add|remove <group> <id>"
+    - "#AAAAAA/tag group grant <player> <group>"
+    - "#AAAAAA/tag reload"
+  # %tags% %groups%
+  list:
+    - "#AAAAAATags: &f%tags%"
+    - "#AAAAAAGroups: &f%groups%"
+  invalid-id: "#FF5555Ids use lowercase letters, numbers, underscores or hyphens."
+  unknown: "#FF5555Unknown tag id."
+  exists: "#FF5555A tag with that id already exists."
+  # %id% %tag%
+  created: "#00FC88Created tag &f%id% #00FC88as %tag%"
+  updated: "#00FC88Tag &f%id% #00FC88now shows %tag%"
+  removed: "#00FC88Removed tag &f%id%"
+  # %id% %player%
+  granted: "#00FC88Granted tag &f%id% #00FC88to &f%player%"
+  revoked: "#00FC88Revoked tag &f%id% #00FC88from &f%player%"
+  already-granted: "#FFAA00That player already has that tag."
+  group-exists: "#FF5555A group with that id already exists."
+  group-unknown: "#FF5555Unknown tag group."
+  # %group%
+  group-created: "#00FC88Created tag group &f%group%"
+  group-deleted: "#00FC88Deleted tag group &f%group%"
+  # %group% %id%
+  group-added: "#00FC88Added tag &f%id% #00FC88to group &f%group%"
+  group-removed: "#00FC88Removed tag &f%id% #00FC88from group &f%group%"
+  # %count% %group% %player%
+  group-granted: "#00FC88Granted &f%count% #00FC88tag(s) from &f%group% #00FC88to &f%player%"
+  no-change: "#FFAA00No change made."
+  reloaded: "#00FC88Reloaded &f%count% #00FC88tag(s) from the database."
+  # %player%
+  unknown-player: "#FF5555No player named #FFFFFF%player%#FF5555 has joined."
+  players-only: "#FF5555Only players can do that."
+  no-gui: "#FF5555Menus are not available on this server."
