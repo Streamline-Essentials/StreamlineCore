@@ -11,6 +11,9 @@
 #
 # Not every platform reports every source; see the module README.
 
+# Which catalog layout this file has; files from older versions are upgraded in place on load.
+catalog-version: 2
+
 # Amounts needed for each level, unless a collection sets its own `tiers`.
 default-tiers:
   - 50
@@ -55,6 +58,13 @@ categories:
     name: "Fishing"
     icon: cod
     color: "#55FFFF"
+  # Hours played and blocks travelled are not items, so they stay out of the category total
+  # and the overall board (`summable: false`).
+  miscellaneous:
+    name: "Miscellaneous"
+    icon: clock
+    color: "#D17BFF"
+    summable: false
 
 # Menu order within a category follows this list.
 collections:
@@ -324,6 +334,12 @@ collections:
       - rooted_dirt
       - podzol
       - mycelium
+  clay:
+    name: "Clay"
+    category: mining
+    icon: clay_ball
+    blocks:
+      - clay
   lava_bucket:
     name: "Lava Bucket"
     category: mining
@@ -532,13 +548,6 @@ collections:
     icon: ink_sac
     fish:
       - ink_sac
-  clay:
-    name: "Clay"
-    category: fishing
-    icon: clay_ball
-    fish:
-      - clay_ball
-      - clay
   prismarine_shard:
     name: "Prismarine Shard"
     category: fishing
@@ -557,3 +566,62 @@ collections:
     icon: water_bucket
     buckets:
       - water_bucket
+  # These follow a vanilla statistic (`statistic`, of type `statistic-type`, `custom` unless
+  # set) divided by `divisor`: ticks to hours, centimetres to blocks. What the statistic gains
+  # while the player is online is added at every save.
+  playtime:
+    name: "Playtime (Hours)"
+    category: miscellaneous
+    icon: clock
+    statistic: play_time
+    divisor: 72000
+    tiers: [1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500]
+  jumps:
+    name: "Jumps"
+    category: miscellaneous
+    icon: rabbit_foot
+    statistic: jump
+    divisor: 1
+    tiers: [500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000]
+  walk_distance:
+    name: "Walk Distance"
+    category: miscellaneous
+    icon: leather_boots
+    statistic: walk_one_cm
+    divisor: 100
+    tiers: [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000]
+  sprint_distance:
+    name: "Sprint Distance"
+    category: miscellaneous
+    icon: sugar
+    statistic: sprint_one_cm
+    divisor: 100
+    tiers: [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000]
+  swim_distance:
+    name: "Swim Distance"
+    category: miscellaneous
+    icon: turtle_helmet
+    statistic: swim_one_cm
+    divisor: 100
+    tiers: [250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000]
+  elytra_distance:
+    name: "Elytra Distance"
+    category: miscellaneous
+    icon: elytra
+    statistic: aviate_one_cm
+    divisor: 100
+    tiers: [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000]
+  fly_distance:
+    name: "Fly Distance"
+    category: miscellaneous
+    icon: feather
+    statistic: fly_one_cm
+    divisor: 100
+    tiers: [250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000]
+  sneak_distance:
+    name: "Sneak Distance"
+    category: miscellaneous
+    icon: chainmail_boots
+    statistic: crouch_one_cm
+    divisor: 100
+    tiers: [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000]

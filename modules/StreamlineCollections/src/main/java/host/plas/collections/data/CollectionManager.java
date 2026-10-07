@@ -221,9 +221,10 @@ public final class CollectionManager {
         return board("category:" + category.getId(), ids);
     }
 
+    /** Top players by every item collected, across the summable categories only. */
     public static CompletableFuture<List<CollectionKeeper.Ranked>> overallBoard() {
         List<String> ids = new ArrayList<>();
-        for (CollectionDefinition definition : catalog.all()) ids.add(definition.getId());
+        for (CollectionDefinition definition : catalog.summable()) ids.add(definition.getId());
         return board("overall", ids);
     }
 

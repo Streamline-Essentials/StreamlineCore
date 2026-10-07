@@ -5,6 +5,9 @@ tracking:
   mob-kills: true
   fishing: true
   bucket-fill: true
+  # Collections in collections.yml that follow a vanilla statistic (playtime, distances):
+  # what the statistic gains while a player is online is added at every save and on quit.
+  statistics: true
   # Whether breaking a block a player placed counts. Crops in collections.yml's
   # `mature-only` count once fully grown either way.
   count-placed-blocks: false

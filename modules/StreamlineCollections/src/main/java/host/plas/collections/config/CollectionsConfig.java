@@ -26,6 +26,7 @@ public class CollectionsConfig extends ModularizedConfig {
         isTrackMobKills();
         isTrackFishing();
         isTrackBucketFill();
+        isTrackStatistics();
         isCountPlacedBlocks();
         isStatSyncEnabled();
         isStatSyncOnJoin();
@@ -55,6 +56,12 @@ public class CollectionsConfig extends ModularizedConfig {
     public boolean isTrackBucketFill() {
         reloadResource();
         return getOrSetDefault("tracking.bucket-fill", true);
+    }
+
+    /** Whether collections that follow a vanilla statistic (playtime, distances) count. */
+    public boolean isTrackStatistics() {
+        reloadResource();
+        return getOrSetDefault("tracking.statistics", true);
     }
 
     public boolean isCountPlacedBlocks() {

@@ -63,7 +63,7 @@ public final class LeaderboardMenus {
             Menus.shell(this, ACCENT);
 
             setIcon(13, CosmicItem.of("minecraft:nether_star", ACCENT + "&lOverall",
-                    "#AAAAAATotal items collected across every collection.", "",
+                    "#AAAAAATotal items collected across every item collection.", "",
                     "#bdc8c9Click: #bbff6aView leaderboard"), click -> openOverall(click.getViewer()));
 
             List<CollectionCategory> categories = new ArrayList<>(CollectionManager.getCatalog().getCategories().values());
@@ -90,9 +90,11 @@ public final class LeaderboardMenus {
         @Override
         protected void drawFrame(CosmicPlayer viewer) {
             Menus.shell(this, category.getColor());
-            setIcon(4, CosmicItem.of("minecraft:gold_ingot", category.getColor() + "&lAll " + category.getName(),
-                    "#AAAAAACombined totals for this category.", "",
-                    "#bdc8c9Click: #bbff6aView leaderboard"), click -> openCategoryTotal(click.getViewer(), category));
+            if (category.isSummable()) {
+                setIcon(4, CosmicItem.of("minecraft:gold_ingot", category.getColor() + "&lAll " + category.getName(),
+                        "#AAAAAACombined totals for this category.", "",
+                        "#bdc8c9Click: #bbff6aView leaderboard"), click -> openCategoryTotal(click.getViewer(), category));
+            }
             setIcon(Menus.BACK_SLOT, Menus.back(() -> openHub(viewer)));
         }
 
