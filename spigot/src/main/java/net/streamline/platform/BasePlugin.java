@@ -256,6 +256,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         GameplayHandler gameplayHandler = new GameplayHandler();
         Singularity.setGameplayHandler(gameplayHandler);
         GuiManager.setHandler(new SpigotGuiHandler());
+        net.streamline.platform.handlers.SpigotProfiles.register();
         slapiB = new SLAPIB(getSlapi(), this);
 
         // Unregistered nodes are operator-only in Bukkit, so module defaults are registered
