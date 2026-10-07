@@ -21,6 +21,8 @@ public final class Perms {
     public static final String EC_OTHERS = command("ec.others");
     public static final String RTP_BYPASS_COOLDOWN = PREFIX + "rtp.bypasscooldown";
     public static final String HOMES_UNLIMITED = PREFIX + "homes.unlimited";
+    /** Colour codes in chat messages count instead of being stripped. */
+    public static final String CHAT_COLOR = PREFIX + "chat.color";
 
     /** Running any custom alias; an alias with its permission toggle on also needs {@link #aliasUse}. */
     public static final String ALIAS = PREFIX + "alias";
