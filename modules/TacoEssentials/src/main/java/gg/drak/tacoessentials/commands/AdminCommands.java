@@ -16,7 +16,7 @@ import java.util.Optional;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
+/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /flyspeed}, {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
 public final class AdminCommands {
 
     private AdminCommands() {}
@@ -29,6 +29,8 @@ public final class AdminCommands {
         commands.add(new TacoCommand("jump", AdminCommands::jump));
         commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("flyspeed", AdminCommands::flySpeed, (ctx, arg) -> arg == 0 ? FLY_SPEEDS
+                : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList()));
         commands.add(new TacoCommand("god", AdminCommands::god, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("invsee", AdminCommands::invsee, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("nickfor", AdminCommands::nickFor, AdminCommands::knownFirst));
@@ -126,6 +128,30 @@ public final class AdminCommands {
         if (! isSelf(ctx, target)) {
             ctx.reply(Msg.success("Flight " + (enable ? "enabled" : "disabled") + " for " + target.getCurrentName() + "."));
         }
+    }
+
+    private static final List<String> FLY_SPEEDS = List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "reset");
+
+    /** {@code /flyspeed <speed|reset> (player)}: speed is a multiple of the normal speed, from 0 to 10. */
+    private static void flySpeed(TacoCommand.Ctx ctx) throws Msg.Fail {
+        String usage = "/flyspeed <speed|reset> (player)";
+        String raw = ctx.require(0, usage);
+        float speed;
+        if (raw.equalsIgnoreCase("reset")) {
+            speed = 1F;
+        } else {
+            try {
+                speed = Float.parseFloat(raw);
+            } catch (NumberFormatException e) {
+                throw Msg.fail("'" + raw + "' is not a number. Usage: " + usage);
+            }
+            if (! (speed >= 0F && speed <= 10F)) throw Msg.fail("Fly speed must be between 0 and 10 (1 is normal).");
+        }
+        CosmicPlayer target = ctx.arg(1) != null ? TacoCommand.onlinePlayer(ctx.arg(1)) : ctx.player();
+        if (! gameplay().setFlySpeed(target.getUuid(), speed)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        String shown = speed == (int) speed ? String.valueOf((int) speed) : String.valueOf(speed);
+        target.sendMessage(Msg.success("Fly speed set to " + shown + "."));
+        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s fly speed to " + shown + "."));
     }
 
     /** Toggles god mode; it stays on across respawns, world changes and relogs until toggled off. */

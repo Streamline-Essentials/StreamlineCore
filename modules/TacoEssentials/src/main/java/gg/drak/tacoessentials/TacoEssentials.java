@@ -120,7 +120,7 @@ public class TacoEssentials extends SimpleModule {
      */
     private static boolean coreSupported() {
         try {
-            IGameplayHandler.class.getMethod("setGodMode", String.class, boolean.class);
+            IGameplayHandler.class.getMethod("setFlySpeed", String.class, float.class);
             return true;
         } catch (NoSuchMethodException e) {
             return false;
