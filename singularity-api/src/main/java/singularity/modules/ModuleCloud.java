@@ -25,6 +25,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -256,6 +257,170 @@ public final class ModuleCloud {
                 .thenCompose(fetched -> onMainThread(() -> install(fetched)));
     }
 
+    /** Outcome of {@link #update}. */
+    @Getter
+    public static final class Update {
+        public enum Status {
+            /** The new version replaced the old jar. */
+            UPDATED,
+            /** The installed version is the registry's latest, or newer. */
+            UP_TO_DATE,
+            /** No jar in the module folder is that module. */
+            NOT_INSTALLED,
+        }
+
+        private final Status status;
+        private final String moduleId;
+        /** The version that was installed, or {@code null} when {@link Status#NOT_INSTALLED}. */
+        private final String oldVersion;
+        /** The registry's latest version. */
+        private final String version;
+        /** The new jar, when {@link Status#UPDATED}. */
+        private final Path file;
+        /** Whether the new version was loaded and started. */
+        private final boolean loaded;
+        /** Why the new jar was not loaded, when it was saved but {@link #isLoaded()} is false. */
+        private final String loadError;
+        /** The old jar's name when it could not be deleted (it is deleted when the server stops), else {@code null}. */
+        private final String leftoverJar;
+
+        Update(Status status, String moduleId, String oldVersion, String version, Path file,
+               boolean loaded, String loadError, String leftoverJar) {
+            this.status = status;
+            this.moduleId = moduleId;
+            this.oldVersion = oldVersion;
+            this.version = version;
+            this.file = file;
+            this.loaded = loaded;
+            this.loadError = loadError;
+            this.leftoverJar = leftoverJar;
+        }
+    }
+
+    /**
+     * Replaces an installed module with the registry's latest version, if that is newer. The
+     * old module is unloaded and its jar deleted, then the new jar is saved and loaded; modules
+     * that depend on it are unloaded with it and loaded again afterwards. Data folders and
+     * configs are kept.
+     *
+     * @param name the module's registry name or Plugin-Id
+     * @return a future completed with the result, or exceptionally with a {@link CloudException}
+     */
+    public static CompletableFuture<Update> update(String name) {
+        return info(name).thenCompose(info -> {
+            String id = info.getId().isEmpty() ? name : info.getId();
+            Path oldJar = ModuleManager.findModuleJar(id);
+            if (oldJar == null && ! id.equalsIgnoreCase(name)) oldJar = ModuleManager.findModuleJar(name);
+            if (oldJar == null) {
+                return CompletableFuture.completedFuture(new Update(Update.Status.NOT_INSTALLED, id, null, info.getVersion(),
+                        null, false, null, null));
+            }
+            String oldVersion = installedVersion(oldJar);
+            if (oldVersion != null && compareVersions(oldVersion, info.getVersion()) >= 0) {
+                return CompletableFuture.completedFuture(new Update(Update.Status.UP_TO_DATE, id, oldVersion, info.getVersion(),
+                        oldJar, true, null, null));
+            }
+            Path replaced = oldJar;
+            return CompletableFuture.supplyAsync(() -> fetch(id, info.getVersion()))
+                    .thenCompose(fetched -> onMainThread(() -> replace(fetched, replaced, oldVersion)));
+        });
+    }
+
+    /** The version of the module in {@code jar}: what PF4J loaded, else what its manifest declares. */
+    private static String installedVersion(Path jar) {
+        PluginWrapper wrapper = ModuleManager.getPluginWrapperByJarName(jar.getFileName().toString());
+        if (wrapper != null) return wrapper.getDescriptor().getVersion();
+        return ModuleManager.manifestValue(jar.toFile(), "Plugin-Version");
+    }
+
+    /**
+     * Compares dotted versions part by part, numerically where both parts are numbers
+     * ({@code 1.10.0} is newer than {@code 1.9.2}); anything after a {@code -} or {@code +}
+     * is ignored.
+     */
+    static int compareVersions(String a, String b) {
+        String[] left = a.trim().split("[-+]", 2)[0].split("\\.");
+        String[] right = b.trim().split("[-+]", 2)[0].split("\\.");
+        for (int i = 0; i < Math.max(left.length, right.length); i++) {
+            String l = i < left.length ? left[i] : "0";
+            String r = i < right.length ? right[i] : "0";
+            int compared;
+            try {
+                compared = Long.compare(Long.parseLong(l), Long.parseLong(r));
+            } catch (NumberFormatException e) {
+                compared = l.compareToIgnoreCase(r);
+            }
+            if (compared != 0) return compared;
+        }
+        return 0;
+    }
+
+    private static Update replace(Fetched fetched, Path oldJar, String oldVersion) {
+        try {
+            String oldName = oldJar.getFileName().toString();
+            // Checked before anything is unloaded, so a refused update leaves the old module running.
+            String clash = jarOnDiskWithId(fetched.moduleId, fetched.fileName);
+            if (clash != null && ! clash.equals(oldName)) {
+                throw new CloudException("'" + clash + "' in the module folder already has the Plugin-Id '"
+                        + fetched.moduleId + "'. Delete it first.");
+            }
+
+            PluginWrapper oldWrapper = ModuleManager.getPluginWrapperByJarName(oldName);
+            List<String> dependents = oldWrapper == null ? new java.util.ArrayList<>() : ModuleManager.getDependentJarNames(oldWrapper.getPluginId());
+            ModuleManager.unloadModuleJar(oldJar);
+
+            Path target = Singularity.getModuleFolder().toPath().resolve(fetched.fileName);
+            String leftover = null;
+            if (! oldJar.equals(target)) {
+                try {
+                    Files.deleteIfExists(oldJar);
+                } catch (IOException e) {
+                    // Windows refuses to delete a jar while any handle to it is still open.
+                    oldJar.toFile().deleteOnExit();
+                    leftover = oldName;
+                }
+            }
+
+            try {
+                move(fetched.temp, target);
+            } catch (IOException e) {
+                if (oldJar.toFile().isFile()) reload(oldName, dependents);
+                throw new CloudException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
+            }
+
+            boolean loaded;
+            String loadError = null;
+            try {
+                ModuleManager.registerExternalModule(fetched.fileName);
+                loaded = ModuleManager.getPluginWrapperByJarName(fetched.fileName) != null;
+                if (! loaded) loadError = "PF4J did not register the jar";
+            } catch (Throwable e) {
+                loaded = false;
+                loadError = String.valueOf(e.getMessage());
+            }
+
+            if (loaded) reload(null, dependents);
+            return new Update(Update.Status.UPDATED, fetched.moduleId, oldVersion, fetched.version, target, loaded, loadError, leftover);
+        } finally {
+            deleteQuietly(fetched.temp);
+        }
+    }
+
+    /** Loads {@code jar} (when not {@code null}) and then each dependent jar that is not loaded. */
+    private static void reload(String jar, List<String> dependents) {
+        List<String> jars = new java.util.ArrayList<>();
+        if (jar != null) jars.add(jar);
+        jars.addAll(dependents);
+        for (String name : jars) {
+            if (ModuleManager.getPluginWrapperByJarName(name) != null) continue;
+            try {
+                ModuleManager.registerExternalModule(name);
+            } catch (Throwable e) {
+                singularity.utils.MessageUtils.logWarning("Could not load '" + name + "' again: " + e.getMessage());
+            }
+        }
+    }
+
     /** A verified jar sitting in a temporary file in the module folder. */
     private static final class Fetched {
         final Path temp;
@@ -332,7 +497,7 @@ public final class ModuleCloud {
                 // PF4J identifies modules by Plugin-Id, so a second jar with the same id
                 // would clash on the next start; replacing a loaded jar needs a restart.
                 throw new CloudException("'" + fetched.moduleId + "' " + installedVersion + " is already installed (" + installedJar
-                        + "). Delete that jar and restart to switch to " + fetched.version + ".");
+                        + "). Use /modules ecloud update " + fetched.moduleId + " to switch to the latest version.");
             }
 
             // Jars PF4J has not loaded (unloaded, or failed to load) still claim their
