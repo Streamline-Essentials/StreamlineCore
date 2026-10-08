@@ -289,6 +289,16 @@ public class GameplayHandler implements IGameplayHandler {
         return true;
     }
 
+    /** Bukkit's fly speed runs from -1 to 1 with 0.1 as the default, so ten times default is its maximum. */
+    @Override
+    public boolean setFlySpeed(String uuid, float multiplier) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        float speed = Math.max(0F, Math.min(1F, multiplier * 0.1F));
+        TaskManager.schedule(player, () -> player.setFlySpeed(speed));
+        return true;
+    }
+
     @Override
     public HatResult wearHeldItem(String uuid) {
         return callSync(() -> {

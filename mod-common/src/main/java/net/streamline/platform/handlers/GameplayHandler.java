@@ -263,6 +263,21 @@ public abstract class GameplayHandler implements IGameplayHandler {
         }, false);
     }
 
+    /** Vanilla's default flying speed is 0.05; {@link #setFlySpeed} caps at ten times it, as Bukkit does. */
+    private static final float DEFAULT_FLYING_SPEED = 0.05F;
+
+    @Override
+    public boolean setFlySpeed(String uuid, float multiplier) {
+        float speed = Math.max(0F, Math.min(10F, multiplier)) * DEFAULT_FLYING_SPEED;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getAbilities().setFlyingSpeed(speed);
+            player.onUpdateAbilities();
+            return true;
+        }, false);
+    }
+
     /**
      * Writes {@code Abilities.mayfly} directly: the abilities packet is all an unmodded client
      * receives, so this is the only flag that lets it fly.

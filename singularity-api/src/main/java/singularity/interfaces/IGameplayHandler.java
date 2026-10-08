@@ -172,6 +172,19 @@ public interface IGameplayHandler {
     boolean setFlight(String uuid, boolean allowed);
 
     /**
+     * Sets how fast the player flies, as a multiple of vanilla's default flying speed. The game
+     * saves it with the player's data, so it lasts across relogs on this server.
+     *
+     * @param uuid       the player's UUID
+     * @param multiplier 1 for vanilla's speed, from 0 (cannot move while flying) to 10
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change flying speed
+     */
+    default boolean setFlySpeed(String uuid, float multiplier) {
+        return false;
+    }
+
+    /**
      * Turns god mode on or off. While on, the player takes no damage (except what the game lets
      * bypass invulnerability, such as the void and {@code /kill}) and their hunger stays full.
      * Like {@link #setFlight(String, boolean)}, it lasts until the player logs out; the caller
