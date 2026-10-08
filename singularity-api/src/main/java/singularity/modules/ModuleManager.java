@@ -622,6 +622,146 @@ public class ModuleManager {
     }
 
     /**
+     * The jar in the module folder behind a module: the jar PF4J loaded it from, a jar with
+     * that file name (the {@code .jar} may be left off), or a jar whose manifest declares that
+     * Plugin-Id. Ids and file names match case-insensitively.
+     *
+     * @param idOrJar a module identifier (Plugin-Id) or jar file name
+     * @return the jar, or {@code null} when nothing in the module folder matches
+     */
+    public static Path findModuleJar(String idOrJar) {
+        if (idOrJar == null || idOrJar.isBlank()) return null;
+        for (PluginWrapper wrapper : safePluginManager().getPlugins()) {
+            if (wrapper.getPluginId().equalsIgnoreCase(idOrJar)) return wrapper.getPluginPath();
+        }
+        String jarName = idOrJar.toLowerCase(java.util.Locale.ROOT).endsWith(".jar") ? idOrJar : idOrJar + ".jar";
+        for (File file : getModuleFiles().values()) {
+            if (file.getName().equalsIgnoreCase(jarName)) return file.toPath();
+        }
+        for (File file : getModuleFiles().values()) {
+            String id = manifestValue(file, "Plugin-Id");
+            if (id != null && id.equalsIgnoreCase(idOrJar)) return file.toPath();
+        }
+        return null;
+    }
+
+    /**
+     * A main attribute of a jar's manifest.
+     *
+     * @return the trimmed value, or {@code null} when the jar is unreadable or lacks it
+     */
+    public static String manifestValue(File jar, String attribute) {
+        try (java.util.jar.JarFile file = new java.util.jar.JarFile(jar)) {
+            java.util.jar.Manifest manifest = file.getManifest();
+            if (manifest == null) return null;
+            String value = manifest.getMainAttributes().getValue(attribute);
+            return value == null ? null : value.trim();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Jar file names of the loaded modules that depend on {@code pluginId}, directly or through
+     * other modules. PF4J unloads all of them together with it.
+     */
+    public static List<String> getDependentJarNames(String pluginId) {
+        List<String> ids = new ArrayList<>();
+        ids.add(pluginId);
+        List<String> jars = new ArrayList<>();
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (PluginWrapper wrapper : safePluginManager().getPlugins()) {
+                if (ids.contains(wrapper.getPluginId())) continue;
+                for (PluginDependency dependency : wrapper.getDescriptor().getDependencies()) {
+                    if (! ids.contains(dependency.getPluginId())) continue;
+                    ids.add(wrapper.getPluginId());
+                    jars.add(wrapper.getPluginPath().getFileName().toString());
+                    grew = true;
+                    break;
+                }
+            }
+        }
+        return jars;
+    }
+
+    /**
+     * Stops and unloads the module behind a jar, wherever it is registered: in Streamline's
+     * registry, in PF4J, or both. Modules that depend on it are unloaded with it.
+     *
+     * @param jar the module's jar in the module folder
+     * @return the module's Plugin-Id, or {@code null} when nothing was loaded from that jar
+     */
+    public static String unloadModuleJar(Path jar) {
+        PluginWrapper wrapper = getPluginWrapperByJarName(jar.getFileName().toString());
+        if (wrapper == null) return null;
+        String id = wrapper.getPluginId();
+        ModuleLike module = getModule(id);
+        if (module != null) {
+            unregisterModule(module);
+        } else {
+            try {
+                safePluginManager().unloadPlugin(id);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return id;
+    }
+
+    /** Outcome of {@link #deleteModule(String)}. */
+    @Getter
+    public static final class Deletion {
+        public enum Status {
+            /** The jar is gone. */
+            DELETED,
+            /** The module was unloaded but the jar is still in use; it is deleted when the server stops. */
+            DELETED_ON_EXIT,
+            /** No jar in the module folder matches. */
+            NOT_FOUND,
+        }
+
+        private final Status status;
+        /** The jar's file name, or what was asked for when {@link Status#NOT_FOUND}. */
+        private final String fileName;
+        /** Jar names of the modules that depended on it and were unloaded with it. */
+        private final List<String> unloadedDependents;
+
+        Deletion(Status status, String fileName, List<String> unloadedDependents) {
+            this.status = status;
+            this.fileName = fileName;
+            this.unloadedDependents = unloadedDependents;
+        }
+    }
+
+    /**
+     * Unloads a module and deletes its jar from the module folder. The module's data folder and
+     * configs are kept. Modules that depend on it are unloaded too and stay unloaded.
+     *
+     * @param idOrJar a module identifier (Plugin-Id) or jar file name; see {@link #findModuleJar(String)}
+     * @return what happened
+     */
+    public static Deletion deleteModule(String idOrJar) {
+        Path jar = findModuleJar(idOrJar);
+        if (jar == null || ! jar.toFile().isFile()) return new Deletion(Deletion.Status.NOT_FOUND, idOrJar, new ArrayList<>());
+
+        PluginWrapper wrapper = getPluginWrapperByJarName(jar.getFileName().toString());
+        List<String> dependents = wrapper == null ? new ArrayList<>() : getDependentJarNames(wrapper.getPluginId());
+        unloadModuleJar(jar);
+
+        String fileName = jar.getFileName().toString();
+        try {
+            java.nio.file.Files.deleteIfExists(jar);
+            return new Deletion(Deletion.Status.DELETED, fileName, dependents);
+        } catch (IOException e) {
+            // Windows refuses to delete a jar while any handle to it is still open.
+            jar.toFile().deleteOnExit();
+            return new Deletion(Deletion.Status.DELETED_ON_EXIT, fileName, dependents);
+        }
+    }
+
+    /**
      * Returns the registered {@link ModuleLike} for the given identifier, or
      * {@code null} if no such module is loaded.
      *

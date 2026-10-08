@@ -27,8 +27,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
  *   <li>{@code unload [modules...]} — unregisters running modules.</li>
  *   <li>{@code enable [modules...]} — starts disabled modules.</li>
  *   <li>{@code disable [modules...]} — stops running modules.</li>
+ *   <li>{@code delete <module>} — unloads a module and deletes its jar.</li>
  *   <li>{@code ecloud download <module> [version]} — downloads a module from the
  *       module registry into the module folder and loads it.</li>
+ *   <li>{@code ecloud update <module>} — replaces a module with the registry's latest
+ *       version when that is newer.</li>
  * </ul>
  * When no module identifiers are provided the operation applies to all modules.
  * Registered under {@code streamlinemodules}, {@code module}, {@code modules},
@@ -86,6 +89,45 @@ public class ModulesCommand extends CosmicCommand {
 
     /** Sent when an eCloud download fails or is refused. */
     private final String messageEcloudFailed;
+
+    /** Usage hint for {@code delete}. */
+    private final String messageDeleteUsage;
+
+    /** Sent when a module's jar was deleted. */
+    private final String messageDeleteDeleted;
+
+    /** Sent when a module was unloaded but its jar is still in use, so it goes when the server stops. */
+    private final String messageDeleteOnExit;
+
+    /** Sent when no jar matches. */
+    private final String messageDeleteNotFound;
+
+    /** Sent after a delete message when depending modules were unloaded too. */
+    private final String messageDeleteDependents;
+
+    /** Usage hint for {@code ecloud update}. */
+    private final String messageEcloudUpdateUsage;
+
+    /** Sent while an {@code ecloud update} runs. */
+    private final String messageEcloudUpdateChecking;
+
+    /** Sent when the installed version is already the latest. */
+    private final String messageEcloudUpdateNone;
+
+    /** Sent when the module to update is not installed. */
+    private final String messageEcloudUpdateNotInstalled;
+
+    /** Sent when the update was saved and loaded. */
+    private final String messageEcloudUpdateUpdated;
+
+    /** Sent when the update was saved but could not be loaded. */
+    private final String messageEcloudUpdateNotLoaded;
+
+    /** Sent when the old jar could not be deleted yet. */
+    private final String messageEcloudUpdateLeftover;
+
+    /** Sent when the update fails. */
+    private final String messageEcloudUpdateFailed;
 
     /** Usage hint for the {@code ecloud} sub-command. */
     private final String messageEcloudUsage;
@@ -157,7 +199,33 @@ public class ModulesCommand extends CosmicCommand {
         this.messageEcloudFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.failed",
                 "&cCould not download &7'&c%this_identifier%&7'&8: &c%this_error%");
         this.messageEcloudUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.usage",
-                "&eUsage&8: &f/modules ecloud <download <module> (version)|get <downloads|version|all> <module>>");
+                "&eUsage&8: &f/modules ecloud <download <module> (version)|update <module>|get <downloads|version|all> <module>>");
+        this.messageEcloudUpdateUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.update.usage",
+                "&eUsage&8: &f/modules ecloud update <module>");
+        this.messageEcloudUpdateChecking = this.getCommandResource().getOrSetDefault("messages.ecloud.update.checking",
+                "&eChecking the module cloud for an update to &7'&c%this_identifier%&7'&8...");
+        this.messageEcloudUpdateNone = this.getCommandResource().getOrSetDefault("messages.ecloud.update.none",
+                "&eNo update available for &7'&c%this_identifier%&7' &8(&7installed&8: &a%this_old_version%&7, latest&8: &a%this_version%&8)");
+        this.messageEcloudUpdateNotInstalled = this.getCommandResource().getOrSetDefault("messages.ecloud.update.not-installed",
+                "&7'&c%this_identifier%&7' &eis not installed&8. &eInstall it with &f/modules ecloud download %this_identifier%&8.");
+        this.messageEcloudUpdateUpdated = this.getCommandResource().getOrSetDefault("messages.ecloud.update.updated",
+                "&eUpdated &7'&c%this_identifier%&7' &efrom v&c%this_old_version% &eto v&a%this_version% &7(&f%this_file%&7)&8!");
+        this.messageEcloudUpdateNotLoaded = this.getCommandResource().getOrSetDefault("messages.ecloud.update.updated-not-loaded",
+                "&eUpdated &7'&c%this_identifier%&7' &eto v&a%this_version% &7(&f%this_file%&7)&e, but it could not be loaded&8: &c%this_error%&e. Restart to load it&8.");
+        this.messageEcloudUpdateLeftover = this.getCommandResource().getOrSetDefault("messages.ecloud.update.leftover",
+                "&eThe old jar &7'&f%this_file%&7' &eis still in use and is deleted when the server stops&8; &eif it is still there, delete it before starting again&8.");
+        this.messageEcloudUpdateFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.update.failed",
+                "&cCould not update &7'&c%this_identifier%&7'&8: &c%this_error%");
+        this.messageDeleteUsage = this.getCommandResource().getOrSetDefault("messages.delete.usage",
+                "&eUsage&8: &f/modules delete <module>");
+        this.messageDeleteDeleted = this.getCommandResource().getOrSetDefault("messages.delete.deleted",
+                "&eUnloaded and deleted &7'&c%this_identifier%&7' &7(&f%this_file%&7)&8!");
+        this.messageDeleteOnExit = this.getCommandResource().getOrSetDefault("messages.delete.on-exit",
+                "&eUnloaded &7'&c%this_identifier%&7'&e, but &f%this_file% &eis still in use and is deleted when the server stops&8.");
+        this.messageDeleteNotFound = this.getCommandResource().getOrSetDefault("messages.delete.not-found",
+                "&cNo module jar matches &7'&c%this_identifier%&7'&8.");
+        this.messageDeleteDependents = this.getCommandResource().getOrSetDefault("messages.delete.dependents",
+                "&eAlso unloaded the modules that depend on it&8: &f%this_dependents%");
         this.messageEcloudGetUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.get.usage",
                 "&eUsage&8: &f/modules ecloud get <downloads|version|all> <module>");
         this.messageEcloudGetLooking = this.getCommandResource().getOrSetDefault("messages.ecloud.get.looking",
@@ -303,6 +371,9 @@ public class ModulesCommand extends CosmicCommand {
                     });
                 }
                 break;
+            case "delete":
+                runDelete(context);
+                break;
             case "ecloud":
                 runEcloud(context);
                 break;
@@ -321,6 +392,10 @@ public class ModulesCommand extends CosmicCommand {
     private void runEcloud(CommandContext<CosmicCommand> context) {
         if (context.getArgCount() >= 2 && context.getStringArg(1).equalsIgnoreCase("get")) {
             runEcloudGet(context);
+            return;
+        }
+        if (context.getArgCount() >= 2 && context.getStringArg(1).equalsIgnoreCase("update")) {
+            runEcloudUpdate(context);
             return;
         }
         if (context.getArgCount() < 3 || ! context.getStringArg(1).equalsIgnoreCase("download")) {
@@ -347,6 +422,88 @@ public class ModulesCommand extends CosmicCommand {
                     .replace("%this_version%", result.getVersion())
                     .replace("%this_file%", result.getFile().getFileName().toString())
                     .replace("%this_error%", String.valueOf(result.getLoadError())));
+        });
+    }
+
+    /**
+     * Handles {@code delete <module>}: unloads the module (and the modules depending on it) and
+     * deletes its jar. Its data folder and configs are kept.
+     *
+     * @param context the command context; argument 0 is {@code delete}
+     */
+    private void runDelete(CommandContext<CosmicCommand> context) {
+        if (context.getArgCount() < 2) {
+            context.sendMessage(messageDeleteUsage);
+            return;
+        }
+        String name = context.getStringArg(1);
+        ModuleManager.Deletion deletion = ModuleManager.deleteModule(name);
+        String message;
+        switch (deletion.getStatus()) {
+            case DELETED:
+                message = messageDeleteDeleted;
+                break;
+            case DELETED_ON_EXIT:
+                message = messageDeleteOnExit;
+                break;
+            default:
+                message = messageDeleteNotFound;
+                break;
+        }
+        context.sendMessage(message
+                .replace("%this_identifier%", name)
+                .replace("%this_file%", deletion.getFileName()));
+        if (! deletion.getUnloadedDependents().isEmpty()) {
+            context.sendMessage(messageDeleteDependents
+                    .replace("%this_dependents%", String.join(", ", deletion.getUnloadedDependents())));
+        }
+    }
+
+    /**
+     * Handles {@code ecloud update <module>}. The lookup and download run off the command
+     * thread; the sender is messaged when it finishes.
+     *
+     * @param context the command context; arguments 0 and 1 are {@code ecloud update}
+     */
+    private void runEcloudUpdate(CommandContext<CosmicCommand> context) {
+        if (context.getArgCount() < 3) {
+            context.sendMessage(messageEcloudUpdateUsage);
+            return;
+        }
+        String name = context.getStringArg(2);
+        context.sendMessage(messageEcloudUpdateChecking.replace("%this_identifier%", name));
+
+        ModuleCloud.update(name).whenComplete((result, error) -> {
+            if (error != null) {
+                Throwable cause = error.getCause() != null ? error.getCause() : error;
+                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                context.sendMessage(messageEcloudUpdateFailed
+                        .replace("%this_identifier%", name)
+                        .replace("%this_error%", reason));
+                return;
+            }
+            String message;
+            switch (result.getStatus()) {
+                case NOT_INSTALLED:
+                    message = messageEcloudUpdateNotInstalled;
+                    break;
+                case UP_TO_DATE:
+                    message = messageEcloudUpdateNone;
+                    break;
+                default:
+                    message = result.isLoaded() ? messageEcloudUpdateUpdated : messageEcloudUpdateNotLoaded;
+                    break;
+            }
+            String identifier = result.getStatus() == ModuleCloud.Update.Status.NOT_INSTALLED ? name : result.getModuleId();
+            context.sendMessage(message
+                    .replace("%this_identifier%", identifier)
+                    .replace("%this_old_version%", orNone(result.getOldVersion()))
+                    .replace("%this_version%", orNone(result.getVersion()))
+                    .replace("%this_file%", result.getFile() == null ? "none" : result.getFile().getFileName().toString())
+                    .replace("%this_error%", String.valueOf(result.getLoadError())));
+            if (result.getLeftoverJar() != null) {
+                context.sendMessage(messageEcloudUpdateLeftover.replace("%this_file%", result.getLeftoverJar()));
+            }
         });
     }
 
@@ -503,6 +660,7 @@ public class ModulesCommand extends CosmicCommand {
                     "enable",
                     "disable",
                     "list",
+                    "delete",
                     "ecloud"
             ));
         }
@@ -515,9 +673,18 @@ public class ModulesCommand extends CosmicCommand {
             if (context.getStringArg(0).equalsIgnoreCase("load")) {
                 return ModuleManager.getUnloadedExternalModuleIdentifiers();
             }
-            if (context.getStringArg(0).equalsIgnoreCase("ecloud")) {
-                return new ConcurrentSkipListSet<>(List.of("download", "get"));
+            if (context.getStringArg(0).equalsIgnoreCase("delete")) {
+                ConcurrentSkipListSet<String> targets = new ConcurrentSkipListSet<>(ModuleManager.getOnlyMalleableModuleIdentifiers());
+                targets.addAll(ModuleManager.getUnloadedExternalModuleIdentifiers());
+                return targets;
             }
+            if (context.getStringArg(0).equalsIgnoreCase("ecloud")) {
+                return new ConcurrentSkipListSet<>(List.of("download", "update", "get"));
+            }
+        }
+        if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
+                && context.getStringArg(1).equalsIgnoreCase("update")) {
+            return ModuleManager.getOnlyMalleableModuleIdentifiers();
         }
         if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
                 && context.getStringArg(1).equalsIgnoreCase("download")) {
