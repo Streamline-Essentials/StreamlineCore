@@ -274,6 +274,17 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean feed(String uuid) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        TaskManager.schedule(player, () -> {
+            player.setFoodLevel(20);
+            player.setSaturation(20F);
+        });
+        return true;
+    }
+
+    @Override
     public boolean setFlight(String uuid, boolean allowed) {
         Player player = BasePlugin.getPlayer(uuid);
         if (player == null) return false;

@@ -256,6 +256,17 @@ public abstract class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean feed(String uuid) {
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getFoodData().setFoodLevel(20);
+            player.getFoodData().setSaturation(20.0F);
+            return true;
+        }, false);
+    }
+
+    @Override
     public boolean setFlight(String uuid, boolean allowed) {
         return callOnServer(() -> {
             ServerPlayer player = player(uuid);
