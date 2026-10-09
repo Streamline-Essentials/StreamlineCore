@@ -38,6 +38,7 @@ import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
 import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
@@ -511,13 +512,22 @@ public abstract class GameplayHandler implements IGameplayHandler {
         runOnServer(() -> {
             MinecraftServer server = BasePlugin.getServer();
             if (server == null) return;
+            // Caught per entity so one bad callback (or one from an unloaded module) neither
+            // skips the rest of the pass nor escapes onto the server thread; reported once.
+            Throwable failure = null;
             for (ServerLevel level : server.getAllLevels()) {
                 List<LivingEntity> victims = new ArrayList<>();
                 List<Float> amounts = new ArrayList<>();
                 for (Entity entity : level.getAllEntities()) {
                     if (! (entity instanceof LivingEntity) || ! entity.isAlive()) continue;
                     LivingEntity living = (LivingEntity) entity;
-                    double damage = damageFor.applyAsDouble(new ModLivingView(level, living));
+                    double damage;
+                    try {
+                        damage = damageFor.applyAsDouble(new ModLivingView(level, living));
+                    } catch (Throwable t) {
+                        failure = failure == null ? t : failure;
+                        continue;
+                    }
                     if (damage <= 0) continue;
                     victims.add(living);
                     amounts.add((float) damage);
@@ -526,11 +536,16 @@ public abstract class GameplayHandler implements IGameplayHandler {
                 for (int i = 0; i < victims.size(); i++) {
                     LivingEntity victim = victims.get(i);
                     if (! victim.isAlive()) continue;
-                    ServerPlayer attacker = victim instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(level, victim, attributionRadius);
-                    DamageSource source = attacker != null ? level.damageSources().playerAttack(attacker) : level.damageSources().generic();
-                    McCompat.hurt(level, victim, source, amounts.get(i));
+                    try {
+                        ServerPlayer attacker = victim instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(level, victim, attributionRadius);
+                        DamageSource source = attacker != null ? level.damageSources().playerAttack(attacker) : level.damageSources().generic();
+                        McCompat.hurt(level, victim, source, amounts.get(i));
+                    } catch (Throwable t) {
+                        failure = failure == null ? t : failure;
+                    }
                 }
             }
+            if (failure != null) MessageUtils.logDebug("Living entity damage pass failed", failure);
         });
         return true;
     }
@@ -605,7 +620,8 @@ public abstract class GameplayHandler implements IGameplayHandler {
         @Override
         public boolean hasPermission(String permission) {
             if (! (entity instanceof Player)) return false;
-            CosmicSender sender = UserUtils.getLoadedSenders().get(entity.getStringUUID());
+            Map<String, CosmicSender> loaded = UserUtils.getLoadedSenders();
+            CosmicSender sender = loaded == null ? null : loaded.get(entity.getStringUUID());
             return sender != null && sender.hasPermission(permission);
         }
     }
