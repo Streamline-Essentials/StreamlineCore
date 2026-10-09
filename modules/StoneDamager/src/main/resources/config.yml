@@ -1,0 +1,97 @@
+# StoneDamager
+#
+# Ids below are Minecraft's namespaced ids, such as "minecraft:stonecutter" or
+# "minecraft:zombie". The "minecraft:" part may be left out, and case does not
+# matter, so Bukkit names like "STONECUTTER" and "ZOMBIE" work too.
+#
+# World names are the world's folder name on Spigot/Paper ("world", "lobby") and
+# the dimension id on Fabric/Forge/NeoForge ("minecraft:overworld",
+# "minecraft:the_nether").
+
+# List of damagers.
+damagers:
+  # The identifier of the damager.
+  stonecutter:
+    # If the damager is enabled.
+    enabled: true
+    # Where to look for the damaging block, relative to the entity's feet.
+    # 0 / 0 / 0 is the block the feet are inside (a stonecutter, slab, carpet...).
+    # 0 / -0.1 / 0 is the full block the entity stands on.
+    offset:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    # Ticks between hurting the entity.
+    # 20 ticks = 1 second.
+    ticks-per-damage: 10
+    # Amount of damage points to hurt.
+    # 1.0 = 1/2 of a heart.
+    damage-amount: 3.0
+    # Permission config. Only applies to players.
+    permission:
+      # Players must have this permission to be damaged.
+      # Leave "" to disable.
+      include: ""
+      # Players with this permission are not damaged.
+      # Leave "" to disable.
+      exclude: "stonedamager.bypass"
+    # Entity config.
+    entities:
+      # A list of entity type ids.
+      list: [] # Empty list.
+      # If the list above is a blacklist.
+      # true = do not damage these entities.
+      # false = only damage these entities.
+      is-blacklist: true
+    # Worlds config.
+    worlds:
+      # A list of world names.
+      list:
+        - "lobby"
+      # If the list above is a blacklist.
+      # true = do not damage in these worlds.
+      # false = only damage in these worlds.
+      is-blacklist: true
+    # Blocks that count as a damager for this selection.
+    materials:
+      # A list of block ids.
+      list:
+        - "minecraft:stonecutter"
+      # If the list above is a blacklist.
+      # true = every block except these counts.
+      # false = only these blocks count.
+      is-blacklist: false
+
+  glass:
+    enabled: false # Disabled due to this being an example.
+    offset:
+      x: 0.0
+      y: -1.0 # 1 block below the entity.
+      z: 0.0
+    ticks-per-damage: 5
+    damage-amount: 5.0
+    permission:
+      include: ""
+      exclude: "stonedamager.bypass"
+    entities:
+      list: [] # Empty list.
+      is-blacklist: true
+    worlds:
+      list:
+        - "lobby"
+      is-blacklist: true
+    materials:
+      list:
+        - "minecraft:glass"
+      is-blacklist: false
+
+# Settings for the damager system.
+settings:
+  # Try to find a player to count as the source of damage, so killed mobs drop
+  # player-kill loot and experience. Players being damaged are never credited to
+  # another player, so this never counts as PvP.
+  try-find-player:
+    # If this feature is enabled.
+    enabled: true
+    # Maximum distance to search for a player (in blocks).
+    radius: 30.0

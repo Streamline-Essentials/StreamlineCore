@@ -210,4 +210,10 @@ public final class McCompat {
             return null;
         }
     }
+
+    /** Hurts the entity as {@code source} would; {@link net.minecraft.world.entity.LivingEntity#hurt} until 1.21.1. */
+    public static void hurt(ServerLevel level, net.minecraft.world.entity.LivingEntity entity,
+                            net.minecraft.world.damagesource.DamageSource source, float amount) {
+        entity.hurt(source, amount);
+    }
 }

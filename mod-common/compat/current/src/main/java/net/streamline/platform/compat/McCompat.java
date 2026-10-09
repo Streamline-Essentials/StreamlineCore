@@ -226,4 +226,10 @@ public final class McCompat {
             return null;
         }
     }
+
+    /** Hurts the entity as {@code source} would; the server-side hurt takes the level from 1.21.2. */
+    public static void hurt(ServerLevel level, net.minecraft.world.entity.LivingEntity entity,
+                            net.minecraft.world.damagesource.DamageSource source, float amount) {
+        entity.hurtServer(level, source, amount);
+    }
 }
