@@ -160,6 +160,17 @@ public interface IGameplayHandler {
     boolean heal(String uuid);
 
     /**
+     * Fills the player's hunger and saturation, leaving health alone.
+     *
+     * @param uuid the player's UUID
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change hunger
+     */
+    default boolean feed(String uuid) {
+        return false;
+    }
+
+    /**
      * Allows or forbids creative-style flight. While allowed, the platform keeps it allowed
      * across respawns, world changes and game mode changes until the player logs out; the
      * caller re-applies it at the next login if it should persist. Forbidding flight leaves

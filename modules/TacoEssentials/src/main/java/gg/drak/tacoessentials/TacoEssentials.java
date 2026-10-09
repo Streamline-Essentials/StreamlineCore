@@ -120,7 +120,7 @@ public class TacoEssentials extends SimpleModule {
      */
     private static boolean coreSupported() {
         try {
-            IGameplayHandler.class.getMethod("setGameMode", String.class, String.class);
+            IGameplayHandler.class.getMethod("feed", String.class);
             return true;
         } catch (NoSuchMethodException e) {
             return false;

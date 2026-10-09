@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /flyspeed}, {@code /walkspeed}, {@code /gm} (and {@code /gms}, {@code /gmc}, {@code /gma}, {@code /gmsp}), {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
+/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /feed}, {@code /fly}, {@code /flyspeed}, {@code /walkspeed}, {@code /gm} (and {@code /gms}, {@code /gmc}, {@code /gma}, {@code /gmsp}), {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
 public final class AdminCommands {
 
     private AdminCommands() {}
@@ -29,6 +29,7 @@ public final class AdminCommands {
                 (ctx, arg) -> arg == 0 ? gameplay().getWorldNames() : Collections.emptyList()));
         commands.add(new TacoCommand("jump", AdminCommands::jump));
         commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("feed", AdminCommands::feed, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("flyspeed", ctx -> speed(ctx, "flyspeed", "fly", 10F, gameplay()::setFlySpeed),
                 speeds(FLY_SPEEDS), "fspeed"));
@@ -125,6 +126,13 @@ public final class AdminCommands {
         if (! gameplay().heal(target.getUuid())) throw Msg.fail(target.getCurrentName() + " is not online here.");
         target.sendMessage(Msg.success("You have been healed."));
         if (! isSelf(ctx, target)) ctx.reply(Msg.success("Healed " + target.getCurrentName() + "."));
+    }
+
+    private static void feed(TacoCommand.Ctx ctx) throws Msg.Fail {
+        CosmicPlayer target = targetOrSelf(ctx);
+        if (! gameplay().feed(target.getUuid())) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        target.sendMessage(Msg.success("You have been fed."));
+        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Fed " + target.getCurrentName() + "."));
     }
 
     /** Toggles flight; it stays on across respawns, world changes and relogs until toggled off. */
