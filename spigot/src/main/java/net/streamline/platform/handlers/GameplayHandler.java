@@ -31,6 +31,7 @@ import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
 import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
@@ -499,13 +500,19 @@ public class GameplayHandler implements IGameplayHandler {
     @Override
     public boolean damageLivingEntities(ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
         EntityUtils.collectLivingEntitiesThenDo(entity -> {
-            if (entity.isDead() || ! entity.isValid()) return;
-            double damage = damageFor.applyAsDouble(new BukkitLivingView(entity));
-            if (damage <= 0) return;
+            // On Folia each entity is its own region task, which BukkitOfUtils does not guard;
+            // a throwing callback (or one from an unloaded module) must not escape onto the region thread.
+            try {
+                if (entity.isDead() || ! entity.isValid()) return;
+                double damage = damageFor.applyAsDouble(new BukkitLivingView(entity));
+                if (damage <= 0) return;
 
-            Player attacker = entity instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(entity, attributionRadius);
-            if (attacker != null) entity.damage(damage, attacker);
-            else entity.damage(damage);
+                Player attacker = entity instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(entity, attributionRadius);
+                if (attacker != null) entity.damage(damage, attacker);
+                else entity.damage(damage);
+            } catch (Throwable t) {
+                MessageUtils.logDebug("Living entity damage pass failed for " + entity.getUniqueId(), t);
+            }
         });
         return true;
     }
