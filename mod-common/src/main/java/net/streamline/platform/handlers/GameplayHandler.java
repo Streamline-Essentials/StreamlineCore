@@ -9,11 +9,14 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.streamline.platform.BasePlugin;
@@ -32,6 +35,7 @@ import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -274,6 +278,41 @@ public abstract class GameplayHandler implements IGameplayHandler {
             if (player == null) return false;
             player.getAbilities().setFlyingSpeed(speed);
             player.onUpdateAbilities();
+            return true;
+        }, false);
+    }
+
+    /** Vanilla's default walking speed is 0.1; {@link #setWalkSpeed} caps at five times it, as Bukkit does. */
+    private static final float DEFAULT_WALKING_SPEED = 0.1F;
+
+    /**
+     * Sets both the abilities' walking speed (which the client uses for its field of view) and the
+     * movement speed attribute's base (which actually moves the player), as Bukkit does.
+     */
+    @Override
+    public boolean setWalkSpeed(String uuid, float multiplier) {
+        float speed = Math.max(0F, Math.min(5F, multiplier)) * DEFAULT_WALKING_SPEED;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getAbilities().setWalkingSpeed(speed);
+            AttributeInstance movement = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movement != null) movement.setBaseValue(speed);
+            player.onUpdateAbilities();
+            return true;
+        }, false);
+    }
+
+    @Override
+    public boolean setGameMode(String uuid, String mode) {
+        GameType type = GameType.byName(mode.toLowerCase(Locale.ROOT), null);
+        if (type == null) return false;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.setGameMode(type);
+            // Leaving creative or spectator takes flight away from players who keep it.
+            if (flightKept.contains(player.getUUID())) applyFlight(player, true);
             return true;
         }, false);
     }

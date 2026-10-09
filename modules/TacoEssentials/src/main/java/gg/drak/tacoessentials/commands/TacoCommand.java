@@ -44,8 +44,9 @@ public class TacoCommand extends ModuleCommand {
     private final Handler handler;
     private final Completer completer;
 
-    public TacoCommand(String name, Handler handler, Completer completer) {
-        super(TacoEssentials.getInstance(), name, Perms.command(name));
+    /** Aliases share the command's permission node. */
+    public TacoCommand(String name, Handler handler, Completer completer, String... aliases) {
+        super(TacoEssentials.getInstance(), name, Perms.command(name), aliases);
         this.handler = handler;
         this.completer = completer;
     }
