@@ -1,6 +1,7 @@
 package net.streamline.platform.handlers;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -8,10 +9,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
@@ -28,8 +33,10 @@ import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.RandomTeleportArea;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.console.CosmicSender;
 import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
+import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
 import singularity.utils.UserUtils;
 
@@ -43,6 +50,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * The mod loaders' {@link IGameplayHandler}, written against Mojang-mapped Minecraft only.
@@ -491,6 +499,115 @@ public abstract class GameplayHandler implements IGameplayHandler {
         if (server == null) return ifStopped;
         if (server.isSameThread()) return task.get();
         return server.submit(task).join();
+    }
+
+    /**
+     * Walks each level's entities on the server thread, collecting the hits first and dealing
+     * them afterwards: a hit that kills removes the entity, which the level's entity list must
+     * not see while it is being walked.
+     */
+    @Override
+    public boolean damageLivingEntities(ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        runOnServer(() -> {
+            MinecraftServer server = BasePlugin.getServer();
+            if (server == null) return;
+            for (ServerLevel level : server.getAllLevels()) {
+                List<LivingEntity> victims = new ArrayList<>();
+                List<Float> amounts = new ArrayList<>();
+                for (Entity entity : level.getAllEntities()) {
+                    if (! (entity instanceof LivingEntity) || ! entity.isAlive()) continue;
+                    LivingEntity living = (LivingEntity) entity;
+                    double damage = damageFor.applyAsDouble(new ModLivingView(level, living));
+                    if (damage <= 0) continue;
+                    victims.add(living);
+                    amounts.add((float) damage);
+                }
+
+                for (int i = 0; i < victims.size(); i++) {
+                    LivingEntity victim = victims.get(i);
+                    if (! victim.isAlive()) continue;
+                    ServerPlayer attacker = victim instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(level, victim, attributionRadius);
+                    DamageSource source = attacker != null ? level.damageSources().playerAttack(attacker) : level.damageSources().generic();
+                    McCompat.hurt(level, victim, source, amounts.get(i));
+                }
+            }
+        });
+        return true;
+    }
+
+    /** The nearest other living, non-spectator player within the radius, or {@code null}. */
+    private static ServerPlayer nearestPlayer(ServerLevel level, LivingEntity entity, double radius) {
+        ServerPlayer nearest = null;
+        double nearestDistance = radius * radius;
+        for (ServerPlayer player : level.players()) {
+            if (player == entity || player.isSpectator() || ! player.isAlive()) continue;
+            double distance = player.distanceToSqr(entity);
+            if (distance <= nearestDistance) {
+                nearestDistance = distance;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+
+    private static final class ModLivingView implements LivingEntityView {
+        private final ServerLevel level;
+        private final LivingEntity entity;
+
+        private ModLivingView(ServerLevel level, LivingEntity entity) {
+            this.level = level;
+            this.entity = entity;
+        }
+
+        @Override
+        public String getUuid() {
+            return entity.getStringUUID();
+        }
+
+        @Override
+        public String getType() {
+            return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        }
+
+        @Override
+        public boolean isPlayer() {
+            return entity instanceof Player;
+        }
+
+        @Override
+        public String getWorldName() {
+            return McCompat.dimensionId(level);
+        }
+
+        @Override
+        public double getX() {
+            return entity.getX();
+        }
+
+        @Override
+        public double getY() {
+            return entity.getY();
+        }
+
+        @Override
+        public double getZ() {
+            return entity.getZ();
+        }
+
+        @Override
+        public String getBlockAt(double dx, double dy, double dz) {
+            BlockPos pos = BlockPos.containing(entity.getX() + dx, entity.getY() + dy, entity.getZ() + dz);
+            if (! level.isLoaded(pos)) return null;
+            return BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString();
+        }
+
+        /** Asks the player's Streamline sender, which applies LuckPerms and the operator fallback. */
+        @Override
+        public boolean hasPermission(String permission) {
+            if (! (entity instanceof Player)) return false;
+            CosmicSender sender = UserUtils.getLoadedSenders().get(entity.getStringUUID());
+            return sender != null && sender.hasPermission(permission);
+        }
     }
 
     private static void runOnServer(Runnable task) {

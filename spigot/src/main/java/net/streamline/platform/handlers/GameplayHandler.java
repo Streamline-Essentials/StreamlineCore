@@ -1,6 +1,7 @@
 package net.streamline.platform.handlers;
 
 import host.plas.bou.scheduling.TaskManager;
+import host.plas.bou.utils.EntityUtils;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
@@ -14,6 +15,8 @@ import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
@@ -26,6 +29,7 @@ import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
+import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
 import singularity.utils.UserUtils;
 
@@ -41,6 +45,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Spigot's {@link IGameplayHandler}, on the Bukkit API. Worlds are named by their Bukkit world
@@ -484,6 +489,103 @@ public class GameplayHandler implements IGameplayHandler {
     @Override
     public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         return callSync(() -> BukkitStatistics.read(uuid, type, ids));
+    }
+
+    /**
+     * BukkitOfUtils hands each living entity to the consumer on the thread that owns it: the
+     * main thread, or the entity's region thread on Folia. The entity's surroundings are read
+     * and the hit dealt right there, as nothing else may touch it.
+     */
+    @Override
+    public boolean damageLivingEntities(ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        EntityUtils.collectLivingEntitiesThenDo(entity -> {
+            if (entity.isDead() || ! entity.isValid()) return;
+            double damage = damageFor.applyAsDouble(new BukkitLivingView(entity));
+            if (damage <= 0) return;
+
+            Player attacker = entity instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(entity, attributionRadius);
+            if (attacker != null) entity.damage(damage, attacker);
+            else entity.damage(damage);
+        });
+        return true;
+    }
+
+    /** The nearest other non-spectator player within the radius; {@code getNearbyEntities} is region-safe on Folia. */
+    private static Player nearestPlayer(LivingEntity entity, double radius) {
+        Location at = entity.getLocation();
+        Player nearest = null;
+        double nearestDistance = radius * radius;
+        for (Entity nearby : entity.getNearbyEntities(radius, radius, radius)) {
+            if (! (nearby instanceof Player) || nearby == entity) continue;
+            Player player = (Player) nearby;
+            if (player.getGameMode() == GameMode.SPECTATOR || player.isDead()) continue;
+            double distance = player.getLocation().distanceSquared(at);
+            if (distance <= nearestDistance) {
+                nearestDistance = distance;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+
+    private static final class BukkitLivingView implements LivingEntityView {
+        private final LivingEntity entity;
+        private final Location location;
+
+        private BukkitLivingView(LivingEntity entity) {
+            this.entity = entity;
+            this.location = entity.getLocation();
+        }
+
+        @Override
+        public String getUuid() {
+            return entity.getUniqueId().toString();
+        }
+
+        @Override
+        public String getType() {
+            return entity.getType().getKey().toString();
+        }
+
+        @Override
+        public boolean isPlayer() {
+            return entity instanceof Player;
+        }
+
+        @Override
+        public String getWorldName() {
+            return location.getWorld().getName();
+        }
+
+        @Override
+        public double getX() {
+            return location.getX();
+        }
+
+        @Override
+        public double getY() {
+            return location.getY();
+        }
+
+        @Override
+        public double getZ() {
+            return location.getZ();
+        }
+
+        @Override
+        public String getBlockAt(double dx, double dy, double dz) {
+            World world = location.getWorld();
+            int x = (int) Math.floor(location.getX() + dx);
+            int y = (int) Math.floor(location.getY() + dy);
+            int z = (int) Math.floor(location.getZ() + dz);
+            if (! world.isChunkLoaded(x >> 4, z >> 4)) return null;
+            return world.getBlockAt(x, y, z).getType().getKey().toString();
+        }
+
+        @Override
+        public boolean hasPermission(String permission) {
+            return entity instanceof Player && entity.hasPermission(permission);
+        }
     }
 
     private static boolean isWater(Biome biome) {

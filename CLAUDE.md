@@ -113,6 +113,8 @@ Two layers: platform-native events (Velocity `@Subscribe`, Bungee `Listener`, Bu
 
 `singularity.utils.profiles.PlayerLookup` resolves names, UUIDs and skins without Mojang (live platform profile → Floodgate → GeyserMC API for Bedrock → playerdb.co / ashcon for Java), cached, backed off on failures, and off under `no-internet` or `player-lookups.enabled: false`. `UUIDFetcher` delegates to it. GUI player heads get their texture from it (`CosmicItem.skinTexture`), so no head ever makes the server ask Mojang's session server. Links: `ClickableMessage.linkified(...)` / `singularity.utils.Links`; only Spigot auto-links plain messages.
 
+`IGameplayHandler.damageLivingEntities(damageFor, attributionRadius)` walks every living entity (`LivingEntityView`: type, world, position, block at an offset, permission) and hurts each by what `damageFor` returns; it returns at once and runs on the server thread (Folia: each entity's region thread, via BOU `EntityUtils.collectLivingEntitiesThenDo`; mods: `getAllEntities()`, hits applied after the walk, `McCompat.hurt` for `hurt` vs `hurtServer`). Used by `modules/StoneDamager`.
+
 `IGameplayHandler.statistics(uuid, type, ids)` reads vanilla statistics (live online, stats file offline) and waits for the server thread; the id `*` reads every entry of the type. Modules that read statistics for many players should do it off Streamline's single task thread (StreamlineCollections uses a small `StatReader` pool).
 
 Chat formatting order on `CosmicChatEvent`: StreamlineMessaging channels (LOWEST) → TacoEssentials mute/alias prompts (NORMAL) → TacoEssentials `ChatFormatter` (HIGH, `chat.format`) → LinkParser (HIGHEST). Each cancels what it takes over and skips cancelled events.

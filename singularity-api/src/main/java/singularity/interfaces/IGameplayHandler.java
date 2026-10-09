@@ -330,4 +330,24 @@ public interface IGameplayHandler {
     default java.util.Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         return java.util.Collections.emptyMap();
     }
+
+    /**
+     * Goes over every living entity in every loaded world and hurts each by the amount
+     * {@code damageFor} returns for it. Returns at once; the pass runs later on the server thread
+     * (on Folia, each entity on its region's thread, so {@code damageFor} may run on several
+     * threads at the same time). Dead entities are skipped. Hits are applied after the entity
+     * has been looked at, never while the world's entity list is being walked.
+     *
+     * <p>When {@code attributionRadius} is above zero, a hit on a non-player is dealt as an
+     * attack by the nearest other non-spectator player within that many blocks, if any, so the
+     * entity drops player-kill loot and experience. Hits on players are never attributed, so
+     * they do not count as PvP.</p>
+     *
+     * @param damageFor         the damage for the entity in half-hearts; zero or less leaves it alone
+     * @param attributionRadius how far to look for a player to credit, or zero to credit no one
+     * @return {@code false} if this platform cannot go over entities, in which case nothing runs
+     */
+    default boolean damageLivingEntities(java.util.function.ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        return false;
+    }
 }
