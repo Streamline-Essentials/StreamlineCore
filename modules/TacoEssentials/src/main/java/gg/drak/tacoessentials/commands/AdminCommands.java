@@ -12,11 +12,12 @@ import singularity.utils.UserUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /flyspeed}, {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
+/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /fly}, {@code /flyspeed}, {@code /walkspeed}, {@code /gm} (and {@code /gms}, {@code /gmc}, {@code /gma}, {@code /gmsp}), {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
 public final class AdminCommands {
 
     private AdminCommands() {}
@@ -29,8 +30,16 @@ public final class AdminCommands {
         commands.add(new TacoCommand("jump", AdminCommands::jump));
         commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("flyspeed", AdminCommands::flySpeed, (ctx, arg) -> arg == 0 ? FLY_SPEEDS
-                : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList()));
+        commands.add(new TacoCommand("flyspeed", ctx -> speed(ctx, "flyspeed", "fly", 10F, gameplay()::setFlySpeed),
+                speeds(FLY_SPEEDS), "fspeed"));
+        commands.add(new TacoCommand("walkspeed", ctx -> speed(ctx, "walkspeed", "walk", 5F, gameplay()::setWalkSpeed),
+                speeds(WALK_SPEEDS), "wspeed"));
+        commands.add(new TacoCommand("gm", AdminCommands::gm,
+                (ctx, arg) -> arg == 0 ? GAME_MODES : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList()));
+        commands.add(new TacoCommand("gms", ctx -> setGameMode(ctx, "survival", ctx.arg(0)), AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("gmc", ctx -> setGameMode(ctx, "creative", ctx.arg(0)), AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("gma", ctx -> setGameMode(ctx, "adventure", ctx.arg(0)), AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("gmsp", ctx -> setGameMode(ctx, "spectator", ctx.arg(0)), AdminCommands::onlineFirst));
         commands.add(new TacoCommand("god", AdminCommands::god, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("invsee", AdminCommands::invsee, AdminCommands::onlineFirst));
         commands.add(new TacoCommand("nickfor", AdminCommands::nickFor, AdminCommands::knownFirst));
@@ -131,10 +140,23 @@ public final class AdminCommands {
     }
 
     private static final List<String> FLY_SPEEDS = List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "reset");
+    private static final List<String> WALK_SPEEDS = List.of("1", "2", "3", "4", "5", "reset");
 
-    /** {@code /flyspeed <speed|reset> (player)}: speed is a multiple of the normal speed, from 0 to 10. */
-    private static void flySpeed(TacoCommand.Ctx ctx) throws Msg.Fail {
-        String usage = "/flyspeed <speed|reset> (player)";
+    /** Changes one player's fly or walk speed; {@link #speed} parses and checks the arguments for it. */
+    private interface SpeedSetter {
+        boolean set(String uuid, float multiplier);
+    }
+
+    private static TacoCommand.Completer speeds(List<String> speeds) {
+        return (ctx, arg) -> arg == 0 ? speeds : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList();
+    }
+
+    /**
+     * {@code /<label> <speed|reset> (player)}: speed is a multiple of the normal speed, from 0 to
+     * {@code max}; {@code reset} sets it back to 1.
+     */
+    private static void speed(TacoCommand.Ctx ctx, String label, String what, float max, SpeedSetter setter) throws Msg.Fail {
+        String usage = "/" + label + " <speed|reset> (player)";
         String raw = ctx.require(0, usage);
         float speed;
         if (raw.equalsIgnoreCase("reset")) {
@@ -145,13 +167,46 @@ public final class AdminCommands {
             } catch (NumberFormatException e) {
                 throw Msg.fail("'" + raw + "' is not a number. Usage: " + usage);
             }
-            if (! (speed >= 0F && speed <= 10F)) throw Msg.fail("Fly speed must be between 0 and 10 (1 is normal).");
+            String shownMax = String.valueOf((int) max);
+            if (! (speed >= 0F && speed <= max)) throw Msg.fail(capitalize(what) + " speed must be between 0 and " + shownMax + " (1 is normal).");
         }
         CosmicPlayer target = ctx.arg(1) != null ? TacoCommand.onlinePlayer(ctx.arg(1)) : ctx.player();
-        if (! gameplay().setFlySpeed(target.getUuid(), speed)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        if (! setter.set(target.getUuid(), speed)) throw Msg.fail(target.getCurrentName() + " is not online here.");
         String shown = speed == (int) speed ? String.valueOf((int) speed) : String.valueOf(speed);
-        target.sendMessage(Msg.success("Fly speed set to " + shown + "."));
-        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s fly speed to " + shown + "."));
+        target.sendMessage(Msg.success(capitalize(what) + " speed set to " + shown + "."));
+        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s " + what + " speed to " + shown + "."));
+    }
+
+    private static String capitalize(String word) {
+        return Character.toUpperCase(word.charAt(0)) + word.substring(1);
+    }
+
+    private static final List<String> GAME_MODES = List.of("survival", "creative", "adventure", "spectator");
+
+    /** A game mode by name, first letter(s) ({@code s}, {@code c}, {@code a}, {@code sp}) or number (0 to 3). */
+    private static String gameMode(String raw) throws Msg.Fail {
+        switch (raw.toLowerCase(Locale.ROOT)) {
+            case "survival": case "s": case "0": return "survival";
+            case "creative": case "c": case "1": return "creative";
+            case "adventure": case "a": case "2": return "adventure";
+            case "spectator": case "sp": case "3": return "spectator";
+            default: throw Msg.fail("Unknown game mode '" + raw + "'. Use survival, creative, adventure or spectator.");
+        }
+    }
+
+    /** {@code /gm <gamemode> (player)}. */
+    private static void gm(TacoCommand.Ctx ctx) throws Msg.Fail {
+        String mode = gameMode(ctx.require(0, "/gm <gamemode> (player)"));
+        setGameMode(ctx, mode, ctx.arg(1));
+    }
+
+    /** Sets the game mode of the named online player, or of the sender when no name is given. */
+    private static void setGameMode(TacoCommand.Ctx ctx, String mode, String targetName) throws Msg.Fail {
+        CosmicPlayer target = targetName != null ? TacoCommand.onlinePlayer(targetName) : ctx.player();
+        if (! gameplay().setGameMode(target.getUuid(), mode)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        String shown = capitalize(mode);
+        target.sendMessage(Msg.success("Game mode set to " + shown + "."));
+        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s game mode to " + shown + "."));
     }
 
     /** Toggles god mode; it stays on across respawns, world changes and relogs until toggled off. */

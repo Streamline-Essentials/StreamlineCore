@@ -32,6 +32,7 @@ import singularity.utils.UserUtils;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -296,6 +297,34 @@ public class GameplayHandler implements IGameplayHandler {
         if (player == null) return false;
         float speed = Math.max(0F, Math.min(1F, multiplier * 0.1F));
         TaskManager.schedule(player, () -> player.setFlySpeed(speed));
+        return true;
+    }
+
+    /** Bukkit's walk speed runs from -1 to 1 with 0.2 as the default, so five times default is its maximum. */
+    @Override
+    public boolean setWalkSpeed(String uuid, float multiplier) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        float speed = Math.max(0F, Math.min(1F, multiplier * 0.2F));
+        TaskManager.schedule(player, () -> player.setWalkSpeed(speed));
+        return true;
+    }
+
+    @Override
+    public boolean setGameMode(String uuid, String mode) {
+        GameMode gameMode;
+        try {
+            gameMode = GameMode.valueOf(mode.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        TaskManager.schedule(player, () -> {
+            player.setGameMode(gameMode);
+            // Leaving creative or spectator takes flight away from players who keep it.
+            if (flightKept.contains(player.getUniqueId())) player.setAllowFlight(true);
+        });
         return true;
     }
 

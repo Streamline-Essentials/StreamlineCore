@@ -185,6 +185,31 @@ public interface IGameplayHandler {
     }
 
     /**
+     * Sets how fast the player walks, as a multiple of vanilla's default walking speed. The game
+     * saves it with the player's data, so it lasts across relogs on this server.
+     *
+     * @param uuid       the player's UUID
+     * @param multiplier 1 for vanilla's speed, from 0 (cannot walk) to 5 (Bukkit's maximum)
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change walking speed
+     */
+    default boolean setWalkSpeed(String uuid, float multiplier) {
+        return false;
+    }
+
+    /**
+     * Switches the player's game mode. Flight turned on with {@link #setFlight} stays on.
+     *
+     * @param uuid the player's UUID
+     * @param mode {@code survival}, {@code creative}, {@code adventure} or {@code spectator}
+     * @return {@code false} if the player is not online on this server, the mode is unknown or
+     *         the platform cannot change game modes
+     */
+    default boolean setGameMode(String uuid, String mode) {
+        return false;
+    }
+
+    /**
      * Turns god mode on or off. While on, the player takes no damage (except what the game lets
      * bypass invulnerability, such as the void and {@code /kill}) and their hunger stays full.
      * Like {@link #setFlight(String, boolean)}, it lasts until the player logs out; the caller
