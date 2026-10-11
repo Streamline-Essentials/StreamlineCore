@@ -33,7 +33,7 @@ and the placeholder list (click one to insert it). Text takes `&` color codes, h
 
 | Placeholder | Shows |
 |---|---|
-| `color_main` / `color_text` | the Main color / Text color settings, as a color code |
+| `color_main` / `color_text` | the Main Color / Text Color settings, as a color code |
 | `fps` | frames per second |
 | `x`, `y`, `z` / `block_x`, `block_y`, `block_z` | position (coordinate decimals) / block position |
 | `facing`, `yaw`, `pitch` | direction |

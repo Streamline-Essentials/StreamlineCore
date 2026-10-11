@@ -165,7 +165,7 @@ public class StreamlineHUD extends ClientModule {
                         MAIN + "Server: " + TEXT + token("server"), info -> ! info.serverAddress().isEmpty()),
                 element("clock", "Clock", RIGHT, TOP + ROW * 2,
                         MAIN + "Time: " + TEXT + token("clock"), null),
-                element("game-time", "In-game day and time", RIGHT, TOP + ROW * 3,
+                element("game-time", "In-Game Day And Time", RIGHT, TOP + ROW * 3,
                         MAIN + "Day " + TEXT + token("day") + " " + MAIN + "- " + TEXT + token("game_time"), null),
                 element("memory", "Memory", RIGHT, TOP + ROW * 4,
                         MAIN + "Memory: " + TEXT + token("memory_used") + MAIN + "/" + TEXT + token("memory_max")
@@ -180,24 +180,24 @@ public class StreamlineHUD extends ClientModule {
     private ModuleSettings settings() {
         ModuleSettings settings = new ModuleSettings(getIdentifier(), "Streamline HUD",
                 "Styles the HUD elements. Edit an element's text with its Edit button below, add your own with +, "
-                        + "and move, scale and hide them with /slclient hud (or Edit HUD layout below).");
+                        + "and move, scale and hide them with /slclient hud (or Edit HUD Layout below).");
 
-        settings.add(new Setting.Color("main-color", "Main color",
-                        "Labels; %streamlinehud_color_main% in element text.", HudStyle.DEFAULT_MAIN_COLOR))
+        settings.add(new Setting.Color("main-color", "Main Color",
+                        "Used for labels. Has a placeholder.", HudStyle.DEFAULT_MAIN_COLOR))
                 .onChange(HudStyle::setMainColor);
-        settings.add(new Setting.Color("text-color", "Text color",
-                        "Values and uncolored text; %streamlinehud_color_text%.", HudStyle.DEFAULT_TEXT_COLOR))
+        settings.add(new Setting.Color("text-color", "Text Color",
+                        "Used for uncolored text. Has a placeholder.", HudStyle.DEFAULT_TEXT_COLOR))
                 .onChange(HudStyle::setTextColor);
         settings.add(new Setting.Toggle("background", "Background", "Draw a box behind each element.", true))
                 .onChange(HudStyle::setBackground);
-        settings.add(new Setting.Color("background-color", "Background color", "Color of the box behind each element.", 0x60000000))
+        settings.add(new Setting.Color("background-color", "Background Color", "Color of the box behind each element.", 0x60000000))
                 .onChange(HudStyle::setBackgroundColor);
-        settings.add(new Setting.Toggle("shadow", "Text shadow", "Draw text with a drop shadow.", true))
+        settings.add(new Setting.Toggle("shadow", "Text Shadow", "Draw text with a drop shadow.", true))
                 .onChange(HudStyle::setShadow);
-        settings.add(new Setting.Slider("coordinate-decimals", "Coordinate decimals",
+        settings.add(new Setting.Slider("coordinate-decimals", "Coordinate Decimals",
                         "Decimal places shown in coordinates.", 1, 0, 3, 1))
                 .onChange(value -> HudStyle.setCoordinateDecimals((int) Math.round(value)));
-        settings.add(new Setting.Choice("clock-format", "Clock format", "24-hour or 12-hour clocks.",
+        settings.add(new Setting.Choice("clock-format", "Clock Format", "24-hour or 12-hour clocks.",
                         CLOCK_24H, Arrays.asList(CLOCK_24H, CLOCK_12H)))
                 .onChange(value -> HudStyle.setTwelveHourClock(CLOCK_12H.equals(value)));
 
