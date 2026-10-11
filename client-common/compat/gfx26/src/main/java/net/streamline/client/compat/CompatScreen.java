@@ -1,6 +1,7 @@
 package net.streamline.client.compat;
 
 import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -42,7 +43,7 @@ public abstract class CompatScreen extends Screen {
         return false;
     }
 
-    /** @param key a GLFW key code */
+    /** @param key a GLFW key code, or {@code -1} for a key the screens do not use ({@link #KEYS}) */
     protected boolean key(int key, int modifiers) {
         return false;
     }
@@ -104,7 +105,44 @@ public abstract class CompatScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return key(event.key(), event.modifiers()) || super.keyPressed(event);
+        return key(toGlfw(event.key()), toGlfwModifiers(event.modifiers())) || super.keyPressed(event);
+    }
+
+    /**
+     * Key codes the shared screens act on, as {@code {InputConstants code, GLFW code}}. 26.2 reads
+     * keys through GLFW, where the two are equal; 26.3 through SDL, whose codes differ and overlap
+     * GLFW's (its Up arrow is GLFW's R), so every key {@link #key} sees is translated.
+     */
+    private static final int[][] KEYS = {
+            {InputConstants.KEY_ESCAPE, 256},
+            {InputConstants.KEY_RETURN, 257},
+            {InputConstants.KEY_BACKSPACE, 259},
+            {InputConstants.KEY_DELETE, 261},
+            {InputConstants.KEY_RIGHT, 262},
+            {InputConstants.KEY_LEFT, 263},
+            {InputConstants.KEY_DOWN, 264},
+            {InputConstants.KEY_UP, 265},
+            {InputConstants.KEY_HOME, 268},
+            {InputConstants.KEY_END, 269},
+            {InputConstants.KEY_NUMPADENTER, 335},
+            {InputConstants.KEY_R, 82},
+            {InputConstants.KEY_V, 86},
+    };
+
+    /** @return the GLFW code of a key the screens use, or {@code -1} for any other key */
+    private static int toGlfw(int key) {
+        for (int[] pair : KEYS) {
+            if (pair[0] == key) return pair[1];
+        }
+        return -1;
+    }
+
+    /** @return Shift, Control, Alt and Super as GLFW modifier bits */
+    private static int toGlfwModifiers(int modifiers) {
+        return ((modifiers & InputConstants.MOD_SHIFT) != 0 ? 0x1 : 0)
+                | ((modifiers & InputConstants.MOD_CONTROL) != 0 ? 0x2 : 0)
+                | ((modifiers & InputConstants.MOD_ALT) != 0 ? 0x4 : 0)
+                | ((modifiers & InputConstants.MOD_SUPER) != 0 ? 0x8 : 0);
     }
 
     @Override
