@@ -221,4 +221,5 @@ foreach ($file in $jars) {
     }
 }
 
+Write-Host 'Done!' -ForegroundColor Green
 if ($failed) { exit 1 }

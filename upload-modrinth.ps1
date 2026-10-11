@@ -376,4 +376,5 @@ try {
     $client.Dispose()
 }
 
+Write-Host 'Done!' -ForegroundColor Green
 if ($failed) { exit 1 }
