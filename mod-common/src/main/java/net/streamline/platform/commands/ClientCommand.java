@@ -44,6 +44,12 @@ public final class ClientCommand {
     private static final String USAGE = "&eUsage: &f/%s <command> (args ...)";
     private static final String NOT_HOSTING = "&cStreamline runs only in a world this game hosts: "
             + "open a singleplayer world, or open one to LAN.";
+    /**
+     * Streamline makes profiles only for UUIDs it can resolve to a name while the server
+     * authenticates, as an integrated server does, so an account Mojang never issued (a
+     * development launch, for one) gets none.
+     */
+    private static final String NO_PROFILE = "&cStreamline has no player profile for you in this world.";
 
     private ClientCommand() {}
 
@@ -102,7 +108,7 @@ public final class ClientCommand {
         server.execute(() -> {
             CosmicSender sender = senderOf(server, player);
             if (sender == null) {
-                reply.accept(LegacyText.parse(NOT_HOSTING));
+                reply.accept(LegacyText.parse(NO_PROFILE));
                 return;
             }
 
