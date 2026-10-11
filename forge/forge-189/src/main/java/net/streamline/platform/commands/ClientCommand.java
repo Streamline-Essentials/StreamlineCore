@@ -6,7 +6,6 @@ import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.streamline.client.compat.LegacyCodes;
 import singularity.client.ClientBridge;
-import singularity.command.CommandHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +78,6 @@ public final class ClientCommand extends CommandBase {
         List<String> options = new ArrayList<>();
         options.add(MENU);
         options.add(HUD);
-        options.addAll(CommandHandler.getAllAliases());
         return getListOfStringsMatchingLastWord(args, options);
     }
 

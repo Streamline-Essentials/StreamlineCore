@@ -1,66 +1,35 @@
 package net.streamline.platform;
 
-import gg.drak.thebase.events.BaseEventHandler;
-import net.streamline.api.SLAPI;
-import net.streamline.api.base.module.BaseModule;
-import net.streamline.platform.commands.ProperCommand;
 import net.streamline.platform.modules.LegacyModuleTransformer;
-import net.streamline.platform.savables.ConsoleHolder;
-import net.streamline.platform.savables.PlayerInterface;
-import net.streamline.platform.savables.UserManager;
 import org.apache.logging.log4j.LogManager;
-import org.jetbrains.annotations.NotNull;
-import net.streamline.libs.slf4j.Logger;
-import net.streamline.libs.slf4j.LoggerFactory;
-import singularity.Singularity;
+import org.apache.logging.log4j.Logger;
 import singularity.client.ClientEnvironment;
-import singularity.command.CosmicCommand;
-import singularity.data.players.CosmicPlayer;
-import singularity.events.CosmicEvent;
-import singularity.events.server.ServerStopEvent;
-import singularity.interfaces.IProperEvent;
-import singularity.interfaces.ISingularityExtension;
-import singularity.modules.SupportedPlatformTag;
-import singularity.objects.CosmicResourcePack;
-import singularity.scheduler.TaskManager;
-import singularity.utils.MessageUtils;
+import singularity.client.module.ClientModuleManager;
 import singularity.utils.StorageUtils;
 
 import java.io.File;
-import java.util.EnumSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Level;
 
 /**
  * Streamline on a Minecraft 1.8.9 Forge client.
  *
- * <p>A 1.8.9 client runs client modules only: it never attaches to a server, integrated or
- * remote, so it has no players, no server commands and nothing to broadcast to. Everything
- * here that a server would answer reports that there is none.</p>
+ * <p>A 1.8.9 client never attaches to a server, integrated or remote, so it runs the lean
+ * module core only: {@link ClientModuleManager} with its client modules, the HUD and the
+ * module menu. Singularity's users, database, permissions and server modules never start.</p>
  */
-public abstract class BasePlugin implements ISingularityExtension {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger("StreamlineCore");
+public abstract class BasePlugin {
 
     /** The game's own logger, which reaches the launcher console and latest.log. */
-    private static final org.apache.logging.log4j.Logger GAME_LOGGER = LogManager.getLogger("StreamlineCore");
+    private static final Logger GAME_LOGGER = LogManager.getLogger("StreamlineCore");
 
     private static BasePlugin instance;
 
     private String version;
     private String folderName;
-    private CosmicResourcePack resourcePack;
 
-    private SLAPI<Object, Object, BasePlugin, UserManager, Messenger> slapi;
-    private UserManager userManager;
-    private Messenger messenger;
-    private ConsoleHolder consoleHolder;
-    private PlayerInterface playerInterface;
-
-    /** Set by the first full teardown, so a later one does nothing. */
+    private boolean booted;
     private boolean shutDown;
 
     public static BasePlugin getInstance() {
@@ -75,46 +44,34 @@ public abstract class BasePlugin implements ISingularityExtension {
     }
 
     /**
-     * Brings Streamline up: SLAPI, the managers and the task manager, after which modules
-     * load on their own thread. Called once the game has started; later calls do nothing.
+     * Starts the client modules, which then load on their own thread. Called once the game has
+     * started; later calls do nothing.
      */
     public synchronized void boot() {
-        if (slapi != null || shutDown) return;
+        if (booted || shutDown) return;
+        booted = true;
 
-        // HUD placements and client module settings are kept under <data folder>/client.
-        ClientEnvironment.setFolder(new File(Singularity.resolveDataFolder(getName(), this), "client"));
+        // HUD placements, client module settings and client modules live under
+        // mods/<name>/client, as on the other mod loaders.
+        ClientEnvironment.setFolder(new File(getDataFolder(), "client"));
         ClientEnvironment.setLog((level, message) -> {
             if (level.intValue() >= Level.WARNING.intValue()) GAME_LOGGER.warn(message);
             else GAME_LOGGER.info(message);
         });
-
-        userManager = new UserManager();
-        messenger = new Messenger();
-        consoleHolder = new ConsoleHolder();
-        playerInterface = new PlayerInterface();
-
-        slapi = new SLAPI<>(
-                getFolderName(), this, userManager, messenger,
-                consoleHolder, playerInterface, BaseModule::new);
-
-        TaskManager.init();
-
-        // External modules load only once the platform reports itself enabled.
-        setPlatformAsEnabled();
+        ClientModuleManager.start();
     }
 
-    /** Takes Streamline down for good. Runs once; later calls do nothing. */
+    /** Stops the client modules for good; the game is exiting. Runs once. */
     public synchronized void shutdownStreamline() {
-        if (shutDown || slapi == null) return;
+        if (shutDown) return;
         shutDown = true;
+        ClientModuleManager.shutdown();
+    }
 
-        try {
-            ServerStopEvent e = new ServerStopEvent().fire();
-            if (! e.isCancelled() && e.isSendable()) SLAPI.sendConsoleMessage(e.getMessage());
-        } catch (Exception ignored) {
-            // Nothing is left to report it to.
-        }
-        TaskManager.stop();
+    /** {@code mods/<name>/} in the game directory. */
+    public File getDataFolder() {
+        return new File(gg.drak.thebase.storage.StorageUtils.getEnvironmentFolder(),
+                "mods" + File.separator + getFolderName() + File.separator);
     }
 
     private void setupProperties() {
@@ -129,29 +86,8 @@ public abstract class BasePlugin implements ISingularityExtension {
         return folderName != null ? folderName : "StreamlineCore";
     }
 
-    @Override
     public String getVersion() {
         return version;
-    }
-
-    public SLAPI<Object, Object, BasePlugin, UserManager, Messenger> getSlapi() {
-        return slapi;
-    }
-
-    public UserManager getUserManager() {
-        return userManager;
-    }
-
-    public Messenger getMessenger() {
-        return messenger;
-    }
-
-    public CosmicResourcePack getResourcePack() {
-        return resourcePack;
-    }
-
-    public void setResourcePack(CosmicResourcePack resourcePack) {
-        this.resourcePack = resourcePack;
     }
 
     /** Logs to the game's log, which is where a 1.8.9 player looks. */
@@ -159,129 +95,8 @@ public abstract class BasePlugin implements ISingularityExtension {
         GAME_LOGGER.info(message);
     }
 
-    @Override
-    public Set<SupportedPlatformTag> getSupportedPlatformTags() {
-        return EnumSet.of(SupportedPlatformTag.MODDED_CLIENT);
-    }
-
-    @Override
-    public ServerType getServerType() {
-        return ServerType.BACKEND;
-    }
-
-    @Override
-    public @NotNull ConcurrentSkipListSet<CosmicPlayer> getOnlinePlayers() {
-        return new ConcurrentSkipListSet<>();
-    }
-
-    @Override
-    public ConcurrentSkipListSet<String> getOnlinePlayerNames() {
-        return new ConcurrentSkipListSet<>();
-    }
-
-    @Override
-    public ProperCommand createCommand(CosmicCommand command) {
-        return new ProperCommand(command);
-    }
-
-    @Override
-    public int getMaxPlayers() {
-        return 1;
-    }
-
-    @Override
-    public boolean isOfflineMode() {
-        return false;
-    }
-
-    @Override
-    public long getConnectionThrottle() {
-        return -1;
-    }
-
-    @Override
-    public boolean getOnlineMode() {
-        return true;
-    }
-
-    /** A client does not shut the game down for a module. */
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
-    public int broadcast(@NotNull String message, @NotNull String permission) {
-        return 0;
-    }
-
-    @Override
-    public boolean serverHasPlugin(String plugin) {
-        return false;
-    }
-
-    @Override
-    public boolean equalsAnyServer(String servername) {
-        return false;
-    }
-
-    @Override
-    public ConcurrentSkipListSet<String> getServerNames() {
-        return new ConcurrentSkipListSet<>();
-    }
-
-    @Override
-    public void fireEvent(IProperEvent<?> event) {
-        if (event.getEvent() instanceof CosmicEvent) {
-            BaseEventHandler.fireEvent((CosmicEvent) event.getEvent());
-        }
-    }
-
-    @Override
-    public void fireEvent(CosmicEvent event) {
-        fireEvent(event, true);
-    }
-
-    @Override
-    public void fireEvent(CosmicEvent event, boolean async) {
-        try {
-            BaseEventHandler.fireEvent(event);
-        } catch (Exception e) {
-            handleMisSync(event, async);
-        }
-    }
-
-    @Override
-    public void handleMisSync(CosmicEvent event, boolean async) {
-        BaseEventHandler.fireEvent(event);
-    }
-
-    @Override
-    public void sendResourcePack(CosmicResourcePack resourcePack, CosmicPlayer player) {
-        sendResourcePack(resourcePack, player.getUuid());
-    }
-
-    @Override
-    public void sendResourcePack(CosmicResourcePack resourcePack, String uuid) {
-        MessageUtils.logWarning("A game client cannot send resource packs.");
-    }
-
-    @Override
-    public ClassLoader getMainClassLoader() {
-        return getClass().getClassLoader();
-    }
-
-    @Override
-    public String getName() {
-        return getFolderName();
-    }
-
-    @Override
-    public java.util.logging.Logger getLoggerLogger() {
-        return null;
-    }
-
-    @Override
-    public Logger getSLFLogger() {
-        return LOGGER;
+    /** Logs a warning to the game's log. */
+    public static void warn(String message, Throwable error) {
+        GAME_LOGGER.warn(message, error);
     }
 }
