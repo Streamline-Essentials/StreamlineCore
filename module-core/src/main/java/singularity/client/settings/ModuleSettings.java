@@ -1,8 +1,7 @@
 package singularity.client.settings;
 
 import lombok.Getter;
-import singularity.Singularity;
-import singularity.utils.MessageUtils;
+import singularity.client.ClientEnvironment;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,9 +47,7 @@ public class ModuleSettings {
     }
 
     private File file() {
-        Singularity<?, ?, ?, ?, ?> instance = Singularity.getInstance();
-        if (instance == null) return null;
-        return new File(new File(new File(instance.getDataFolder(), "client"), "settings"), moduleId + ".properties");
+        return ClientEnvironment.file("settings", moduleId + ".properties");
     }
 
     /** Reads saved values over the defaults; settings without a saved value keep theirs. */
@@ -61,7 +58,7 @@ public class ModuleSettings {
         try (InputStream in = new FileInputStream(file)) {
             properties.load(in);
         } catch (IOException e) {
-            MessageUtils.logWarning("Could not read " + file + ": " + e.getMessage());
+            ClientEnvironment.logWarning("Could not read " + file + ": " + e.getMessage());
             return this;
         }
         for (Setting<?> setting : settings) {
@@ -82,7 +79,7 @@ public class ModuleSettings {
         try (OutputStream out = new FileOutputStream(file)) {
             properties.store(out, displayName + " client settings");
         } catch (IOException e) {
-            MessageUtils.logWarning("Could not write " + file + ": " + e.getMessage());
+            ClientEnvironment.logWarning("Could not write " + file + ": " + e.getMessage());
         }
     }
 }

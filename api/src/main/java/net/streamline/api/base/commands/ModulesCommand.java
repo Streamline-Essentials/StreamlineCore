@@ -7,6 +7,7 @@ import singularity.modules.ModuleCloud;
 import singularity.objects.ClickableMessage;
 import singularity.modules.ModuleLike;
 import singularity.modules.ModuleManager;
+import singularity.registry.ModuleRegistry;
 import singularity.utils.MessageUtils;
 
 import java.time.Duration;
@@ -414,7 +415,7 @@ public class ModulesCommand extends CosmicCommand {
         ModuleCloud.download(name, version).whenComplete((result, error) -> {
             if (error != null) {
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
-                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                String reason = cause instanceof ModuleRegistry.RegistryException ? cause.getMessage() : String.valueOf(cause);
                 context.sendMessage(messageEcloudFailed
                         .replace("%this_identifier%", name)
                         .replace("%this_error%", reason));
@@ -480,7 +481,7 @@ public class ModulesCommand extends CosmicCommand {
         ModuleCloud.update(name).whenComplete((result, error) -> {
             if (error != null) {
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
-                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                String reason = cause instanceof ModuleRegistry.RegistryException ? cause.getMessage() : String.valueOf(cause);
                 context.sendMessage(messageEcloudUpdateFailed
                         .replace("%this_identifier%", name)
                         .replace("%this_error%", reason));
@@ -533,7 +534,7 @@ public class ModulesCommand extends CosmicCommand {
         ModuleCloud.info(name).whenComplete((info, error) -> {
             if (error != null) {
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
-                String reason = cause instanceof ModuleCloud.CloudException ? cause.getMessage() : String.valueOf(cause);
+                String reason = cause instanceof ModuleRegistry.RegistryException ? cause.getMessage() : String.valueOf(cause);
                 context.sendMessage(messageEcloudGetFailed
                         .replace("%this_identifier%", name)
                         .replace("%this_error%", reason));
@@ -550,7 +551,7 @@ public class ModulesCommand extends CosmicCommand {
                 default:
                     for (String line : messageEcloudGetAll) {
                         if (line.trim().equals("%this_versions%")) {
-                            List<ModuleCloud.VersionInfo> versions = info.getVersions();
+                            List<ModuleRegistry.VersionInfo> versions = info.getVersions();
                             int shown = Math.min(versions.size(), Math.max(0, ecloudGetAllVersions));
                             for (int i = 0; i < shown; i++) sendLinked(context, fillVersion(messageEcloudGetAllVersion, versions.get(i)));
                             if (versions.size() > shown) sendLinked(context, "   &8... &7and &f" + (versions.size() - shown) + " &7more");
@@ -579,7 +580,7 @@ public class ModulesCommand extends CosmicCommand {
         return text.replaceAll("(?i)&#[0-9a-f]{6}|[&§][0-9a-fk-or]", "").trim();
     }
 
-    private static String fillInfo(String template, ModuleCloud.ModuleInfo info) {
+    private static String fillInfo(String template, ModuleRegistry.ModuleInfo info) {
         String installed = installedVersion(info.getId());
         String installedText;
         if (installed == null) installedText = "&cnot installed";
@@ -607,7 +608,7 @@ public class ModulesCommand extends CosmicCommand {
                 .replace("%this_version_count%", String.valueOf(info.getVersions().size()));
     }
 
-    private static String fillVersion(String template, ModuleCloud.VersionInfo version) {
+    private static String fillVersion(String template, ModuleRegistry.VersionInfo version) {
         return template
                 .replace("%this_version%", version.getVersion())
                 .replace("%this_downloads%", String.format(Locale.ROOT, "%,d", version.getDownloads()))
