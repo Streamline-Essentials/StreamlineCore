@@ -87,6 +87,8 @@ public final class MenuScreen extends CompatScreen {
     private String confirmDelete;
     /** The module whose add-element form is open, and what has been typed into it. */
     private String addingFor;
+    /** The module whose details popup is open, or {@code null}. */
+    private String detailsFor;
     private String addId = "";
     private String addText = "";
     /** Owners of the add form's two fields, so input can tell them apart. */
@@ -247,6 +249,68 @@ public final class MenuScreen extends CompatScreen {
 
         drawSidebar(canvas, mouseX, mouseY, modules);
         drawContent(canvas, mouseX, mouseY, modules);
+        drawDetails(canvas, mouseX, mouseY, modules);
+    }
+
+    /**
+     * The details popup over the whole menu: it takes every click while open, and a click
+     * outside it, its Close button or Escape closes it.
+     */
+    private void drawDetails(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules) {
+        if (detailsFor == null) return;
+        ClientModuleManager.Installed module = modules.stream().filter(m -> m.getId().equals(detailsFor)).findFirst().orElse(null);
+        if (module == null) {
+            detailsFor = null;
+            return;
+        }
+        regions.clear();
+        regions.add(new Region(0, 0, canvas.width(), canvas.height(), null, (x, y, b) -> detailsFor = null));
+        canvas.fill(0, 0, canvas.width(), canvas.height(), 0xA0000000);
+
+        int width = Math.min(canvas.width() - 40, 300);
+        int textWidth = width - PAD * 2;
+        List<String> rows = new ArrayList<>();
+        rows.add("&7Version: &f" + module.getVersion());
+        if (! module.getProvider().isEmpty()) rows.add("&7Author: &f" + module.getProvider());
+        rows.add("&7Identifier: &f" + module.getId());
+        if (module.getFileName() != null && ! module.getFileName().isEmpty()) rows.add("&7File: &f" + module.getFileName());
+        rows.add("&7Status: &f" + (module.isEnabled() ? "Enabled" : "Disabled"));
+        List<String> description = Theme.wrap(canvas, module.getDescription(), textWidth);
+
+        int line = canvas.lineHeight() + 2;
+        int height = PAD + line + 4 + rows.size() * line + (description.isEmpty() ? 0 : 6 + description.size() * line) + 8 + 14 + PAD;
+        height = Math.min(height, canvas.height() - 20);
+        int x1 = (canvas.width() - width) / 2;
+        int y1 = (canvas.height() - height) / 2;
+        int x2 = x1 + width;
+        int y2 = y1 + height;
+        regions.add(new Region(x1, y1, x2, y2, null, (x, y, b) -> { }));
+        canvas.fill(x1, y1, x2, y2, Theme.PANEL);
+        canvas.outline(x1, y1, x2, y2, Theme.CONTROL_BORDER);
+
+        canvas.clip(x1, y1, x2, y2 - PAD - 18);
+        int y = y1 + PAD;
+        canvas.text(Theme.fit(canvas, "&l" + displayName(module), textWidth), x1 + PAD, y, Theme.TEXT, false);
+        y += line + 4;
+        for (String row : rows) {
+            canvas.text(Theme.fit(canvas, row, textWidth), x1 + PAD, y, Theme.TEXT, false);
+            y += line;
+        }
+        if (! description.isEmpty()) {
+            y += 6;
+            for (String text : description) {
+                canvas.text(text, x1 + PAD, y, Theme.MUTED, false);
+                y += line;
+            }
+        }
+        canvas.endClip();
+
+        int closeX2 = x2 - PAD;
+        int closeX1 = closeX2 - 50;
+        int closeY1 = y2 - PAD - 14;
+        Theme.button(canvas, closeX1, closeY1, closeX2, closeY1 + 14, "Close",
+                Theme.inside(mouseX, mouseY, closeX1, closeY1, closeX2, closeY1 + 14), true);
+        regions.add(new Region(closeX1, closeY1, closeX2, closeY1 + 14, null, (x, yy, b) -> detailsFor = null));
     }
 
     private void drawHeader(Canvas canvas, int mouseX, int mouseY, int left, int top, int width) {
@@ -277,8 +341,8 @@ public final class MenuScreen extends CompatScreen {
         canvas.clip(sidebarX1, sidebarY1, sidebarX2, sidebarY2);
         int y = sidebarY1 + 4 - (int) sidebarScroll;
         for (ClientModuleManager.Installed module : modules) {
-            int dot = module.isEnabled() ? 0xFF4CC26A : 0xFF6A6F77;
-            sidebarRow(canvas, mouseX, mouseY, module.getId(), displayName(module), dot, y, rowHeight);
+            sidebarRow(canvas, mouseX, mouseY, module.getId(), displayName(module), 0, y, rowHeight);
+            sidebarToggle(canvas, mouseX, mouseY, module, y, rowHeight);
             y += rowHeight;
         }
         y += 4;
@@ -287,6 +351,25 @@ public final class MenuScreen extends CompatScreen {
         canvas.endClip();
     }
 
+    /** The switch left of a module's name, which turns it on and off; drawn after its row so it takes the click. */
+    private void sidebarToggle(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module, int y, int rowHeight) {
+        String id = module.getId();
+        int x1 = sidebarX1 + 5;
+        int ty = y + (rowHeight - 10) / 2;
+        if (pending.contains(id)) {
+            canvas.text("...", x1 + 4, y + 5, Theme.MUTED);
+            return;
+        }
+        boolean visible = ty + 10 > sidebarY1 && ty < sidebarY2;
+        boolean hover = visible && Theme.inside(mouseX, mouseY, x1, ty, x1 + 20, ty + 10);
+        Theme.toggle(canvas, x1, ty, module.isEnabled(), hover);
+        if (visible) {
+            regions.add(new Region(x1, Math.max(ty, sidebarY1), x1 + 20, Math.min(ty + 10, sidebarY2), null,
+                    (x, yy, b) -> toggleModule(id, module.isEnabled())));
+        }
+    }
+
+    /** @param dot the marker's color, or {@code 0} for a module's row, whose left holds its switch */
     private void sidebarRow(Canvas canvas, int mouseX, int mouseY, String key, String label, int dot, int y, int rowHeight) {
         boolean isSelected = key.equals(selected);
         boolean visible = y + rowHeight > sidebarY1 && y < sidebarY2;
@@ -297,8 +380,9 @@ public final class MenuScreen extends CompatScreen {
         } else if (hover) {
             canvas.fill(sidebarX1, y, sidebarX2, y + rowHeight, Theme.HOVER);
         }
-        canvas.fill(sidebarX1 + 7, y + 7, sidebarX1 + 11, y + 11, dot);
-        canvas.text(Theme.fit(canvas, label, SIDEBAR_WIDTH - 22), sidebarX1 + 16, y + 5,
+        int labelX = dot == 0 ? sidebarX1 + 29 : sidebarX1 + 16;
+        if (dot != 0) canvas.fill(sidebarX1 + 7, y + 7, sidebarX1 + 11, y + 11, dot);
+        canvas.text(Theme.fit(canvas, label, sidebarX2 - labelX - 6), labelX, y + 5,
                 isSelected ? Theme.TEXT : Theme.MUTED);
         if (visible) {
             regions.add(new Region(sidebarX1, Math.max(y, sidebarY1), sidebarX2, Math.min(y + rowHeight, sidebarY2), null, (x, yy, b) -> {
@@ -359,36 +443,12 @@ public final class MenuScreen extends CompatScreen {
         int x1 = contentX1 + PAD;
         int right = contentX2 - PAD - 4;
 
-        String name = displayName(module);
-        canvas.text("&l" + name, x1, y, Theme.TEXT, false);
-        canvas.text("v" + module.getVersion(), x1 + canvas.textWidth("&l" + name) + 6, y, Theme.MUTED);
-        y += canvas.lineHeight() + 3;
-        if (! module.getProvider().isEmpty()) {
-            canvas.text(Theme.fit(canvas, "by " + module.getProvider(), textWidth), x1, y, Theme.MUTED);
-            y += canvas.lineHeight() + 3;
-        }
-        if (! module.getDescription().isEmpty()) {
-            y = paragraph(canvas, module.getDescription(), y, textWidth, Theme.MUTED);
-        }
-        y += 4;
-        y = drawModuleActions(canvas, mouseX, mouseY, module, y, x1);
+        y = drawModuleActions(canvas, mouseX, mouseY, module, y, x1, right);
         y += 6;
-
-        // Enable switch.
-        canvas.fill(x1 - 2, y - 3, right + 2, y + 13, 0x10FFFFFF);
-        canvas.text("Enabled", x1, y + 1, Theme.TEXT);
-        if (pending.contains(id)) {
-            canvas.text("...", right - canvas.textWidth("..."), y + 1, Theme.MUTED);
-        } else {
-            boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
-            Theme.toggle(canvas, right - 20, y, module.isEnabled(), hover);
-            addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> toggleModule(id, module.isEnabled()));
-        }
-        y += 20;
 
         ModuleSettings page = ClientSettingsRegistry.get(id);
         if (! module.isEnabled()) {
-            y = paragraph(canvas, "Enable the module to change its settings.", y, textWidth, Theme.MUTED);
+            y = paragraph(canvas, "Turn the module on with its switch in the list to change its settings.", y, textWidth, Theme.MUTED);
         } else if (page != null && ! page.getSettings().isEmpty()) {
             y = section(canvas, "Settings", y, right);
             for (Setting<?> setting : page.getSettings()) {
@@ -416,7 +476,7 @@ public final class MenuScreen extends CompatScreen {
             y += 2;
             int buttonX2 = x1 + 100;
             boolean hover = hovered(mouseX, mouseY, x1, y, buttonX2, y + 14);
-            Theme.button(canvas, x1, y, buttonX2, y + 14, "Edit HUD layout", hover, true);
+            Theme.button(canvas, x1, y, buttonX2, y + 14, "Edit HUD Layout", hover, true);
             addRegion(x1, y, buttonX2, y + 14, null, (cx, cy, b) -> openHudEditor());
             y += 18;
         }
@@ -845,32 +905,64 @@ public final class MenuScreen extends CompatScreen {
 
     // ---------------------------------------------------------------- actions
 
-    /** Reload, Update (when eCloud lists a newer version) and Remove, then the last action's outcome. */
-    private int drawModuleActions(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module, int y, int x1) {
+    /**
+     * The module's one-line header, {@code <name> <version> by <author>}, with Details, Reload,
+     * Update (when eCloud lists a newer version) and Remove beside it, or below it when the line
+     * is too narrow; then the last action's outcome.
+     */
+    private int drawModuleActions(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module,
+                                  int y, int x1, int right) {
         String id = module.getId();
-        if (pending.contains(id)) {
-            canvas.text("Working...", x1, y + 3, Theme.MUTED);
-            return y + 18;
-        }
-        int x = actionButton(canvas, mouseX, mouseY, x1, y, "Reload", false,
-                () -> run(id, ClientModuleManager.reload(id), m -> "Reloaded " + m.getVersion() + "."));
+        String title = "&l" + displayName(module) + "&r &7" + module.getVersion()
+                + (module.getProvider().isEmpty() ? "" : " by " + module.getProvider());
 
+        boolean busy = pending.contains(id);
         ModuleRegistry.ModuleInfo listed = listed(id);
-        if (listed != null && ModuleRegistry.compareVersions(module.getVersion(), listed.getVersion()) < 0) {
-            x = actionButton(canvas, mouseX, mouseY, x, y, "Update to " + listed.getVersion(), true,
-                    () -> run(id, ClientModuleCloud.update(id), result -> "Updated to " + result.getVersion() + "."));
+        String update = listed != null && ModuleRegistry.compareVersions(module.getVersion(), listed.getVersion()) < 0
+                ? "Update to " + listed.getVersion() : null;
+        boolean confirming = id.equals(confirmRemove);
+        String remove = confirming ? "Click again to remove" : "Remove";
+        List<String> labels = new ArrayList<>();
+        labels.add("Details");
+        if (! busy) {
+            labels.add("Reload");
+            if (update != null) labels.add(update);
+            labels.add(remove);
+        }
+        int buttons = -6;
+        for (String label : labels) buttons += canvas.textWidth(label) + 14 + 6;
+        if (busy) buttons += 6 + canvas.textWidth("Working...");
+
+        int x;
+        if (x1 + canvas.textWidth(title) + 10 + buttons <= right) {
+            canvas.text(title, x1, y + 3, Theme.TEXT, false);
+            x = right - buttons;
+        } else {
+            canvas.text(Theme.fit(canvas, title, right - x1), x1, y, Theme.TEXT, false);
+            y += canvas.lineHeight() + 4;
+            x = x1;
         }
 
-        boolean confirming = id.equals(confirmRemove);
-        actionButton(canvas, mouseX, mouseY, x, y, confirming ? "Click again to remove" : "Remove", confirming, () -> {
-            if (! id.equals(confirmRemove)) {
-                confirmRemove = id;
-                return;
+        x = actionButton(canvas, mouseX, mouseY, x, y, "Details", false, () -> detailsFor = id);
+        if (busy) {
+            canvas.text("Working...", x, y + 3, Theme.MUTED);
+        } else {
+            x = actionButton(canvas, mouseX, mouseY, x, y, "Reload", false,
+                    () -> run(id, ClientModuleManager.reload(id), m -> "Reloaded " + m.getVersion() + "."));
+            if (update != null) {
+                x = actionButton(canvas, mouseX, mouseY, x, y, update, true,
+                        () -> run(id, ClientModuleCloud.update(id), result -> "Updated to " + result.getVersion() + "."));
             }
-            confirmRemove = null;
-            run(id, ClientModuleManager.remove(id), jar -> "Removed " + jar + ".");
-        });
-        return notice(canvas, id, y + 18, x1, contentX2 - PAD - 4);
+            actionButton(canvas, mouseX, mouseY, x, y, remove, confirming, () -> {
+                if (! id.equals(confirmRemove)) {
+                    confirmRemove = id;
+                    return;
+                }
+                confirmRemove = null;
+                run(id, ClientModuleManager.remove(id), jar -> "Removed " + jar + ".");
+            });
+        }
+        return notice(canvas, id, y + 18, x1, right);
     }
 
     /** @return the x where the next button goes */
@@ -1048,6 +1140,7 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean scroll(double x, double y, double amount) {
+        if (detailsFor != null) return true;
         if (Theme.inside(x, y, sidebarX1, sidebarY1, sidebarX2, sidebarY2)) {
             sidebarScroll = Math.max(0, Math.min(sidebarOverflow, sidebarScroll - amount * SCROLL_STEP));
             return true;
@@ -1061,6 +1154,10 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean key(int key, int modifiers) {
+        if (detailsFor != null && key == Theme.GLFW_ESCAPE) {
+            detailsFor = null;
+            return true;
+        }
         if (editing == null) return false;
         switch (key) {
             case Theme.GLFW_BACKSPACE:
