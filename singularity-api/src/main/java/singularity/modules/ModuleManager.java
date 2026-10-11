@@ -372,9 +372,12 @@ public class ModuleManager {
      * {@link SupportedPlatformTag}s exclude this platform, and any that fail
      * with a logged error.
      *
+     * <p>Synchronized with {@link #startModules()}: a mod-loader client runs a second pass
+     * when it first hosts a world, which may overlap the pass made at boot.</p>
+     *
      * @return the number of JARs successfully handed off to PF4J
      */
-    public static int loadModulesSafe() {
+    public static synchronized int loadModulesSafe() {
         AtomicInteger i = new AtomicInteger(0);
 
         File pathFile = safePluginManager().getPluginsRoot().toFile();
@@ -894,7 +897,7 @@ public class ModuleManager {
     /**
      * Starts all plugins known to the underlying PF4J plugin manager.
      */
-    public static void startModules() {
+    public static synchronized void startModules() {
         safePluginManager().startPlugins();
     }
 

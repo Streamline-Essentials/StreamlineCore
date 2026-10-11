@@ -86,6 +86,23 @@ public final class ModEvents {
         }
     }
 
+    private static volatile boolean clientStarted;
+
+    /**
+     * The game client has started. Brings Streamline up so client modules run whether or not
+     * a world is hosted. Loaders call this from a hook that fires repeatedly (a client tick on
+     * Forge and NeoForge), so only the first call does anything.
+     */
+    public static void onClientStarted() {
+        if (clientStarted) return;
+        clientStarted = true;
+        try {
+            BasePlugin.getInstance().boot();
+        } catch (Throwable t) {
+            BasePlugin.getInstance().getSlf4jLogger().warn("Streamline could not start on the client", t);
+        }
+    }
+
     public static void onServerStarting(MinecraftServer server) {
         try {
             BasePlugin.getInstance().onServerEnable(server);

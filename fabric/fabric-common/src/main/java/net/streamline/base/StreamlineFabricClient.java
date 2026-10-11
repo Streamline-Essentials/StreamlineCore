@@ -13,8 +13,8 @@ import net.streamline.platform.listeners.ModEvents;
 
 /**
  * The client side of the Fabric mod: the {@code /streamlineclient} and {@code /slclient}
- * client commands, and Streamline's shutdown once the client exits, since stopping an
- * integrated server leaves it up for the next world.
+ * client commands, Streamline's start once the client is up, and its shutdown once the
+ * client exits, since stopping an integrated server leaves it up for the next world.
  */
 public class StreamlineFabricClient implements ClientModInitializer {
 
@@ -34,6 +34,7 @@ public class StreamlineFabricClient implements ClientModInitializer {
             }
         });
 
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModEvents.onClientStarted());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ModEvents.onGameStopping());
     }
 

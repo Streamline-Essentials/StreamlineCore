@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.savables.UserManager;
 import net.streamline.platform.text.LegacyText;
+import singularity.client.ClientBridge;
 import singularity.command.CommandHandler;
 import singularity.command.CosmicCommand;
 import singularity.data.console.CosmicSender;
@@ -26,13 +27,15 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
- * {@code /streamlineclient <command> (args ...)} and its alias {@code /slclient}: a client
- * command that runs a Streamline command, picked by any of its aliases, as the local player.
+ * {@code /streamlineclient (menu|hud|<command> (args ...))} and its alias {@code /slclient}: a
+ * client command that opens the client module menu or the HUD editor, or runs a Streamline
+ * command, picked by any of its aliases, as the local player.
  *
- * <p>The game client has no Streamline of its own; Streamline runs on the integrated server
- * of a world this client hosts (singleplayer, or opened to LAN), so that is where the command
- * runs, on the server thread, as the host's {@link ServerPlayer}. Its output reaches chat
- * the usual way. On a remote server there is nothing to run it against.</p>
+ * <p>{@code menu} and {@code hud} belong to the client and work anywhere, remote servers
+ * included; they win over a module command with the same alias. Any other command runs as a
+ * player, and a client has a player only on the integrated server of a world it hosts
+ * (singleplayer, or opened to LAN), so that is where it runs, on the server thread, as the
+ * host's {@link ServerPlayer}. Its output reaches chat the usual way.</p>
  *
  * <p>This class only touches classes both sides have; each loader registers the labels with
  * its own client-command API and forwards here.</p>
@@ -41,7 +44,13 @@ public final class ClientCommand {
 
     public static final String[] LABELS = {"streamlineclient", "slclient"};
 
-    private static final String USAGE = "&eUsage: &f/%s <command> (args ...)";
+    /** Subcommands the client handles itself, ahead of any module alias. */
+    public static final String MENU = "menu";
+    public static final String HUD = "hud";
+
+    private static final String USAGE = "&eUsage: &f/%s (menu|hud|<command> (args ...))"
+            + "%n&7menu &f- client module settings  &7hud &f- move and scale HUD elements";
+    private static final String NO_CLIENT_UI = "&cThe Streamline client menu is not available in this game.";
     private static final String NOT_HOSTING = "&cStreamline runs only in a world this game hosts: "
             + "open a singleplayer world, or open one to LAN.";
     /**
@@ -95,9 +104,13 @@ public final class ClientCommand {
     public static void run(String label, UUID player, String line, Consumer<Component> reply) {
         String[] args = line == null ? new String[0] : line.trim().split(" +");
         if (args.length == 0 || args[0].isEmpty()) {
-            reply.accept(LegacyText.parse(String.format(USAGE, label)));
+            for (String usageLine : String.format(USAGE, label).split("\\R")) {
+                reply.accept(LegacyText.parse(usageLine));
+            }
             return;
         }
+
+        if (runBuiltIn(args[0], reply)) return;
 
         MinecraftServer server = BasePlugin.getServer();
         if (server == null || UserManager.getInstance() == null) {
@@ -128,8 +141,30 @@ public final class ClientCommand {
     }
 
     /**
-     * Suggests the word being typed in {@code builder}'s remaining input: a command alias for
-     * the first word, otherwise whatever that command completes.
+     * Runs {@code menu} or {@code hud}, which need no world. Called on the client thread, from
+     * the command callback.
+     *
+     * @return whether {@code name} was one of them
+     */
+    private static boolean runBuiltIn(String name, Consumer<Component> reply) {
+        boolean menu = name.equalsIgnoreCase(MENU);
+        boolean hud = name.equalsIgnoreCase(HUD);
+        if (! menu && ! hud) return false;
+
+        if (! ClientBridge.isClient()) {
+            reply.accept(LegacyText.parse(NO_CLIENT_UI));
+        } else if (menu) {
+            ClientBridge.openMenu();
+        } else {
+            ClientBridge.openHudEditor();
+        }
+        return true;
+    }
+
+    /**
+     * Suggests the word being typed in {@code builder}'s remaining input: {@code menu},
+     * {@code hud} or a command alias for the first word, otherwise whatever that command
+     * completes.
      */
     public static CompletableFuture<Suggestions> suggest(UUID player, SuggestionsBuilder builder) {
         try {
@@ -138,8 +173,11 @@ public final class ClientCommand {
 
             ConcurrentSkipListSet<String> completions;
             if (args.length <= 1) {
-                completions = CommandHandler.getAllAliases();
+                completions = new ConcurrentSkipListSet<>(CommandHandler.getAllAliases());
+                completions.add(MENU);
+                completions.add(HUD);
             } else {
+                if (args[0].equalsIgnoreCase(MENU) || args[0].equalsIgnoreCase(HUD)) return builder.buildFuture();
                 MinecraftServer server = BasePlugin.getServer();
                 CosmicCommand command = CommandHandler.getCommandByAlias(args[0]);
                 CosmicSender sender = server == null || UserManager.getInstance() == null ? null : senderOf(server, player);
