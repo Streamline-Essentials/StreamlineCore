@@ -4,7 +4,9 @@
 + Added the StreamlineClient menu (Right Shift opens the HUD editor), with Client Settings, module pages, settings, key bindings and an eCloud browser.
 + Added the HUD editor: drag, scale, nudge with the arrow keys, hide and delete elements, and edit their text with placeholders.
 + Added the /streamlineclient (/slclient) command to manage client modules and run Streamline commands on a hosted world.
++ Added the Client Settings page (Show HUD, Remember Last Page, Check eCloud For Updates, chroma colors), which was missing from the 2.6.1.2 jars.
 + Added chroma color placeholders (%streamlineclient_colors_chroma%).
++ Client modules can add rebindable keys on their menu page and hold sprint or sneak, which ClientTogglesModule needs to load.
 + Added the StreamlineHUD (FPS, ping, clocks and more) and ClientTogglesModule (toggle sprint and toggle sneak) client modules.
 + Modules now declare the platforms they run on, and Streamline only loads modules made for its platform.
 + Fixed a lot of bugs with Database handling.
