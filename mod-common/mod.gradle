@@ -75,6 +75,20 @@ configurations {
     compileOnly.extendsFrom modShade
 }
 
+// Dev runs load the mod from its classes, not the shaded jar, so the libraries it bundles go
+// on the run classpath as they are. Fabric reads the runtime classpath; ModDevGradle needs
+// non-mod jars in additionalRuntimeClasspath (NeoForge 1.21.8 and older ignore the rest);
+// ForgeGradle 7 takes them as each run's extra libraries.
+configurations.named('runtimeOnly') { extendsFrom configurations.modShade }
+configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach {
+    extendsFrom configurations.modShade
+}
+plugins.withId('net.minecraftforge.gradle') {
+    minecraft.runs.configureEach {
+        extraLibraries.from(configurations.modShade)
+    }
+}
+
 dependencies {
     compileOnly "net.luckperms:api:${rootProject.properties['lp_version']}"
     compileOnly 'org.jetbrains:annotations:24.0.1'

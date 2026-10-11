@@ -26,6 +26,20 @@ if (legacy) {
             forgeVersion = project.forgeVersion
             disableRecompilation = true
         }
+        runs {
+            client {
+                client()
+            }
+            server {
+                server()
+                programArgument('--nogui')
+            }
+        }
+        mods {
+            streamlinecore {
+                sourceSet sourceSets.main
+            }
+        }
     }
 } else {
     apply plugin: 'net.minecraftforge.gradle'
@@ -35,6 +49,23 @@ if (legacy) {
     if (project.obfuscated as boolean) {
         minecraft {
             mappings channel: 'official', version: project.mcVersion
+        }
+    }
+
+    minecraft {
+        runs {
+            configureEach {
+                workingDir = layout.projectDirectory.dir('run')
+                mods {
+                    streamlinecore {
+                        source sourceSets.main
+                    }
+                }
+            }
+            client {}
+            server {
+                args '--nogui'
+            }
         }
     }
 
