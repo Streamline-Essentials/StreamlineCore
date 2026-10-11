@@ -1,6 +1,14 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **Note:** This file was written specifically for Claude (Claude Code), so
+> some wording may not fit other agents exactly — e.g. Claude-specific tool
+> names, skills, or features. Interpret those in terms of your own equivalents.
+>
+> The master copy of the global rules these instructions build on lives at
+> `{USER HOME}/.claude/CLAUDE.md` (e.g. `C:\Users\<user>\.claude\CLAUDE.md`).
+> Read it as well; rules there apply unless this file overrides them.
+
+This file provides guidance to coding agents working with code in this repository.
 
 ## Project Overview
 
