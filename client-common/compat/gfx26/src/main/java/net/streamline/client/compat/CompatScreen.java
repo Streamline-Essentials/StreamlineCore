@@ -93,17 +93,30 @@ public abstract class CompatScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return mouseDown(event.x(), event.y(), event.button()) || super.mouseClicked(event, doubleClick);
+        return mouseDown(event.x(), event.y(), toGlfwButton(event.button())) || super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        return mouseUp(event.x(), event.y(), event.button()) || super.mouseReleased(event);
+        return mouseUp(event.x(), event.y(), toGlfwButton(event.button())) || super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        return mouseDrag(event.x(), event.y(), event.button(), dx, dy) || super.mouseDragged(event, dx, dy);
+        return mouseDrag(event.x(), event.y(), toGlfwButton(event.button()), dx, dy) || super.mouseDragged(event, dx, dy);
+    }
+
+    /**
+     * @return the button as GLFW numbers it (left 0, right 1, middle 2), which the shared screens
+     * use. 26.2 reads the mouse through GLFW, where the two agree; 26.3 through SDL, which counts
+     * from 1 with middle before right, so its left click would otherwise arrive as a right click.
+     * The {@code InputConstants} values are each version's own, compiled in.
+     */
+    private static int toGlfwButton(int button) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT) return 0;
+        if (button == InputConstants.MOUSE_BUTTON_RIGHT) return 1;
+        if (button == InputConstants.MOUSE_BUTTON_MIDDLE) return 2;
+        return button >= InputConstants.MOUSE_BUTTON_4 ? button - InputConstants.MOUSE_BUTTON_4 + 3 : -1;
     }
 
     @Override
