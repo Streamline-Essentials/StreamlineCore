@@ -10,7 +10,10 @@
 
 def legacy = project.ext.has('legacy') && project.legacy
 
-ext.modSourceDirs = ['forge/forge-common', "forge/forge-eventbus${project.eventBus}"]
+// The HUD hook: RenderGuiEvent on 1.20.1, AddGuiOverlayLayersEvent on the mod bus on 1.21.1,
+// and the same event on its own EventBus 7 bus from 1.21.11.
+def hudHook = legacy ? 'forge-hud1201' : (project.eventBus.toString() == '6' ? 'forge-hud1211' : 'forge-hud-eb7')
+ext.modSourceDirs = ['forge/forge-common', "forge/forge-eventbus${project.eventBus}", "forge/${hudHook}"]
 ext.metadataExtras = [loaderMajor: project.loaderMajor.toString()]
 
 if (legacy) {
