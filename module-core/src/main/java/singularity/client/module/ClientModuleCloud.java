@@ -15,10 +15,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * The game client's view of the module registry (eCloud): only modules whose platforms
  * include {@code modded-client} are listed, downloaded or updated, and a download is checked
  * twice: the registry must list the version for clients, and the jar itself must say so
- * before {@link ClientModuleManager} loads it.
+ * before it is installed.
  *
- * <p>Downloads load straight away, replacing an installed version of the same module without
- * a restart.</p>
+ * <p>Two kinds are offered. Client modules ({@code modded-client} only) go to
+ * {@link ClientModuleManager} and load straight away, replacing an installed version without
+ * a restart. World modules ({@code modded-server} and {@code modded-client}) are server modules
+ * that also run in the worlds the client hosts; they go to {@link WorldModules}, and only to a
+ * client that can host worlds.</p>
  */
 public final class ClientModuleCloud {
 
@@ -60,22 +63,31 @@ public final class ClientModuleCloud {
         private final String oldVersion;
         /** The version installed now, or the registry's latest when nothing changed. */
         private final String version;
-        /** Whether the module is enabled now. */
+        /** Whether the module is enabled now; for a world module, whether it is running in a hosted world. */
         private final boolean enabled;
+        /** Whether it is a world module, which runs in the worlds this client hosts. */
+        private final boolean world;
 
-        Result(Status status, String moduleId, String oldVersion, String version, boolean enabled) {
+        Result(Status status, String moduleId, String oldVersion, String version, boolean enabled, boolean world) {
             this.status = status;
             this.moduleId = moduleId;
             this.oldVersion = oldVersion;
             this.version = version;
             this.enabled = enabled;
+            this.world = world;
         }
     }
 
-    /** Every client module the registry lists. */
+    /**
+     * Every module the registry lists that this client can install: client modules, and world
+     * modules where this client hosts worlds.
+     */
     public static CompletableFuture<List<ModuleRegistry.ModuleInfo>> available() {
         return CompletableFuture.supplyAsync(() -> {
-            List<ModuleRegistry.ModuleInfo> modules = REGISTRY.listNow(ClientModuleManager.CLIENT_TAG);
+            List<ModuleRegistry.ModuleInfo> modules = new ArrayList<>();
+            for (ModuleRegistry.ModuleInfo info : REGISTRY.listNow(ClientModuleManager.CLIENT_TAG)) {
+                if (WorldModules.installable(info.getPlatforms())) modules.add(info);
+            }
             List<String> names = new ArrayList<>();
             for (ModuleRegistry.ModuleInfo info : modules) names.add(info.getName());
             cachedNames.retainAll(names);
@@ -85,7 +97,7 @@ public final class ClientModuleCloud {
         }, NETWORK);
     }
 
-    /** A client module's registry entry; fails if the registry does not list it for clients. */
+    /** A module's registry entry; fails if the registry does not list it for this client. */
     public static CompletableFuture<ModuleRegistry.ModuleInfo> info(String name) {
         return CompletableFuture.supplyAsync(() -> requireClient(REGISTRY.infoNow(name), null), NETWORK);
     }
@@ -102,8 +114,23 @@ public final class ClientModuleCloud {
         return new ArrayList<>(cachedNames);
     }
 
+    /** @return whether the registry entry is a world module, by its latest version's platforms */
+    public static boolean isWorldModule(ModuleRegistry.ModuleInfo info) {
+        return WorldModules.isWorldModule(info.getPlatforms());
+    }
+
+    /** The installed version of a client or world module, by Plugin-Id, or {@code null}. */
+    public static String installedVersion(String id) {
+        ClientModuleManager.Installed client = ClientModuleManager.module(id);
+        if (client != null) return client.getVersion();
+        WorldModules.Installed world = WorldModules.module(id);
+        return world == null ? null : world.getVersion();
+    }
+
     /**
-     * Downloads a client module and loads it, replacing an installed version of it.
+     * Downloads a module and installs it, replacing an installed version of it. A client
+     * module loads at once; a world module loads at once while Streamline runs for a hosted
+     * world, otherwise with the next one.
      *
      * @param name    registry name or Plugin-Id
      * @param version a specific version, or {@code null} for the latest
@@ -114,6 +141,13 @@ public final class ClientModuleCloud {
             ModuleRegistry.ModuleInfo info = requireClient(REGISTRY.infoNow(name), version);
             String id = info.getId().isEmpty() ? name : info.getId();
             String target = version == null || version.isBlank() ? info.getVersion() : version.trim();
+            if (worldVersion(info, version)) {
+                WorldModules.Installed installed = WorldModules.module(id);
+                if (installed != null && installed.getVersion().equalsIgnoreCase(target)) {
+                    throw new ModuleRegistry.RegistryException("'" + installed.getId() + "' " + installed.getVersion() + " is already installed.");
+                }
+                return fetchAndInstallWorld(id, version, installed == null ? null : installed.getVersion());
+            }
             ClientModuleManager.Installed installed = ClientModuleManager.module(id);
             if (installed != null && installed.getVersion().equalsIgnoreCase(target)) {
                 throw new ModuleRegistry.RegistryException("'" + installed.getId() + "' " + installed.getVersion() + " is already installed.");
@@ -122,18 +156,30 @@ public final class ClientModuleCloud {
         }, NETWORK).thenCompose(future -> future);
     }
 
-    /** Replaces an installed client module with the registry's latest version, if that is newer. */
+    /** Replaces an installed module with the registry's latest version, if that is newer. */
     public static CompletableFuture<Result> update(String name) {
         return CompletableFuture.supplyAsync(() -> {
             ModuleRegistry.ModuleInfo info = requireClient(REGISTRY.infoNow(name), null);
             String id = info.getId().isEmpty() ? name : info.getId();
+            if (isWorldModule(info)) {
+                WorldModules.Installed installed = WorldModules.module(id);
+                if (installed == null) installed = WorldModules.module(name);
+                if (installed == null) {
+                    return CompletableFuture.completedFuture(new Result(Result.Status.NOT_INSTALLED, id, null, info.getVersion(), false, true));
+                }
+                if (ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) >= 0) {
+                    return CompletableFuture.completedFuture(new Result(Result.Status.UP_TO_DATE, installed.getId(),
+                            installed.getVersion(), info.getVersion(), installed.isLoaded(), true));
+                }
+                return fetchAndInstallWorld(id, info.getVersion(), installed.getVersion());
+            }
             ClientModuleManager.Installed installed = ClientModuleManager.module(id);
             if (installed == null) installed = ClientModuleManager.module(name);
             if (installed == null) {
                 // A jar of it that did not load counts as installed: updating is how it gets fixed.
                 String unloaded = ClientModuleManager.unloadedVersion(id);
                 if (unloaded == null) {
-                    return CompletableFuture.completedFuture(new Result(Result.Status.NOT_INSTALLED, id, null, info.getVersion(), false));
+                    return CompletableFuture.completedFuture(new Result(Result.Status.NOT_INSTALLED, id, null, info.getVersion(), false, false));
                 }
                 if (unloaded.equalsIgnoreCase(info.getVersion())) {
                     throw new ModuleRegistry.RegistryException("'" + id + "' " + unloaded
@@ -143,7 +189,7 @@ public final class ClientModuleCloud {
             }
             if (ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) >= 0) {
                 return CompletableFuture.completedFuture(new Result(Result.Status.UP_TO_DATE, installed.getId(),
-                        installed.getVersion(), info.getVersion(), installed.isEnabled()));
+                        installed.getVersion(), info.getVersion(), installed.isEnabled(), false));
             }
             return fetchAndInstall(id, info.getVersion(), installed.getVersion());
         }, NETWORK).thenCompose(future -> future);
@@ -158,8 +204,28 @@ public final class ClientModuleCloud {
                         throw new ModuleRegistry.RegistryException(String.valueOf(cause.getMessage()), cause);
                     }
                     return new Result(oldVersion == null ? Result.Status.INSTALLED : Result.Status.UPDATED,
-                            installed.getId(), oldVersion, installed.getVersion(), installed.isEnabled());
+                            installed.getId(), oldVersion, installed.getVersion(), installed.isEnabled(), false);
                 });
+    }
+
+    private static CompletableFuture<Result> fetchAndInstallWorld(String id, String version, String oldVersion) {
+        ModuleRegistry.Fetched fetched = REGISTRY.fetch(id, version, WorldModules.folder().toPath());
+        return WorldModules.install(fetched)
+                .handle((installed, error) -> {
+                    if (error != null) {
+                        Throwable cause = error.getCause() != null ? error.getCause() : error;
+                        throw new ModuleRegistry.RegistryException(String.valueOf(cause.getMessage()), cause);
+                    }
+                    return new Result(oldVersion == null ? Result.Status.INSTALLED : Result.Status.UPDATED,
+                            installed.getId(), oldVersion, installed.getVersion(), installed.isLoaded(), true);
+                });
+    }
+
+    /** Whether the requested version (or the latest, for {@code null}) is a world module. */
+    private static boolean worldVersion(ModuleRegistry.ModuleInfo info, String version) {
+        if (version == null || version.isBlank()) return isWorldModule(info);
+        ModuleRegistry.VersionInfo listed = info.version(version.trim());
+        return WorldModules.isWorldModule(listed == null ? info.getPlatforms() : listed.getPlatforms());
     }
 
     /** Refuses modules (or the requested version) the registry does not list for clients. */
@@ -175,8 +241,12 @@ public final class ClientModuleCloud {
             }
             platforms = listed.getPlatforms();
         }
-        if (! platforms.contains(ClientModuleManager.CLIENT_TAG)) {
-            throw new ModuleRegistry.RegistryException("'" + info.getName() + "' is not a client module"
+        if (WorldModules.isWorldModule(platforms) && ! WorldModules.isSupported()) {
+            throw new ModuleRegistry.RegistryException("'" + info.getName()
+                    + "' runs in the worlds a client hosts, which this game does not run.");
+        }
+        if (! WorldModules.installable(platforms)) {
+            throw new ModuleRegistry.RegistryException("'" + info.getName() + "' does not run on clients"
                     + (platforms.isEmpty() ? "." : " (it runs on " + String.join(", ", platforms) + ")."));
         }
         return info;

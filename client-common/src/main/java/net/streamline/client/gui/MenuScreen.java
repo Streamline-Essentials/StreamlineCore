@@ -7,6 +7,7 @@ import singularity.client.hud.HudPlacement;
 import singularity.client.hud.HudRegistry;
 import singularity.client.module.ClientModuleCloud;
 import singularity.client.module.ClientModuleManager;
+import singularity.client.module.WorldModules;
 import singularity.client.settings.ClientSettingsRegistry;
 import singularity.client.settings.ModuleSettings;
 import singularity.client.settings.Setting;
@@ -26,7 +27,8 @@ import java.util.function.Function;
  * The client module menu ({@code /slclient menu}): a sidebar of the client modules loaded in
  * this game and, for the selected one, its details, an enable switch, reload, update and
  * remove buttons, the settings it registered with {@link ClientSettingsRegistry}, and its HUD
- * elements. The sidebar's last entry browses eCloud for client modules and installs them
+ * elements. The sidebar's last entry browses eCloud for client modules, and for world modules
+ * (server modules that run in the worlds this client hosts), and installs them
  * while the game runs.
  *
  * <p>Everything is drawn by hand so it looks the same on every Minecraft version. Each frame
@@ -53,7 +55,7 @@ public final class MenuScreen extends CompatScreen {
     /** The module whose Remove button was clicked once; a second click removes it. */
     private String confirmRemove;
 
-    /** eCloud's client modules, once fetched; {@code null} until then. */
+    /** eCloud's modules for clients, once fetched; {@code null} until then. */
     private volatile List<ModuleRegistry.ModuleInfo> available;
     private volatile String availableError;
     private volatile boolean loadingAvailable;
@@ -581,7 +583,7 @@ public final class MenuScreen extends CompatScreen {
         else run(id, ClientModuleManager.enable(id), m -> "Enabled.");
     }
 
-    /** The eCloud page: every client module the registry lists, with install and update buttons. */
+    /** The eCloud page: every client and world module the registry lists, with install and update buttons. */
     private int drawBrowse(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules, int y, int textWidth) {
         int x1 = contentX1 + PAD;
         int right = contentX2 - PAD - 4;
@@ -594,6 +596,10 @@ public final class MenuScreen extends CompatScreen {
         y += canvas.lineHeight() + 5;
         y = paragraph(canvas, "Client modules from eCloud. They install and start right away; no restart needed.",
                 y, textWidth, Theme.MUTED);
+        if (WorldModules.isSupported()) {
+            y = paragraph(canvas, "World modules are server modules that run in the worlds you host (singleplayer or LAN). "
+                    + "They go to " + WorldModules.folder() + " and start with your world.", y, textWidth, Theme.MUTED);
+        }
         if (modules.isEmpty()) {
             y = paragraph(canvas, "No client modules are installed yet. Jars put in " + ClientModuleManager.folder()
                     + " also load as soon as they land.", y, textWidth, Theme.MUTED);
@@ -608,7 +614,7 @@ public final class MenuScreen extends CompatScreen {
             y = paragraph(canvas, "Could not reach eCloud: " + availableError, y, textWidth, Theme.ACCENT_LIGHT);
         }
         if (list == null) return loadingAvailable ? paragraph(canvas, "Loading...", y, textWidth, Theme.MUTED) : y;
-        if (list.isEmpty()) return paragraph(canvas, "eCloud lists no client modules yet.", y, textWidth, Theme.MUTED);
+        if (list.isEmpty()) return paragraph(canvas, "eCloud lists no modules for clients yet.", y, textWidth, Theme.MUTED);
 
         for (ModuleRegistry.ModuleInfo info : list) {
             y = drawListing(canvas, mouseX, mouseY, info, y, x1, right);
@@ -619,8 +625,9 @@ public final class MenuScreen extends CompatScreen {
     private int drawListing(Canvas canvas, int mouseX, int mouseY, ModuleRegistry.ModuleInfo info, int y, int x1, int right) {
         int top = y;
         String key = info.getId().isEmpty() ? info.getName() : info.getId();
-        ClientModuleManager.Installed installed = ClientModuleManager.module(key);
-        boolean outdated = installed != null && ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) < 0;
+        String installed = ClientModuleCloud.installedVersion(key);
+        boolean outdated = installed != null && ModuleRegistry.compareVersions(installed, info.getVersion()) < 0;
+        boolean world = ClientModuleCloud.isWorldModule(info);
 
         String label;
         Runnable action = null;
@@ -628,10 +635,12 @@ public final class MenuScreen extends CompatScreen {
             label = "Working...";
         } else if (installed == null) {
             label = "Install";
-            action = () -> run(key, ClientModuleCloud.download(key, null), result -> "Installed " + result.getVersion() + ".");
+            action = () -> run(key, ClientModuleCloud.download(key, null), result -> "Installed " + result.getVersion()
+                    + (result.isWorld() && ! result.isEnabled() ? ". It starts with the next world you open." : "."));
         } else if (outdated) {
             label = "Update";
-            action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated to " + result.getVersion() + ".");
+            action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated to " + result.getVersion()
+                    + (result.isWorld() && ! result.isEnabled() ? ". It starts with the next world you open." : "."));
         } else {
             label = "Installed";
         }
@@ -651,9 +660,9 @@ public final class MenuScreen extends CompatScreen {
         }
         y += canvas.lineHeight() + 3;
 
-        String byline = (info.getAuthor().isEmpty() ? "" : "by " + info.getAuthor() + "  ")
+        String byline = (world ? "World module  " : "") + (info.getAuthor().isEmpty() ? "" : "by " + info.getAuthor() + "  ")
                 + info.getDownloads() + (info.getDownloads() == 1 ? " download" : " downloads")
-                + (installed != null ? "  (installed " + installed.getVersion() + ")" : "");
+                + (installed != null ? "  (installed " + installed + ")" : "");
         canvas.text(Theme.fit(canvas, byline, textWidth), x1, y, Theme.MUTED);
         y += canvas.lineHeight() + 2;
         for (String line : Theme.wrap(canvas, info.getDescription(), right - x1)) {

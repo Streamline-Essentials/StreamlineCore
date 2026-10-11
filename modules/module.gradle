@@ -73,11 +73,14 @@ ext {
             throw new GradleException("Module '${project.name}' lists unknown platforms in pf.platforms: " +
                     "${unknown.join(', ')}. Use a comma-separated subset of ${known.join(', ')}.")
         }
-        // Client modules extend ClientModule and run in the game client's lean module core,
-        // which servers do not load, so a module is either client-only or for servers.
-        if (tags.contains('modded-client') && tags.size() > 1) {
-            throw new GradleException("Module '${project.name}' lists modded-client with other platforms in " +
-                    "pf.platforms. Client modules are client-only; split the server part into its own module.")
+        // modded-client alone makes a client module: it extends ClientModule and runs in the game
+        // client's lean module core, which servers do not load. Alongside modded-server it marks
+        // a server module that also runs in the worlds a client hosts (its integrated server),
+        // which clients then offer from eCloud. Any other mix is neither.
+        if (tags.contains('modded-client') && tags.size() > 1 && ! tags.contains('modded-server')) {
+            throw new GradleException("Module '${project.name}' lists modded-client with ${(tags - 'modded-client').join(', ')} " +
+                    "in pf.platforms. modded-client alone makes a client module; add modded-server for a server module " +
+                    "that also runs in the worlds a client hosts.")
         }
         return tags.join(', ')
     }()

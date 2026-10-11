@@ -15,7 +15,9 @@ import net.streamline.platform.handlers.gui.ModGuiHandler;
 import singularity.Singularity;
 import singularity.client.ClientEnvironment;
 import singularity.client.module.ClientModuleManager;
+import singularity.client.module.WorldModules;
 import net.streamline.platform.modules.RelocatingModuleTransformer;
+import net.streamline.platform.modules.WorldModuleHost;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
@@ -147,6 +149,7 @@ public abstract class BasePlugin implements ISingularityExtension {
         GuiManager.setHandler(new ModGuiHandler());
 
         TaskManager.init();
+        if (isClient()) WorldModules.setHost(new WorldModuleHost(this));
 
         enable();
 
@@ -170,7 +173,14 @@ public abstract class BasePlugin implements ISingularityExtension {
             if (level.intValue() >= Level.WARNING.intValue()) LOGGER.warn(message);
             else LOGGER.info(message);
         });
+        // Server modules tagged modded-client run on the worlds this client hosts.
+        WorldModules.setSupported(true);
         ClientModuleManager.start();
+    }
+
+    /** @return whether Streamline is up: {@link #boot()} ran and it has not been shut down */
+    public boolean isRunning() {
+        return slapi != null && ! shutDown;
     }
 
     /** Whether {@link #bootClient()} has run. */
