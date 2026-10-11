@@ -18,14 +18,24 @@ import java.util.List;
  * <p>The layout is saved when a drag ends, after every other change, and when the editor
  * closes.</p>
  *
- * <p>A drag follows the pointer every frame while the left button is held, read from the
- * window itself, rather than relying on drag and release events: mods can take those before
- * the screen sees them. The events, when they do arrive, only move it sooner.</p>
+ * <p>A drag starts on the press the screen receives and then follows the pointer every frame,
+ * rather than relying on drag events: the game sends those only while its own record of the held
+ * button says so, and mods can take or rewrite that record. It ends on the release event, or
+ * once {@link ClientCompat#leftMouseDown()} reports the button up, which is trusted only after it
+ * has reported it down during the same drag, so a query that cannot see the button never ends a
+ * drag on its own.</p>
+ *
+ * <p>The button at the top opens the StreamlineClient Menu; it is faint until hovered so it does
+ * not hide the HUD behind it.</p>
  */
 public final class HudEditorScreen extends CompatScreen {
 
     private static final String HINT = "Drag to move • Scroll to scale • Right-click to show/hide • R to reset • Esc to finish";
     private static final double SCALE_STEP = 0.1;
+    private static final String MENU_LABEL = "StreamlineClient Menu";
+    private static final int MENU_PAD_X = 6;
+    private static final int MENU_PAD_Y = 4;
+    private static final int MENU_TOP = 4;
 
     /** The screen to return to: a version-specific screen object, or {@code null}. */
     private final Object parent;
@@ -36,6 +46,10 @@ public final class HudEditorScreen extends CompatScreen {
     private HudRegistry.Registered dragging;
     private double dragOffsetX;
     private double dragOffsetY;
+    /** Whether {@link ClientCompat#leftMouseDown()} has seen the button held during this drag. */
+    private boolean dragSeenDown;
+    /** The menu button's area in the last frame: x1, y1, x2, y2. */
+    private final int[] menuButton = new int[4];
     private int lastWidth = 1;
     private int lastHeight = 1;
     /** The pointer in the last frame; key presses carry no position of their own. */
@@ -69,8 +83,14 @@ public final class HudEditorScreen extends CompatScreen {
         canvas.fill(0, canvas.height() / 2, canvas.width(), canvas.height() / 2 + 1, 0x20FFFFFF);
 
         if (dragging != null) {
-            if (ClientCompat.leftMouseDown()) dragTo(mouseX, mouseY);
-            else endDrag();
+            if (ClientCompat.leftMouseDown()) {
+                dragSeenDown = true;
+                dragTo(mouseX, mouseY);
+            } else if (dragSeenDown) {
+                endDrag();
+            } else {
+                dragTo(mouseX, mouseY);
+            }
         }
 
         placed.clear();
@@ -112,11 +132,48 @@ public final class HudEditorScreen extends CompatScreen {
             }
         }
 
+        drawMenuButton(canvas, mouseX, mouseY);
+
         String hint = Theme.fit(canvas, HINT, canvas.width() - 8);
         int hintX = (canvas.width() - canvas.textWidth(hint)) / 2;
         int hintY = canvas.height() - canvas.lineHeight() - 4;
         canvas.fill(hintX - 3, hintY - 2, hintX + canvas.textWidth(hint) + 3, hintY + canvas.lineHeight() + 1, 0xA0000000);
         canvas.text(hint, hintX, hintY, Theme.MUTED);
+    }
+
+    /** The button that opens the StreamlineClient Menu: faint until the pointer is over it. */
+    private void drawMenuButton(Canvas canvas, int mouseX, int mouseY) {
+        int width = canvas.textWidth(MENU_LABEL) + MENU_PAD_X * 2;
+        int height = canvas.lineHeight() + MENU_PAD_Y * 2;
+        menuButton[0] = (canvas.width() - width) / 2;
+        menuButton[1] = MENU_TOP;
+        menuButton[2] = menuButton[0] + width;
+        menuButton[3] = MENU_TOP + height;
+        boolean hover = dragging == null && overMenuButton(mouseX, mouseY);
+        int fill = hover ? Theme.BUTTON_HOVER : faint(Theme.BUTTON);
+        canvas.fill(menuButton[0], menuButton[1], menuButton[2], menuButton[3], fill);
+        canvas.outline(menuButton[0], menuButton[1], menuButton[2], menuButton[3],
+                hover ? Theme.ACCENT_LIGHT : faint(Theme.CONTROL_BORDER));
+        canvas.text(MENU_LABEL, menuButton[0] + MENU_PAD_X, menuButton[1] + MENU_PAD_Y,
+                hover ? Theme.TEXT : faint(Theme.TEXT));
+    }
+
+    /** @return {@code argb} at half its opacity */
+    private static int faint(int argb) {
+        return (((argb >>> 24) / 2) << 24) | (argb & 0xFFFFFF);
+    }
+
+    private boolean overMenuButton(double x, double y) {
+        return x >= menuButton[0] && y >= menuButton[1] && x < menuButton[2] && y < menuButton[3];
+    }
+
+    /**
+     * Opens the StreamlineClient Menu in place of the editor, going back to the menu the editor
+     * was opened from rather than stacking another one on it.
+     */
+    private void openMenu() {
+        HudRegistry.save();
+        ClientCompat.setScreen(parent instanceof MenuScreen ? parent : new MenuScreen(parent));
     }
 
     private Placed hoveredAt(double x, double y) {
@@ -135,10 +192,17 @@ public final class HudEditorScreen extends CompatScreen {
 
     @Override
     protected boolean mouseDown(double x, double y, int button) {
+        // A press while dragging means the release never arrived; that drag is over.
+        if (dragging != null) endDrag();
+        if (button == 0 && overMenuButton(x, y)) {
+            openMenu();
+            return true;
+        }
         Placed hit = hoveredAt(x, y);
         if (hit == null) return false;
         if (button == 0) {
             dragging = hit.registered;
+            dragSeenDown = false;
             dragOffsetX = x - hit.bounds.x;
             dragOffsetY = y - hit.bounds.y;
             return true;
@@ -171,6 +235,7 @@ public final class HudEditorScreen extends CompatScreen {
 
     private void endDrag() {
         dragging = null;
+        dragSeenDown = false;
         HudRegistry.save();
     }
 
