@@ -36,6 +36,8 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 ./gradlew clean
 ```
 
+- **Build output lives outside OneDrive.** OneDrive turns synced folders into read-only cloud placeholders that Gradle cannot delete ("Unable to delete directory" / `AccessDeniedException`), so when the checkout sits inside OneDrive, `build.gradle` points every project's `layout.buildDirectory` at `%LOCALAPPDATA%\StreamlineCore\build\<folder>-<hash>\<project path>`. Override with the `streamline.buildRoot` Gradle property or `STREAMLINE_BUILD_ROOT` (`project` keeps the usual `build/` folders). Never hard-code `build/` paths; use `layout.buildDirectory`. `clean-build.ps1` also clears the redirected root.
+- **Dev runs.** Every mod project defines `client` and `server` runs (`runClient` / `runServer`, and IntelliJ run configurations after a Gradle sync): Fabric Loom generates them per subproject, ModDevGradle and ForgeGradle 7 declare them in `neoforge.gradle` / `forge.gradle`. Runs load the mod from its classes, so `mod-common/mod.gradle` builds `devLibrariesJar` (the bundled libraries, unrelocated and filtered like the shipped jar) and adds it to `runtimeOnly`, to ModDevGradle's `additionalRuntimeClasspath` up to 1.21.1 (MDG rejects it from 1.21.9), and to ForgeGradle 7's `extraLibraries`. ForgeGradle 7 runs need classes and resources in one output directory, which `forge.gradle` sets.
 - `build` automatically chains: `clean` -> `clearDeploys` -> `build` -> `publish`
 - `shadowJar` automatically runs `deploy` (copies JAR to `./deploy/` or `$DEPLOY_DIR`)
 - Output JARs are named `{ProjectName}-{version}.jar`
