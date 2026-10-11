@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.streamline.platform.text.LegacyText;
 import singularity.client.module.ClientModuleCloud;
 import singularity.client.module.ClientModuleManager;
+import singularity.client.module.WorldModules;
 import singularity.registry.ModuleRegistry;
 
 import java.util.ArrayList;
@@ -19,7 +20,9 @@ import java.util.function.Function;
 /**
  * {@code /slclient modules (list|enable <module>|disable <module>|reload <module>|remove <module>|ecloud (list|info <module>|download <module> (version)|update <module>))}:
  * the game client's own modules, managed while the game runs. Works on any server or none,
- * since client modules never touch one. eCloud only offers modules built for clients.
+ * since client modules never touch one. eCloud only offers modules built for clients: client
+ * modules, and world modules (server modules tagged for clients too), which run in the worlds
+ * this client hosts and are installed to Streamline's server module folder.
  *
  * <p>Every action runs off the client thread; {@code reply} brings answers back to it.</p>
  */
@@ -75,6 +78,12 @@ final class ClientModulesCommand {
                 answer(ClientModuleManager.reload(id), say, m -> "&aReloaded &f" + m.getId() + " &7" + m.getVersion() + "&a.");
                 break;
             default:
+                if (ClientModuleManager.module(id) == null && ClientModuleManager.unloadedVersion(id) == null
+                        && WorldModules.module(id) != null) {
+                    answer(WorldModules.remove(id), say, jar -> "&eRemoved world module &f" + jar
+                            + "&e. Its configs and data are kept if you install it again.");
+                    break;
+                }
                 answer(ClientModuleManager.remove(id), say, jar -> "&eRemoved &f" + jar
                         + "&e. Its settings and data are kept if you install it again.");
                 break;
@@ -134,6 +143,15 @@ final class ClientModulesCommand {
             out.append("\n&7 None yet. Browse them with &f/slclient modules ecloud list&7, or put jars in &f")
                     .append(ClientModuleManager.folder()).append("&7.");
         }
+        List<WorldModules.Installed> world = WorldModules.installed();
+        if (! world.isEmpty()) {
+            out.append("\n&eWorld modules &7(").append(world.size()).append(", run in the worlds you host)&e:");
+            for (WorldModules.Installed module : world) {
+                out.append("\n").append(module.isLoaded() ? "&a" : "&7").append(" ● &f").append(module.getId())
+                        .append(" &7").append(module.getVersion())
+                        .append(module.isLoaded() ? "" : " &8(starts with the next world you open)");
+            }
+        }
         return out.toString();
     }
 
@@ -141,16 +159,19 @@ final class ClientModulesCommand {
         if (modules.isEmpty()) return "&7eCloud lists no client modules yet.";
         StringBuilder out = new StringBuilder("&eClient modules on eCloud &7(" + modules.size() + ")&e:");
         for (ModuleRegistry.ModuleInfo info : modules) {
-            out.append("\n&b ").append(info.getName()).append(" &7").append(info.getVersion()).append(status(info));
+            out.append("\n&b ").append(info.getName()).append(" &7").append(info.getVersion())
+                    .append(ClientModuleCloud.isWorldModule(info) ? " &3[world]" : "").append(status(info));
             if (! info.getDescription().isEmpty()) out.append("\n&7   ").append(info.getDescription());
         }
-        out.append("\n&7Install one with &f/slclient modules ecloud download <module>&7.");
+        out.append("\n&7Install one with &f/slclient modules ecloud download <module>&7. "
+                + "&3[world] &7modules run in the worlds you host.");
         return out.toString();
     }
 
     private static String describe(ModuleRegistry.ModuleInfo info) {
         StringBuilder out = new StringBuilder("&b" + info.getName() + " &7" + info.getVersion() + status(info));
         if (! info.getDescription().isEmpty()) out.append("\n&7").append(info.getDescription());
+        if (ClientModuleCloud.isWorldModule(info)) out.append("\n&3A world module: it runs in the worlds you host.");
         out.append("\n&7Id: &f").append(info.getId());
         if (! info.getAuthor().isEmpty()) out.append(" &7by &f").append(info.getAuthor());
         out.append("\n&7Versions: &f");
@@ -164,10 +185,10 @@ final class ClientModulesCommand {
 
     /** Whether a registry module is installed here, and whether it is behind. */
     private static String status(ModuleRegistry.ModuleInfo info) {
-        ClientModuleManager.Installed installed = ClientModuleManager.module(info.getId());
+        String installed = ClientModuleCloud.installedVersion(info.getId());
         if (installed == null) return "";
-        if (ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) < 0) {
-            return " &6(installed " + installed.getVersion() + ", update available)";
+        if (ModuleRegistry.compareVersions(installed, info.getVersion()) < 0) {
+            return " &6(installed " + installed + ", update available)";
         }
         return " &a(installed)";
     }
@@ -175,6 +196,10 @@ final class ClientModulesCommand {
     private static String result(ClientModuleCloud.Result result) {
         switch (result.getStatus()) {
             case INSTALLED:
+                if (result.isWorld()) {
+                    return "&aInstalled world module &f" + result.getModuleId() + " &7" + result.getVersion()
+                            + (result.isEnabled() ? "&a. It is running now." : "&a. It starts with the next world you open.");
+                }
                 return "&aInstalled &f" + result.getModuleId() + " &7" + result.getVersion()
                         + (result.isEnabled() ? "&a. It is running now." : "&a. It is turned off; enable it with /slclient modules enable " + result.getModuleId() + ".");
             case UPDATED:
@@ -195,7 +220,7 @@ final class ClientModulesCommand {
     static List<String> suggest(String[] args) {
         if (args.length <= 1) return ACTIONS;
         String action = args[0].toLowerCase();
-        if (MODULE_ACTIONS.contains(action)) return args.length == 2 ? installedIds() : Collections.emptyList();
+        if (MODULE_ACTIONS.contains(action)) return args.length == 2 ? installedIds(action.equals("remove")) : Collections.emptyList();
         if (! action.equals("ecloud")) return Collections.emptyList();
         if (args.length == 2) return CLOUD_ACTIONS;
         if (args.length != 3) return Collections.emptyList();
@@ -204,15 +229,18 @@ final class ClientModulesCommand {
             case "download":
                 return ClientModuleCloud.cachedNames();
             case "update":
-                return installedIds();
+                return installedIds(true);
             default:
                 return Collections.emptyList();
         }
     }
 
-    private static List<String> installedIds() {
+    private static List<String> installedIds(boolean withWorld) {
         List<String> ids = new ArrayList<>();
         for (ClientModuleManager.Installed module : ClientModuleManager.modules()) ids.add(module.getId());
+        if (withWorld) {
+            for (WorldModules.Installed module : WorldModules.installed()) ids.add(module.getId());
+        }
         return ids;
     }
 }
