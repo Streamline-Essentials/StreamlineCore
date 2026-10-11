@@ -40,6 +40,13 @@ public final class ModEvents {
     private ModEvents() {}
 
     /**
+     * Set once the game is exiting. A client may announce that before its integrated server
+     * has stopped (Fabric does) or after, so whichever of {@link #onGameStopping()} and the
+     * server stop comes last takes Streamline down.
+     */
+    private static volatile boolean gameStopping;
+
+    /**
      * Classes first touched while the server stops or players leave. A mod loader reads class
      * bytes lazily from the open jar, so if that jar is replaced on disk while the server runs
      * (copying a new build into {@code mods/} before restarting), anything not yet loaded fails
@@ -101,7 +108,7 @@ public final class ModEvents {
 
     public static void onServerStopping(MinecraftServer server) {
         try {
-            BasePlugin.getInstance().onServerDisable(server);
+            BasePlugin.getInstance().onServerDisable(server.isDedicatedServer() || gameStopping);
         } catch (Throwable t) {
             logStopFailure("Server disable", t);
         }
@@ -110,16 +117,23 @@ public final class ModEvents {
     public static void onServerStopped(MinecraftServer server) {
         BasePlugin.setServer(null);
         CommandRegistry.forgetDispatcher();
-        // A client's Streamline outlives its integrated servers; see onGameStopping.
-        if (server.isDedicatedServer()) stopTheBaseTasks();
+        // A client's Streamline outlives its integrated servers until the game exits.
+        if (gameStopping) shutdownStreamline();
+        else if (server.isDedicatedServer()) stopTheBaseTasks();
     }
 
     /**
      * The game itself is exiting. On a client this is where Streamline comes down, since
-     * stopping an integrated server leaves it up for the next world; on a dedicated server
-     * the server stop already did it and this does nothing.
+     * stopping an integrated server leaves it up for the next world; a server still running
+     * finishes the teardown once it has stopped. On a dedicated server the server stop
+     * already did it and this does nothing.
      */
     public static void onGameStopping() {
+        gameStopping = true;
+        if (BasePlugin.getServer() == null) shutdownStreamline();
+    }
+
+    private static void shutdownStreamline() {
         BasePlugin plugin = BasePlugin.getInstance();
         if (plugin == null) return;
         try {

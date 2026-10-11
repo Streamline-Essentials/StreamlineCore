@@ -66,11 +66,15 @@ public final class ClientCommand {
         }
     }
 
+    /**
+     * Forge's and NeoForge's client source stacks override {@code sendSuccess} to show chat;
+     * {@code sendSystemMessage} goes to whatever source they wrap.
+     */
     private static int run(String label, CommandContext<CommandSourceStack> ctx, String line, Executor clientThread) {
         CommandSourceStack source = ctx.getSource();
         if (source.getEntity() == null) return 0;
         run(label, source.getEntity().getUUID(), line,
-                message -> clientThread.execute(() -> source.sendSystemMessage(message)));
+                message -> clientThread.execute(() -> source.sendSuccess(() -> message, false)));
         return 1;
     }
 
