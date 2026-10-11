@@ -12,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 import net.streamline.libs.slf4j.Logger;
 import net.streamline.libs.slf4j.LoggerFactory;
+import singularity.Singularity;
+import singularity.client.ClientEnvironment;
 import singularity.command.CosmicCommand;
 import singularity.data.players.CosmicPlayer;
 import singularity.events.CosmicEvent;
@@ -24,11 +26,13 @@ import singularity.scheduler.TaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.StorageUtils;
 
+import java.io.File;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Level;
 
 /**
  * Streamline on a Minecraft 1.8.9 Forge client.
@@ -76,6 +80,13 @@ public abstract class BasePlugin implements ISingularityExtension {
      */
     public synchronized void boot() {
         if (slapi != null || shutDown) return;
+
+        // HUD placements and client module settings are kept under <data folder>/client.
+        ClientEnvironment.setFolder(new File(Singularity.resolveDataFolder(getName(), this), "client"));
+        ClientEnvironment.setLog((level, message) -> {
+            if (level.intValue() >= Level.WARNING.intValue()) GAME_LOGGER.warn(message);
+            else GAME_LOGGER.info(message);
+        });
 
         userManager = new UserManager();
         messenger = new Messenger();
