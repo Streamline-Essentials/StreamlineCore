@@ -75,6 +75,14 @@ public abstract class CompatScreen extends GuiScreen {
         return false;
     }
 
+    /**
+     * Sees every key press before {@link #key}, as modern Minecraft's key name
+     * ({@code key.keyboard.g}, see {@link LegacyKeys}), for binding keys.
+     */
+    protected boolean keyNamed(String name) {
+        return false;
+    }
+
     protected boolean typed(String text) {
         return false;
     }
@@ -146,6 +154,8 @@ public abstract class CompatScreen extends GuiScreen {
     @Override
     protected void keyTyped(char character, int keyCode) throws IOException {
         int modifiers = (isShiftKeyDown() ? MOD_SHIFT : 0) | (isCtrlKeyDown() ? MOD_CONTROL : 0);
+        String name = LegacyKeys.name(keyCode);
+        if (name != null && keyNamed(name)) return;
         // A printable character goes to a focused field before the key does, so letters the
         // screens also bind (R, V) still type. Control with a letter arrives as a control
         // character, so shortcuts reach key(); AltGr's characters are printable and type.

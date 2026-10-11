@@ -10,6 +10,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.streamline.client.ModuleKeys;
 import net.streamline.client.StreamlineClient;
 import net.streamline.client.compat.ClientCompat;
 import net.streamline.client.compat.GfxCanvas;
@@ -59,6 +60,7 @@ public final class LegacyClientListener {
             }
         }
         ClientCompat.runQueued();
+        ModuleKeys.tick();
         keys();
     }
 

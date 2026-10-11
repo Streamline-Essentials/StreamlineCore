@@ -4,8 +4,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.streamline.client.LiveClientInfo;
+import net.streamline.client.ModernKeys;
 import org.lwjgl.glfw.GLFW;
 import singularity.client.ClientInfo;
+import singularity.client.input.ClientInput;
 
 /**
  * Client calls whose shape differs between Minecraft versions; this is Minecraft 1.21.11's.
@@ -59,6 +61,26 @@ public final class ClientCompat {
         return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
     }
 
+    /** @return whether the key with this GLFW key code is held now */
+    public static boolean keyCodeDown(int code) {
+        long window = minecraft().getWindow().handle();
+        return GLFW.glfwGetKey(window, code) == GLFW.GLFW_PRESS;
+    }
+
+    /** @return whether the keyboard key with this name ({@code key.keyboard.g}) is held now */
+    public static boolean keyDown(String name) {
+        return ModernKeys.down(name);
+    }
+
+    /** @return the key's name as the Controls screen shows it, or {@code null} if it is unknown */
+    public static String keyDisplayName(String name) {
+        return ModernKeys.displayName(name);
+    }
+
+    /** Presses or releases a game key for client modules; see {@link ModernKeys#hold}. */
+    public static void holdGameKey(ClientInput.GameKey key, boolean held) {
+        ModernKeys.hold(key, held);
+    }
     /** @return whether the player hid the GUI (F1) */
     public static boolean hudHidden() {
         return minecraft().options.hideGui;
