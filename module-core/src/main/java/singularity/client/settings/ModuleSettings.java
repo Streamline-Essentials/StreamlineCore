@@ -46,7 +46,8 @@ public class ModuleSettings {
         return null;
     }
 
-    private File file() {
+    /** @return where the values are kept, or {@code null} off a game client */
+    protected File file() {
         return ClientEnvironment.file("settings", moduleId + ".properties");
     }
 

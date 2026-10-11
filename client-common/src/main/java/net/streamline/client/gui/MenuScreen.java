@@ -11,9 +11,11 @@ import singularity.client.hud.HudRegistry;
 import singularity.client.module.ClientModuleCloud;
 import singularity.client.module.ClientModuleManager;
 import singularity.client.module.WorldModules;
+import singularity.client.placeholders.ClientPlaceholders;
 import singularity.client.settings.ClientSettingsRegistry;
 import singularity.client.settings.ModuleSettings;
 import singularity.client.settings.Setting;
+import singularity.client.settings.StreamlineClientSettings;
 import singularity.registry.ModuleRegistry;
 
 import java.util.ArrayList;
@@ -34,7 +36,8 @@ import java.util.function.Function;
  * this game and, for the selected one, its details, an enable switch, reload, update and
  * remove buttons, the settings it registered with {@link ClientSettingsRegistry}, and its HUD
  * elements, whose text can be edited where the element allows it, plus an add button for
- * modules that let the player add text elements of their own. The sidebar's last entry browses eCloud for client modules, and for world modules
+ * modules that let the player add text elements of their own. The sidebar's first entry,
+ * Client Settings, holds StreamlineClient's own settings ({@link StreamlineClientSettings}); its last entry browses eCloud for client modules, and for world modules
  * (server modules that run in the worlds this client hosts), and installs them
  * while the game runs.
  *
@@ -56,6 +59,10 @@ public final class MenuScreen extends CompatScreen {
     private final List<Region> regions = new ArrayList<>();
     /** Sidebar key of the eCloud browser; never a Plugin-Id, which cannot contain spaces. */
     private static final String BROWSE = " ecloud";
+    /** Sidebar key of the Client Settings page; never a Plugin-Id either. */
+    private static final String CLIENT = " client";
+    /** The page the menu was last on, reopened when Remember Last Page is on. */
+    private static volatile String lastSelected;
 
     /** Modules (by id) with an action running in the background. */
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
@@ -101,6 +108,7 @@ public final class MenuScreen extends CompatScreen {
     public MenuScreen(Object parent) {
         super("Streamline Client");
         this.parent = parent;
+        if (StreamlineClientSettings.rememberPage()) selected = lastSelected;
     }
 
     /** A clickable area and what clicking it does. */
@@ -244,11 +252,16 @@ public final class MenuScreen extends CompatScreen {
         contentY2 = top + height;
 
         List<ClientModuleManager.Installed> modules = ClientModuleManager.modules();
-        if (selected == null || (! BROWSE.equals(selected) && modules.stream().noneMatch(m -> m.getId().equals(selected)))) {
-            selected = modules.isEmpty() ? BROWSE : modules.get(0).getId();
+        if (selected == null || (! BROWSE.equals(selected) && ! CLIENT.equals(selected)
+                && modules.stream().noneMatch(m -> m.getId().equals(selected)))) {
+            selected = modules.isEmpty() ? CLIENT : modules.get(0).getId();
             contentScroll = 0;
         }
-        if (available == null && availableError == null) fetchAvailable();
+        lastSelected = selected;
+        if (available == null && availableError == null
+                && (StreamlineClientSettings.checkECloud() || BROWSE.equals(selected))) {
+            fetchAvailable();
+        }
 
         drawSidebar(canvas, mouseX, mouseY, modules);
         drawContent(canvas, mouseX, mouseY, modules);
@@ -337,12 +350,15 @@ public final class MenuScreen extends CompatScreen {
     private void drawSidebar(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules) {
         canvas.fill(sidebarX1, sidebarY1, sidebarX2, sidebarY2, Theme.SIDEBAR);
         int rowHeight = 18;
-        int total = (modules.size() + 1) * rowHeight + 12;
+        int total = (modules.size() + 2) * rowHeight + 16;
         sidebarOverflow = Math.max(0, total - (sidebarY2 - sidebarY1));
         sidebarScroll = Math.max(0, Math.min(sidebarScroll, sidebarOverflow));
 
         canvas.clip(sidebarX1, sidebarY1, sidebarX2, sidebarY2);
         int y = sidebarY1 + 4 - (int) sidebarScroll;
+        sidebarRow(canvas, mouseX, mouseY, CLIENT, "Client Settings", Theme.ACCENT, y, rowHeight);
+        y += rowHeight + 4;
+        canvas.fill(sidebarX1 + 6, y - 2, sidebarX2 - 6, y - 1, Theme.CONTROL_BORDER);
         for (ClientModuleManager.Installed module : modules) {
             sidebarRow(canvas, mouseX, mouseY, module.getId(), displayName(module), 0, y, rowHeight);
             sidebarToggle(canvas, mouseX, mouseY, module, y, rowHeight);
@@ -406,7 +422,8 @@ public final class MenuScreen extends CompatScreen {
         int start = y;
 
         ClientModuleManager.Installed module = modules.stream().filter(m -> m.getId().equals(selected)).findFirst().orElse(null);
-        if (module == null) y = drawBrowse(canvas, mouseX, mouseY, modules, y, textWidth);
+        if (CLIENT.equals(selected)) y = drawClientSettings(canvas, mouseX, mouseY, y, textWidth);
+        else if (module == null) y = drawBrowse(canvas, mouseX, mouseY, modules, y, textWidth);
         else y = drawModule(canvas, mouseX, mouseY, module, y, textWidth);
 
         canvas.endClip();
@@ -484,6 +501,49 @@ public final class MenuScreen extends CompatScreen {
             y += 18;
         }
         return y;
+    }
+
+    /** The Client Settings page: StreamlineClient's own settings, and the placeholders it fills. */
+    private int drawClientSettings(Canvas canvas, int mouseX, int mouseY, int y, int textWidth) {
+        int x1 = contentX1 + PAD;
+        int right = contentX2 - PAD - 4;
+        StreamlineClientSettings page = StreamlineClientSettings.page();
+        canvas.text("&lClient Settings", x1, y, Theme.TEXT, false);
+        y += canvas.lineHeight() + 4;
+        y = paragraph(canvas, page.getDescription(), y, textWidth, Theme.MUTED);
+        y += 6;
+        y = section(canvas, "Settings", y, right);
+        for (Setting<?> setting : page.getSettings()) {
+            y = drawSetting(canvas, mouseX, mouseY, page, setting, y, x1, right);
+        }
+        y += 4;
+        y = section(canvas, "Placeholders", y, right);
+        y = paragraph(canvas, "Usable in HUD element text.", y, textWidth, Theme.MUTED);
+        y += 2;
+        for (Map.Entry<String, String> entry : ClientPlaceholders.descriptions().entrySet()) {
+            String token = entry.getKey();
+            canvas.text(Theme.fit(canvas, token, textWidth), x1, y, Theme.TEXT);
+            y += canvas.lineHeight() + 1;
+            int swatch = swatchColor(ClientPlaceholders.apply(token));
+            int textX = x1 + 4;
+            if (swatch != 0) {
+                canvas.fill(textX, y, textX + 8, y + 8, swatch);
+                textX += 12;
+            }
+            canvas.text(Theme.fit(canvas, entry.getValue(), right - textX), textX, y, Theme.MUTED);
+            y += canvas.lineHeight() + 4;
+        }
+        return y;
+    }
+
+    /** @return the opaque color of a {@code {#rrggbb}} value, or {@code 0} for any other value */
+    private static int swatchColor(String value) {
+        if (value == null || value.length() != 9 || ! value.startsWith("{#") || value.charAt(8) != '}') return 0;
+        try {
+            return 0xFF000000 | Integer.parseInt(value.substring(2, 8), 16);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private int section(Canvas canvas, String title, int y, int right) {

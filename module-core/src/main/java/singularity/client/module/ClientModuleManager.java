@@ -4,6 +4,7 @@ import org.pf4j.PluginDependency;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginWrapper;
 import singularity.client.ClientEnvironment;
+import singularity.client.settings.StreamlineClientSettings;
 import singularity.loading.ModuleClassTransformer;
 import singularity.registry.ModuleRegistry;
 
@@ -198,6 +199,7 @@ public final class ClientModuleManager {
             return;
         }
         started = true;
+        StreamlineClientSettings.loadSaved();
         submit(() -> {
             folder.mkdirs();
             clearCache();

@@ -6,6 +6,7 @@ import net.streamline.client.gui.MenuScreen;
 import singularity.client.ClientBridge;
 import singularity.client.ClientInfo;
 import singularity.client.IClientHandler;
+import singularity.client.settings.StreamlineClientSettings;
 
 /**
  * The game client's side of Streamline: installs the {@link IClientHandler} behind
@@ -29,11 +30,11 @@ public final class StreamlineClient {
     }
 
     /**
-     * Draws the HUD elements, unless the GUI is hidden (F1) or the HUD editor, which draws
-     * them itself, is open.
+     * Draws the HUD elements, unless the GUI is hidden (F1), the player turned the HUD off in
+     * Client Settings, or the HUD editor, which draws them itself, is open.
      */
     public static void renderHud(Canvas canvas) {
-        if (ClientCompat.hudHidden()) return;
+        if (ClientCompat.hudHidden() || ! StreamlineClientSettings.showHud()) return;
         if (ClientCompat.currentScreen() instanceof HudEditorScreen) return;
         HudOverlay.render(canvas);
     }

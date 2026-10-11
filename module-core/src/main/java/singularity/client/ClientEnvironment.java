@@ -17,6 +17,7 @@ import java.util.logging.Logger;
  *     <li>{@code modules/} the client module jars</li>
  *     <li>{@code module-data/<module-id>/} each client module's own files</li>
  *     <li>{@code settings/<module-id>.properties} values from the client menu</li>
+ *     <li>{@code client-settings.properties} StreamlineClient's own settings (Client Settings)</li>
  *     <li>{@code hud-layout.properties} where the player placed each HUD element</li>
  *     <li>{@code modules.properties} which modules the player turned off</li>
  * </ul>
