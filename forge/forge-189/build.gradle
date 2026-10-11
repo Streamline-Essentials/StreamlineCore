@@ -1,0 +1,282 @@
+// StreamlineCore for Minecraft Forge 1.8.9, game clients only.
+//
+// 1.8.9 runs on Java 8, while Streamline's core and its libraries are Java 11 bytecode and
+// modules are built for Java 11 too. So:
+//   - bundleLibraries shades the core (the API's shadow jar), TheBase and the libraries into
+//     one jar, relocated away from what 1.8.9 itself ships, and downgradeLibraries rewrites it
+//     to Java 8 with JvmDowngrader. That one jar is what this project compiles against, what
+//     dev runs load, and what the mod ships.
+//   - JvmDowngrader itself ships in the mod (bundleDowngrader), so modules are downgraded as
+//     they load; see net.streamline.platform.modules.LegacyModuleTransformer.
+//   - Only this project's own sources compile with javac 8: forge/forge-189/src plus the
+//     shared client UI (client-common), which is kept to Java 8 syntax for this reason.
+//
+// 1.8.9 puts its own libraries ahead of a mod's, so any package the mod shares with the game
+// binds to the game's older copy. Everything the bundle could share with it is relocated
+// under net.streamline.libs: Gson (the game has 2.2.4), ASM (the game has 5.0.3, JvmDowngrader
+// needs 9), SLF4J, and the libraries the other mod jars relocate. Lettuce, Reactor and
+// redis-authx are left out: Lettuce needs Netty 4.1 and the game has 4.0.
+
+plugins {
+    id 'java'
+    id 'gg.essential.loom' version '1.15.51'
+    id 'dev.architectury.architectury-pack200' version '0.1.3'
+    id 'com.gradleup.shadow' version '9.6.1'
+    id 'xyz.wagyourtail.jvmdowngrader' version '2.0.1'
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import xyz.wagyourtail.jvmdg.gradle.task.DowngradeJar
+import xyz.wagyourtail.jvmdg.gradle.task.ShadeJar
+
+def repoRoot = file('../..')
+def rootProperties = new Properties()
+new File(repoRoot, 'gradle.properties').withInputStream { rootProperties.load(it) }
+
+group = rootProperties.getProperty('group')
+version = rootProperties.getProperty('version')
+base.archivesName = 'StreamlineCore-Forge-189'
+
+apply from: new File(repoRoot, 'dependencies.gradle')
+
+// Build output goes where the main build puts it (see the root build.gradle): outside the
+// checkout when it sits in OneDrive, whose read-only placeholders Gradle cannot delete.
+def buildRootSetting = (findProperty('streamline.buildRoot') ?: System.getenv('STREAMLINE_BUILD_ROOT'))?.toString()?.trim()
+def underOneDrive = ['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial'].collect { System.getenv(it) }
+        .findAll { it }
+        .any { repoRoot.canonicalPath.toLowerCase().startsWith(new File(it).canonicalPath.toLowerCase() + File.separator) }
+def redirectedBuildRoot = null
+if (buildRootSetting && buildRootSetting != 'project') {
+    redirectedBuildRoot = new File(buildRootSetting)
+} else if (! buildRootSetting && underOneDrive && System.getenv('LOCALAPPDATA')) {
+    def checkout = repoRoot.canonicalFile.name + '-' + Integer.toHexString(repoRoot.canonicalPath.toLowerCase().hashCode())
+    redirectedBuildRoot = new File(System.getenv('LOCALAPPDATA'), "StreamlineCore/build/${checkout}")
+}
+if (redirectedBuildRoot != null) {
+    layout.buildDirectory.set(new File(redirectedBuildRoot, repoRoot.toPath().relativize(projectDir.toPath()).toString()))
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+loom {
+    forge {
+        pack200Provider = new dev.architectury.pack200.java.Pack200Adapter()
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.essential.gg/repository/maven-public' }
+    maven { url = 'https://repo.codemc.io/repository/maven-releases/' }
+    maven { url = 'https://repo.codemc.io/repository/streamline-essentials/' }
+    maven { url = 'https://jitpack.io' }
+}
+
+sourceSets {
+    main {
+        java.srcDir new File(repoRoot, 'client-common/src/main/java')
+        java.srcDir new File(repoRoot, 'client-common/compat/gfx189/src/main/java')
+        resources.srcDir new File(repoRoot, 'mod-common/src/main/resources')
+    }
+}
+
+// FML reads mcmod.info from where the mod's classes are, so dev runs keep both in one folder.
+sourceSets.main.output.resourcesDir = sourceSets.main.java.destinationDirectory.get().asFile
+
+// Packages moved under net.streamline.libs, applied to the bundle at build time and to module
+// classes at load time (LegacyModuleTransformer reads them from a generated resource).
+// The first block matches mod-common/mod.gradle; the rest are packages 1.8.9 ships older
+// copies of, or that JvmDowngrader needs at a newer version than the game's.
+def libRelocations = [
+        'org.reactivestreams'            : 'net.streamline.libs.reactivestreams',
+        'reactor'                        : 'net.streamline.libs.reactor',
+        'io.lettuce'                     : 'net.streamline.libs.lettuce',
+        'redis.clients.authentication'   : 'net.streamline.libs.redis.authentication',
+        'com.github.benmanes.caffeine'   : 'net.streamline.libs.caffeine',
+        'com.github.zafarkhaja.semver'   : 'net.streamline.libs.semver',
+        'com.zaxxer.hikari'              : 'net.streamline.libs.hikari',
+        'com.mysql'                      : 'net.streamline.libs.mysql',
+        'com.google.protobuf'            : 'net.streamline.libs.protobuf',
+        'org.json'                       : 'net.streamline.libs.json',
+        'com.esotericsoftware.yamlbeans' : 'net.streamline.libs.yamlbeans',
+
+        'com.google.gson'                : 'net.streamline.libs.gson',
+        'org.slf4j'                      : 'net.streamline.libs.slf4j',
+        'org.objectweb.asm'              : 'net.streamline.libs.asm',
+]
+
+configurations {
+    // Shaded into the library bundle. Non-transitive: exactly what is listed ships.
+    bundle {
+        canBeConsumed = false
+        transitive = false
+    }
+    // JvmDowngrader and the ASM it runs on, for downgrading modules at load time.
+    downgrader {
+        canBeConsumed = false
+        transitive = false
+    }
+    // JvmDowngrader's Java 9+ API stubs, already built for Java 8.
+    downgraderApi {
+        canBeConsumed = false
+        transitive = false
+    }
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.8.9'
+    mappings 'de.oceanlabs.mcp:mcp_stable:22-1.8.9'
+    forge 'net.minecraftforge:forge:1.8.9-11.15.1.2318-1.8.9'
+
+    // Libraries come before TheBase so their copies win over the stale ones in TheBase's fat
+    // jar. Gson is shipped (relocated) rather than relying on the game's 2.2.4.
+    //
+    // Caffeine 3 looks its generated classes up with MethodHandles.Lookup.findClass, a Java 9
+    // API JvmDowngrader has no stub for, so 1.8.9 ships Caffeine 2.9, the last Java 8 line,
+    // which has the same packages and API.
+    def libraries = MOD_SHADED_LIBRARIES.findAll { ! (it.startsWith('io.lettuce:') || it.startsWith('io.projectreactor:')
+            || it.startsWith('org.reactivestreams:') || it.startsWith('redis.clients.authentication:')
+            || it.startsWith('com.github.ben-manes.caffeine:')) }
+    (['com.github.ben-manes.caffeine:caffeine:2.9.3'] + libraries
+            + ['com.google.code.gson:gson:2.8.8', 'org.slf4j:slf4j-api:2.0.13', 'org.slf4j:slf4j-simple:2.0.13']
+            + THE_BASE).each { bundle(it) }
+    bundle("gg.drak:StreamlineCore-API:${version}") {
+        attributes {
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.SHADOWED))
+        }
+    }
+
+    def asmVersion = '9.10.1'
+    downgrader 'xyz.wagyourtail.jvmdowngrader:jvmdowngrader:2.0.1'
+    ['asm', 'asm-tree', 'asm-commons', 'asm-util', 'asm-analysis'].each { downgrader("org.ow2.asm:${it}:${asmVersion}") }
+    downgraderApi 'xyz.wagyourtail.jvmdowngrader:jvmdowngrader-java-api:2.0.1:downgraded-8'
+
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}
+
+def relocationsDir = layout.buildDirectory.dir('generated/relocations')
+def writeRelocations = tasks.register('writeModuleRelocations') {
+    def relocations = libRelocations.collect { from, to -> "${from}=${to}" }.join('\n') + '\n'
+    def outFile = relocationsDir.map { it.file('streamline-relocations.properties') }
+    inputs.property('relocations', relocations)
+    outputs.file(outFile)
+    doLast {
+        outFile.get().asFile.text = relocations
+    }
+}
+sourceSets.main.resources.srcDir(files(relocationsDir).builtBy(writeRelocations))
+
+def applyRelocations = { ShadowJar task ->
+    libRelocations.each { from, to -> task.relocate(from, to) }
+}
+
+// The core, TheBase and the libraries in one relocated jar, still at their own Java versions.
+def bundleLibraries = tasks.register('bundleLibraries', ShadowJar) {
+    archiveClassifier.set('libraries-original')
+    configurations = [project.configurations.bundle]
+    applyRelocations(it)
+    mergeServiceFiles()
+    filesMatching('META-INF/services/**') { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.EC'
+    exclude 'module-info.class', 'META-INF/versions/**'
+    exclude 'org/junit/**', 'junit/**', 'org/hamcrest/**', 'org/opentest4j/**', 'org/apiguardian/**'
+    exclude 'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/DEPENDENCIES'
+}
+
+// ...rewritten to Java 8...
+def downgradeLibraries = tasks.register('downgradeLibraries', DowngradeJar) {
+    inputFile = bundleLibraries.flatMap { it.archiveFile }
+    downgradeTo = JavaVersion.VERSION_1_8
+    classpath = files()
+    archiveClassifier.set('libraries-downgraded')
+    // Optional integrations whose APIs are not bundled; their classes are only loaded when
+    // the integration is present, which it never is on a 1.8.9 client.
+    ignoreWarningsIn.addAll(['net.luckperms.**', 'me.clip.**', 'org.geysermc.**', 'net.streamline.libs.**', 'gg.drak.**', 'org.sqlite.**'])
+    logLevel = 'ERROR'
+}
+
+// ...with the Java 9+ APIs it uses copied in from JvmDowngrader's stubs.
+def libraryJar = tasks.register('libraryJar', ShadeJar) {
+    inputFile = downgradeLibraries.flatMap { it.archiveFile }
+    downgradeTo = JavaVersion.VERSION_1_8
+    shadePath = 'net/streamline/libs/jvmdg/'
+    archiveClassifier.set('libraries')
+}
+
+// JvmDowngrader for modules: its runtime and stubs on the classpath, relocated onto the
+// shaded ASM, plus the same stubs as a nested jar at the path JvmDowngrader looks for its
+// java-api, since it reads the stubs from a jar file rather than from the classpath.
+def relocatedDowngraderApi = tasks.register('relocatedDowngraderApi', ShadowJar) {
+    archiveClassifier.set('downgrader-api')
+    configurations = [project.configurations.downgraderApi]
+    relocate('org.objectweb.asm', 'net.streamline.libs.asm')
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'module-info.class', 'META-INF/versions/**'
+}
+
+def bundleDowngrader = tasks.register('bundleDowngrader', ShadowJar) {
+    archiveClassifier.set('downgrader')
+    configurations = [project.configurations.downgrader, project.configurations.downgraderApi]
+    relocate('org.objectweb.asm', 'net.streamline.libs.asm')
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'module-info.class', 'META-INF/versions/**'
+    exclude 'META-INF/lib/java-api.jar'
+    from(relocatedDowngraderApi.flatMap { it.archiveFile }) {
+        into 'META-INF/lib'
+        rename { 'java-api.jar' }
+    }
+}
+
+def libraryFiles = files(libraryJar.flatMap { it.archiveFile }, bundleDowngrader.flatMap { it.archiveFile })
+        .builtBy(libraryJar, bundleDowngrader)
+
+dependencies {
+    compileOnly libraryFiles
+    // Dev runs load the same relocated, downgraded jars the mod ships.
+    runtimeOnly libraryFiles
+}
+
+def metadata = [name: 'StreamlineCore', version: version.toString()]
+tasks.named('processResources', ProcessResources) {
+    inputs.properties(metadata)
+    filesMatching(['mcmod.info', 'streamline.properties']) {
+        expand(metadata)
+    }
+}
+
+tasks.named('jar', Jar) {
+    archiveClassifier.set('plain')
+}
+
+// The mod's classes plus both bundles, before Loom remaps Minecraft references to SRG names.
+def modJar = tasks.register('modJar', ShadowJar) {
+    archiveClassifier.set('dev')
+    from sourceSets.main.output
+    configurations = []
+    from(libraryJar.flatMap { it.archiveFile }.map { zipTree(it) })
+    from(bundleDowngrader.flatMap { it.archiveFile }.map { zipTree(it) })
+    dependsOn(libraryJar, bundleDowngrader)
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+    mergeServiceFiles()
+    filesMatching('META-INF/services/**') { duplicatesStrategy = DuplicatesStrategy.INCLUDE }
+}
+
+tasks.named('remapJar') {
+    inputFile = modJar.flatMap { it.archiveFile }
+    archiveClassifier.set('')
+}
+
+// Copies the shippable jar to ./deploy (or $DEPLOY_DIR), as every other platform does.
+def deploy = tasks.register('deploy', Copy) {
+    from tasks.named('remapJar')
+    into(System.getenv('DEPLOY_DIR') ?: new File(repoRoot, 'deploy'))
+}
+tasks.named('remapJar') { finalizedBy(deploy) }
+
+tasks.named('shadowJar') { enabled = false }
