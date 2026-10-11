@@ -12,31 +12,24 @@ import singularity.command.CommandHandler;
 import singularity.command.ModuleCommand;
 import singularity.events.*;
 import singularity.events.modules.ModuleLoadEvent;
+import singularity.loading.TransformingPluginClassLoader;
 import singularity.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Path;
-import java.security.CodeSigner;
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
 /**
  * Central registry and lifecycle coordinator for all Streamline modules.
@@ -89,119 +82,12 @@ public class ModuleManager {
     private static ModuleClassTransformer moduleClassTransformer;
 
     /**
-     * Rewrites the bytecode of one module class.
+     * Rewrites the bytecode of one module class. Server modules load through
+     * {@link TransformingPluginClassLoader} with it; client modules take the same transformer
+     * through {@code ClientModuleManager.setClassTransformer}.
      */
     @FunctionalInterface
-    public interface ModuleClassTransformer {
-        /**
-         * @param className binary name of the class being defined
-         * @param classBytes the class file as read from the module jar
-         * @return the class file to define
-         */
-        byte[] transform(String className, byte[] classBytes);
-
-        /**
-         * Rewrites one module class into the classes to define for it: the class itself, plus
-         * any helper classes the rewrite introduces, which the module's loader then defines
-         * when they are first asked for.
-         *
-         * @param className binary name of the class being defined
-         * @param classBytes the class file as read from the module jar
-         * @param classFiles reads a class file the module can see (its own or its parent
-         *                   loader's) by internal name ({@code a/b/C}), or {@code null} if there
-         *                   is none
-         * @return class files by binary name, including {@code className}
-         */
-        default Map<String, byte[]> transformAll(String className, byte[] classBytes, Function<String, byte[]> classFiles) {
-            return Collections.singletonMap(className, transform(className, classBytes));
-        }
-    }
-
-    /**
-     * A {@link PluginClassLoader} that passes every class it defines from the module jar
-     * through a {@link ModuleClassTransformer}.
-     */
-    private static class TransformingPluginClassLoader extends PluginClassLoader {
-        private final ModuleClassTransformer transformer;
-
-        /** Helper classes a transform produced, by binary name, until they are defined. */
-        private final Map<String, byte[]> pendingClasses = new ConcurrentHashMap<>();
-
-        /** Packages this loader has defined. */
-        private final Set<String> definedPackages = ConcurrentHashMap.newKeySet();
-
-        TransformingPluginClassLoader(PluginManager pluginManager, PluginDescriptor descriptor,
-                                      ClassLoader parent, ModuleClassTransformer transformer) {
-            super(pluginManager, descriptor, parent);
-            this.transformer = transformer;
-        }
-
-        /**
-         * Reads a resource without the JVM's shared jar cache: it is keyed by path, so after a
-         * module is unloaded and its jar replaced or reloaded, a cached handle to the earlier
-         * (closed or rewritten) file would be read instead of this loader's jar.
-         */
-        private static byte[] readUncached(URL resource) throws IOException {
-            URLConnection connection = resource.openConnection();
-            connection.setUseCaches(false);
-            try (InputStream in = connection.getInputStream()) {
-                return in.readAllBytes();
-            }
-        }
-
-        /** A class file this module can see, by internal name, or {@code null}. */
-        private byte[] classFile(String internalName) {
-            String path = internalName + ".class";
-            try {
-                URL own = findResource(path);
-                if (own != null) return readUncached(own);
-                ClassLoader parent = getParent();
-                URL inherited = parent == null ? null : parent.getResource(path);
-                return inherited == null ? null : readUncached(inherited);
-            } catch (IOException e) {
-                return null;
-            }
-        }
-
-        @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-            byte[] bytes = pendingClasses.remove(name);
-            if (bytes == null) {
-                URL resource = findResource(name.replace('.', '/') + ".class");
-                if (resource == null) throw new ClassNotFoundException(name);
-
-                try {
-                    bytes = readUncached(resource);
-                } catch (IOException e) {
-                    throw new ClassNotFoundException(name, e);
-                }
-
-                Map<String, byte[]> classes = transformer.transformAll(name, bytes, this::classFile);
-                bytes = classes.get(name);
-                if (bytes == null) throw new ClassNotFoundException(name);
-                for (Map.Entry<String, byte[]> extra : classes.entrySet()) {
-                    if (! extra.getKey().equals(name)) pendingClasses.putIfAbsent(extra.getKey(), extra.getValue());
-                }
-            }
-
-            // Each package is defined once, tracked here rather than through
-            // getDefinedPackage, which Java 8 (Minecraft 1.8.9's runtime) does not have.
-            int lastDot = name.lastIndexOf('.');
-            if (lastDot > 0) {
-                String packageName = name.substring(0, lastDot);
-                if (definedPackages.add(packageName)) {
-                    try {
-                        definePackage(packageName, null, null, null, null, null, null, null);
-                    } catch (IllegalArgumentException ignored) {
-                        // The package came with a class defined before this loader tracked it.
-                    }
-                }
-            }
-
-            URL[] urls = getURLs();
-            CodeSource source = new CodeSource(urls.length > 0 ? urls[0] : null, (CodeSigner[]) null);
-            return defineClass(name, bytes, 0, bytes.length, source);
-        }
+    public interface ModuleClassTransformer extends singularity.loading.ModuleClassTransformer {
     }
 
     /**
