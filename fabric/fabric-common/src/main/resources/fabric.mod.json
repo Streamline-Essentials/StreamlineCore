@@ -3,12 +3,13 @@
   "id": "streamlinecore",
   "version": "${version}",
   "name": "${name}",
-  "description": "StreamlineCore for Fabric servers.",
+  "description": "StreamlineCore for Fabric servers and clients.",
   "authors": ["DrakDv"],
   "license": "MIT",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
-    "server": ["net.streamline.base.StreamlineFabric"]
+    "main": ["net.streamline.base.StreamlineFabric"],
+    "client": ["net.streamline.base.StreamlineFabricClient"]
   },
   "depends": {
     "fabricloader": ">=${fabricLoaderVersion}",

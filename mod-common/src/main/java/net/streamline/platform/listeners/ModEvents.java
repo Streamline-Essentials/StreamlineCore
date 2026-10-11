@@ -89,8 +89,9 @@ public final class ModEvents {
 
     public static void onServerStarted(MinecraftServer server) {
         preloadStopPath();
-        // The listening channels are bound by now, which they may not be while starting.
-        StatusPingHandler.install(server);
+        // The listening channels are bound by now, which they may not be while starting. An
+        // integrated server has none until it is opened to LAN, and nothing pings it.
+        if (server.isDedicatedServer()) StatusPingHandler.install(server);
         try {
             BaseEventHandler.fireEvent(new ServerStartEvent());
         } catch (Exception e) {
@@ -100,7 +101,7 @@ public final class ModEvents {
 
     public static void onServerStopping(MinecraftServer server) {
         try {
-            BasePlugin.getInstance().onServerDisable();
+            BasePlugin.getInstance().onServerDisable(server);
         } catch (Throwable t) {
             logStopFailure("Server disable", t);
         }
@@ -108,6 +109,28 @@ public final class ModEvents {
 
     public static void onServerStopped(MinecraftServer server) {
         BasePlugin.setServer(null);
+        CommandRegistry.forgetDispatcher();
+        // A client's Streamline outlives its integrated servers; see onGameStopping.
+        if (server.isDedicatedServer()) stopTheBaseTasks();
+    }
+
+    /**
+     * The game itself is exiting. On a client this is where Streamline comes down, since
+     * stopping an integrated server leaves it up for the next world; on a dedicated server
+     * the server stop already did it and this does nothing.
+     */
+    public static void onGameStopping() {
+        BasePlugin plugin = BasePlugin.getInstance();
+        if (plugin == null) return;
+        try {
+            plugin.shutdownStreamline();
+        } catch (Throwable t) {
+            logStopFailure("Streamline shutdown", t);
+        }
+        stopTheBaseTasks();
+    }
+
+    private static void stopTheBaseTasks() {
         try {
             TheBaseShutdown.stopQueuedTasks();
         } catch (Throwable t) {
