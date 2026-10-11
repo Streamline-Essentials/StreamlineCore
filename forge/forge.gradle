@@ -27,6 +27,10 @@ if (legacy) {
             disableRecompilation = true
         }
         runs {
+            // The root build.gradle writes the IntelliJ runs for every mod project.
+            configureEach {
+                disableIdeRun()
+            }
             client {
                 client()
             }
