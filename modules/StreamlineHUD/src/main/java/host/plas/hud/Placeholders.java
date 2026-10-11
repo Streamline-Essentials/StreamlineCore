@@ -10,7 +10,8 @@ import java.util.Map;
 /**
  * The placeholders element text understands, written the RAT way: {@code %streamlinehud_<key>%}.
  * Game clients run without Streamline's RAT registry, so {@link Template} resolves them itself,
- * and only these keys; anything else between percent signs stays as typed.
+ * and only these keys plus the core's {@code %streamlineclient_<key>%} ones ({@link ClientValues});
+ * anything else between percent signs stays as typed.
  *
  * <p>The table is built once and only read afterwards, from the render thread.</p>
  */
@@ -19,6 +20,8 @@ public final class Placeholders {
     public static final String IDENTIFIER = "streamlinehud";
     /** What comes before a key in a token. */
     static final String PREFIX = "%" + IDENTIFIER + "_";
+    /** What comes before a key in one of the core's tokens. */
+    static final String CLIENT_PREFIX = "%streamlineclient_";
     /** RAT's line break, honoured in element text. */
     public static final String NEWLINE = "%newline%";
 
@@ -31,6 +34,8 @@ public final class Placeholders {
     private static final Map<String, Value> VALUES = new LinkedHashMap<>();
     /** Token to meaning, in the order the menu lists them. */
     private static final Map<String, String> DESCRIPTIONS = new LinkedHashMap<>();
+    /** {@link #DESCRIPTIONS} followed by the core's placeholders, built on first use. */
+    private static volatile Map<String, String> allDescriptions;
 
     static {
         add("color_main", "main HUD color", info -> HudStyle.mainCode());
@@ -78,8 +83,27 @@ public final class Placeholders {
         return VALUES.get(key.toLowerCase(Locale.ROOT));
     }
 
+    /** @return the core's value behind {@code key}, or {@code null} if it has none or is too old to have any */
+    static Value getClient(String key) {
+        try {
+            return ClientValues.get(key);
+        } catch (LinkageError e) {
+            return null;
+        }
+    }
+
     /** @return every token with what it shows, for the menu */
     public static Map<String, String> descriptions() {
-        return Collections.unmodifiableMap(DESCRIPTIONS);
+        Map<String, String> all = allDescriptions;
+        if (all != null) return all;
+        Map<String, String> built = new LinkedHashMap<>(DESCRIPTIONS);
+        try {
+            built.putAll(ClientValues.descriptions());
+        } catch (LinkageError ignored) {
+            // An older core: only this module's own placeholders.
+        }
+        all = Collections.unmodifiableMap(built);
+        allDescriptions = all;
+        return all;
     }
 }
