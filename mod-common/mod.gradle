@@ -48,6 +48,13 @@ sourceSets {
         def menu = mc.startsWith('1.') ? 'menu-clicktype' : 'menu-containerinput'
         java.srcDir rootProject.file("mod-common/compat/${menu}/src/main/java")
 
+        // The game client's screens and HUD, plus the era that matches this version's GUI API:
+        // 1.20.x, 1.21.1, 1.21.11 (JOML matrices, input events) and 26.x (GuiGraphicsExtractor).
+        // Only client-only classes reach into them, so a dedicated server never loads them.
+        java.srcDir rootProject.file('client-common/src/main/java')
+        def gfx = mc.startsWith('1.20.') ? 'gfx1201' : (mc == '1.21.1' ? 'gfx1211' : (mc.startsWith('1.') ? 'gfx12111' : 'gfx26'))
+        java.srcDir rootProject.file("client-common/compat/${gfx}/src/main/java")
+
         // Mojang renamed EnderMan to Enderman in 26.3.
         def enderman = (mc.startsWith('1.') || mc.startsWith('26.1') || mc.startsWith('26.2')) ? 'enderman-upto262' : 'enderman-263'
         java.srcDir rootProject.file("mod-common/compat/${enderman}/src/main/java")

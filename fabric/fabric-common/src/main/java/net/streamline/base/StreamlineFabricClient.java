@@ -8,7 +8,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.streamline.client.StreamlineClient;
 import net.streamline.platform.commands.ClientCommand;
+import net.streamline.platform.listeners.FabricHudHook;
 import net.streamline.platform.listeners.ModEvents;
 
 /**
@@ -24,6 +26,9 @@ public class StreamlineFabricClient implements ClientModInitializer {
      */
     @Override
     public void onInitializeClient() {
+        StreamlineClient.init();
+        FabricHudHook.register();
+
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             for (String label : ClientCommand.LABELS) {
                 dispatcher.register(LiteralArgumentBuilder.<FabricClientCommandSource>literal(label)

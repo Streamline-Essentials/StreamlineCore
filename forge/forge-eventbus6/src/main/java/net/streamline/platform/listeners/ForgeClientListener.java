@@ -3,6 +3,7 @@ package net.streamline.platform.listeners;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.streamline.client.StreamlineClient;
 import net.streamline.platform.commands.ClientCommand;
 
 /**
@@ -14,6 +15,8 @@ public final class ForgeClientListener {
     private ForgeClientListener() {}
 
     public static void register() {
+        StreamlineClient.init();
+        ForgeHudHook.register();
         MinecraftForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) ->
                 ClientCommand.register(e.getDispatcher(), Minecraft.getInstance()));
     }
