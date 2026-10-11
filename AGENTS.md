@@ -103,6 +103,8 @@ The core abstraction is `Singularity<C, P, S, U, M>` (in `singularity-api`), par
 
 Modules extend `CosmicModule` (which extends `org.pf4j.Plugin`). `ModuleManager` uses `JarPluginManager` to scan and load JARs from the `modules/` folder. Each module registers commands via `ModuleCommand` and fires `ModuleLoadEvent`/`ModuleEnableEvent`/`ModuleDisableEvent`.
 
+**Platform tags (required).** Every module lists the platforms it runs on in `pf.platforms` in its `gradle.properties`, a comma-separated subset of `proxy`, `spigot`, `paper`, `modded-server`, `modded-client` (`singularity.modules.SupportedPlatformTag`). `modules/module.gradle` fails the build when it is missing or holds an unknown id, and writes it to the `Plugin-Platforms` manifest attribute. `ModuleManager.loadModulesSafe()` / `tryRegisterExternalModule()` load a jar only if it shares a tag with `ISingularityExtension.getSupportedPlatformTags()` (`ModulePlatforms.refusal`): proxies accept `proxy`; Spigot accepts `spigot`, and Paper and its forks accept `spigot` and `paper`; mod servers accept `modded-server`. Tag what the code actually supports: Bukkit/BOU types on a common path mean `spigot, paper` only, gameplay/entity hooks mean no `proxy`. Untagged third-party jars still load on servers with a warning, but never on a game client. `loadModulesSafe()` skips jars that are already loaded.
+
 ### Command System
 
 `CosmicCommand` (cross-platform) is wrapped by platform-specific `ProperCommand` adapters in each platform module. Commands are registered through `CommandHandler`.
