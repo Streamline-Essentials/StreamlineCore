@@ -80,7 +80,7 @@ public final class HudEditorScreen extends CompatScreen {
             HudOverlay.Bounds b = entry.bounds;
             boolean shown = entry.registered.getPlacement().isEnabled();
             if (! shown) canvas.fill(b.x, b.y, b.x + b.width, b.y + b.height, 0xB0000000);
-            int border = entry == hovered ? (dragging != null ? 0xFF55FF55 : 0xFFFFFF55) : (shown ? 0x80FFFFFF : 0x60FF5555);
+            int border = entry == hovered ? (dragging != null ? Theme.ACCENT_LIGHT : Theme.ACCENT) : (shown ? 0x80FFFFFF : 0x60FF5555);
             canvas.outline(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1, border);
         }
 

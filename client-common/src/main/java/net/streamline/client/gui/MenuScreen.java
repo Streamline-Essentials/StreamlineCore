@@ -189,7 +189,7 @@ public final class MenuScreen extends CompatScreen {
 
     private void drawHeader(Canvas canvas, int mouseX, int mouseY, int left, int top, int width) {
         canvas.fill(left, top, left + width, top + HEADER_HEIGHT, Theme.HEADER);
-        canvas.text(LegacyText.parse("&lStreamline &r&7Client"), left + PAD, top + 7, Theme.TEXT, false);
+        canvas.text(LegacyText.parse("&lStreamline &rClient"), left + PAD, top + 7, 0xFFFFFFFF, true);
 
         int doneX2 = left + width - 6;
         int doneX1 = doneX2 - 44;
@@ -197,10 +197,11 @@ public final class MenuScreen extends CompatScreen {
         Theme.button(canvas, doneX1, top + 4, doneX2, top + 18, "Done", doneHover, false);
         regions.add(new Region(doneX1, top + 4, doneX2, top + 18, null, (x, y, b) -> onClose()));
 
+        // Header buttons use the dark red: the bright one would vanish into the red header.
         int hudX2 = doneX1 - 6;
         int hudX1 = hudX2 - 74;
         boolean hudHover = Theme.inside(mouseX, mouseY, hudX1, top + 4, hudX2, top + 18);
-        Theme.button(canvas, hudX1, top + 4, hudX2, top + 18, "HUD Layout", hudHover, true);
+        Theme.button(canvas, hudX1, top + 4, hudX2, top + 18, "HUD Layout", hudHover, false);
         regions.add(new Region(hudX1, top + 4, hudX2, top + 18, null, (x, y, b) -> openHudEditor()));
     }
 
