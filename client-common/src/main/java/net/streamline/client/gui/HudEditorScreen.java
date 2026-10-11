@@ -1,7 +1,5 @@
 package net.streamline.client.gui;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.streamline.client.Canvas;
 import net.streamline.client.HudOverlay;
 import net.streamline.client.compat.ClientCompat;
@@ -25,7 +23,8 @@ public final class HudEditorScreen extends CompatScreen {
     private static final String HINT = "Drag to move • Scroll to scale • Right-click to show/hide • R to reset • Esc to finish";
     private static final double SCALE_STEP = 0.1;
 
-    private final Screen parent;
+    /** The screen to return to: a version-specific screen object, or {@code null}. */
+    private final Object parent;
 
     /** What each element occupied in the last frame, topmost last. */
     private final List<Placed> placed = new ArrayList<>();
@@ -39,8 +38,8 @@ public final class HudEditorScreen extends CompatScreen {
     private int lastMouseX;
     private int lastMouseY;
 
-    public HudEditorScreen(Screen parent) {
-        super(Component.literal("Streamline HUD Editor"));
+    public HudEditorScreen(Object parent) {
+        super("Streamline HUD Editor");
         this.parent = parent;
     }
 

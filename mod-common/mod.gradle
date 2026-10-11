@@ -52,6 +52,7 @@ sourceSets {
         // 1.20.x, 1.21.1, 1.21.11 (JOML matrices, input events) and 26.x (GuiGraphicsExtractor).
         // Only client-only classes reach into them, so a dedicated server never loads them.
         java.srcDir rootProject.file('client-common/src/main/java')
+        java.srcDir rootProject.file('client-common/modern/src/main/java')
         def gfx = mc.startsWith('1.20.') ? 'gfx1201' : (mc == '1.21.1' ? 'gfx1211' : (mc.startsWith('1.') ? 'gfx12111' : 'gfx26'))
         java.srcDir rootProject.file("client-common/compat/${gfx}/src/main/java")
 

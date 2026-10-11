@@ -1,11 +1,8 @@
 package net.streamline.client.gui;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.streamline.client.Canvas;
 import net.streamline.client.compat.ClientCompat;
 import net.streamline.client.compat.CompatScreen;
-import net.streamline.platform.text.LegacyText;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
@@ -41,7 +38,8 @@ public final class MenuScreen extends CompatScreen {
     private static final int PAD = 8;
     private static final int SCROLL_STEP = 16;
 
-    private final Screen parent;
+    /** The screen to return to: a version-specific screen object, or {@code null}. */
+    private final Object parent;
     private final List<Region> regions = new ArrayList<>();
     /** Modules whose start or stop is running in the background. */
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
@@ -58,8 +56,8 @@ public final class MenuScreen extends CompatScreen {
     private TextEdit editing;
     private long openedAt = System.currentTimeMillis();
 
-    public MenuScreen(Screen parent) {
-        super(Component.literal("Streamline Client"));
+    public MenuScreen(Object parent) {
+        super("Streamline Client");
         this.parent = parent;
     }
 
@@ -189,7 +187,7 @@ public final class MenuScreen extends CompatScreen {
 
     private void drawHeader(Canvas canvas, int mouseX, int mouseY, int left, int top, int width) {
         canvas.fill(left, top, left + width, top + HEADER_HEIGHT, Theme.HEADER);
-        canvas.text(LegacyText.parse("&lStreamline &rClient"), left + PAD, top + 7, 0xFFFFFFFF, true);
+        canvas.text("&lStreamline &rClient", left + PAD, top + 7, 0xFFFFFFFF, true);
 
         int doneX2 = left + width - 6;
         int doneX1 = doneX2 - 44;
@@ -273,7 +271,7 @@ public final class MenuScreen extends CompatScreen {
 
     private int paragraph(Canvas canvas, String text, int y, int width, int color) {
         for (String line : Theme.wrap(canvas, text, width)) {
-            canvas.text(LegacyText.parse(line), contentX1 + PAD, y, color, false);
+            canvas.text(line, contentX1 + PAD, y, color, false);
             y += canvas.lineHeight() + 2;
         }
         return y;
@@ -299,9 +297,9 @@ public final class MenuScreen extends CompatScreen {
         int right = contentX2 - PAD - 4;
 
         String name = displayName(module);
-        canvas.text(LegacyText.parse("&l" + name), x1, y, Theme.TEXT, false);
+        canvas.text("&l" + name, x1, y, Theme.TEXT, false);
         if (descriptor != null && descriptor.getVersion() != null) {
-            canvas.text("v" + descriptor.getVersion(), x1 + canvas.textWidth(LegacyText.parse("&l" + name)) + 6, y, Theme.MUTED);
+            canvas.text("v" + descriptor.getVersion(), x1 + canvas.textWidth("&l" + name) + 6, y, Theme.MUTED);
         }
         y += canvas.lineHeight() + 3;
         String authors = module.getAuthorsStringed();

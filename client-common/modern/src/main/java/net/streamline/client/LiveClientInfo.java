@@ -14,7 +14,7 @@ import singularity.client.ClientInfo;
  * {@link ClientInfo} read straight from the running game. Meant for the render thread; from
  * another thread the values may be a frame out of date.
  */
-final class LiveClientInfo implements ClientInfo {
+public final class LiveClientInfo implements ClientInfo {
 
     private static final long DAY_TICKS = 24000L;
 
