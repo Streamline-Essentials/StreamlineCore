@@ -42,11 +42,8 @@ public class StreamlineHUD extends SimpleModule {
     public void onEnable() {
         instance = this;
 
-        if (! ClientBridge.isClient()) {
-            logWarning("StreamlineHUD only works in a game client; nothing to show here.");
-            return;
-        }
-
+        // Registers whether or not the client handler is installed yet: the registries keep
+        // elements and settings either way, and the client draws whatever is registered.
         for (InfoElement element : elements()) {
             HudStyle.track(element);
             HudRegistry.register(getIdentifier(), element);
