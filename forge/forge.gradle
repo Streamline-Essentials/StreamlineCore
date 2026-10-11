@@ -52,6 +52,14 @@ if (legacy) {
         }
     }
 
+    // Forge's dev launcher takes every directory on the run classpath as a mod file of its own,
+    // so the mod's classes and its mods.toml must share one output directory.
+    sourceSets.configureEach { sourceSet ->
+        def output = layout.buildDirectory.dir("sourcesSets/${sourceSet.name}")
+        sourceSet.output.resourcesDir = output
+        sourceSet.java.destinationDirectory = output
+    }
+
     minecraft {
         runs {
             configureEach {
