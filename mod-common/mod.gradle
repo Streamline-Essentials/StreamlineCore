@@ -75,20 +75,6 @@ configurations {
     compileOnly.extendsFrom modShade
 }
 
-// Dev runs load the mod from its classes, not the shaded jar, so the libraries it bundles go
-// on the run classpath as they are. Fabric reads the runtime classpath; ModDevGradle needs
-// non-mod jars in additionalRuntimeClasspath (NeoForge 1.21.8 and older ignore the rest);
-// ForgeGradle 7 takes them as each run's extra libraries.
-configurations.named('runtimeOnly') { extendsFrom configurations.modShade }
-configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach {
-    extendsFrom configurations.modShade
-}
-plugins.withId('net.minecraftforge.gradle') {
-    minecraft.runs.configureEach {
-        extraLibraries.from(configurations.modShade)
-    }
-}
-
 dependencies {
     compileOnly "net.luckperms:api:${rootProject.properties['lp_version']}"
     compileOnly 'org.jetbrains:annotations:24.0.1'
@@ -158,53 +144,85 @@ tasks.named('jar', Jar) {
     archiveClassifier.set('plain')
 }
 
-tasks.named('shadowJar') {
-    configurations = [project.configurations.modShade]
-    archiveBaseName.set(project.name)
-    archiveClassifier.set('')
+// What the mod bundles from modShade, shared by the shipped jar and the dev runs' library jar.
+def bundleLibraries = { task ->
+    task.configurations = [project.configurations.modShade]
 
     // Several shaded jars register services under the same file (JDBC drivers above all).
     // Gradle drops duplicate paths before Shadow's transformers see them, so service files
     // keep every copy for mergeServiceFiles() while all other duplicates keep the first.
     // Kotlin module metadata likewise goes through Shadow's merging transformer.
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    filesNotMatching(['META-INF/services/**', 'META-INF/*.kotlin_module']) {
+    task.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    task.filesNotMatching(['META-INF/services/**', 'META-INF/*.kotlin_module']) {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
-    mergeServiceFiles()
-
-    modRelocations.each { from, to -> relocate(from, to) }
+    task.mergeServiceFiles()
 
     // Test-framework leftovers in TheBase's fat jar.
-    exclude 'org/opentest4j/**'
+    task.exclude 'org/opentest4j/**'
 
     // The game or the loader already ships these (Forge/NeoForge refuse a second jar
     // exporting the same package), and Logback must not compete with the game's Log4j for
     // SLF4J. The JetBrains annotations are compile-time only.
-    exclude 'com/google/gson/**'
-    exclude 'com/google/common/**'
-    exclude 'org/slf4j/**'
-    exclude 'ch/qos/logback/**'
-    exclude 'org/jetbrains/annotations/**'
-    exclude 'org/intellij/lang/annotations/**'
-    exclude 'META-INF/services/org.slf4j.spi.SLF4JServiceProvider'
-    exclude 'META-INF/services/ch.qos.logback.**'
-    exclude 'logback*.xml'
+    task.exclude 'com/google/gson/**'
+    task.exclude 'com/google/common/**'
+    task.exclude 'org/slf4j/**'
+    task.exclude 'ch/qos/logback/**'
+    task.exclude 'org/jetbrains/annotations/**'
+    task.exclude 'org/intellij/lang/annotations/**'
+    task.exclude 'META-INF/services/org.slf4j.spi.SLF4JServiceProvider'
+    task.exclude 'META-INF/services/ch.qos.logback.**'
+    task.exclude 'logback*.xml'
 
     // TheBase's fat jar carries its own relocated database drivers and test classes.
-    exclude 'org/junit/**'
-    exclude 'gg/drak/thebase/lib/mysql/**'
-    exclude 'gg/drak/thebase/lib/hikari/**'
-    exclude 'gg/drak/thebase/lib/sqlite/**'
+    task.exclude 'org/junit/**'
+    task.exclude 'gg/drak/thebase/lib/mysql/**'
+    task.exclude 'gg/drak/thebase/lib/hikari/**'
+    task.exclude 'gg/drak/thebase/lib/sqlite/**'
 
-    // A module descriptor would turn the mod into an explicit JPMS module on Forge/NeoForge,
+    // A module descriptor would turn the jar into an explicit JPMS module on Forge/NeoForge,
     // and leftover signatures would fail verification once the jar is repacked.
-    exclude 'module-info.class'
-    exclude 'META-INF/versions/*/module-info.class'
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-    exclude 'META-INF/maven/**'
+    task.exclude 'module-info.class'
+    task.exclude 'META-INF/versions/*/module-info.class'
+    task.exclude 'META-INF/*.SF'
+    task.exclude 'META-INF/*.DSA'
+    task.exclude 'META-INF/*.RSA'
+    task.exclude 'META-INF/maven/**'
+}
+
+tasks.named('shadowJar') {
+    bundleLibraries(it)
+    archiveBaseName.set(project.name)
+    archiveClassifier.set('')
+    modRelocations.each { from, to -> relocate(from, to) }
+}
+
+// Dev runs load the mod from its compiled classes, which use the libraries' original
+// packages, so they get the bundled libraries unrelocated in one jar of their own. The raw
+// library jars cannot go on a Forge-family run as they are: TheBase's fat jar exports packages
+// another library also exports, and some declare Multi-Release without any versioned entries,
+// both of which stop the module system from starting.
+def devLibrariesJar = tasks.register('devLibrariesJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    bundleLibraries(it)
+    archiveBaseName.set(project.name)
+    archiveClassifier.set('dev-libraries')
+    destinationDirectory.set(layout.buildDirectory.dir('dev-libraries'))
+}
+def devLibraries = files(devLibrariesJar.flatMap { it.archiveFile }).builtBy(devLibrariesJar)
+
+// Fabric reads the runtime classpath; ModDevGradle needs non-mod jars in
+// additionalRuntimeClasspath (NeoForge 1.21.8 and older ignore the rest); ForgeGradle 7
+// takes them as each run's extra libraries.
+dependencies {
+    runtimeOnly devLibraries
+}
+configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach { configuration ->
+    project.dependencies.add(configuration.name, devLibraries)
+}
+plugins.withId('net.minecraftforge.gradle') {
+    minecraft.runs.configureEach {
+        extraLibraries.from(devLibraries)
+    }
 }
 
 tasks.register('deploy', Copy) {
