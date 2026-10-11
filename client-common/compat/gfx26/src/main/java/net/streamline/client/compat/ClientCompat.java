@@ -1,10 +1,13 @@
 package net.streamline.client.compat;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.streamline.client.LiveClientInfo;
 import singularity.client.ClientInfo;
+
+import java.lang.reflect.Field;
 
 /**
  * Client calls whose shape differs between Minecraft versions; this is Minecraft 26.x's.
@@ -41,6 +44,36 @@ public final class ClientCompat {
      */
     public static void later(Runnable task) {
         minecraft().schedule(task);
+    }
+
+    /**
+     * {@code MouseHandler.activeButton}: the button held down, kept up to date while a screen
+     * is open, unlike {@code isLeftPressed()}. 26.2 reads the mouse through GLFW and 26.3 through
+     * SDL, so this field is the one way to ask that works on both; {@code null} if it is gone.
+     */
+    private static final Field ACTIVE_BUTTON = activeButtonField();
+
+    private static Field activeButtonField() {
+        try {
+            Field field = MouseHandler.class.getDeclaredField("activeButton");
+            field.setAccessible(true);
+            return field;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return whether a mouse button is held now; {@code true} when that cannot be read, so
+     * callers fall back to the release event
+     */
+    public static boolean leftMouseDown() {
+        if (ACTIVE_BUTTON == null) return true;
+        try {
+            return ACTIVE_BUTTON.get(minecraft().mouseHandler) != null;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return true;
+        }
     }
 
     /** @return whether the player hid the GUI (F1) */

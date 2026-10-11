@@ -3,6 +3,7 @@ package net.streamline.client.compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.streamline.client.Canvas;
 import net.streamline.client.ModernText;
 
@@ -46,6 +47,16 @@ public final class GfxCanvas implements Canvas {
     @Override
     public int textWidth(String text) {
         return font.width(ModernText.parse(text));
+    }
+
+    @Override
+    public void rawText(String text, int x, int y, int color) {
+        graphics.text(font, Component.literal(text), x, y, color, false);
+    }
+
+    @Override
+    public int rawTextWidth(String text) {
+        return font.width(text);
     }
 
     @Override
