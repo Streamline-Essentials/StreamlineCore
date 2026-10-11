@@ -1,15 +1,19 @@
 package net.streamline.base;
 
-import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.api.ModInitializer;
 import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.handlers.GameplayHandler;
 import net.streamline.platform.listeners.FabricListener;
 
-public class StreamlineFabric extends BasePlugin implements DedicatedServerModInitializer {
+/**
+ * Runs on dedicated servers and on clients, where Streamline comes up with the integrated
+ * server of a world the client hosts. {@link StreamlineFabricClient} adds the client side.
+ */
+public class StreamlineFabric extends BasePlugin implements ModInitializer {
 
     @Override
-    public void onInitializeServer() {
+    public void onInitialize() {
         initialize();
         FabricListener.register();
     }

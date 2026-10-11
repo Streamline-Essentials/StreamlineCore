@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.CommandEvent;
+import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.minecraft.world.level.Level;
@@ -45,6 +46,11 @@ public class NeoForgeListener {
     @SubscribeEvent
     public void onServerStopped(ServerStoppedEvent event) {
         ModEvents.onServerStopped(event.getServer());
+    }
+
+    @SubscribeEvent
+    public void onGameShuttingDown(GameShuttingDownEvent event) {
+        ModEvents.onGameStopping();
     }
 
     @SubscribeEvent

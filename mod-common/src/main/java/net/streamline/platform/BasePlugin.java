@@ -103,11 +103,23 @@ public abstract class BasePlugin implements ISingularityExtension {
     }
 
     /**
+     * Whether Streamline has been brought down for good; set by the first full teardown so a
+     * later shutdown hook does nothing.
+     */
+    private boolean shutDown;
+
+    /**
      * Brings Streamline up against a server that is starting. Modules load here, so their
      * commands register straight into the server's live dispatcher.
+     *
+     * <p>A client starts an integrated server for every world it opens, but
+     * {@link Singularity} can be built only once per JVM, so a later server is only attached:
+     * Streamline, its modules and their commands carry over, and the loader's
+     * command-registration hook puts every command into the new server's dispatcher.</p>
      */
     public void onServerEnable(MinecraftServer server) {
         setServer(server);
+        if (slapi != null) return;
 
         userManager = new UserManager();
         messenger = new Messenger();
@@ -129,17 +141,38 @@ public abstract class BasePlugin implements ISingularityExtension {
         setPlatformAsEnabled();
     }
 
-    public void onServerDisable() {
-        disable();
+    /**
+     * Reacts to the server stopping. A dedicated server takes Streamline down with it; an
+     * integrated one only ends the current world, and Streamline stays up for the next one
+     * until {@link #shutdownStreamline()} runs as the client exits.
+     */
+    public void onServerDisable(MinecraftServer server) {
+        if (server.isDedicatedServer()) {
+            shutdownStreamline();
+            return;
+        }
+        fireServerStop();
+    }
 
+    /**
+     * Takes Streamline down for good. Runs once; later calls do nothing.
+     */
+    public synchronized void shutdownStreamline() {
+        if (shutDown || slapi == null) return;
+        shutDown = true;
+
+        disable();
+        fireServerStop();
+        TaskManager.stop();
+    }
+
+    private void fireServerStop() {
         try {
             ServerStopEvent e = new ServerStopEvent().fire();
             if (!e.isCancelled() && e.isSendable()) {
                 SLAPI.sendConsoleMessage(e.getMessage());
             }
         } catch (Exception ignored) {}
-
-        TaskManager.stop();
     }
 
     public void setupProperties() {

@@ -92,6 +92,15 @@ public final class CommandRegistry {
     }
 
     /**
+     * Drops the foreign nodes held for a dispatcher that is gone with its server. A client
+     * builds a new dispatcher for every world it hosts, and a node displaced from the last
+     * one must not be restored into the next.
+     */
+    public static void forgetDispatcher() {
+        DISPLACED.clear();
+    }
+
+    /**
      * @return whether some registered command answers to {@code label}
      */
     public static boolean isActive(String label) {
