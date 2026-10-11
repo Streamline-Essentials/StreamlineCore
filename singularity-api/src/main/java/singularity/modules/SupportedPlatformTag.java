@@ -25,7 +25,14 @@ public enum SupportedPlatformTag {
     PAPER("paper"),
     /** A Fabric, Forge or NeoForge server, dedicated or integrated. */
     MODDED_SERVER("modded-server"),
-    /** A Fabric, Forge or NeoForge game client. */
+    /**
+     * A Fabric, Forge or NeoForge game client. Alone, it marks a client module: one that extends
+     * {@code ClientModule} and runs in the client's own module core, which servers never load.
+     * Together with {@link #MODDED_SERVER}, it marks a world module: a server module that game
+     * clients also offer from eCloud and manage, and run on the integrated server of the worlds
+     * they host (singleplayer or LAN). Servers load such a module by its other tags and ignore
+     * this one.
+     */
     MODDED_CLIENT("modded-client"),
     ;
 
