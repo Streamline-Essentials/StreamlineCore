@@ -322,7 +322,11 @@ public class ModulesCommand extends CosmicCommand {
                 } else {
                     Arrays.stream(MessageUtils.argsMinus(context.getArgsArray(), 0)).forEach(a -> {
                         if (ModuleManager.hasModule(a)) return;
-                        ModuleManager.registerExternalModule(a);
+                        String refusal = ModuleManager.tryRegisterExternalModule(a);
+                        if (refusal != null) {
+                            context.sendMessage("&cNot loading module " + refusal);
+                            return;
+                        }
                         context.sendMessage(messageResultLoadOne
                                 .replace("%this_identifier%", a)
                         );
