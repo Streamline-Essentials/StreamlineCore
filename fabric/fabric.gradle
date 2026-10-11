@@ -35,6 +35,15 @@ dependencies {
     }
 }
 
+// Loom writes IDE run configurations only for the root project unless told otherwise.
+loom {
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+        }
+    }
+}
+
 apply from: rootProject.file('mod-common/mod.gradle')
 
 if (obfuscated) {
