@@ -246,10 +246,11 @@ foreach ($target in $targets) {
 
 Write-Host ''
 if ($failed.Count -eq 0) {
-    Write-Host 'Done. All build directories removed.' -ForegroundColor Green
+    Write-Host 'All build directories removed.' -ForegroundColor Green
     if ($Deep) {
         Write-Host 'Deep clean included .gradle — next build will re-download caches.' -ForegroundColor DarkYellow
     }
+    Write-Host 'Done!' -ForegroundColor Green
     exit 0
 }
 
@@ -265,4 +266,5 @@ Write-Host '  - OneDrive syncing files under the project (pause sync, retry)'
 Write-Host '  - A terminal whose cwd is inside a build folder'
 Write-Host 'Close those, then run:  .\clean-build.ps1'
 Write-Host 'For a colder wipe:       .\clean-build.ps1 -Deep'
+Write-Host 'Done!' -ForegroundColor Green
 exit 1
