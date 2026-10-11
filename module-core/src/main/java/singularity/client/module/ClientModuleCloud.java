@@ -130,7 +130,16 @@ public final class ClientModuleCloud {
             ClientModuleManager.Installed installed = ClientModuleManager.module(id);
             if (installed == null) installed = ClientModuleManager.module(name);
             if (installed == null) {
-                return CompletableFuture.completedFuture(new Result(Result.Status.NOT_INSTALLED, id, null, info.getVersion(), false));
+                // A jar of it that did not load counts as installed: updating is how it gets fixed.
+                String unloaded = ClientModuleManager.unloadedVersion(id);
+                if (unloaded == null) {
+                    return CompletableFuture.completedFuture(new Result(Result.Status.NOT_INSTALLED, id, null, info.getVersion(), false));
+                }
+                if (unloaded.equalsIgnoreCase(info.getVersion())) {
+                    throw new ModuleRegistry.RegistryException("'" + id + "' " + unloaded
+                            + " is eCloud's latest version, and it did not load here. See /slclient modules list.");
+                }
+                return fetchAndInstall(id, info.getVersion(), unloaded);
             }
             if (ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) >= 0) {
                 return CompletableFuture.completedFuture(new Result(Result.Status.UP_TO_DATE, installed.getId(),
