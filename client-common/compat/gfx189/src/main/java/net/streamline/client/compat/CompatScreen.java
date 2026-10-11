@@ -23,8 +23,18 @@ public abstract class CompatScreen extends GuiScreen {
             {Keyboard.KEY_RETURN, 257},
             {Keyboard.KEY_BACK, 259},
             {Keyboard.KEY_NUMPADENTER, 335},
+            {Keyboard.KEY_DELETE, 261},
+            {Keyboard.KEY_RIGHT, 262},
+            {Keyboard.KEY_LEFT, 263},
+            {Keyboard.KEY_HOME, 268},
+            {Keyboard.KEY_END, 269},
             {Keyboard.KEY_R, 82},
+            {Keyboard.KEY_V, 86},
     };
+
+    /** GLFW's modifier bits, which {@link #key} receives as on every other version. */
+    private static final int MOD_SHIFT = 1;
+    private static final int MOD_CONTROL = 2;
 
     private final String title;
     private int lastMouseX;
@@ -65,6 +75,16 @@ public abstract class CompatScreen extends GuiScreen {
 
     protected boolean typed(String text) {
         return false;
+    }
+
+    /** Tells the game whether a text field of this screen has focus; 1.8.9 always sends characters. */
+    protected void textInput(boolean focused) {
+    }
+
+    /** @return the system clipboard's text, empty when it holds none */
+    protected String clipboard() {
+        String text = getClipboardString();
+        return text == null ? "" : text;
     }
 
     /** Leaves the screen; the default closes it. */
@@ -110,9 +130,13 @@ public abstract class CompatScreen extends GuiScreen {
 
     @Override
     protected void keyTyped(char character, int keyCode) throws IOException {
-        int glfw = toGlfw(keyCode);
-        if (glfw != -1 && key(glfw, 0)) return;
+        int modifiers = (isShiftKeyDown() ? MOD_SHIFT : 0) | (isCtrlKeyDown() ? MOD_CONTROL : 0);
+        // A printable character goes to a focused field before the key does, so letters the
+        // screens also bind (R, V) still type. Control with a letter arrives as a control
+        // character, so shortcuts reach key(); AltGr's characters are printable and type.
         if (character >= ' ' && character != 127 && typed(String.valueOf(character))) return;
+        int glfw = toGlfw(keyCode);
+        if (glfw != -1 && key(glfw, modifiers)) return;
         if (keyCode == Keyboard.KEY_ESCAPE) {
             onClose();
             return;

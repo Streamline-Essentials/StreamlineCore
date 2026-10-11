@@ -1,5 +1,6 @@
 package net.streamline.client.compat;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -48,6 +49,19 @@ public abstract class CompatScreen extends Screen {
 
     protected boolean typed(String text) {
         return false;
+    }
+
+    /**
+     * Tells the game whether a text field of this screen has focus. Only 26.x asks: its SDL
+     * window sends typed characters only while text input is on.
+     */
+    protected void textInput(boolean focused) {
+    }
+
+    /** @return the system clipboard's text, empty when it holds none */
+    protected String clipboard() {
+        String text = Minecraft.getInstance().keyboardHandler.getClipboard();
+        return text == null ? "" : text;
     }
 
     @Override
