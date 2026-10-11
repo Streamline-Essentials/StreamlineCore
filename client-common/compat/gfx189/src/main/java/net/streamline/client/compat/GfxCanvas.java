@@ -64,6 +64,18 @@ public final class GfxCanvas implements Canvas {
         return font.getStringWidth(LegacyCodes.convert(text));
     }
 
+    /** 1.8.9's font renderer applies only {@code §} codes, so that is the one character to hide. */
+    @Override
+    public void rawText(String text, int x, int y, int color) {
+        GlStateManager.enableBlend();
+        font.drawString(text.replace('§', '&'), (float) x, (float) y, color, false);
+    }
+
+    @Override
+    public int rawTextWidth(String text) {
+        return font.getStringWidth(text.replace('§', '&'));
+    }
+
     @Override
     public int lineHeight() {
         return font.FONT_HEIGHT;

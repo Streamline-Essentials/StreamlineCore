@@ -2,6 +2,7 @@ package net.streamline.client.compat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import org.lwjgl.input.Mouse;
 import singularity.client.ClientInfo;
 
 import java.util.ArrayList;
@@ -53,6 +54,11 @@ public final class ClientCompat {
             LATER.clear();
         }
         for (Runnable task : tasks) task.run();
+    }
+
+    /** @return whether the left mouse button is held now */
+    public static boolean leftMouseDown() {
+        return Mouse.isButtonDown(0);
     }
 
     /** @return whether the player hid the GUI (F1) */

@@ -27,6 +27,12 @@ public interface Canvas {
     /** @return the width of {@code text} in pixels, color codes excluded */
     int textWidth(String text);
 
+    /** Draws {@code text} as typed, with color codes shown rather than applied. */
+    void rawText(String text, int x, int y, int color);
+
+    /** @return the width of {@code text} drawn by {@link #rawText} */
+    int rawTextWidth(String text);
+
     int lineHeight();
 
     /** Saves the current transform; pair with {@link #pop()}. */

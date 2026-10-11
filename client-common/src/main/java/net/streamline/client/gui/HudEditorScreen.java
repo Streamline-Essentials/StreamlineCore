@@ -17,6 +17,10 @@ import java.util.List;
  *
  * <p>The layout is saved when a drag ends, after every other change, and when the editor
  * closes.</p>
+ *
+ * <p>A drag follows the pointer every frame while the left button is held, read from the
+ * window itself, rather than relying on drag and release events: mods can take those before
+ * the screen sees them. The events, when they do arrive, only move it sooner.</p>
  */
 public final class HudEditorScreen extends CompatScreen {
 
@@ -63,6 +67,11 @@ public final class HudEditorScreen extends CompatScreen {
         // Centre guides make lining elements up easier.
         canvas.fill(canvas.width() / 2, 0, canvas.width() / 2 + 1, canvas.height(), 0x20FFFFFF);
         canvas.fill(0, canvas.height() / 2, canvas.width(), canvas.height() / 2 + 1, 0x20FFFFFF);
+
+        if (dragging != null) {
+            if (ClientCompat.leftMouseDown()) dragTo(mouseX, mouseY);
+            else endDrag();
+        }
 
         placed.clear();
         for (HudRegistry.Registered registered : HudRegistry.elements()) {
@@ -146,20 +155,29 @@ public final class HudEditorScreen extends CompatScreen {
     @Override
     protected boolean mouseDrag(double x, double y, int button, double dx, double dy) {
         if (dragging == null) return false;
+        dragTo(x, y);
+        return true;
+    }
+
+    /** Moves the dragged element so the point grabbed stays under the pointer. */
+    private void dragTo(double x, double y) {
         Placed current = find(dragging);
         int width = current == null ? 0 : current.bounds.width;
         int height = current == null ? 0 : current.bounds.height;
         double left = Math.max(0, Math.min(x - dragOffsetX, lastWidth - width));
         double top = Math.max(0, Math.min(y - dragOffsetY, lastHeight - height));
         dragging.getPlacement().moveTo(left / lastWidth, top / lastHeight);
-        return true;
+    }
+
+    private void endDrag() {
+        dragging = null;
+        HudRegistry.save();
     }
 
     @Override
     protected boolean mouseUp(double x, double y, int button) {
         if (dragging == null) return false;
-        dragging = null;
-        HudRegistry.save();
+        endDrag();
         return true;
     }
 

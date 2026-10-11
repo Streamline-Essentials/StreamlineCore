@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.streamline.client.LiveClientInfo;
+import org.lwjgl.glfw.GLFW;
 import singularity.client.ClientInfo;
 
 /**
@@ -41,6 +42,15 @@ public final class ClientCompat {
      */
     public static void later(Runnable task) {
         minecraft().tell(task);
+    }
+
+    /**
+     * @return whether the left mouse button is held now, read from GLFW: {@code MouseHandler}
+     * tracks its buttons only while no screen is open
+     */
+    public static boolean leftMouseDown() {
+        long window = minecraft().getWindow().getWindow();
+        return GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
     }
 
     /** @return whether the player hid the GUI (F1) */
