@@ -142,16 +142,16 @@ public abstract class BasePlugin implements ISingularityExtension {
     }
 
     /**
-     * Reacts to the server stopping. A dedicated server takes Streamline down with it; an
-     * integrated one only ends the current world, and Streamline stays up for the next one
-     * until {@link #shutdownStreamline()} runs as the client exits.
+     * Reacts to the server stopping.
+     *
+     * @param last whether Streamline goes down with this server: always on a dedicated server;
+     *             on a client only once the game is exiting, since stopping an integrated
+     *             server otherwise just ends the current world and Streamline stays up for the
+     *             next one
      */
-    public void onServerDisable(MinecraftServer server) {
-        if (server.isDedicatedServer()) {
-            shutdownStreamline();
-            return;
-        }
-        fireServerStop();
+    public void onServerDisable(boolean last) {
+        if (last) shutdownStreamline();
+        else fireServerStop();
     }
 
     /**
