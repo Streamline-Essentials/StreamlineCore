@@ -15,11 +15,12 @@ import net.streamline.platform.listeners.NeoForgeListener;
 public class StreamlineNeoForge extends BasePlugin {
 
     public StreamlineNeoForge(IEventBus modBus, Dist dist) {
+        setClient(dist.isClient());
         initialize();
         NeoForge.EVENT_BUS.register(new NeoForgeListener());
         NeoForge.EVENT_BUS.register(new NeoForgeBreakListener());
         // Client classes exist only on a client, so the listener touching them loads only there.
-        if (dist.isClient()) NeoForge.EVENT_BUS.register(new NeoForgeClientListener());
+        if (isClient()) NeoForge.EVENT_BUS.register(new NeoForgeClientListener());
     }
 
     @Override

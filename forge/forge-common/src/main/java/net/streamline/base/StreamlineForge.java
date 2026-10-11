@@ -12,10 +12,11 @@ import net.streamline.platform.listeners.ForgeListener;
 public class StreamlineForge extends BasePlugin {
 
     public StreamlineForge() {
+        setClient(FMLEnvironment.dist == Dist.CLIENT);
         initialize();
         ForgeListener.register();
         // Client classes exist only on a client, so the listener touching them loads only there.
-        if (FMLEnvironment.dist == Dist.CLIENT) ForgeClientListener.register();
+        if (isClient()) ForgeClientListener.register();
     }
 
     @Override
