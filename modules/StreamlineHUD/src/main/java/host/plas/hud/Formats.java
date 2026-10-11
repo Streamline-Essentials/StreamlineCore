@@ -3,8 +3,8 @@ package host.plas.hud;
 import java.time.LocalTime;
 
 /**
- * Text formatting for HUD lines. Runs every frame, so it builds strings by hand instead of
- * going through {@code String.format}.
+ * Text formatting for placeholder values. Runs every frame, so it builds strings by hand
+ * instead of going through {@code String.format}.
  */
 public final class Formats {
 
@@ -12,7 +12,7 @@ public final class Formats {
     /** Memory figures change slowly and reading them is not free, so they refresh once a second. */
     private static final long MEMORY_REFRESH_MILLIS = 1000L;
 
-    private static volatile String memoryLine = "";
+    private static volatile long[] memory = {0L, 0L, 0L};
     private static volatile long memoryReadAt;
 
     private Formats() {}
@@ -87,17 +87,32 @@ public final class Formats {
         return clock(hour, minute, twelveHour);
     }
 
-    /** @return the JVM's used and maximum heap, read at most once a second */
-    public static String memory() {
+    /** @return the JVM's used heap in megabytes */
+    public static long memoryUsed() {
+        return memory()[0];
+    }
+
+    /** @return the JVM's maximum heap in megabytes */
+    public static long memoryMax() {
+        return memory()[1];
+    }
+
+    /** @return the used share of the maximum heap, 0..100 */
+    public static long memoryPercent() {
+        return memory()[2];
+    }
+
+    /** @return used, maximum and percent, read at most once a second */
+    private static long[] memory() {
         long now = System.currentTimeMillis();
         if (now - memoryReadAt >= MEMORY_REFRESH_MILLIS) {
             Runtime runtime = Runtime.getRuntime();
             long used = (runtime.totalMemory() - runtime.freeMemory()) / MEGABYTE;
             long max = runtime.maxMemory() / MEGABYTE;
             long percent = max > 0 ? used * 100L / max : 0L;
-            memoryLine = "&7Memory: &f" + used + "&7/&f" + max + "MB &7(" + percent + "%)";
+            memory = new long[] {used, max, percent};
             memoryReadAt = now;
         }
-        return memoryLine;
+        return memory;
     }
 }

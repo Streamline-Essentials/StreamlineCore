@@ -9,12 +9,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * The look every StreamlineHUD element shares, set from the module's settings page. Values
  * change on whichever thread saves a setting and are read on the render thread, so they are
  * volatile and every change is pushed straight onto the registered elements.
+ *
+ * <p>The main and text colors also fill {@code %streamlinehud_color_main%} and
+ * {@code %streamlinehud_color_text%}, as {@code {#rrggbb}} codes built when the color changes.</p>
  */
 public final class HudStyle {
 
+    public static final int DEFAULT_MAIN_COLOR = 0xFFAAAAAA;
+    public static final int DEFAULT_TEXT_COLOR = 0xFFFFFFFF;
+
     private static final List<TextHudElement> ELEMENTS = new CopyOnWriteArrayList<>();
 
-    private static volatile int textColor = 0xFFFFFFFF;
+    private static volatile int textColor = DEFAULT_TEXT_COLOR;
+    private static volatile String mainCode = code(DEFAULT_MAIN_COLOR);
+    private static volatile String textCode = code(DEFAULT_TEXT_COLOR);
     private static volatile int backgroundColor = 0x60000000;
     private static volatile boolean background = true;
     private static volatile boolean shadow = true;
@@ -26,6 +34,10 @@ public final class HudStyle {
     public static void track(TextHudElement element) {
         ELEMENTS.add(element);
         apply(element);
+    }
+
+    public static void untrack(TextHudElement element) {
+        ELEMENTS.remove(element);
     }
 
     public static void clear() {
@@ -42,8 +54,29 @@ public final class HudStyle {
         for (TextHudElement element : ELEMENTS) apply(element);
     }
 
+    /** @return {@code argb} as a {@code {#rrggbb}} color code */
+    private static String code(int argb) {
+        String hex = Integer.toHexString(argb & 0xFFFFFF);
+        StringBuilder out = new StringBuilder(9).append("{#");
+        for (int i = hex.length(); i < 6; i++) out.append('0');
+        return out.append(hex).append('}').toString();
+    }
+
+    public static String mainCode() {
+        return mainCode;
+    }
+
+    public static String textCode() {
+        return textCode;
+    }
+
+    public static void setMainColor(int argb) {
+        mainCode = code(argb);
+    }
+
     public static void setTextColor(int argb) {
         textColor = argb;
+        textCode = code(argb);
         applyAll();
     }
 
