@@ -2,12 +2,20 @@ package singularity.client.hud;
 
 import lombok.Getter;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * Something drawn on a game client's HUD, which the player can move, scale and hide in the
  * HUD editor. Register it with {@link HudRegistry#register(String, HudElement)}.
  *
  * <p>{@link #render}, {@link #width} and {@link #height} run on the render thread every
  * frame, so they must be cheap and must not block.</p>
+ *
+ * <p>An element whose text the player may edit returns it from {@link #getTemplate()}; the
+ * module menu then shows a field for it, with {@link #getPlaceholders()} listed as help.
+ * These methods have defaults, so a module that overrides them still loads on a core that
+ * predates them, where they are never called.</p>
  */
 @Getter
 public abstract class HudElement {
@@ -43,5 +51,37 @@ public abstract class HudElement {
     /** @return whether to draw it at all right now; the editor shows it regardless */
     public boolean isVisible() {
         return true;
+    }
+
+    /** @return the text the player can edit in the module menu, or {@code null} if there is none */
+    public String getTemplate() {
+        return null;
+    }
+
+    /** @return what {@link #getTemplate()} goes back to when the player resets it */
+    public String getDefaultTemplate() {
+        return null;
+    }
+
+    /**
+     * Sets the player's text, called on the render thread when they finish typing. The
+     * element keeps it across restarts itself.
+     *
+     * @param template the new text; empty puts back {@link #getDefaultTemplate()}
+     */
+    public void setTemplate(String template) {
+    }
+
+    /** @return the placeholders the template understands, token to meaning, in display order */
+    public Map<String, String> getPlaceholders() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * @return whether the player added this element through the module's
+     * {@link CustomHudElements}, which lets them delete it again
+     */
+    public boolean isCustom() {
+        return false;
     }
 }
