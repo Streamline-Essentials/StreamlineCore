@@ -20,7 +20,7 @@ public class StreamlineNeoForge extends BasePlugin {
         NeoForge.EVENT_BUS.register(new NeoForgeListener());
         NeoForge.EVENT_BUS.register(new NeoForgeBreakListener());
         // Client classes exist only on a client, so the listener touching them loads only there.
-        if (isClient()) NeoForge.EVENT_BUS.register(new NeoForgeClientListener());
+        if (isClient()) NeoForge.EVENT_BUS.register(new NeoForgeClientListener(modBus));
     }
 
     @Override
