@@ -6,7 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.streamline.client.LiveClientInfo;
+import net.streamline.client.ModernKeys;
 import singularity.client.ClientInfo;
+import singularity.client.input.ClientInput;
 
 import java.lang.reflect.Method;
 
@@ -108,7 +110,12 @@ public final class ClientCompat {
 
     /** @return whether the left Shift key is held now; either Shift when that cannot be asked */
     public static boolean leftShiftDown() {
-        int key = InputConstants.KEY_LSHIFT;
+        Boolean down = isKeyDown(InputConstants.KEY_LSHIFT);
+        return down != null ? down : minecraft().hasShiftDown();
+    }
+
+    /** @return whether the key with this {@code InputConstants} code is held, or {@code null} if that cannot be asked */
+    private static Boolean isKeyDown(int key) {
         try {
             if (IS_KEY_DOWN != null) {
                 Object down = IS_KEY_DOWN.getParameterCount() == 1
@@ -118,7 +125,27 @@ public final class ClientCompat {
             }
         } catch (ReflectiveOperationException | RuntimeException ignored) {
         }
-        return minecraft().hasShiftDown();
+        return null;
+    }
+
+    /** @return whether the key with this {@code InputConstants} code (GLFW on 26.2, SDL on 26.3) is held now */
+    public static boolean keyCodeDown(int code) {
+        return Boolean.TRUE.equals(isKeyDown(code));
+    }
+
+    /** @return whether the keyboard key with this name ({@code key.keyboard.g}) is held now */
+    public static boolean keyDown(String name) {
+        return ModernKeys.down(name);
+    }
+
+    /** @return the key's name as the Controls screen shows it, or {@code null} if it is unknown */
+    public static String keyDisplayName(String name) {
+        return ModernKeys.displayName(name);
+    }
+
+    /** Presses or releases a game key for client modules; see {@link ModernKeys#hold}. */
+    public static void holdGameKey(ClientInput.GameKey key, boolean held) {
+        ModernKeys.hold(key, held);
     }
 
     /** @return whether the player hid the GUI (F1) */

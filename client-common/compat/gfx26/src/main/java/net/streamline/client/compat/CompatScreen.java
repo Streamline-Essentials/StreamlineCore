@@ -48,6 +48,14 @@ public abstract class CompatScreen extends Screen {
         return false;
     }
 
+    /**
+     * Sees every key press before {@link #key}, as Minecraft's version-independent key name
+     * ({@code key.keyboard.g}), for binding keys.
+     */
+    protected boolean keyNamed(String name) {
+        return false;
+    }
+
     protected boolean typed(String text) {
         return false;
     }
@@ -105,7 +113,8 @@ public abstract class CompatScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return key(toGlfw(event.key()), toGlfwModifiers(event.modifiers())) || super.keyPressed(event);
+        return keyNamed(InputConstants.getKey(event).getName())
+                || key(toGlfw(event.key()), toGlfwModifiers(event.modifiers())) || super.keyPressed(event);
     }
 
     /**

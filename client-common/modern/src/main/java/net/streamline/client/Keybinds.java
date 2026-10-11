@@ -32,6 +32,7 @@ public final class Keybinds {
      * while no screen is open, so these never stack on top of another screen.
      */
     public static void tick() {
+        ModuleKeys.tick();
         boolean editor = drain(HUD_EDITOR);
         boolean menu = drain(MENU);
         if (ClientCompat.currentScreen() != null) return;

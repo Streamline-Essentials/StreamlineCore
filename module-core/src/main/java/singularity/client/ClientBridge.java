@@ -3,6 +3,7 @@ package singularity.client;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.client.hud.HudRegistry;
+import singularity.client.input.ClientInput;
 import singularity.client.settings.ClientSettingsRegistry;
 
 /**
@@ -46,11 +47,13 @@ public final class ClientBridge {
     }
 
     /**
-     * Drops every HUD element and settings page a module registered. Runs when the module
-     * stops, so nothing on the render thread calls into a module that is gone.
+     * Drops every HUD element and settings page a module registered, and lets go of the game
+     * keys it held. Runs when the module stops, so nothing on the render thread calls into a
+     * module that is gone and the player is not left sprinting or sneaking.
      */
     public static void forgetModule(String moduleId) {
         HudRegistry.unregisterAll(moduleId);
         ClientSettingsRegistry.unregister(moduleId);
+        ClientInput.forgetModule(moduleId);
     }
 }

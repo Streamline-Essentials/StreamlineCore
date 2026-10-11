@@ -1,5 +1,6 @@
 package net.streamline.client.compat;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.CharacterEvent;
@@ -44,6 +45,14 @@ public abstract class CompatScreen extends Screen {
 
     /** @param key a GLFW key code */
     protected boolean key(int key, int modifiers) {
+        return false;
+    }
+
+    /**
+     * Sees every key press before {@link #key}, as Minecraft's version-independent key name
+     * ({@code key.keyboard.g}), for binding keys.
+     */
+    protected boolean keyNamed(String name) {
         return false;
     }
 
@@ -96,7 +105,7 @@ public abstract class CompatScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        return key(event.key(), event.modifiers()) || super.keyPressed(event);
+        return keyNamed(InputConstants.getKey(event).getName()) || key(event.key(), event.modifiers()) || super.keyPressed(event);
     }
 
     @Override

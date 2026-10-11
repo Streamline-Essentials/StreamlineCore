@@ -79,6 +79,9 @@ public final class MenuScreen extends CompatScreen {
 
     private SliderDrag sliderDrag;
     private TextEdit editing;
+    /** The key setting waiting for the player to press its key, and the page it saves to. */
+    private Setting.Key capturing;
+    private ModuleSettings capturingPage;
     private long openedAt = System.currentTimeMillis();
 
     /** The HUD element (registry key) whose text editor is open. */
@@ -571,10 +574,39 @@ public final class MenuScreen extends CompatScreen {
                         });
                 break;
             }
+            case KEY: {
+                Setting.Key key = (Setting.Key) setting;
+                boolean listening = capturing == key;
+                boolean hover = hovered(mouseX, mouseY, cx1, y - 1, cx2, y + 11);
+                canvas.fill(cx1, y - 1, cx2, y + 11, hover ? Theme.CONTROL_BORDER : Theme.CONTROL);
+                canvas.outline(cx1, y - 1, cx2, y + 11, listening ? Theme.ACCENT : Theme.CONTROL_BORDER);
+                String label = listening ? "> Press a key <" : keyLabel(key);
+                label = Theme.fit(canvas, label, controlWidth - 6);
+                canvas.text(label, cx1 + (controlWidth - canvas.textWidth(label)) / 2, y + 1, listening ? Theme.ACCENT : Theme.TEXT);
+                addRegion(cx1, y - 1, cx2, y + 11, setting, (x, yy, b) -> {
+                    if (b == 1) {
+                        capturing = null;
+                        key.set(Setting.Key.NONE);
+                        page.save();
+                    } else if (listening) {
+                        capturing = null;
+                    } else {
+                        capturing = key;
+                        capturingPage = page;
+                    }
+                });
+                break;
+            }
             default:
                 break;
         }
         return y + rowHeight;
+    }
+
+    private static String keyLabel(Setting.Key key) {
+        if (! key.isBound()) return "None";
+        String name = ClientCompat.keyDisplayName(key.getValue());
+        return name == null || name.isEmpty() ? key.getValue() : name;
     }
 
     private static int controlWidth(Setting<?> setting) {
@@ -584,6 +616,7 @@ public final class MenuScreen extends CompatScreen {
             case SLIDER:
                 return 120;
             case CHOICE:
+            case KEY:
                 return 90;
             case COLOR:
                 return 86;
@@ -1116,10 +1149,12 @@ public final class MenuScreen extends CompatScreen {
             Region region = regions.get(i);
             if (! Theme.inside(x, y, region.x1, region.y1, region.x2, region.y2)) continue;
             if (editing != null && region.owner != editing.owner) commitEdit();
+            if (capturing != null && region.owner != capturing) capturing = null;
             region.click.click(x, y, button);
             return true;
         }
         commitEdit();
+        capturing = null;
         return false;
     }
 
@@ -1150,6 +1185,19 @@ public final class MenuScreen extends CompatScreen {
             return true;
         }
         return false;
+    }
+
+    /** Binds the key the player pressed to the setting waiting for one; Escape leaves it as it was. */
+    @Override
+    protected boolean keyNamed(String name) {
+        if (capturing == null) return false;
+        Setting.Key key = capturing;
+        capturing = null;
+        if (! "key.keyboard.escape".equals(name)) {
+            key.set(name);
+            if (capturingPage != null) capturingPage.save();
+        }
+        return true;
     }
 
     @Override

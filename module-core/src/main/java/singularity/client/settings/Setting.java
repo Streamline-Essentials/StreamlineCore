@@ -21,6 +21,7 @@ public abstract class Setting<T> {
         CHOICE,
         TEXT,
         COLOR,
+        KEY,
     }
 
     private final String key;
@@ -216,6 +217,59 @@ public abstract class Setting<T> {
         @Override
         public String format(Integer value) {
             return String.format("#%08X", value);
+        }
+    }
+
+    /**
+     * A {@link Kind#KEY}: a keyboard key the player binds in the menu, held as Minecraft's
+     * name for it ({@code key.keyboard.g}), which stays the same across game versions.
+     * {@link #NONE} leaves it unbound.
+     *
+     * <p>The client checks every registered key each tick and runs {@link #onPress} on the
+     * client thread when it goes down while no screen is open, so typing in chat or a menu
+     * never triggers it.</p>
+     */
+    public static final class Key extends Setting<String> {
+        public static final String NONE = "key.keyboard.unknown";
+        private static final String PREFIX = "key.keyboard.";
+
+        private volatile Runnable onPress;
+
+        /** @param defaultKey a key name such as {@code key.keyboard.g}, or {@link #NONE} */
+        public Key(String key, String displayName, String description, String defaultKey) {
+            super(key, displayName, description, defaultKey == null ? NONE : defaultKey);
+        }
+
+        @Override
+        public Kind getKind() {
+            return Kind.KEY;
+        }
+
+        @Override
+        protected String parse(String text) {
+            return text.trim();
+        }
+
+        @Override
+        protected String normalise(String value) {
+            if (value == null) return null;
+            if (value.isEmpty()) return NONE;
+            return value.startsWith(PREFIX) ? value : null;
+        }
+
+        /** @return whether a key is bound */
+        public boolean isBound() {
+            return ! NONE.equals(getValue());
+        }
+
+        /** Runs {@code action} on the client thread each time the bound key is pressed in game. */
+        public Key onPress(Runnable action) {
+            this.onPress = action;
+            return this;
+        }
+
+        public Runnable getOnPress() {
+            return onPress;
         }
     }
 }
