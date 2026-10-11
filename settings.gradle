@@ -35,6 +35,12 @@ if (gradle.ext.buildMods) {
             project(path).projectDir = file("${loader}/${loader}-${mc}")
         }
     }
+
+    // Forge 1.8.9 (game clients) is a build of its own: it needs Essential's fork of Loom,
+    // which cannot share a classloader with the Fabric Loom above. It includes this build
+    // back for the API; including it here lets the IDE and this build's command line reach
+    // its tasks, e.g. :StreamlineCore-Forge-189:remapJar.
+    includeBuild('forge/forge-189') { name = rootProject.name + '-Forge-189' }
 } else if (! isCI()) {
     logger.warn("[StreamlineCore] Skipping the Fabric/Forge/NeoForge subprojects: they need Gradle " +
             "to run on Java 25, but it is running on Java ${JavaVersion.current()}. Point JAVA_HOME " +
