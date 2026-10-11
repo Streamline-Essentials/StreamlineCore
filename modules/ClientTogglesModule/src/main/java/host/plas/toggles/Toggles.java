@@ -23,8 +23,9 @@ import java.util.Properties;
  */
 final class Toggles {
 
+    /** Below StreamlineHUD's left column, clear of the chat in the bottom-left corner. */
     private static final double LEFT = 0.005;
-    private static final double BOTTOM = 0.88;
+    private static final double TOP = 0.235;
     private static final double ROW = 0.045;
 
     private static volatile String moduleId;
@@ -49,9 +50,9 @@ final class Toggles {
         elementsFile = new File(module.getDataFolder(), "elements.properties");
         Properties saved = loadTemplates();
 
-        ToggleElement sprint = new ToggleElement("sprinting", "Sprint Toggle", LEFT, BOTTOM,
+        ToggleElement sprint = new ToggleElement("sprinting", "Sprint Toggle", LEFT, TOP,
                 "&7" + Placeholders.SPRINTING_TEXT, Toggles::saveTemplate);
-        ToggleElement sneak = new ToggleElement("sneaking", "Sneak Toggle", LEFT, BOTTOM + ROW,
+        ToggleElement sneak = new ToggleElement("sneaking", "Sneak Toggle", LEFT, TOP + ROW,
                 "&7" + Placeholders.SNEAKING_TEXT, Toggles::saveTemplate);
         sprint.load(saved.getProperty(sprint.getId()));
         sneak.load(saved.getProperty(sneak.getId()));
