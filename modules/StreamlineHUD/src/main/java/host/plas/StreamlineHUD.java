@@ -6,7 +6,6 @@ import host.plas.hud.InfoElement;
 import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
-import singularity.client.ClientBridge;
 import singularity.client.hud.HudRegistry;
 import singularity.client.settings.ClientSettingsRegistry;
 import singularity.client.settings.ModuleSettings;
