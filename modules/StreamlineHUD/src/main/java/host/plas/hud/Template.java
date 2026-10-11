@@ -50,6 +50,17 @@ final class Template {
                     continue;
                 }
             }
+            if (source.startsWith(Placeholders.CLIENT_PREFIX, i)) {
+                int keyStart = i + Placeholders.CLIENT_PREFIX.length();
+                int end = source.indexOf('%', keyStart);
+                Placeholders.Value value = end > keyStart ? Placeholders.getClient(source.substring(keyStart, end)) : null;
+                if (value != null) {
+                    flush(parts, literal);
+                    parts.add(value);
+                    i = end + 1;
+                    continue;
+                }
+            }
             literal.append(source.charAt(i));
             i++;
         }
