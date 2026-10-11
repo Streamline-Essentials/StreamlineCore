@@ -36,6 +36,8 @@ final class Theme {
     static final int GLFW_DELETE = 261;
     static final int GLFW_RIGHT = 262;
     static final int GLFW_LEFT = 263;
+    static final int GLFW_DOWN = 264;
+    static final int GLFW_UP = 265;
     static final int GLFW_HOME = 268;
     static final int GLFW_END = 269;
     static final int GLFW_R = 82;
