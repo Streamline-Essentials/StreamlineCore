@@ -2,6 +2,7 @@ package net.streamline.platform.listeners;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.streamline.platform.commands.ClientCommand;
 
 /**
@@ -13,6 +14,8 @@ public final class ForgeClientListener {
     private ForgeClientListener() {}
 
     public static void register() {
+        // The first client tick comes once the game is up, at the title screen.
+        TickEvent.ClientTickEvent.Post.BUS.addListener(e -> ModEvents.onClientStarted());
         RegisterClientCommandsEvent.BUS.addListener(e ->
                 ClientCommand.register(e.getDispatcher(), Minecraft.getInstance()));
     }
