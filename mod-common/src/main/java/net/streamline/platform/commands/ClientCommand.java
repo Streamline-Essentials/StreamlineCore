@@ -27,12 +27,13 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
- * {@code /streamlineclient (menu|hud|<command> (args ...))} and its alias {@code /slclient}: a
- * client command that opens the client module menu or the HUD editor, or runs a Streamline
+ * {@code /streamlineclient (menu|hud|modules (...)|<command> (args ...))} and its alias
+ * {@code /slclient}: a client command that opens the client module menu or the HUD editor,
+ * manages the client's own modules ({@link ClientModulesCommand}), or runs a Streamline
  * command, picked by any of its aliases, as the local player.
  *
- * <p>{@code menu} and {@code hud} belong to the client and work anywhere, remote servers
- * included; they win over a module command with the same alias. Any other command runs as a
+ * <p>{@code menu}, {@code hud} and {@code modules} belong to the client and work anywhere,
+ * remote servers included; they win over a module command with the same alias. Any other command runs as a
  * player, and a client has a player only on the integrated server of a world it hosts
  * (singleplayer, or opened to LAN), so that is where it runs, on the server thread, as the
  * host's {@link ServerPlayer}. Its output reaches chat the usual way.</p>
@@ -47,9 +48,11 @@ public final class ClientCommand {
     /** Subcommands the client handles itself, ahead of any module alias. */
     public static final String MENU = "menu";
     public static final String HUD = "hud";
+    public static final String MODULES = ClientModulesCommand.LABEL;
 
-    private static final String USAGE = "&eUsage: &f/%s (menu|hud|<command> (args ...))"
-            + "%n&7menu &f- client module settings  &7hud &f- move and scale HUD elements";
+    private static final String USAGE = "&eUsage: &f/%s (menu|hud|modules (...)|<command> (args ...))"
+            + "%n&7menu &f- client module settings  &7hud &f- move and scale HUD elements"
+            + "%n&7modules &f- list, enable, disable, reload, remove, and download from eCloud";
     private static final String NO_CLIENT_UI = "&cThe Streamline client menu is not available in this game.";
     private static final String NOT_HOSTING = "&cStreamline runs only in a world this game hosts: "
             + "open a singleplayer world, or open one to LAN.";
@@ -111,6 +114,10 @@ public final class ClientCommand {
         }
 
         if (runBuiltIn(args[0], reply)) return;
+        if (args[0].equalsIgnoreCase(MODULES)) {
+            ClientModulesCommand.run(label, StringUtils.argsMinus(args, 0), reply);
+            return;
+        }
 
         MinecraftServer server = BasePlugin.getServer();
         if (server == null || UserManager.getInstance() == null) {
@@ -163,8 +170,8 @@ public final class ClientCommand {
 
     /**
      * Suggests the word being typed in {@code builder}'s remaining input: {@code menu},
-     * {@code hud} or a command alias for the first word, otherwise whatever that command
-     * completes.
+     * {@code hud}, {@code modules} or a command alias for the first word, otherwise whatever
+     * that subcommand or command completes.
      */
     public static CompletableFuture<Suggestions> suggest(UUID player, SuggestionsBuilder builder) {
         try {
@@ -173,9 +180,14 @@ public final class ClientCommand {
 
             ConcurrentSkipListSet<String> completions;
             if (args.length <= 1) {
-                completions = new ConcurrentSkipListSet<>(CommandHandler.getAllAliases());
+                completions = new ConcurrentSkipListSet<>();
+                // Streamline commands run only in a hosted world, so they are offered only there.
+                if (BasePlugin.getServer() != null) completions.addAll(CommandHandler.getAllAliases());
                 completions.add(MENU);
                 completions.add(HUD);
+                completions.add(MODULES);
+            } else if (args[0].equalsIgnoreCase(MODULES)) {
+                completions = new ConcurrentSkipListSet<>(ClientModulesCommand.suggest(StringUtils.argsMinus(args, 0)));
             } else {
                 if (args[0].equalsIgnoreCase(MENU) || args[0].equalsIgnoreCase(HUD)) return builder.buildFuture();
                 MinecraftServer server = BasePlugin.getServer();

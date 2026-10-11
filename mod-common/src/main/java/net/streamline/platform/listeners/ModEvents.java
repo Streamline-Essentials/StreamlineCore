@@ -12,6 +12,7 @@ import net.streamline.platform.handlers.StatusPingHandler;
 import net.streamline.platform.handlers.TheBaseShutdown;
 import net.streamline.platform.savables.UserManager;
 import singularity.Singularity;
+import singularity.client.module.ClientModuleManager;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.events.UnloadPlayerEvent;
 import singularity.data.players.events.UnloadSenderEvent;
@@ -89,15 +90,16 @@ public final class ModEvents {
     private static volatile boolean clientStarted;
 
     /**
-     * The game client has started. Brings Streamline up so client modules run whether or not
-     * a world is hosted. Loaders call this from a hook that fires repeatedly (a client tick on
-     * Forge and NeoForge), so only the first call does anything.
+     * The game client has started. Brings up the client side of Streamline only, so client
+     * modules run on any server or none; the full Streamline comes up if the client hosts a
+     * world. Loaders call this from a hook that fires repeatedly (a client tick on Forge and
+     * NeoForge), so only the first call does anything.
      */
     public static void onClientStarted() {
         if (clientStarted) return;
         clientStarted = true;
         try {
-            BasePlugin.getInstance().boot();
+            BasePlugin.getInstance().bootClient();
         } catch (Throwable t) {
             BasePlugin.getInstance().getSlf4jLogger().warn("Streamline could not start on the client", t);
         }
@@ -140,13 +142,18 @@ public final class ModEvents {
     }
 
     /**
-     * The game itself is exiting. On a client this is where Streamline comes down, since
-     * stopping an integrated server leaves it up for the next world; a server still running
-     * finishes the teardown once it has stopped. On a dedicated server the server stop
-     * already did it and this does nothing.
+     * The game itself is exiting. On a client this is where the client modules and Streamline
+     * come down, since stopping an integrated server leaves it up for the next world; a server
+     * still running finishes the teardown once it has stopped. On a dedicated server the
+     * server stop already did it and this does nothing.
      */
     public static void onGameStopping() {
         gameStopping = true;
+        try {
+            ClientModuleManager.shutdown();
+        } catch (Throwable t) {
+            logStopFailure("Stopping client modules", t);
+        }
         if (BasePlugin.getServer() == null) shutdownStreamline();
     }
 

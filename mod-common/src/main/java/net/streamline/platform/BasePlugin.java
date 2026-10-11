@@ -13,6 +13,8 @@ import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.handlers.GameplayHandler;
 import net.streamline.platform.handlers.gui.ModGuiHandler;
 import singularity.Singularity;
+import singularity.client.ClientEnvironment;
+import singularity.client.module.ClientModuleManager;
 import net.streamline.platform.modules.RelocatingModuleTransformer;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
@@ -35,6 +37,7 @@ import singularity.utils.MessageUtils;
 import singularity.utils.StorageUtils;
 import singularity.utils.UserUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,6 +46,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Level;
 
 /**
  * Loader-agnostic core of the mod-loader platforms (Fabric, Forge, NeoForge).
@@ -121,18 +125,11 @@ public abstract class BasePlugin implements ISingularityExtension {
     private static volatile boolean client;
 
     /**
-     * Whether this client has hosted a world, after which it runs server modules as well:
-     * they load on its first integrated server and stay loaded for the rest of the game.
-     */
-    @Getter
-    private volatile boolean hostedWorld;
-
-    /**
      * Brings Streamline up: SLAPI, the managers and the task manager, after which modules
-     * load on their own thread. Needs no server. A dedicated server calls it as it starts; a
-     * client calls it once the game has started, so client modules run on remote servers too,
-     * and again from {@link #onServerEnable} in case a world starts first. Runs once; later
-     * calls do nothing.
+     * load on their own thread. A dedicated server calls it as it starts; a client only once
+     * it hosts a world (singleplayer or LAN), for that world's integrated server, since
+     * players, permissions and the database belong to a server. Runs once; later calls do
+     * nothing.
      */
     public synchronized void boot() {
         if (slapi != null || shutDown) return;
@@ -158,56 +155,48 @@ public abstract class BasePlugin implements ISingularityExtension {
     }
 
     /**
+     * Brings up the client side of Streamline, and nothing else: the client folder and the
+     * client modules ({@link ClientModuleManager}), which run on any server or none. No
+     * players, permissions, database or SLAPI; those come with {@link #boot()} if the
+     * client hosts a world. Runs once; later calls do nothing.
+     */
+    public synchronized void bootClient() {
+        if (clientBooted || shutDown) return;
+        clientBooted = true;
+
+        File dataFolder = Singularity.resolveDataFolder(getName(), this);
+        ClientEnvironment.setFolder(new File(dataFolder, "client"));
+        ClientEnvironment.setLog((level, message) -> {
+            if (level.intValue() >= Level.WARNING.intValue()) LOGGER.warn(message);
+            else LOGGER.info(message);
+        });
+        ClientModuleManager.start();
+    }
+
+    /** Whether {@link #bootClient()} has run. */
+    private boolean clientBooted;
+
+    /**
      * Attaches a server that is starting, booting Streamline first if it is not up yet.
      * Commands registered before now reach the server's dispatcher through the loader's
      * command-registration hook.
      *
      * <p>A client starts an integrated server for every world it opens, but
-     * {@link Singularity} can be built only once per JVM, so each one is only attached:
-     * Streamline, its modules and their commands carry over. The first one also makes the
-     * client accept server modules, which load then.</p>
+     * {@link Singularity} can be built only once per JVM, so the first one boots it and later
+     * ones are only attached: Streamline, its server modules and their commands carry over.</p>
      */
     public void onServerEnable(MinecraftServer server) {
         setServer(server);
         boot();
-
-        if (client && ! server.isDedicatedServer() && ! hostedWorld) {
-            hostedWorld = true;
-            loadHostedModules();
-        }
     }
 
     /**
-     * Loads and starts the server-tagged module jars a client skipped at boot. Runs on its own
-     * thread, since loading waits for the database and for the boot-time module pass; the
-     * modules' commands then reach the integrated server's dispatcher as they register.
-     */
-    private void loadHostedModules() {
-        Thread loader = new Thread(() -> {
-            try {
-                Singularity<?, ?, ?, ?, ?> instance = Singularity.getInstance();
-                if (instance == null) return;
-                Singularity.awaitDatabaseReady();
-                instance.awaitPlatformEnabled();
-                if (ModuleManager.loadModulesSafe() > 0) ModuleManager.startModules();
-            } catch (Throwable t) {
-                MessageUtils.logWarning("Could not load server modules for this world: " + t);
-            }
-        }, "Streamline hosted-module loader");
-        loader.setDaemon(true);
-        loader.start();
-    }
-
-    /**
-     * A dedicated server runs server modules. A client runs client modules, and server
-     * modules too once it has hosted a world, on its integrated server.
+     * {@link #boot()} runs Streamline for a server, dedicated or integrated, so it loads
+     * server modules only. A client's own modules are {@link ClientModuleManager}'s.
      */
     @Override
     public Set<SupportedPlatformTag> getSupportedPlatformTags() {
-        if (! client) return EnumSet.of(SupportedPlatformTag.MODDED_SERVER);
-        return hostedWorld
-                ? EnumSet.of(SupportedPlatformTag.MODDED_CLIENT, SupportedPlatformTag.MODDED_SERVER)
-                : EnumSet.of(SupportedPlatformTag.MODDED_CLIENT);
+        return EnumSet.of(SupportedPlatformTag.MODDED_SERVER);
     }
 
     /**
