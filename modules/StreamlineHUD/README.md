@@ -1,8 +1,10 @@
 # StreamlineHUD
 
 A client-only StreamlineCore module (`pf.platforms = modded-client`) that adds HUD
-elements to Fabric, Forge and NeoForge game clients. It compiles against the
-singularity client API only (`singularity.client.*`), with no Minecraft types.
+elements to Fabric, Forge and NeoForge game clients. It extends `ClientModule` and
+compiles against `StreamlineCore-ModuleCore` only (`singularity.client.*`), with no
+Minecraft types. Install it in game with `/slclient modules ecloud download StreamlineHUD`
+or from the eCloud page of `/slclient menu`; it loads and unloads without a restart.
 
 | Element | Shows | Default place |
 |---|---|---|
