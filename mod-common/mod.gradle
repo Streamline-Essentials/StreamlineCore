@@ -202,7 +202,11 @@ tasks.named('shadowJar') {
 // library jars cannot go on a Forge-family run as they are: TheBase's fat jar exports packages
 // another library also exports, and some declare Multi-Release without any versioned entries,
 // both of which stop the module system from starting.
-def devLibrariesJar = tasks.register('devLibrariesJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+// A script plugin cannot name the Shadow plugin's classes directly, so the task type comes
+// through the loader that defined shadowJar.
+def shadowJarType = Class.forName('com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar', true,
+        tasks.named('shadowJar').get().getClass().classLoader)
+def devLibrariesJar = tasks.register('devLibrariesJar', shadowJarType) {
     bundleLibraries(it)
     archiveBaseName.set(project.name)
     archiveClassifier.set('dev-libraries')
