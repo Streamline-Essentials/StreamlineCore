@@ -4,6 +4,7 @@ import org.pf4j.PluginDependency;
 import org.pf4j.PluginDescriptor;
 import org.pf4j.PluginWrapper;
 import singularity.client.ClientEnvironment;
+import singularity.loading.ModuleClassTransformer;
 import singularity.registry.ModuleRegistry;
 
 import java.io.File;
@@ -71,8 +72,23 @@ public final class ClientModuleManager {
     private static volatile ClientPluginManager pluginManager;
     private static volatile boolean started;
     private static volatile boolean stopped;
+    private static volatile ModuleClassTransformer classTransformer;
 
     private ClientModuleManager() {}
+
+    /**
+     * Rewrites client module classes before they are defined, or {@code null} to define them
+     * as they are in the jar. Minecraft 1.8.9 sets one that rewrites them for Java 8. Applies
+     * to modules loaded after it is set.
+     */
+    public static void setClassTransformer(ModuleClassTransformer transformer) {
+        classTransformer = transformer;
+    }
+
+    /** @return the transformer client module classes go through, or {@code null} */
+    public static ModuleClassTransformer getClassTransformer() {
+        return classTransformer;
+    }
 
     /** A loaded module and the jar it came from. */
     private static final class Entry {
