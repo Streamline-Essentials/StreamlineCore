@@ -8,15 +8,19 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.streamline.client.Keybinds;
 import net.streamline.client.StreamlineClient;
 import net.streamline.platform.commands.ClientCommand;
 import net.streamline.platform.listeners.FabricHudHook;
+import net.streamline.platform.listeners.FabricKeyHook;
 import net.streamline.platform.listeners.ModEvents;
 
 /**
  * The client side of the Fabric mod: the {@code /streamlineclient} and {@code /slclient}
- * client commands, Streamline's start once the client is up, and its shutdown once the
- * client exits, since stopping an integrated server leaves it up for the next world.
+ * client commands, the HUD Editor and menu key mappings, Streamline's start once the client
+ * is up, and its shutdown once the client exits, since stopping an integrated server leaves
+ * it up for the next world.
  */
 public class StreamlineFabricClient implements ClientModInitializer {
 
@@ -28,6 +32,8 @@ public class StreamlineFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         StreamlineClient.init();
         FabricHudHook.register();
+        FabricKeyHook.register();
+        ClientTickEvents.END_CLIENT_TICK.register(client -> Keybinds.tick());
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             for (String label : ClientCommand.LABELS) {
