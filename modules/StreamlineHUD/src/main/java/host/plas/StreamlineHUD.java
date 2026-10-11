@@ -7,10 +7,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
 import singularity.client.hud.HudRegistry;
+import singularity.client.module.ClientModule;
 import singularity.client.settings.ClientSettingsRegistry;
 import singularity.client.settings.ModuleSettings;
 import singularity.client.settings.Setting;
-import singularity.modules.SimpleModule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,9 +18,9 @@ import java.util.List;
 /**
  * Client HUD elements built on Streamline's client API. Players move, scale and hide them
  * with {@code /slclient hud}, and style them on this module's page in {@code /slclient menu}.
- * Leaving it, {@code CosmicModule.stop()} drops the elements and the settings page.
+ * Disabling or unloading it drops the elements and the settings page.
  */
-public class StreamlineHUD extends SimpleModule {
+public class StreamlineHUD extends ClientModule {
     @Getter @Setter
     private static StreamlineHUD instance;
 
@@ -54,6 +54,9 @@ public class StreamlineHUD extends SimpleModule {
     @Override
     public void onDisable() {
         HudStyle.clear();
+        // The module can be unloaded while the game runs; a static reference would keep its
+        // class loader, and the jar copy it reads from, alive.
+        instance = null;
     }
 
     private static List<InfoElement> elements() {
