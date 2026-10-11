@@ -368,7 +368,9 @@ public class ModuleManager {
 
     /**
      * Iterates every JAR in the plugin manager's root folder and loads each
-     * one through PF4J, skipping any that fail with a logged error.
+     * one through PF4J, skipping jars already loaded, jars whose
+     * {@link SupportedPlatformTag}s exclude this platform, and any that fail
+     * with a logged error.
      *
      * @return the number of JARs successfully handed off to PF4J
      */
@@ -381,6 +383,8 @@ public class ModuleManager {
 
         Arrays.stream(files).forEach(file -> {
             if (file.getName().endsWith(".jar")) {
+                if (getPluginWrapperByJarName(file.getName()) != null) return;
+                if (! mayLoad(file.toPath())) return;
                 try {
                     safePluginManager().loadPlugin(file.toPath());
 
@@ -395,14 +399,48 @@ public class ModuleManager {
     }
 
     /**
+     * Logs why a jar may not load here, and warns about jars that declare no platforms.
+     *
+     * @return whether the jar may load
+     */
+    private static boolean mayLoad(Path jar) {
+        String refusal = ModulePlatforms.refusal(jar);
+        if (refusal != null) {
+            MessageUtils.logInfo("&eSkipping module " + refusal);
+            return false;
+        }
+        if (ModulePlatforms.isUntagged(jar)) {
+            MessageUtils.logWarning("Module '" + jar.getFileName() + "' declares no supported platforms ("
+                    + SupportedPlatformTag.MANIFEST_ATTRIBUTE + "); loading it anyway. Rebuild it with pf.platforms set.");
+        }
+        return true;
+    }
+
+    /**
      * Loads and starts a single external module JAR by file name.
      *
      * @param jarName the JAR file name (with or without the {@code .jar}
      *                extension) located in the plugin manager's root folder
      */
     public static void registerExternalModule(@NotNull String jarName) {
+        String refusal = tryRegisterExternalModule(jarName);
+        if (refusal != null) MessageUtils.logInfo("&eSkipping module " + refusal);
+    }
+
+    /**
+     * Loads and starts a single external module JAR by file name, unless its
+     * {@link SupportedPlatformTag}s exclude this platform.
+     *
+     * @param jarName the JAR file name (with or without the {@code .jar}
+     *                extension) located in the plugin manager's root folder
+     * @return why the module was not loaded, or {@code null} if it was handed to PF4J
+     */
+    public static String tryRegisterExternalModule(@NotNull String jarName) {
         if (! jarName.endsWith(".jar")) jarName += ".jar";
         Path path = safePluginManager().getPluginsRoot().resolve(jarName);
+
+        String refusal = ModulePlatforms.refusal(path);
+        if (refusal != null) return refusal;
 
         // If a previous unload left a RESOLVED/STOPPED wrapper, drop it first.
         PluginWrapper existingByJar = getPluginWrapperByJarName(jarName);
@@ -414,9 +452,10 @@ public class ModuleManager {
         PluginWrapper plugin = getPluginWrapperByJarName(jarName);
         if (plugin == null) {
             MessageUtils.logSevere("Could not load module '" + jarName + "': plugin wrapper missing after loadPlugin.");
-            return;
+            return "'" + jarName + "' could not be loaded; see the log.";
         }
         safePluginManager().startPlugin(plugin.getPluginId());
+        return null;
     }
 
     /**

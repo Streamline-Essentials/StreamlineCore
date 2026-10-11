@@ -7,9 +7,12 @@ import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.events.CosmicEvent;
+import singularity.modules.SupportedPlatformTag;
 import singularity.objects.CosmicResourcePack;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Logger;
 
@@ -59,6 +62,42 @@ public interface ISingularityExtension {
      * @return the {@link PlatformType} constant identifying the current platform
      */
     PlatformType getPlatformType();
+
+    /**
+     * The module platform tags this platform runs: a module loads only if it lists one of them.
+     * Paper and its forks also run modules written for Spigot; mod loaders report
+     * {@link SupportedPlatformTag#MODDED_SERVER}, and their clients override this.
+     *
+     * @return the accepted tags
+     */
+    default Set<SupportedPlatformTag> getSupportedPlatformTags() {
+        switch (getPlatformType()) {
+            case BUNGEE:
+            case VELOCITY:
+                return EnumSet.of(SupportedPlatformTag.PROXY);
+            case SPIGOT:
+                return isPaperServer()
+                        ? EnumSet.of(SupportedPlatformTag.SPIGOT, SupportedPlatformTag.PAPER)
+                        : EnumSet.of(SupportedPlatformTag.SPIGOT);
+            default:
+                return EnumSet.of(SupportedPlatformTag.MODDED_SERVER);
+        }
+    }
+
+    /**
+     * @return whether the server ships the Paper API, as Paper and its forks do
+     */
+    static boolean isPaperServer() {
+        for (String marker : new String[]{"io.papermc.paper.ServerBuildInfo", "com.destroystokyo.paper.PaperConfig",
+                "io.papermc.paper.configuration.Configuration"}) {
+            try {
+                Class.forName(marker, false, ISingularityExtension.class.getClassLoader());
+                return true;
+            } catch (ClassNotFoundException | LinkageError ignored) {
+            }
+        }
+        return false;
+    }
 
     /**
      * Returns the server type (proxy or backend) for this extension.
