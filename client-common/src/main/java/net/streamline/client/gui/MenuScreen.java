@@ -1,8 +1,11 @@
 package net.streamline.client.gui;
 
 import net.streamline.client.Canvas;
+import net.streamline.client.CanvasHudRenderer;
 import net.streamline.client.compat.ClientCompat;
 import net.streamline.client.compat.CompatScreen;
+import singularity.client.hud.CustomHudElements;
+import singularity.client.hud.HudElement;
 import singularity.client.hud.HudPlacement;
 import singularity.client.hud.HudRegistry;
 import singularity.client.module.ClientModuleCloud;
@@ -14,20 +17,24 @@ import singularity.client.settings.Setting;
 import singularity.registry.ModuleRegistry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
  * The client module menu ({@code /slclient menu}): a sidebar of the client modules loaded in
  * this game and, for the selected one, its details, an enable switch, reload, update and
  * remove buttons, the settings it registered with {@link ClientSettingsRegistry}, and its HUD
- * elements. The sidebar's last entry browses eCloud for client modules, and for world modules
+ * elements, whose text can be edited where the element allows it, plus an add button for
+ * modules that let the player add text elements of their own. The sidebar's last entry browses eCloud for client modules, and for world modules
  * (server modules that run in the worlds this client hosts), and installs them
  * while the game runs.
  *
@@ -41,6 +48,8 @@ public final class MenuScreen extends CompatScreen {
     private static final int HEADER_HEIGHT = 22;
     private static final int PAD = 8;
     private static final int SCROLL_STEP = 16;
+    private static final int TEMPLATE_MAX_LENGTH = 256;
+    private static final int ID_MAX_LENGTH = 32;
 
     /** The screen to return to: a version-specific screen object, or {@code null}. */
     private final Object parent;
@@ -71,6 +80,18 @@ public final class MenuScreen extends CompatScreen {
     private SliderDrag sliderDrag;
     private TextEdit editing;
     private long openedAt = System.currentTimeMillis();
+
+    /** The HUD element (registry key) whose text editor is open. */
+    private String expandedElement;
+    /** The HUD element (registry key) whose Delete button was clicked once. */
+    private String confirmDelete;
+    /** The module whose add-element form is open, and what has been typed into it. */
+    private String addingFor;
+    private String addId = "";
+    private String addText = "";
+    /** Owners of the add form's two fields, so input can tell them apart. */
+    private final Object addIdField = new Object();
+    private final Object addTextField = new Object();
 
     public MenuScreen(Object parent) {
         super("Streamline Client");
@@ -116,22 +137,25 @@ public final class MenuScreen extends CompatScreen {
         }
     }
 
-    /** A text or color field being typed into; the value is applied on Enter or focus loss. */
+    /**
+     * A text field being typed into; the value is applied on Enter or focus loss. The owner
+     * identifies the field across frames: a setting, a HUD element, or one of the add form's fields.
+     */
     private static final class TextEdit {
-        final ModuleSettings page;
-        final Setting<?> setting;
+        final Object owner;
         final StringBuilder buffer;
+        final int maxLength;
+        final Consumer<String> apply;
 
-        TextEdit(ModuleSettings page, Setting<?> setting) {
-            this.page = page;
-            this.setting = setting;
-            this.buffer = new StringBuilder(setting.getKind() == Setting.Kind.COLOR
-                    ? setting.formatValue() : String.valueOf(setting.getValue()));
+        TextEdit(Object owner, String initial, int maxLength, Consumer<String> apply) {
+            this.owner = owner;
+            this.buffer = new StringBuilder(initial == null ? "" : initial);
+            this.maxLength = maxLength;
+            this.apply = apply;
         }
 
-        int maxLength() {
-            if (setting instanceof Setting.Text) return ((Setting.Text) setting).getMaxLength();
-            return 9;
+        void append(String text) {
+            for (int i = 0; i < text.length() && buffer.length() < maxLength; i++) buffer.append(text.charAt(i));
         }
     }
 
@@ -352,20 +376,21 @@ public final class MenuScreen extends CompatScreen {
         }
 
         List<HudRegistry.Registered> elements = HudRegistry.elementsOf(id);
-        if (! elements.isEmpty()) {
+        CustomHudElements custom = module.isEnabled() ? HudRegistry.customElements(id) : null;
+        if (! elements.isEmpty() || custom != null) {
             y += 4;
+            int headerY = y;
             y = section(canvas, "HUD elements", y, right);
+            if (custom != null) {
+                boolean adding = id.equals(addingFor);
+                int plusX1 = right - 14;
+                Theme.button(canvas, plusX1, headerY - 3, right, headerY + 9, adding ? "-" : "+",
+                        hovered(mouseX, mouseY, plusX1, headerY - 3, right, headerY + 9), true);
+                addRegion(plusX1, headerY - 3, right, headerY + 9, null, (cx, cy, b) -> toggleAddForm(id));
+                if (adding) y = drawAddForm(canvas, mouseX, mouseY, id, custom, y, x1, right);
+            }
             for (HudRegistry.Registered registered : elements) {
-                HudPlacement placement = registered.getPlacement();
-                if (hovered(mouseX, mouseY, x1 - 2, y - 2, right + 2, y + 12)) canvas.fill(x1 - 2, y - 2, right + 2, y + 12, Theme.HOVER);
-                canvas.text(Theme.fit(canvas, registered.getElement().getDisplayName(), right - x1 - 30), x1, y + 1, Theme.TEXT);
-                boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
-                Theme.toggle(canvas, right - 20, y, placement.isEnabled(), hover);
-                addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> {
-                    placement.setEnabled(! placement.isEnabled());
-                    HudRegistry.save();
-                });
-                y += 16;
+                y = drawElement(canvas, mouseX, mouseY, registered, custom, y, x1, right);
             }
             y += 2;
             int buttonX2 = x1 + 100;
@@ -457,25 +482,12 @@ public final class MenuScreen extends CompatScreen {
                     canvas.fill(cx1, y - 1, cx1 + 12, y + 11, Theme.CONTROL_BORDER);
                     canvas.fill(cx1 + 1, y, cx1 + 11, y + 10, Canvas.opaque(color));
                 }
-                boolean focused = editing != null && editing.setting == setting;
-                boolean hover = hovered(mouseX, mouseY, fieldX1, y - 1, cx2, y + 11);
-                canvas.fill(fieldX1, y - 1, cx2, y + 11, Theme.CONTROL);
-                canvas.outline(fieldX1, y - 1, cx2, y + 11, focused ? Theme.ACCENT : (hover ? Theme.MUTED : Theme.CONTROL_BORDER));
-                String shown = focused ? editing.buffer.toString() : (isColor ? setting.formatValue() : String.valueOf(setting.getValue()));
-                String visibleText = fitTail(canvas, shown, cx2 - fieldX1 - 8);
-                canvas.text(visibleText, fieldX1 + 3, y + 1, Theme.TEXT);
-                boolean caret = focused && ((System.currentTimeMillis() - openedAt) / 500) % 2 == 0;
-                if (caret) {
-                    int caretX = fieldX1 + 3 + canvas.textWidth(visibleText);
-                    canvas.fill(caretX, y, caretX + 1, y + 10, Theme.TEXT);
-                }
-                addRegion(fieldX1, y - 1, cx2, y + 11, setting, (x, yy, b) -> {
-                    if (editing == null || editing.setting != setting) {
-                        commitEdit();
-                        editing = new TextEdit(page, setting);
-                        openedAt = System.currentTimeMillis();
-                    }
-                });
+                int maxLength = setting instanceof Setting.Text ? ((Setting.Text) setting).getMaxLength() : 9;
+                field(canvas, mouseX, mouseY, setting, fieldX1, y, cx2,
+                        isColor ? setting.formatValue() : String.valueOf(setting.getValue()), false, maxLength, text -> {
+                            setting.setFromText(text);
+                            page.save();
+                        });
                 break;
             }
             default:
@@ -500,12 +512,265 @@ public final class MenuScreen extends CompatScreen {
         }
     }
 
+    /**
+     * Draws a one-line text field from {@code x1} to {@code x2}; clicking it starts typing into
+     * it, and {@code apply} gets the text on Enter or when another control takes focus.
+     *
+     * @param owner identifies the field across frames
+     * @param raw   whether to show color codes as typed instead of applying them
+     */
+    private void field(Canvas canvas, int mouseX, int mouseY, Object owner, int x1, int y, int x2,
+                       String value, boolean raw, int maxLength, Consumer<String> apply) {
+        boolean focused = editing != null && editing.owner == owner;
+        boolean hover = hovered(mouseX, mouseY, x1, y - 1, x2, y + 11);
+        canvas.fill(x1, y - 1, x2, y + 11, Theme.CONTROL);
+        canvas.outline(x1, y - 1, x2, y + 11, focused ? Theme.ACCENT : (hover ? Theme.MUTED : Theme.CONTROL_BORDER));
+        String shown = focused ? editing.buffer.toString() : (value == null ? "" : value);
+        String visibleText = fitTail(canvas, shown, x2 - x1 - 8, raw);
+        if (raw) canvas.rawText(visibleText, x1 + 3, y + 1, Theme.TEXT);
+        else canvas.text(visibleText, x1 + 3, y + 1, Theme.TEXT);
+        boolean caret = focused && ((System.currentTimeMillis() - openedAt) / 500) % 2 == 0;
+        if (caret) {
+            int caretX = x1 + 3 + width(canvas, visibleText, raw);
+            canvas.fill(caretX, y, caretX + 1, y + 10, Theme.TEXT);
+        }
+        addRegion(x1, y - 1, x2, y + 11, owner, (x, yy, b) -> focus(owner, value, maxLength, apply));
+    }
+
+    /** Starts typing into a field, keeping what was typed if it already has focus. */
+    private void focus(Object owner, String value, int maxLength, Consumer<String> apply) {
+        if (editing != null && editing.owner == owner) return;
+        commitEdit();
+        editing = new TextEdit(owner, value, maxLength, apply);
+        openedAt = System.currentTimeMillis();
+    }
+
     /** Keeps the end of the text, where the caret is, when it is too wide for its field. */
-    private static String fitTail(Canvas canvas, String text, int width) {
-        if (canvas.textWidth(text) <= width) return text;
+    private static String fitTail(Canvas canvas, String text, int width, boolean raw) {
+        if (width(canvas, text, raw) <= width) return text;
         int start = 0;
-        while (start < text.length() && canvas.textWidth(text.substring(start)) > width) start++;
+        while (start < text.length() && width(canvas, text.substring(start), raw) > width) start++;
         return text.substring(start);
+    }
+
+    private static int width(Canvas canvas, String text, boolean raw) {
+        return raw ? canvas.rawTextWidth(text) : canvas.textWidth(text);
+    }
+
+    // ---------------------------------------------------------------- hud elements
+
+    /** One HUD element: its name, an Edit button where its text can be edited, and its show switch. */
+    private int drawElement(Canvas canvas, int mouseX, int mouseY, HudRegistry.Registered registered,
+                            CustomHudElements custom, int y, int x1, int right) {
+        HudElement element = registered.getElement();
+        HudPlacement placement = registered.getPlacement();
+        String key = registered.getKey();
+        boolean editable = template(element) != null;
+        boolean expanded = editable && key.equals(expandedElement);
+
+        if (hovered(mouseX, mouseY, x1 - 2, y - 2, right + 2, y + 12)) canvas.fill(x1 - 2, y - 2, right + 2, y + 12, Theme.HOVER);
+        int labelRight = right - 30;
+        if (editable) {
+            String label = expanded ? "Close" : "Edit";
+            int editX2 = right - 26;
+            int editX1 = editX2 - canvas.textWidth(label) - 10;
+            Theme.button(canvas, editX1, y - 1, editX2, y + 11, label, hovered(mouseX, mouseY, editX1, y - 1, editX2, y + 11), false);
+            addRegion(editX1, y - 1, editX2, y + 11, null, (cx, cy, b) -> {
+                commitEdit();
+                expandedElement = expanded ? null : key;
+                confirmDelete = null;
+            });
+            labelRight = editX1 - 4;
+        }
+        String name = element.getDisplayName() + (custom(element) ? " &8(custom)" : "");
+        canvas.text(Theme.fit(canvas, name, labelRight - x1), x1, y + 1, Theme.TEXT);
+        boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
+        Theme.toggle(canvas, right - 20, y, placement.isEnabled(), hover);
+        addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> {
+            placement.setEnabled(! placement.isEnabled());
+            HudRegistry.save();
+        });
+        y += 16;
+        if (expanded) y = drawTemplateEditor(canvas, mouseX, mouseY, registered, custom, y, x1, right);
+        return y;
+    }
+
+    /** The open text editor of one element: the field, a preview, Reset / Delete, and its placeholders. */
+    private int drawTemplateEditor(Canvas canvas, int mouseX, int mouseY, HudRegistry.Registered registered,
+                                   CustomHudElements custom, int y, int x1, int right) {
+        HudElement element = registered.getElement();
+        String key = registered.getKey();
+        int inner = x1 + 6;
+        int top = y;
+        Consumer<String> apply = text -> guard(key, () -> element.setTemplate(text));
+
+        field(canvas, mouseX, mouseY, element, inner, y, right, template(element), true, TEMPLATE_MAX_LENGTH, apply);
+        y += 16;
+
+        y = drawPreview(canvas, registered, y, inner, right);
+
+        int x = actionButton(canvas, mouseX, mouseY, inner, y, "Reset", false, () -> {
+            if (editing != null && editing.owner == element) editing = null;
+            guard(key, () -> element.setTemplate(""));
+        });
+        if (custom != null && custom(element)) {
+            boolean confirming = key.equals(confirmDelete);
+            actionButton(canvas, mouseX, mouseY, x, y, confirming ? "Click again to delete" : "Delete", confirming, () -> {
+                if (! key.equals(confirmDelete)) {
+                    confirmDelete = key;
+                    return;
+                }
+                confirmDelete = null;
+                if (editing != null && editing.owner == element) editing = null;
+                String error = call(key, () -> custom.remove(element.getId()));
+                if (error == null) {
+                    expandedElement = null;
+                    HudRegistry.forgetPlacement(registered.getOwner(), element.getId());
+                    HudRegistry.save();
+                }
+            });
+        }
+        y = notice(canvas, key, y + 18, inner, right);
+
+        Map<String, String> placeholders = placeholders(element);
+        if (! placeholders.isEmpty()) {
+            canvas.text("Placeholders (click to insert):", inner, y + 2, Theme.MUTED);
+            y += canvas.lineHeight() + 5;
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                String token = entry.getKey();
+                int tokenWidth = canvas.rawTextWidth(token);
+                int rowY2 = y + canvas.lineHeight();
+                boolean hover = hovered(mouseX, mouseY, inner - 2, y - 1, right + 2, rowY2);
+                if (hover) canvas.fill(inner - 2, y - 1, right + 2, rowY2, Theme.HOVER);
+                canvas.rawText(token, inner, y, hover ? Theme.ACCENT_LIGHT : Theme.TEXT);
+                if (! entry.getValue().isEmpty()) {
+                    canvas.text(Theme.fit(canvas, entry.getValue(), right - inner - tokenWidth - 8), inner + tokenWidth + 6, y, Theme.MUTED);
+                }
+                // Owned by the element's field, so clicking here keeps typing in it.
+                addRegion(inner - 2, y - 1, right + 2, rowY2, element, (cx, cy, b) -> {
+                    focus(element, template(element), TEMPLATE_MAX_LENGTH, apply);
+                    editing.append(token);
+                });
+                y += canvas.lineHeight() + 2;
+            }
+        }
+        canvas.fill(x1, top - 2, x1 + 2, y, Theme.CONTROL_BORDER);
+        return y + 6;
+    }
+
+    /** Draws the element as the HUD would, scaled down if it is wider than the menu. */
+    private int drawPreview(Canvas canvas, HudRegistry.Registered registered, int y, int x1, int right) {
+        HudElement element = registered.getElement();
+        try {
+            CanvasHudRenderer renderer = new CanvasHudRenderer(canvas);
+            int width = element.width(renderer, true);
+            int height = element.height(renderer, true);
+            if (width <= 0 || height <= 0) return y;
+            float scale = Math.min(1f, (right - x1) / (float) width);
+            canvas.push();
+            try {
+                canvas.translate(x1, y);
+                canvas.scale(scale);
+                element.render(renderer, true);
+            } finally {
+                canvas.pop();
+            }
+            return y + (int) Math.ceil(height * scale) + 4;
+        } catch (Throwable t) {
+            return paragraph(canvas, "Preview failed: " + t, y, right - x1, Theme.ACCENT_LIGHT);
+        }
+    }
+
+    /** The form the + button opens: an identifier, the text, and Add / Cancel. */
+    private int drawAddForm(Canvas canvas, int mouseX, int mouseY, String moduleId, CustomHudElements custom,
+                            int y, int x1, int right) {
+        int labelWidth = Math.max(canvas.textWidth("Identifier"), canvas.textWidth("Text")) + 8;
+        canvas.text("Identifier", x1, y + 1, Theme.TEXT);
+        field(canvas, mouseX, mouseY, addIdField, x1 + labelWidth, y, Math.min(right, x1 + labelWidth + 120), addId, true,
+                ID_MAX_LENGTH, text -> addId = text);
+        y += 16;
+        canvas.text("Text", x1, y + 1, Theme.TEXT);
+        field(canvas, mouseX, mouseY, addTextField, x1 + labelWidth, y, right, addText, true,
+                TEMPLATE_MAX_LENGTH, text -> addText = text);
+        y += 16;
+        y = paragraph(canvas, "Color codes and placeholders work here; Edit lists the placeholders once it is added. "
+                + "It starts at the top left: move it with HUD Layout.", y, right - x1, Theme.MUTED);
+        String noticeKey = "add:" + moduleId;
+        int x = actionButton(canvas, mouseX, mouseY, x1, y, "Add", true, () -> {
+            String id = addId.trim();
+            String error = call(noticeKey, () -> custom.add(id, addText));
+            if (error == null) {
+                notices.put(noticeKey, "Added '" + id + "'.");
+                expandedElement = HudRegistry.key(moduleId, id);
+                addId = "";
+                addText = "";
+            }
+        });
+        actionButton(canvas, mouseX, mouseY, x, y, "Cancel", false, () -> toggleAddForm(moduleId));
+        return notice(canvas, noticeKey, y + 18, x1, right) + 4;
+    }
+
+    private void toggleAddForm(String moduleId) {
+        commitEdit();
+        if (moduleId.equals(addingFor)) {
+            addingFor = null;
+        } else {
+            addingFor = moduleId;
+            addId = "";
+            addText = "";
+        }
+        notices.remove("add:" + moduleId);
+    }
+
+    // Element methods are module code, so each call is caught: a module that throws only
+    // fails its own element.
+
+    private static String template(HudElement element) {
+        try {
+            return element.getTemplate();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static Map<String, String> placeholders(HudElement element) {
+        try {
+            Map<String, String> placeholders = element.getPlaceholders();
+            return placeholders == null ? Collections.<String, String>emptyMap() : placeholders;
+        } catch (Throwable t) {
+            return Collections.emptyMap();
+        }
+    }
+
+    private static boolean custom(HudElement element) {
+        try {
+            return element.isCustom();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Runs module code for the element or form at {@code key}, noting a failure under it. */
+    private void guard(String key, Runnable action) {
+        try {
+            action.run();
+            notices.remove(key);
+        } catch (Throwable t) {
+            notices.put(key, "!" + message(t));
+        }
+    }
+
+    /** Asks module code for an outcome; {@code null} is success, anything else is noted as a failure. */
+    private String call(String key, Callable<String> action) {
+        String error;
+        try {
+            error = action.call();
+        } catch (Throwable t) {
+            error = message(t);
+        }
+        if (error == null) notices.remove(key);
+        else notices.put(key, "!" + error);
+        return error;
     }
 
     private static String formatNumber(Double value, double step) {
@@ -684,8 +949,7 @@ public final class MenuScreen extends CompatScreen {
         if (editing == null) return;
         TextEdit edit = editing;
         editing = null;
-        edit.setting.setFromText(edit.buffer.toString());
-        edit.page.save();
+        edit.apply.accept(edit.buffer.toString());
     }
 
     // ---------------------------------------------------------------- input
@@ -695,7 +959,7 @@ public final class MenuScreen extends CompatScreen {
         for (int i = regions.size() - 1; i >= 0; i--) {
             Region region = regions.get(i);
             if (! Theme.inside(x, y, region.x1, region.y1, region.x2, region.y2)) continue;
-            if (editing != null && region.owner != editing.setting) commitEdit();
+            if (editing != null && region.owner != editing.owner) commitEdit();
             region.click.click(x, y, button);
             return true;
         }
@@ -757,7 +1021,7 @@ public final class MenuScreen extends CompatScreen {
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c < 32 || c == 127) continue;
-            if (editing.buffer.length() >= editing.maxLength()) break;
+            if (editing.buffer.length() >= editing.maxLength) break;
             editing.buffer.append(c);
         }
         return true;

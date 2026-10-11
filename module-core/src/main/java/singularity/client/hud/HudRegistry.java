@@ -29,6 +29,8 @@ public final class HudRegistry {
     /** Registered elements by key, sorted so the editor lists them in a stable order. */
     private static final Map<String, Registered> ELEMENTS = new ConcurrentSkipListMap<>();
     private static final Map<String, HudPlacement> PLACEMENTS = new ConcurrentHashMap<>();
+    /** Modules that let the player add elements, by module id. */
+    private static final Map<String, CustomHudElements> CUSTOM = new ConcurrentHashMap<>();
     private static volatile boolean loaded;
 
     private HudRegistry() {}
@@ -81,6 +83,21 @@ public final class HudRegistry {
 
     public static void unregisterAll(String owner) {
         ELEMENTS.values().removeIf(registered -> registered.owner.equals(owner));
+        CUSTOM.remove(owner);
+    }
+
+    /**
+     * Lets the player add elements to a module's HUD from the module menu; {@code null} stops
+     * offering it. It is dropped with the module's elements when the module stops.
+     */
+    public static void setCustomElements(String owner, CustomHudElements custom) {
+        if (custom == null) CUSTOM.remove(owner);
+        else CUSTOM.put(owner, custom);
+    }
+
+    /** @return how the player adds elements to a module's HUD, or {@code null} if they cannot */
+    public static CustomHudElements customElements(String owner) {
+        return CUSTOM.get(owner);
     }
 
     /** @return a snapshot of every registered element */
@@ -108,6 +125,11 @@ public final class HudRegistry {
     public static void reset(String owner, HudElement element) {
         PLACEMENTS.put(key(owner, element.getId()),
                 new HudPlacement(element.getDefaultX(), element.getDefaultY(), 1.0, true));
+    }
+
+    /** Forgets where an element was placed, so one added later with its id starts at its default place. */
+    public static void forgetPlacement(String owner, String elementId) {
+        PLACEMENTS.remove(key(owner, elementId));
     }
 
     private static File file() {
