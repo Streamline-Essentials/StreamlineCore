@@ -11,19 +11,23 @@ import java.util.List;
  */
 final class Theme {
 
+    // Streamline red (#D32F2F) leads; buttons and controls use nearby shades of it.
     static final int BACKDROP = 0x90000000;
-    static final int PANEL = 0xF0181A1F;
-    static final int HEADER = 0xFF22252B;
-    static final int SIDEBAR = 0xFF1D2025;
-    static final int ACCENT = 0xFF4F8CFF;
-    static final int ACCENT_DIM = 0xFF2E4F8F;
+    static final int PANEL = 0xF0181415;
+    static final int HEADER = 0xFFD32F2F;
+    static final int SIDEBAR = 0xFF1F1718;
+    static final int ACCENT = 0xFFD32F2F;
+    static final int ACCENT_LIGHT = 0xFFE57373;
+    static final int BUTTON = 0xFFB02424;
+    static final int BUTTON_HOVER = 0xFFD84343;
+    static final int BUTTON_DARK = 0xFF5E1717;
+    static final int BUTTON_DARK_HOVER = 0xFF7A2020;
     static final int TEXT = 0xFFE6E6E6;
-    static final int MUTED = 0xFF9AA0A6;
+    static final int MUTED = 0xFFA89A9B;
     static final int HOVER = 0x18FFFFFF;
-    static final int CONTROL = 0xFF2B2F36;
-    static final int CONTROL_BORDER = 0xFF3A3F47;
-    static final int SWITCH_OFF = 0xFF4A4F57;
-    static final int WARNING = 0xFFE0A040;
+    static final int CONTROL = 0xFF2A1F20;
+    static final int CONTROL_BORDER = 0xFF4D2A2D;
+    static final int SWITCH_OFF = 0xFF4A3B3D;
 
     static final int GLFW_ESCAPE = 256;
     static final int GLFW_ENTER = 257;
@@ -37,9 +41,9 @@ final class Theme {
         return x >= x1 && y >= y1 && x < x2 && y < y2;
     }
 
-    /** A flat button with centred text; hovered buttons light up. */
+    /** A flat button with centred text: primary ones bright red, others dark red; hovered ones lighten. */
     static void button(Canvas canvas, int x1, int y1, int x2, int y2, String label, boolean hovered, boolean primary) {
-        int color = primary ? (hovered ? ACCENT : ACCENT_DIM) : (hovered ? CONTROL_BORDER : CONTROL);
+        int color = primary ? (hovered ? BUTTON_HOVER : BUTTON) : (hovered ? BUTTON_DARK_HOVER : BUTTON_DARK);
         canvas.fill(x1, y1, x2, y2, color);
         int textX = x1 + (x2 - x1 - canvas.textWidth(label)) / 2;
         int textY = y1 + (y2 - y1 - canvas.lineHeight()) / 2 + 1;
