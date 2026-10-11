@@ -1,13 +1,15 @@
 package net.streamline.client;
 
-import net.minecraft.network.chat.Component;
-
 /**
  * Drawing on the game's GUI, the same on every Minecraft version. Each version's
  * {@code GfxCanvas} implements it over that version's graphics object.
  *
  * <p>Coordinates are GUI-scaled pixels. Colors are ARGB; {@link #opaque(int)} makes a color
  * without alpha fully opaque, since from 1.21.6 a zero alpha draws nothing.</p>
+ *
+ * <p>Text is a string with {@code &} or {@code §} color codes and {@code {#rrggbb}} /
+ * {@code &#rrggbb} hex colors, so nothing here depends on a Minecraft text type. A version
+ * without hex colors draws them as the nearest legacy color.</p>
  */
 public interface Canvas {
 
@@ -19,9 +21,11 @@ public interface Canvas {
 
     void fill(int x1, int y1, int x2, int y2, int color);
 
-    void text(Component text, int x, int y, int color, boolean shadow);
+    /** @param color the color of text without a color code of its own */
+    void text(String text, int x, int y, int color, boolean shadow);
 
-    int textWidth(Component text);
+    /** @return the width of {@code text} in pixels, color codes excluded */
+    int textWidth(String text);
 
     int lineHeight();
 
@@ -44,12 +48,8 @@ public interface Canvas {
         return (color >>> 24) == 0 ? color | 0xFF000000 : color;
     }
 
-    default void text(String plain, int x, int y, int color) {
-        text(Component.literal(plain), x, y, color, false);
-    }
-
-    default int textWidth(String plain) {
-        return textWidth(Component.literal(plain));
+    default void text(String text, int x, int y, int color) {
+        text(text, x, y, color, false);
     }
 
     /** Draws a one-pixel outline inside the rectangle. */

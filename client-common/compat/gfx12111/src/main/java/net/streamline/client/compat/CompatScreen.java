@@ -17,8 +17,8 @@ import net.streamline.client.Canvas;
  */
 public abstract class CompatScreen extends Screen {
 
-    protected CompatScreen(Component title) {
-        super(title);
+    protected CompatScreen(String title) {
+        super(Component.literal(title));
     }
 
     /** Draws the whole screen; nothing is drawn behind it but the game. */

@@ -3,8 +3,8 @@ package net.streamline.client.compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import net.streamline.client.Canvas;
+import net.streamline.client.ModernText;
 
 /**
  * {@link Canvas} over Minecraft 1.21.1's {@code GuiGraphics}, whose transform is a {@code PoseStack}.
@@ -39,13 +39,13 @@ public final class GfxCanvas implements Canvas {
     }
 
     @Override
-    public void text(Component text, int x, int y, int color, boolean shadow) {
-        graphics.drawString(font, text, x, y, color, shadow);
+    public void text(String text, int x, int y, int color, boolean shadow) {
+        graphics.drawString(font, ModernText.parse(text), x, y, color, shadow);
     }
 
     @Override
-    public int textWidth(Component text) {
-        return font.width(text);
+    public int textWidth(String text) {
+        return font.width(ModernText.parse(text));
     }
 
     @Override

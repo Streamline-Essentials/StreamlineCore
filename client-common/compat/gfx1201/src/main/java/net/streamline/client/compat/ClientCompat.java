@@ -3,25 +3,35 @@ package net.streamline.client.compat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
+import net.streamline.client.LiveClientInfo;
+import singularity.client.ClientInfo;
 
 /**
  * Client calls whose shape differs between Minecraft versions; this is Minecraft 1.20.x's.
  */
 public final class ClientCompat {
 
+    private static final ClientInfo INFO = new LiveClientInfo();
+
     private ClientCompat() {}
+
+    /** @return what the client knows about itself, read live */
+    public static ClientInfo clientInfo() {
+        return INFO;
+    }
 
     private static Minecraft minecraft() {
         return Minecraft.getInstance();
     }
 
     /** @return the open screen, or {@code null} in game */
-    public static Screen currentScreen() {
+    public static Object currentScreen() {
         return minecraft().screen;
     }
 
-    public static void setScreen(Screen screen) {
-        minecraft().setScreen(screen);
+    /** @param screen a {@code Screen}, or {@code null} to close the open one */
+    public static void setScreen(Object screen) {
+        minecraft().setScreen((Screen) screen);
     }
 
     /**

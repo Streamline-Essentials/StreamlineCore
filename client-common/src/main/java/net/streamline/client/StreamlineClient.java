@@ -17,7 +17,6 @@ import singularity.client.IClientHandler;
  */
 public final class StreamlineClient {
 
-    private static final ClientInfo INFO = new LiveClientInfo();
     private static volatile boolean initialized;
 
     private StreamlineClient() {}
@@ -58,7 +57,7 @@ public final class StreamlineClient {
 
         @Override
         public ClientInfo info() {
-            return INFO;
+            return ClientCompat.clientInfo();
         }
     }
 }
