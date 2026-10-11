@@ -13,7 +13,7 @@ if (legacy) {
 
     // The fork still speaks Forge: the Forge EventBus 6 listener and a Forge-style
     // mods.toml, with this project's own entrypoint reporting NeoForge.
-    ext.modSourceDirs = ['forge/forge-eventbus6']
+    ext.modSourceDirs = ['forge/forge-eventbus6', 'forge/forge-hud1201']
     ext.modResourceDirs = ['forge/forge-common']
     // 1.20.1 runs on SRG names, so the shaded jar ships reobfuscated.
     ext.modJarTask = 'reobfShadowJar'
