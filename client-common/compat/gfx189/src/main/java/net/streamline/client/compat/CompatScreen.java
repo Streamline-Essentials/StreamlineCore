@@ -26,6 +26,8 @@ public abstract class CompatScreen extends GuiScreen {
             {Keyboard.KEY_DELETE, 261},
             {Keyboard.KEY_RIGHT, 262},
             {Keyboard.KEY_LEFT, 263},
+            {Keyboard.KEY_DOWN, 264},
+            {Keyboard.KEY_UP, 265},
             {Keyboard.KEY_HOME, 268},
             {Keyboard.KEY_END, 269},
             {Keyboard.KEY_R, 82},
@@ -90,6 +92,19 @@ public abstract class CompatScreen extends GuiScreen {
     /** Leaves the screen; the default closes it. */
     public void onClose() {
         mc.displayGuiScreen(null);
+    }
+
+    /** Held keys repeat, as they do on later versions, so holding an arrow keeps moving. */
+    @Override
+    public void initGui() {
+        super.initGui();
+        Keyboard.enableRepeatEvents(true);
+    }
+
+    @Override
+    public void onGuiClosed() {
+        Keyboard.enableRepeatEvents(false);
+        super.onGuiClosed();
     }
 
     @Override

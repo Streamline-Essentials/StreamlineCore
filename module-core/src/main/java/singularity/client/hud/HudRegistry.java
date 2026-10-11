@@ -151,12 +151,13 @@ public final class HudRegistry {
             return;
         }
         for (String name : properties.stringPropertyNames()) {
-            // x,y,scale,enabled
+            // x,y,scale,enabled[,removed]
             String[] parts = properties.getProperty(name).split(",");
             if (parts.length < 4) continue;
             try {
                 PLACEMENTS.put(name, new HudPlacement(Double.parseDouble(parts[0].trim()), Double.parseDouble(parts[1].trim()),
-                        Double.parseDouble(parts[2].trim()), Boolean.parseBoolean(parts[3].trim())));
+                        Double.parseDouble(parts[2].trim()), Boolean.parseBoolean(parts[3].trim()),
+                        parts.length > 4 && Boolean.parseBoolean(parts[4].trim())));
             } catch (NumberFormatException ignored) {
             }
         }
@@ -169,11 +170,11 @@ public final class HudRegistry {
         Properties properties = new Properties();
         for (Map.Entry<String, HudPlacement> entry : PLACEMENTS.entrySet()) {
             HudPlacement p = entry.getValue();
-            properties.setProperty(entry.getKey(), p.getX() + "," + p.getY() + "," + p.getScale() + "," + p.isEnabled());
+            properties.setProperty(entry.getKey(), p.getX() + "," + p.getY() + "," + p.getScale() + "," + p.isEnabled() + "," + p.isRemoved());
         }
         file.getParentFile().mkdirs();
         try (OutputStream out = new FileOutputStream(file)) {
-            properties.store(out, "Streamline HUD layout: <module-id>:<element-id> = x,y,scale,enabled");
+            properties.store(out, "Streamline HUD layout: <module-id>:<element-id> = x,y,scale,enabled,removed");
         } catch (IOException e) {
             ClientEnvironment.logWarning("Could not write " + file + ": " + e.getMessage());
         }

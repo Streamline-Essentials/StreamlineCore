@@ -53,6 +53,12 @@ public final class ClientCompat {
         return GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
     }
 
+    /** @return whether the left Shift key is held now, read from GLFW */
+    public static boolean leftShiftDown() {
+        long window = minecraft().getWindow().getWindow();
+        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS;
+    }
+
     /** @return whether the player hid the GUI (F1) */
     public static boolean hudHidden() {
         return minecraft().options.hideGui;

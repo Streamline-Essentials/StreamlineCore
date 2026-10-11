@@ -2,6 +2,7 @@ package net.streamline.client.compat;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import singularity.client.ClientInfo;
 
@@ -59,6 +60,11 @@ public final class ClientCompat {
     /** @return whether the left mouse button is held now */
     public static boolean leftMouseDown() {
         return Mouse.isButtonDown(0);
+    }
+
+    /** @return whether the left Shift key is held now */
+    public static boolean leftShiftDown() {
+        return Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
     }
 
     /** @return whether the player hid the GUI (F1) */

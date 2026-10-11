@@ -1,5 +1,7 @@
 package net.streamline.client.compat;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
@@ -86,6 +88,37 @@ public final class ClientCompat {
         } catch (Throwable t) {
             return true;
         }
+    }
+
+    /**
+     * {@code InputConstants.isKeyDown}: {@code (Window, int)} on 26.2, {@code (int)} on 26.3, so it
+     * is looked up rather than linked; {@code null} if neither shape is there.
+     */
+    private static final Method IS_KEY_DOWN = isKeyDownMethod();
+
+    private static Method isKeyDownMethod() {
+        for (Class<?>[] shape : new Class<?>[][] {{int.class}, {Window.class, int.class}}) {
+            try {
+                return InputConstants.class.getMethod("isKeyDown", shape);
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
+            }
+        }
+        return null;
+    }
+
+    /** @return whether the left Shift key is held now; either Shift when that cannot be asked */
+    public static boolean leftShiftDown() {
+        int key = InputConstants.KEY_LSHIFT;
+        try {
+            if (IS_KEY_DOWN != null) {
+                Object down = IS_KEY_DOWN.getParameterCount() == 1
+                        ? IS_KEY_DOWN.invoke(null, key)
+                        : IS_KEY_DOWN.invoke(null, minecraft().getWindow(), key);
+                return (Boolean) down;
+            }
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+        }
+        return minecraft().hasShiftDown();
     }
 
     /** @return whether the player hid the GUI (F1) */

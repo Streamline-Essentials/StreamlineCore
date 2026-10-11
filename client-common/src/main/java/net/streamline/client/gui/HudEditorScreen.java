@@ -15,6 +15,11 @@ import java.util.List;
  * right-click it to show or hide it, and press R over it to put it back where it started.
  * Hidden elements stay visible here, dimmed, so they can be shown again.
  *
+ * <p>Clicking an element selects it: the arrow keys then nudge it a few pixels, or one pixel with
+ * Ctrl held, and Delete removes it, which hides it and takes it out of the editor until it is
+ * shown again from its module's page in the StreamlineClient Menu. Holding left Shift previews
+ * the HUD as it will look, without the menu button or hidden elements.</p>
+ *
  * <p>The layout is saved when a drag ends, after every other change, and when the editor
  * closes.</p>
  *
@@ -31,6 +36,10 @@ import java.util.List;
 public final class HudEditorScreen extends CompatScreen {
 
     private static final String HINT = "Drag to move • Scroll to scale • Right-click to show/hide • R to reset • Esc to finish";
+    private static final String HINT_SELECTED = "Arrows to nudge (Ctrl: 1px) • Delete to remove • Hold Left Shift to preview";
+    /** GUI pixels an arrow key moves the selected element; {@link #NUDGE_FINE} with Ctrl. */
+    private static final int NUDGE = 4;
+    private static final int NUDGE_FINE = 1;
     private static final double SCALE_STEP = 0.1;
     private static final String MENU_LABEL = "StreamlineClient Menu";
     private static final int MENU_PAD_X = 6;
@@ -44,6 +53,10 @@ public final class HudEditorScreen extends CompatScreen {
     private final List<Placed> placed = new ArrayList<>();
 
     private HudRegistry.Registered dragging;
+    /** The element the arrow keys and Delete act on: the last one clicked. */
+    private HudRegistry.Registered selected;
+    /** Whether left Shift was held this frame: the editor then shows only what the HUD will. */
+    private boolean previewing;
     private double dragOffsetX;
     private double dragOffsetY;
     /** Whether {@link ClientCompat#leftMouseDown()} has seen the button held during this drag. */
@@ -77,6 +90,7 @@ public final class HudEditorScreen extends CompatScreen {
         lastMouseY = mouseY;
         lastWidth = Math.max(1, canvas.width());
         lastHeight = Math.max(1, canvas.height());
+        previewing = dragging == null && ClientCompat.leftShiftDown();
         canvas.fill(0, 0, canvas.width(), canvas.height(), 0x50000000);
         // Centre guides make lining elements up easier.
         canvas.fill(canvas.width() / 2, 0, canvas.width() / 2 + 1, canvas.height(), 0x20FFFFFF);
@@ -95,6 +109,8 @@ public final class HudEditorScreen extends CompatScreen {
 
         placed.clear();
         for (HudRegistry.Registered registered : HudRegistry.elements()) {
+            HudPlacement placement = registered.getPlacement();
+            if (placement.isRemoved() || (previewing && ! placement.isEnabled())) continue;
             try {
                 HudOverlay.Bounds bounds = HudOverlay.draw(canvas, registered, true);
                 placed.add(new Placed(registered, bounds));
@@ -103,6 +119,7 @@ public final class HudEditorScreen extends CompatScreen {
             }
         }
 
+        if (selected != null && find(selected) == null) selected = null;
         Placed hovered = dragging != null ? find(dragging) : hoveredAt(mouseX, mouseY);
         for (Placed entry : placed) {
             HudOverlay.Bounds b = entry.bounds;
@@ -110,6 +127,9 @@ public final class HudEditorScreen extends CompatScreen {
             if (! shown) canvas.fill(b.x, b.y, b.x + b.width, b.y + b.height, 0xB0000000);
             int border = entry == hovered ? (dragging != null ? Theme.ACCENT_LIGHT : Theme.ACCENT) : (shown ? 0x80FFFFFF : 0x60FF5555);
             canvas.outline(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1, border);
+            if (selected != null && entry.registered.getKey().equals(selected.getKey())) {
+                canvas.outline(b.x - 2, b.y - 2, b.x + b.width + 2, b.y + b.height + 2, Theme.ACCENT_LIGHT);
+            }
         }
 
         if (hovered != null) {
@@ -132,13 +152,19 @@ public final class HudEditorScreen extends CompatScreen {
             }
         }
 
+        if (previewing) return;
         drawMenuButton(canvas, mouseX, mouseY);
 
-        String hint = Theme.fit(canvas, HINT, canvas.width() - 8);
-        int hintX = (canvas.width() - canvas.textWidth(hint)) / 2;
         int hintY = canvas.height() - canvas.lineHeight() - 4;
-        canvas.fill(hintX - 3, hintY - 2, hintX + canvas.textWidth(hint) + 3, hintY + canvas.lineHeight() + 1, 0xA0000000);
-        canvas.text(hint, hintX, hintY, Theme.MUTED);
+        drawHint(canvas, HINT, hintY);
+        drawHint(canvas, HINT_SELECTED, hintY - canvas.lineHeight() - 4);
+    }
+
+    private static void drawHint(Canvas canvas, String text, int y) {
+        String hint = Theme.fit(canvas, text, canvas.width() - 8);
+        int x = (canvas.width() - canvas.textWidth(hint)) / 2;
+        canvas.fill(x - 3, y - 2, x + canvas.textWidth(hint) + 3, y + canvas.lineHeight() + 1, 0xA0000000);
+        canvas.text(hint, x, y, Theme.MUTED);
     }
 
     /** The button that opens the StreamlineClient Menu: faint until the pointer is over it. */
@@ -194,13 +220,17 @@ public final class HudEditorScreen extends CompatScreen {
     protected boolean mouseDown(double x, double y, int button) {
         // A press while dragging means the release never arrived; that drag is over.
         if (dragging != null) endDrag();
-        if (button == 0 && overMenuButton(x, y)) {
+        if (button == 0 && ! previewing && overMenuButton(x, y)) {
             openMenu();
             return true;
         }
         Placed hit = hoveredAt(x, y);
-        if (hit == null) return false;
+        if (hit == null) {
+            if (button == 0) selected = null;
+            return false;
+        }
         if (button == 0) {
+            selected = hit.registered;
             dragging = hit.registered;
             dragSeenDown = false;
             dragOffsetX = x - hit.bounds.x;
@@ -259,10 +289,38 @@ public final class HudEditorScreen extends CompatScreen {
 
     @Override
     protected boolean key(int key, int modifiers) {
+        if (selected != null && dragging == null) {
+            int step = (modifiers & Theme.GLFW_MOD_SHORTCUT) != 0 ? NUDGE_FINE : NUDGE;
+            switch (key) {
+                case Theme.GLFW_LEFT: return nudge(-step, 0);
+                case Theme.GLFW_RIGHT: return nudge(step, 0);
+                case Theme.GLFW_UP: return nudge(0, -step);
+                case Theme.GLFW_DOWN: return nudge(0, step);
+                case Theme.GLFW_DELETE:
+                    selected.getPlacement().remove();
+                    selected = null;
+                    HudRegistry.save();
+                    return true;
+                default:
+                    break;
+            }
+        }
         if (key != Theme.GLFW_R) return false;
         Placed hit = hoveredAt(lastMouseX, lastMouseY);
         if (hit == null) return false;
         HudRegistry.reset(hit.registered.getOwner(), hit.registered.getElement());
+        HudRegistry.save();
+        return true;
+    }
+
+    /** Moves the selected element by whole GUI pixels, kept on screen. */
+    private boolean nudge(int dx, int dy) {
+        Placed current = find(selected);
+        if (current == null) return false;
+        HudOverlay.Bounds b = current.bounds;
+        int left = Math.max(0, Math.min(b.x + dx, lastWidth - b.width));
+        int top = Math.max(0, Math.min(b.y + dy, lastHeight - b.height));
+        selected.getPlacement().moveTo((double) left / lastWidth, (double) top / lastHeight);
         HudRegistry.save();
         return true;
     }

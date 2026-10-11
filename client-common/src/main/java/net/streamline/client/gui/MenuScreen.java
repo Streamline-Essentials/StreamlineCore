@@ -649,7 +649,9 @@ public final class MenuScreen extends CompatScreen {
         boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
         Theme.toggle(canvas, right - 20, y, placement.isEnabled(), hover);
         addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> {
-            placement.setEnabled(! placement.isEnabled());
+            // Showing also brings back an element removed in the HUD editor.
+            if (placement.isEnabled()) placement.setEnabled(false);
+            else placement.show();
             HudRegistry.save();
         });
         y += 16;
