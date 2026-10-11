@@ -156,30 +156,8 @@ function Get-BuildDirectories {
     return @($dirs | ForEach-Object { $_.FullName })
 }
 
-# Where build.gradle puts build output for a checkout inside OneDrive:
-# %LOCALAPPDATA%\StreamlineCore\build\<folder name>-<hex of Java's String.hashCode of the
-# lowercased path>. Returns $null when the checkout keeps its build output in place.
-function Get-RedirectedBuildRoot {
-    param([string] $Root)
-    $custom = $env:STREAMLINE_BUILD_ROOT
-    if (-not [string]::IsNullOrWhiteSpace($custom)) {
-        if ($custom.Trim() -eq 'project') { return $null }
-        return $custom.Trim()
-    }
-    if ([string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) { return $null }
-    $lower = $Root.ToLowerInvariant()
-    $inOneDrive = $false
-    foreach ($od in @($env:OneDrive, $env:OneDriveConsumer, $env:OneDriveCommercial)) {
-        if (-not [string]::IsNullOrWhiteSpace($od) -and $lower.StartsWith($od.ToLowerInvariant().TrimEnd('\') + '\')) { $inOneDrive = $true }
-    }
-    if (-not $inOneDrive) { return $null }
-    # Java's String.hashCode, kept to 32 bits; the literal 0xFFFFFFFF would be -1 here.
-    [int64] $mask = 4294967295
-    [int64] $h = 0
-    foreach ($c in $lower.ToCharArray()) { $h = ($h * 31 + [int][char]$c) -band $mask }
-    $hex = '{0:x}' -f $h
-    return Join-Path $env:LOCALAPPDATA ('StreamlineCore\build\' + (Split-Path -Leaf $Root) + '-' + $hex)
-}
+# Get-RedirectedBuildRoot: where build.gradle puts build output for a checkout inside OneDrive.
+. (Join-Path $PSScriptRoot 'build-paths.ps1')
 
 $ProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 
