@@ -33,7 +33,15 @@ final class Theme {
     static final int GLFW_ENTER = 257;
     static final int GLFW_BACKSPACE = 259;
     static final int GLFW_KP_ENTER = 335;
+    static final int GLFW_DELETE = 261;
+    static final int GLFW_RIGHT = 262;
+    static final int GLFW_LEFT = 263;
+    static final int GLFW_HOME = 268;
+    static final int GLFW_END = 269;
     static final int GLFW_R = 82;
+    static final int GLFW_V = 86;
+    /** Control, or Command on macOS, as GLFW modifier bits. */
+    static final int GLFW_MOD_SHORTCUT = 0x2 | 0x8;
 
     private Theme() {}
 

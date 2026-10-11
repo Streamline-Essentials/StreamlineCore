@@ -146,16 +146,37 @@ public final class MenuScreen extends CompatScreen {
         final StringBuilder buffer;
         final int maxLength;
         final Consumer<String> apply;
+        /** Index in {@link #buffer} where typing goes; starts at the end. */
+        int caret;
 
         TextEdit(Object owner, String initial, int maxLength, Consumer<String> apply) {
             this.owner = owner;
             this.buffer = new StringBuilder(initial == null ? "" : initial);
             this.maxLength = maxLength;
             this.apply = apply;
+            this.caret = buffer.length();
         }
 
-        void append(String text) {
-            for (int i = 0; i < text.length() && buffer.length() < maxLength; i++) buffer.append(text.charAt(i));
+        /** Inserts {@code text} at the caret, dropping control characters and what does not fit. */
+        void insert(String text) {
+            for (int i = 0; i < text.length() && buffer.length() < maxLength; i++) {
+                char c = text.charAt(i);
+                if (c < 32 || c == 127) continue;
+                buffer.insert(caret++, c);
+            }
+        }
+
+        void backspace() {
+            if (caret == 0) return;
+            buffer.deleteCharAt(--caret);
+        }
+
+        void delete() {
+            if (caret < buffer.length()) buffer.deleteCharAt(caret);
+        }
+
+        void moveCaret(int to) {
+            caret = Math.max(0, Math.min(buffer.length(), to));
         }
     }
 
@@ -526,15 +547,24 @@ public final class MenuScreen extends CompatScreen {
         canvas.fill(x1, y - 1, x2, y + 11, Theme.CONTROL);
         canvas.outline(x1, y - 1, x2, y + 11, focused ? Theme.ACCENT : (hover ? Theme.MUTED : Theme.CONTROL_BORDER));
         String shown = focused ? editing.buffer.toString() : (value == null ? "" : value);
-        String visibleText = fitTail(canvas, shown, x2 - x1 - 8, raw);
+        int caretAt = focused ? editing.caret : shown.length();
+        int room = x2 - x1 - 8;
+        int start = visibleStart(canvas, shown, caretAt, room, raw);
+        String visibleText = fitHead(canvas, shown.substring(start), room, raw);
         if (raw) canvas.rawText(visibleText, x1 + 3, y + 1, Theme.TEXT);
         else canvas.text(visibleText, x1 + 3, y + 1, Theme.TEXT);
         boolean caret = focused && ((System.currentTimeMillis() - openedAt) / 500) % 2 == 0;
         if (caret) {
-            int caretX = x1 + 3 + width(canvas, visibleText, raw);
+            int caretX = x1 + 3 + width(canvas, shown.substring(start, caretAt), raw);
             canvas.fill(caretX, y, caretX + 1, y + 10, Theme.TEXT);
         }
-        addRegion(x1, y - 1, x2, y + 11, owner, (x, yy, b) -> focus(owner, value, maxLength, apply));
+        addRegion(x1, y - 1, x2, y + 11, owner, (x, yy, b) -> {
+            focus(owner, value, maxLength, apply);
+            // A click inside the text puts the caret at the nearest character.
+            if (editing != null && editing.owner == owner) {
+                editing.moveCaret(start + charsBefore(canvas, visibleText, x - (x1 + 3), raw));
+            }
+        });
     }
 
     /** Starts typing into a field, keeping what was typed if it already has focus. */
@@ -543,14 +573,38 @@ public final class MenuScreen extends CompatScreen {
         commitEdit();
         editing = new TextEdit(owner, value, maxLength, apply);
         openedAt = System.currentTimeMillis();
+        textInput(true);
     }
 
-    /** Keeps the end of the text, where the caret is, when it is too wide for its field. */
-    private static String fitTail(Canvas canvas, String text, int width, boolean raw) {
-        if (width(canvas, text, raw) <= width) return text;
+    /** Leaves the focused field without applying what was typed. */
+    private void dropEdit() {
+        if (editing == null) return;
+        editing = null;
+        textInput(false);
+    }
+
+    /** @return where the shown part of a field's text starts, so the caret stays in view */
+    private static int visibleStart(Canvas canvas, String text, int caret, int width, boolean raw) {
         int start = 0;
-        while (start < text.length() && width(canvas, text.substring(start), raw) > width) start++;
-        return text.substring(start);
+        while (start < caret && width(canvas, text.substring(start, caret), raw) > width) start++;
+        return start;
+    }
+
+    /** Cuts the text after as many characters as fit in {@code width}. */
+    private static String fitHead(Canvas canvas, String text, int width, boolean raw) {
+        int end = text.length();
+        while (end > 0 && width(canvas, text.substring(0, end), raw) > width) end--;
+        return text.substring(0, end);
+    }
+
+    /** @return how many characters of {@code text} lie left of {@code x}, rounding to the nearest gap */
+    private static int charsBefore(Canvas canvas, String text, double x, boolean raw) {
+        for (int i = 1; i <= text.length(); i++) {
+            int left = width(canvas, text.substring(0, i - 1), raw);
+            int right = width(canvas, text.substring(0, i), raw);
+            if (x < (left + right) / 2.0) return i - 1;
+        }
+        return text.length();
     }
 
     private static int width(Canvas canvas, String text, boolean raw) {
@@ -582,6 +636,14 @@ public final class MenuScreen extends CompatScreen {
             });
             labelRight = editX1 - 4;
         }
+        if (editable) {
+            // The name opens the editor too, not only the Edit button.
+            addRegion(x1 - 2, y - 2, labelRight, y + 12, null, (cx, cy, b) -> {
+                commitEdit();
+                expandedElement = expanded ? null : key;
+                confirmDelete = null;
+            });
+        }
         String name = element.getDisplayName() + (custom(element) ? " &8(custom)" : "");
         canvas.text(Theme.fit(canvas, name, labelRight - x1), x1, y + 1, Theme.TEXT);
         boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
@@ -610,7 +672,7 @@ public final class MenuScreen extends CompatScreen {
         y = drawPreview(canvas, registered, y, inner, right);
 
         int x = actionButton(canvas, mouseX, mouseY, inner, y, "Reset", false, () -> {
-            if (editing != null && editing.owner == element) editing = null;
+            if (editing != null && editing.owner == element) dropEdit();
             guard(key, () -> element.setTemplate(""));
         });
         if (custom != null && custom(element)) {
@@ -621,7 +683,7 @@ public final class MenuScreen extends CompatScreen {
                     return;
                 }
                 confirmDelete = null;
-                if (editing != null && editing.owner == element) editing = null;
+                if (editing != null && editing.owner == element) dropEdit();
                 String error = call(key, () -> custom.remove(element.getId()));
                 if (error == null) {
                     expandedElement = null;
@@ -649,7 +711,7 @@ public final class MenuScreen extends CompatScreen {
                 // Owned by the element's field, so clicking here keeps typing in it.
                 addRegion(inner - 2, y - 1, right + 2, rowY2, element, (cx, cy, b) -> {
                     focus(element, template(element), TEMPLATE_MAX_LENGTH, apply);
-                    editing.append(token);
+                    editing.insert(token);
                 });
                 y += canvas.lineHeight() + 2;
             }
@@ -948,7 +1010,7 @@ public final class MenuScreen extends CompatScreen {
     private void commitEdit() {
         if (editing == null) return;
         TextEdit edit = editing;
-        editing = null;
+        dropEdit();
         edit.apply.accept(edit.buffer.toString());
     }
 
@@ -1000,14 +1062,31 @@ public final class MenuScreen extends CompatScreen {
         if (editing == null) return false;
         switch (key) {
             case Theme.GLFW_BACKSPACE:
-                if (editing.buffer.length() > 0) editing.buffer.setLength(editing.buffer.length() - 1);
+                editing.backspace();
                 return true;
+            case Theme.GLFW_DELETE:
+                editing.delete();
+                return true;
+            case Theme.GLFW_LEFT:
+                editing.moveCaret(editing.caret - 1);
+                return true;
+            case Theme.GLFW_RIGHT:
+                editing.moveCaret(editing.caret + 1);
+                return true;
+            case Theme.GLFW_HOME:
+                editing.moveCaret(0);
+                return true;
+            case Theme.GLFW_END:
+                editing.moveCaret(editing.buffer.length());
+                return true;
+            case Theme.GLFW_V:
+                if ((modifiers & Theme.GLFW_MOD_SHORTCUT) != 0) editing.insert(clipboard());
+                return true;
+            // Escape leaves the field, keeping what was typed; the next Escape closes the menu.
             case Theme.GLFW_ENTER:
             case Theme.GLFW_KP_ENTER:
-                commitEdit();
-                return true;
             case Theme.GLFW_ESCAPE:
-                editing = null;
+                commitEdit();
                 return true;
             default:
                 // Swallow other keys so typing does not trigger keybinds behind the menu.
@@ -1018,12 +1097,7 @@ public final class MenuScreen extends CompatScreen {
     @Override
     protected boolean typed(String text) {
         if (editing == null || text == null) return false;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (c < 32 || c == 127) continue;
-            if (editing.buffer.length() >= editing.maxLength) break;
-            editing.buffer.append(c);
-        }
+        editing.insert(text);
         return true;
     }
 
