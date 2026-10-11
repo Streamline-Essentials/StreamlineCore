@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -43,9 +42,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * open), and a reload never reads stale bytes from the JVM's jar cache, which is keyed by
  * path.</p>
  *
- * <p>Only jars whose {@code Plugin-Platforms} include {@code modded-client} and whose main
- * class is a {@link ClientModule} are loaded; anything else is refused with a reason, shown
- * by {@link #refusals()}, until the jar changes.</p>
+ * <p>Only jars whose {@code Plugin-Platforms} include {@code modded-client} but not
+ * {@code modded-server}, and whose main class is a {@link ClientModule}, are loaded. Jars
+ * with both tags are server modules that also run on the worlds a client hosts, so they are
+ * moved to the server module folder ({@link WorldModules}); anything else is refused with a
+ * reason, shown by {@link #refusals()}, until the jar changes.</p>
  */
 public final class ClientModuleManager {
 
@@ -343,7 +344,7 @@ public final class ClientModuleManager {
         return submit(() -> {
             try {
                 Path temp = fetched.getTemp();
-                if (! ModuleRegistry.manifestPlatforms(temp).contains(CLIENT_TAG)) {
+                if (! WorldModules.isClientModule(ModuleRegistry.manifestPlatforms(temp))) {
                     throw new IllegalStateException("'" + fetched.getModuleId() + "' is not a client module.");
                 }
                 String id = ModuleRegistry.manifestValue(temp, "Plugin-Id");
@@ -495,7 +496,14 @@ public final class ClientModuleManager {
         }
 
         List<String> platforms = ModuleRegistry.manifestPlatforms(jar);
-        if (! platforms.contains(CLIENT_TAG)) {
+        if (WorldModules.isWorldModule(platforms)) {
+            if (WorldModules.adopt(jar)) return;
+            refuse(name, modified, size, WorldModules.isSupported()
+                    ? "'" + name + "' runs in the worlds this client hosts; move it to " + WorldModules.folder() + "."
+                    : "'" + name + "' runs only in worlds a client hosts, which this game does not run.");
+            return;
+        }
+        if (! WorldModules.isClientModule(platforms)) {
             refuse(name, modified, size, platforms.isEmpty()
                     ? "'" + name + "' declares no platforms, so it is not a client module."
                     : "'" + name + "' is not a client module (platforms: " + String.join(", ", platforms) + ").");
@@ -684,7 +692,7 @@ public final class ClientModuleManager {
         File[] jars = serverModules == null ? null : serverModules.listFiles((dir, name) -> name.endsWith(".jar"));
         if (jars == null) return;
         for (File jar : jars) {
-            if (! ModuleRegistry.manifestPlatforms(jar.toPath()).equals(Collections.singletonList(CLIENT_TAG))) continue;
+            if (! WorldModules.isClientModule(ModuleRegistry.manifestPlatforms(jar.toPath()))) continue;
             Path target = folder().toPath().resolve(jar.getName());
             if (Files.exists(target)) continue;
             try {
