@@ -25,14 +25,17 @@ import java.security.CodeSigner;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 /**
  * Central registry and lifecycle coordinator for all Streamline modules.
@@ -95,6 +98,22 @@ public class ModuleManager {
          * @return the class file to define
          */
         byte[] transform(String className, byte[] classBytes);
+
+        /**
+         * Rewrites one module class into the classes to define for it: the class itself, plus
+         * any helper classes the rewrite introduces, which the module's loader then defines
+         * when they are first asked for.
+         *
+         * @param className binary name of the class being defined
+         * @param classBytes the class file as read from the module jar
+         * @param classFiles reads a class file the module can see (its own or its parent
+         *                   loader's) by internal name ({@code a/b/C}), or {@code null} if there
+         *                   is none
+         * @return class files by binary name, including {@code className}
+         */
+        default Map<String, byte[]> transformAll(String className, byte[] classBytes, Function<String, byte[]> classFiles) {
+            return Collections.singletonMap(className, transform(className, classBytes));
+        }
     }
 
     /**
@@ -104,34 +123,62 @@ public class ModuleManager {
     private static class TransformingPluginClassLoader extends PluginClassLoader {
         private final ModuleClassTransformer transformer;
 
+        /** Helper classes a transform produced, by binary name, until they are defined. */
+        private final Map<String, byte[]> pendingClasses = new ConcurrentHashMap<>();
+
         TransformingPluginClassLoader(PluginManager pluginManager, PluginDescriptor descriptor,
                                       ClassLoader parent, ModuleClassTransformer transformer) {
             super(pluginManager, descriptor, parent);
             this.transformer = transformer;
         }
 
-        @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-            URL resource = findResource(name.replace('.', '/') + ".class");
-            if (resource == null) throw new ClassNotFoundException(name);
-
-            byte[] bytes;
-            // Read without the JVM's shared jar cache: it is keyed by path, so after a module is
-            // unloaded and its jar replaced or reloaded, a cached handle to the earlier (closed or
-            // rewritten) file would be read instead of this loader's jar.
-            URLConnection connection;
-            try {
-                connection = resource.openConnection();
-            } catch (IOException e) {
-                throw new ClassNotFoundException(name, e);
-            }
+        /**
+         * Reads a resource without the JVM's shared jar cache: it is keyed by path, so after a
+         * module is unloaded and its jar replaced or reloaded, a cached handle to the earlier
+         * (closed or rewritten) file would be read instead of this loader's jar.
+         */
+        private static byte[] readUncached(URL resource) throws IOException {
+            URLConnection connection = resource.openConnection();
             connection.setUseCaches(false);
             try (InputStream in = connection.getInputStream()) {
-                bytes = in.readAllBytes();
-            } catch (IOException e) {
-                throw new ClassNotFoundException(name, e);
+                return in.readAllBytes();
             }
-            bytes = transformer.transform(name, bytes);
+        }
+
+        /** A class file this module can see, by internal name, or {@code null}. */
+        private byte[] classFile(String internalName) {
+            String path = internalName + ".class";
+            try {
+                URL own = findResource(path);
+                if (own != null) return readUncached(own);
+                ClassLoader parent = getParent();
+                URL inherited = parent == null ? null : parent.getResource(path);
+                return inherited == null ? null : readUncached(inherited);
+            } catch (IOException e) {
+                return null;
+            }
+        }
+
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            byte[] bytes = pendingClasses.remove(name);
+            if (bytes == null) {
+                URL resource = findResource(name.replace('.', '/') + ".class");
+                if (resource == null) throw new ClassNotFoundException(name);
+
+                try {
+                    bytes = readUncached(resource);
+                } catch (IOException e) {
+                    throw new ClassNotFoundException(name, e);
+                }
+
+                Map<String, byte[]> classes = transformer.transformAll(name, bytes, this::classFile);
+                bytes = classes.get(name);
+                if (bytes == null) throw new ClassNotFoundException(name);
+                for (Map.Entry<String, byte[]> extra : classes.entrySet()) {
+                    if (! extra.getKey().equals(name)) pendingClasses.putIfAbsent(extra.getKey(), extra.getValue());
+                }
+            }
 
             int lastDot = name.lastIndexOf('.');
             if (lastDot > 0) {
