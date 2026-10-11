@@ -51,6 +51,31 @@ buildscript {
 // mod-common/mod.gradle rather than by the platform conventions further down.
 def isModProject = { Project p -> p.projectDir.parentFile.name in ['fabric', 'forge', 'neoforge'] }
 
+// OneDrive turns synced folders into read-only cloud placeholders, and Gradle cannot delete
+// those, so a checkout inside OneDrive fails with "Unable to delete directory" once a build
+// directory gets synced. Build output therefore goes outside the project there, under
+// %LOCALAPPDATA%/StreamlineCore/build/<checkout>. The streamline.buildRoot Gradle property
+// (or STREAMLINE_BUILD_ROOT) picks another root anywhere; set it to "project" to keep the
+// usual build/ folders.
+def buildRootSetting = (findProperty('streamline.buildRoot') ?: System.getenv('STREAMLINE_BUILD_ROOT'))?.toString()?.trim()
+def underOneDrive = ['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial'].collect { System.getenv(it) }
+        .findAll { it }
+        .any { rootDir.canonicalPath.toLowerCase().startsWith(new File(it).canonicalPath.toLowerCase() + File.separator) }
+def redirectedBuildRoot = null
+if (buildRootSetting && buildRootSetting != 'project') {
+    redirectedBuildRoot = new File(buildRootSetting)
+} else if (! buildRootSetting && underOneDrive && System.getenv('LOCALAPPDATA')) {
+    def checkout = rootDir.name + '-' + Integer.toHexString(rootDir.canonicalPath.toLowerCase().hashCode())
+    redirectedBuildRoot = new File(System.getenv('LOCALAPPDATA'), "StreamlineCore/build/${checkout}")
+}
+if (redirectedBuildRoot != null) {
+    allprojects { p ->
+        def relative = p == rootProject ? '_root' : rootDir.toPath().relativize(p.projectDir.toPath()).toString()
+        p.layout.buildDirectory.set(new File(redirectedBuildRoot, relative))
+    }
+    logger.lifecycle("[StreamlineCore] Build output: ${redirectedBuildRoot}")
+}
+
 allprojects {
     apply plugin: "java"
     apply plugin: "com.gradleup.shadow"
@@ -140,7 +165,7 @@ configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProje
         inputs.property("version", rootProject.version.toString())
         inputs.property("main", project.ext.pluginMain.toString())
         inputs.property("libraries", project.ext.PLATFORM_LIBRARIES.join('|'))
-        outputs.dir(file("build/generated-src"))
+        outputs.dir(layout.buildDirectory.dir('generated-src'))
 
         filesMatching("**/plugin.yml") {
             expand (
