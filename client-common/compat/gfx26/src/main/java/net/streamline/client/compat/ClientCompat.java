@@ -1,13 +1,12 @@
 package net.streamline.client.compat;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.streamline.client.LiveClientInfo;
 import singularity.client.ClientInfo;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Client calls whose shape differs between Minecraft versions; this is Minecraft 26.x's.
@@ -47,31 +46,44 @@ public final class ClientCompat {
     }
 
     /**
-     * {@code MouseHandler.activeButton}: the button held down, kept up to date while a screen
-     * is open, unlike {@code isLeftPressed()}. 26.2 reads the mouse through GLFW and 26.3 through
-     * SDL, so this field is the one way to ask that works on both; {@code null} if it is gone.
+     * Asks the window system whether the left button is held, without going through
+     * {@code MouseHandler}: its button state comes from the events it was given, which other
+     * mods can take or reorder. 26.2 reads input through GLFW and 26.3 through SDL, and this
+     * source set compiles against both, so each is looked up by name; {@code null} if neither is
+     * there.
      */
-    private static final Field ACTIVE_BUTTON = activeButtonField();
+    private static final MouseQuery MOUSE = mouseQuery();
 
-    private static Field activeButtonField() {
+    private interface MouseQuery {
+        boolean leftDown() throws Throwable;
+    }
+
+    private static MouseQuery mouseQuery() {
         try {
-            Field field = MouseHandler.class.getDeclaredField("activeButton");
-            field.setAccessible(true);
-            return field;
-        } catch (ReflectiveOperationException | RuntimeException e) {
+            // SDL_GetMouseState(NULL, NULL) returns the held buttons; bit 0 is the left one.
+            Method state = Class.forName("org.lwjgl.sdl.SDLMouse").getMethod("nSDL_GetMouseState", long.class, long.class);
+            return () -> (((Integer) state.invoke(null, 0L, 0L)) & 1) != 0;
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
+            // Not SDL: 26.2.
+        }
+        try {
+            // glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS
+            Method button = Class.forName("org.lwjgl.glfw.GLFW").getMethod("glfwGetMouseButton", long.class, int.class);
+            return () -> ((Integer) button.invoke(null, minecraft().getWindow().handle(), 0)) == 1;
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
             return null;
         }
     }
 
     /**
-     * @return whether a mouse button is held now; {@code true} when that cannot be read, so
-     * callers fall back to the release event
+     * @return whether the left mouse button is held now; {@code true} when that cannot be read,
+     * so callers fall back to the release event
      */
     public static boolean leftMouseDown() {
-        if (ACTIVE_BUTTON == null) return true;
+        if (MOUSE == null) return true;
         try {
-            return ACTIVE_BUTTON.get(minecraft().mouseHandler) != null;
-        } catch (ReflectiveOperationException | RuntimeException e) {
+            return MOUSE.leftDown();
+        } catch (Throwable t) {
             return true;
         }
     }
