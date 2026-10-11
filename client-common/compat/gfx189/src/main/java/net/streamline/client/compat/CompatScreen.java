@@ -32,6 +32,9 @@ public abstract class CompatScreen extends GuiScreen {
             {Keyboard.KEY_END, 269},
             {Keyboard.KEY_R, 82},
             {Keyboard.KEY_V, 86},
+            {Keyboard.KEY_A, 65},
+            {Keyboard.KEY_C, 67},
+            {Keyboard.KEY_X, 88},
     };
 
     /** GLFW's modifier bits, which {@link #key} receives as on every other version. */
@@ -97,6 +100,11 @@ public abstract class CompatScreen extends GuiScreen {
         return text == null ? "" : text;
     }
 
+    /** Puts {@code text} on the system clipboard. */
+    protected void setClipboard(String text) {
+        setClipboardString(text);
+    }
+
     /** Leaves the screen; the default closes it. */
     public void onClose() {
         mc.displayGuiScreen(null);
@@ -157,7 +165,7 @@ public abstract class CompatScreen extends GuiScreen {
         String name = LegacyKeys.name(keyCode);
         if (name != null && keyNamed(name)) return;
         // A printable character goes to a focused field before the key does, so letters the
-        // screens also bind (R, V) still type. Control with a letter arrives as a control
+        // screens also bind (R, V, A, C, X) still type. Control with a letter arrives as a control
         // character, so shortcuts reach key(); AltGr's characters are printable and type.
         if (character >= ' ' && character != 127 && typed(String.valueOf(character))) return;
         int glfw = toGlfw(keyCode);

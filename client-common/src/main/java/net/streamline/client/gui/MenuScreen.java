@@ -86,6 +86,11 @@ public final class MenuScreen extends CompatScreen {
 
     private SliderDrag sliderDrag;
     private TextEdit editing;
+    /**
+     * Whether the left button went down in the focused field and is still held: each frame then
+     * moves the caret to the pointer, selecting from where the press was.
+     */
+    private boolean selectingText;
     /** The key setting waiting for the player to press its key, and the page it saves to. */
     private Setting.Key capturing;
     private ModuleSettings capturingPage;
@@ -153,6 +158,9 @@ public final class MenuScreen extends CompatScreen {
     /**
      * A text field being typed into; the value is applied on Enter or focus loss. The owner
      * identifies the field across frames: a setting, a HUD element, or one of the add form's fields.
+     *
+     * <p>The selection runs between {@link #anchor} and {@link #caret}; when the two are equal
+     * nothing is selected. Typing, pasting and deleting replace the selection.</p>
      */
     private static final class TextEdit {
         final Object owner;
@@ -161,6 +169,8 @@ public final class MenuScreen extends CompatScreen {
         final Consumer<String> apply;
         /** Index in {@link #buffer} where typing goes; starts at the end. */
         int caret;
+        /** The fixed end of the selection; the caret is the end that moves. */
+        int anchor;
 
         TextEdit(Object owner, String initial, int maxLength, Consumer<String> apply) {
             this.owner = owner;
@@ -168,28 +178,106 @@ public final class MenuScreen extends CompatScreen {
             this.maxLength = maxLength;
             this.apply = apply;
             this.caret = buffer.length();
+            this.anchor = caret;
         }
 
-        /** Inserts {@code text} at the caret, dropping control characters and what does not fit. */
+        boolean hasSelection() {
+            return anchor != caret;
+        }
+
+        int selectionStart() {
+            return Math.min(anchor, caret);
+        }
+
+        int selectionEnd() {
+            return Math.max(anchor, caret);
+        }
+
+        String selected() {
+            return buffer.substring(selectionStart(), selectionEnd());
+        }
+
+        /** Removes the selected text, leaving the caret where it started. */
+        void deleteSelection() {
+            int start = selectionStart();
+            buffer.delete(start, selectionEnd());
+            caret = start;
+            anchor = start;
+        }
+
+        void selectAll() {
+            anchor = 0;
+            caret = buffer.length();
+        }
+
+        /** Inserts {@code text} in place of the selection, dropping control characters and what does not fit. */
         void insert(String text) {
+            if (hasSelection()) deleteSelection();
             for (int i = 0; i < text.length() && buffer.length() < maxLength; i++) {
                 char c = text.charAt(i);
                 if (c < 32 || c == 127) continue;
                 buffer.insert(caret++, c);
             }
+            anchor = caret;
         }
 
-        void backspace() {
+        /** Deletes the selection, or else the character before the caret, or the word before it with {@code word}. */
+        void backspace(boolean word) {
+            if (hasSelection()) {
+                deleteSelection();
+                return;
+            }
             if (caret == 0) return;
-            buffer.deleteCharAt(--caret);
+            int from = word ? wordBefore(caret) : caret - 1;
+            buffer.delete(from, caret);
+            caret = from;
+            anchor = from;
         }
 
-        void delete() {
-            if (caret < buffer.length()) buffer.deleteCharAt(caret);
+        /** Deletes the selection, or else the character after the caret, or the word after it with {@code word}. */
+        void delete(boolean word) {
+            if (hasSelection()) {
+                deleteSelection();
+                return;
+            }
+            if (caret >= buffer.length()) return;
+            buffer.delete(caret, word ? wordAfter(caret) : caret + 1);
         }
 
-        void moveCaret(int to) {
+        /** Moves the caret; {@code extend} keeps the anchor where it is, selecting what lies between. */
+        void moveCaret(int to, boolean extend) {
             caret = Math.max(0, Math.min(buffer.length(), to));
+            if (! extend) anchor = caret;
+        }
+
+        /**
+         * Moves one character, or one word with {@code word}, in {@code direction} (-1 or 1).
+         * A plain arrow press with a selection collapses it to that side's edge instead.
+         */
+        void step(int direction, boolean word, boolean extend) {
+            if (! extend && ! word && hasSelection()) {
+                moveCaret(direction < 0 ? selectionStart() : selectionEnd(), false);
+                return;
+            }
+            int to = word ? (direction < 0 ? wordBefore(caret) : wordAfter(caret)) : caret + direction;
+            moveCaret(to, extend);
+        }
+
+        /** @return the start of the word before {@code from}, skipping the spaces in between */
+        int wordBefore(int from) {
+            int i = from;
+            while (i > 0 && Character.isWhitespace(buffer.charAt(i - 1))) i--;
+            while (i > 0 && ! Character.isWhitespace(buffer.charAt(i - 1))) i--;
+            return i;
+        }
+
+        /** @return the end of the word after {@code from}, skipping the spaces in between */
+        int wordAfter(int from) {
+            int i = from;
+            int length = buffer.length();
+            while (i < length && Character.isWhitespace(buffer.charAt(i))) i++;
+            while (i < length && ! Character.isWhitespace(buffer.charAt(i))) i++;
+            return i;
         }
     }
 
@@ -704,6 +792,22 @@ public final class MenuScreen extends CompatScreen {
         int room = x2 - x1 - 8;
         int start = visibleStart(canvas, shown, caretAt, room, raw);
         String visibleText = fitHead(canvas, shown.substring(start), room, raw);
+        if (focused && selectingText) {
+            if (ClientCompat.leftMouseDown()) {
+                editing.moveCaret(start + charsBefore(canvas, visibleText, mouseX - (x1 + 3), raw), true);
+            } else {
+                selectingText = false;
+            }
+        }
+        if (focused && editing.hasSelection()) {
+            int from = Math.max(start, editing.selectionStart());
+            int to = Math.min(start + visibleText.length(), editing.selectionEnd());
+            if (from < to) {
+                int selX1 = x1 + 3 + width(canvas, shown.substring(start, from), raw);
+                int selX2 = x1 + 3 + width(canvas, shown.substring(start, to), raw);
+                canvas.fill(selX1, y, selX2, y + 10, Theme.SELECTION);
+            }
+        }
         if (raw) canvas.rawText(visibleText, x1 + 3, y + 1, Theme.TEXT);
         else canvas.text(visibleText, x1 + 3, y + 1, Theme.TEXT);
         boolean caret = focused && ((System.currentTimeMillis() - openedAt) / 500) % 2 == 0;
@@ -712,11 +816,15 @@ public final class MenuScreen extends CompatScreen {
             canvas.fill(caretX, y, caretX + 1, y + 10, Theme.TEXT);
         }
         addRegion(x1, y - 1, x2, y + 11, owner, (x, yy, b) -> {
+            // Shift-clicking the focused field selects up to the click; clicking a field that had
+            // no focus starts a fresh caret there.
+            boolean extend = focused && ClientCompat.leftShiftDown();
             focus(owner, value, maxLength, apply);
-            // A click inside the text puts the caret at the nearest character.
-            if (editing != null && editing.owner == owner) {
-                editing.moveCaret(start + charsBefore(canvas, visibleText, x - (x1 + 3), raw));
-            }
+            if (editing == null || editing.owner != owner) return;
+            // A click inside the text puts the caret at the nearest character; holding the button
+            // and moving selects from there (see selectingText).
+            editing.moveCaret(start + charsBefore(canvas, visibleText, x - (x1 + 3), raw), extend);
+            selectingText = b == 0;
         });
     }
 
@@ -733,6 +841,7 @@ public final class MenuScreen extends CompatScreen {
     private void dropEdit() {
         if (editing == null) return;
         editing = null;
+        selectingText = false;
         textInput(false);
     }
 
@@ -1227,6 +1336,7 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean mouseUp(double x, double y, int button) {
+        if (button == 0) selectingText = false;
         if (sliderDrag == null) return false;
         sliderDrag.page.save();
         sliderDrag = null;
@@ -1267,27 +1377,41 @@ public final class MenuScreen extends CompatScreen {
             return true;
         }
         if (editing == null) return false;
+        boolean shortcut = (modifiers & Theme.GLFW_MOD_SHORTCUT) != 0;
+        boolean shift = (modifiers & Theme.GLFW_MOD_SHIFT) != 0;
         switch (key) {
             case Theme.GLFW_BACKSPACE:
-                editing.backspace();
+                editing.backspace(shortcut);
                 return true;
             case Theme.GLFW_DELETE:
-                editing.delete();
+                editing.delete(shortcut);
                 return true;
             case Theme.GLFW_LEFT:
-                editing.moveCaret(editing.caret - 1);
+                editing.step(-1, shortcut, shift);
                 return true;
             case Theme.GLFW_RIGHT:
-                editing.moveCaret(editing.caret + 1);
+                editing.step(1, shortcut, shift);
                 return true;
             case Theme.GLFW_HOME:
-                editing.moveCaret(0);
+                editing.moveCaret(0, shift);
                 return true;
             case Theme.GLFW_END:
-                editing.moveCaret(editing.buffer.length());
+                editing.moveCaret(editing.buffer.length(), shift);
+                return true;
+            case Theme.GLFW_A:
+                if (shortcut) editing.selectAll();
+                return true;
+            case Theme.GLFW_C:
+                if (shortcut && editing.hasSelection()) setClipboard(editing.selected());
+                return true;
+            case Theme.GLFW_X:
+                if (shortcut && editing.hasSelection()) {
+                    setClipboard(editing.selected());
+                    editing.deleteSelection();
+                }
                 return true;
             case Theme.GLFW_V:
-                if ((modifiers & Theme.GLFW_MOD_SHORTCUT) != 0) editing.insert(clipboard());
+                if (shortcut) editing.insert(clipboard());
                 return true;
             // Escape leaves the field, keeping what was typed; the next Escape closes the menu.
             case Theme.GLFW_ENTER:
