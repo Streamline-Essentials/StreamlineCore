@@ -75,6 +75,11 @@ public abstract class CompatScreen extends Screen {
         return text == null ? "" : text;
     }
 
+    /** Puts {@code text} on the system clipboard. */
+    protected void setClipboard(String text) {
+        Minecraft.getInstance().keyboardHandler.setClipboard(text);
+    }
+
     @Override
     public void removed() {
         textInput(false);
@@ -149,6 +154,9 @@ public abstract class CompatScreen extends Screen {
             {InputConstants.KEY_NUMPADENTER, 335},
             {InputConstants.KEY_R, 82},
             {InputConstants.KEY_V, 86},
+            {InputConstants.KEY_A, 65},
+            {InputConstants.KEY_C, 67},
+            {InputConstants.KEY_X, 88},
     };
 
     /** @return the GLFW code of a key the screens use, or {@code -1} for any other key */

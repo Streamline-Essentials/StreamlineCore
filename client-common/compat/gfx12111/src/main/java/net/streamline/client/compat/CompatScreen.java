@@ -73,6 +73,11 @@ public abstract class CompatScreen extends Screen {
         return text == null ? "" : text;
     }
 
+    /** Puts {@code text} on the system clipboard. */
+    protected void setClipboard(String text) {
+        Minecraft.getInstance().keyboardHandler.setClipboard(text);
+    }
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         draw(GfxCanvas.wrap(graphics), mouseX, mouseY, partialTick);

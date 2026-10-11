@@ -25,6 +25,8 @@ final class Theme {
     static final int TEXT = 0xFFE6E6E6;
     static final int MUTED = 0xFFA89A9B;
     static final int HOVER = 0x18FFFFFF;
+    /** Behind selected text in a field. */
+    static final int SELECTION = 0x90D32F2F;
     static final int CONTROL = 0xFF2A1F20;
     static final int CONTROL_BORDER = 0xFF4D2A2D;
     static final int SWITCH_OFF = 0xFF4A3B3D;
@@ -41,7 +43,11 @@ final class Theme {
     static final int GLFW_HOME = 268;
     static final int GLFW_END = 269;
     static final int GLFW_R = 82;
+    static final int GLFW_A = 65;
+    static final int GLFW_C = 67;
     static final int GLFW_V = 86;
+    static final int GLFW_X = 88;
+    static final int GLFW_MOD_SHIFT = 0x1;
     /** Control, or Command on macOS, as GLFW modifier bits. */
     static final int GLFW_MOD_SHORTCUT = 0x2 | 0x8;
 
