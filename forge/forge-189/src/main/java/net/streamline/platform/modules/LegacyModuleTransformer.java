@@ -5,7 +5,8 @@ import net.streamline.libs.asm.ClassReader;
 import net.streamline.libs.asm.ClassWriter;
 import net.streamline.libs.asm.commons.ClassRemapper;
 import net.streamline.libs.asm.commons.Remapper;
-import singularity.modules.ModuleManager;
+import singularity.client.module.ClientModuleManager;
+import singularity.loading.ModuleClassTransformer;
 import xyz.wagyourtail.jvmdg.ClassDowngrader;
 import xyz.wagyourtail.jvmdg.cli.Flags;
 import xyz.wagyourtail.jvmdg.logging.Logger;
@@ -34,7 +35,7 @@ import java.util.function.Function;
  * matching string constants in this jar. Downgrading a class can produce helper classes
  * beside it, which {@link #transformAll} hands back to the module's loader.</p>
  */
-public final class LegacyModuleTransformer extends Remapper implements ModuleManager.ModuleClassTransformer {
+public final class LegacyModuleTransformer extends Remapper implements ModuleClassTransformer {
 
     static final String RESOURCE = "streamline-relocations.properties";
 
@@ -51,7 +52,7 @@ public final class LegacyModuleTransformer extends Remapper implements ModuleMan
         this.prefixes = prefixes;
     }
 
-    /** Installs the transformer for modules loaded from now on. */
+    /** Installs the transformer for client modules loaded from now on. */
     public static void install() {
         Properties properties = new Properties();
         try (InputStream in = LegacyModuleTransformer.class.getClassLoader().getResourceAsStream(RESOURCE)) {
@@ -69,7 +70,7 @@ public final class LegacyModuleTransformer extends Remapper implements ModuleMan
         }
         prefixes.sort(Comparator.comparingInt((String[] pair) -> pair[0].length()).reversed());
 
-        ModuleManager.setModuleClassTransformer(new LegacyModuleTransformer(prefixes));
+        ClientModuleManager.setClassTransformer(new LegacyModuleTransformer(prefixes));
     }
 
     @Override

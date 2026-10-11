@@ -20,9 +20,4 @@ public class StreamlineLegacyForge extends BasePlugin {
     public void init(FMLInitializationEvent event) {
         LegacyClientListener.register();
     }
-
-    @Override
-    public PlatformType getPlatformType() {
-        return PlatformType.FORGE;
-    }
 }

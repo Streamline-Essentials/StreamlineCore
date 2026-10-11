@@ -43,7 +43,7 @@ public final class LegacyClientListener {
             try {
                 BasePlugin.getInstance().boot();
             } catch (Throwable t) {
-                BasePlugin.getInstance().getSLFLogger().warn("Streamline could not start on the client", t);
+                BasePlugin.warn("Streamline could not start on the client", t);
             }
         }
         ClientCompat.runQueued();
