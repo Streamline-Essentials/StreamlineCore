@@ -1,9 +1,7 @@
 package singularity.client.module;
 
-import org.pf4j.JarPluginManager;
 import org.pf4j.PluginDependency;
 import org.pf4j.PluginDescriptor;
-import org.pf4j.PluginManager;
 import org.pf4j.PluginWrapper;
 import singularity.client.ClientEnvironment;
 import singularity.registry.ModuleRegistry;
@@ -70,7 +68,7 @@ public final class ClientModuleManager {
     private static final Map<String, Refusal> REFUSED = new ConcurrentHashMap<>();
     private static final AtomicLong COPY_COUNTER = new AtomicLong();
 
-    private static volatile PluginManager pluginManager;
+    private static volatile ClientPluginManager pluginManager;
     private static volatile boolean started;
     private static volatile boolean stopped;
 
@@ -189,7 +187,7 @@ public final class ClientModuleManager {
             adoptLegacyJars();
             Path cache = cacheFolder().toPath();
             Files.createDirectories(cache);
-            pluginManager = new JarPluginManager(cache);
+            pluginManager = new ClientPluginManager(cache);
             scan(true);
             return null;
         });
@@ -301,7 +299,15 @@ public final class ClientModuleManager {
      */
     public static CompletableFuture<String> remove(String id) {
         return submit(() -> {
-            Entry entry = require(id);
+            Entry entry = entry(id);
+            if (entry == null) {
+                // A jar that did not load (built for an older client, say) can be removed too.
+                Path jar = jarWithId(id, null);
+                if (jar == null) throw new IllegalArgumentException("No client module '" + id + "' is installed.");
+                deleteOrDefer(jar);
+                REFUSED.remove(jar.getFileName().toString());
+                return jar.getFileName().toString();
+            }
             List<Path> dependents = unloadWithDependents(entry);
             dependents.remove(entry.jar);
             deleteOrDefer(entry.jar);
@@ -335,10 +341,12 @@ public final class ClientModuleManager {
                     dependents.remove(old.jar);
                     if (! old.jar.equals(target)) deleteOrDefer(old.jar);
                 } else {
-                    String clash = jarWithId(id, target);
-                    if (clash != null) {
-                        throw new IllegalStateException("'" + clash + "' in the client module folder already has the Plugin-Id '"
-                                + id + "'. Remove it first.");
+                    // A jar with this id that is not loaded was refused (or is still being
+                    // written); the player asked for this module, so the download replaces it.
+                    Path stale = jarWithId(id, target);
+                    if (stale != null) {
+                        deleteOrDefer(stale);
+                        REFUSED.remove(stale.getFileName().toString());
                     }
                 }
 
@@ -405,26 +413,34 @@ public final class ClientModuleManager {
         REFUSED.keySet().retainAll(jars.keySet());
 
         List<Path> pending = new ArrayList<>();
+        List<Path> refused = new ArrayList<>();
         for (Path jar : jars.values()) {
             if (isLoaded(jar) || ! settled(jar)) continue;
             Refusal refusal = REFUSED.get(jar.getFileName().toString());
-            if (refusal != null && ! changed(jar, refusal.modified, refusal.size)) continue;
-            pending.add(jar);
+            if (refusal != null && ! changed(jar, refusal.modified, refusal.size)) refused.add(jar);
+            else pending.add(jar);
         }
 
-        // A module can need another that sorts after it; keep going while a pass loads something.
-        boolean progress = true;
-        while (! pending.isEmpty() && progress) {
-            progress = false;
-            for (Path jar : new ArrayList<>(pending)) {
-                load(jar);
-                if (isLoaded(jar)) {
-                    pending.remove(jar);
-                    progress = true;
-                }
-            }
-            if (! initial) break;
+        // A module can need another that sorts after it, or that arrives later: whenever a pass
+        // loads something, the jars still waiting, refused ones included, get another try.
+        boolean progress = loadAll(pending);
+        if (initial || progress) {
+            pending.addAll(refused);
+            while (progress && ! pending.isEmpty()) progress = loadAll(pending);
         }
+    }
+
+    /** Tries each jar once, dropping those that load. @return whether any loaded */
+    private static boolean loadAll(List<Path> jars) {
+        boolean progress = false;
+        for (Path jar : new ArrayList<>(jars)) {
+            load(jar);
+            if (isLoaded(jar)) {
+                jars.remove(jar);
+                progress = true;
+            }
+        }
+        return progress;
     }
 
     private static boolean isLoaded(Path jar) {
@@ -491,11 +507,18 @@ public final class ClientModuleManager {
 
             PluginWrapper wrapper = pluginManager.getPlugin(loadedId);
             PluginDescriptor descriptor = wrapper.getDescriptor();
-            Class<?> type = wrapper.getPluginClassLoader().loadClass(descriptor.getPluginClass());
+            String fix = " It was built for an older Streamline client. Update it with /slclient modules ecloud update "
+                    + loadedId + ", or remove it with /slclient modules remove " + loadedId + ".";
+            Class<?> type;
+            try {
+                type = wrapper.getPluginClassLoader().loadClass(descriptor.getPluginClass());
+            } catch (LinkageError e) {
+                // Built against a class the client does not have, such as SimpleModule.
+                throw new IllegalStateException("it needs " + e.getMessage().replace('/', '.')
+                        + ", which a game client does not have." + fix, e);
+            }
             if (! ClientModule.class.isAssignableFrom(type)) {
-                throw new IllegalStateException("its main class " + type.getSimpleName() + " is not a ClientModule; "
-                        + "it was built for an older Streamline client. Update it (/slclient modules ecloud update "
-                        + loadedId + ").");
+                throw new IllegalStateException("its main class " + type.getSimpleName() + " is not a ClientModule." + fix);
             }
 
             ClientModule module = (ClientModule) wrapper.getPlugin();
@@ -519,14 +542,10 @@ public final class ClientModuleManager {
             // PF4J registers a plugin before resolving its dependencies, and keeps it when
             // that fails, which would block every later attempt with "already loaded".
             String registered = loadedId != null ? loadedId : id;
-            if (! LOADED.containsKey(registered) && pluginManager.getPlugin(registered) != null) {
-                try {
-                    pluginManager.unloadPlugin(registered);
-                } catch (Throwable ignored) {
-                    // Already gone, or never fully loaded.
-                }
+            if (! LOADED.containsKey(registered)) {
+                pluginManager.forget(registered);
+                deleteCopy(copy);
             }
-            if (! LOADED.containsKey(registered)) deleteCopy(copy);
             String reason = t.getMessage() == null ? t.toString() : t.getMessage();
             refuse(name, modified, size, "'" + name + "' did not load: " + reason);
         }
@@ -574,12 +593,8 @@ public final class ClientModuleManager {
         } catch (Throwable t) {
             ClientEnvironment.logWarning("Client module '" + entry.id + "' failed to disable: " + t);
         }
-        try {
-            // Closes the module's class loader, which releases the copy it was loaded from.
-            pluginManager.unloadPlugin(entry.id);
-        } catch (Throwable t) {
-            ClientEnvironment.logWarning("Could not unload client module '" + entry.id + "': " + t);
-        }
+        // Closes the module's class loader, which releases the copy it was loaded from.
+        pluginManager.forget(entry.id);
         deleteCopy(entry.copy);
         ClientEnvironment.logInfo("Unloaded client module '" + entry.id + "'.");
     }
@@ -613,17 +628,33 @@ public final class ClientModuleManager {
         }
     }
 
-    /** The name of a jar in the module folder, other than {@code except}, with this Plugin-Id. */
-    private static String jarWithId(String id, Path except) throws IOException {
-        Path folder = folder().toPath();
-        if (! Files.isDirectory(folder)) return null;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(folder, "*.jar")) {
+    /** A jar in the module folder, other than {@code except}, with this Plugin-Id, ignoring case. */
+    private static Path jarWithId(String id, Path except) throws IOException {
+        File folderFile = folder();
+        if (folderFile == null || ! folderFile.isDirectory()) return null;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(folderFile.toPath(), "*.jar")) {
             for (Path jar : stream) {
                 if (jar.equals(except)) continue;
-                if (id.equalsIgnoreCase(ModuleRegistry.manifestValue(jar, "Plugin-Id"))) return jar.getFileName().toString();
+                if (id.equalsIgnoreCase(ModuleRegistry.manifestValue(jar, "Plugin-Id"))) return jar;
             }
         }
         return null;
+    }
+
+    /**
+     * The version of a client module jar in the folder that did not load, by Plugin-Id, or
+     * {@code null} when there is none. Lets an update replace a jar that was refused.
+     */
+    public static String unloadedVersion(String id) {
+        if (entry(id) != null) return null;
+        try {
+            Path jar = jarWithId(id, null);
+            if (jar == null) return null;
+            String version = ModuleRegistry.manifestValue(jar, "Plugin-Version");
+            return version == null ? "0" : version;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /**
