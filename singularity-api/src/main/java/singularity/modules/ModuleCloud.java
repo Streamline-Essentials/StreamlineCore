@@ -1,32 +1,20 @@
 package singularity.modules;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
 import singularity.interfaces.ISingularityExtension;
+import singularity.registry.ModuleRegistry;
+import singularity.registry.ModuleRegistry.ModuleInfo;
+import singularity.registry.ModuleRegistry.RegistryException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
@@ -37,8 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Client for the Streamline module registry ("eCloud", {@code https://modules.drak.gg}).
@@ -46,11 +32,12 @@ import java.util.regex.Pattern;
  * <p>Downloads land in the module folder under the file name the registry
  * suggests ({@code <Name>-<version>.jar}) and are verified against the
  * registry's SHA-256 before they are moved into place, so a truncated or
- * corrupted transfer never becomes a loadable jar.</p>
+ * corrupted transfer never becomes a loadable jar. The registry requests themselves go
+ * through {@link ModuleRegistry}, which the game client's module browser shares.</p>
  */
 public final class ModuleCloud {
     /** Registry root used when nothing else is configured. */
-    public static final String DEFAULT_BASE_URL = "https://modules.drak.gg";
+    public static final String DEFAULT_BASE_URL = ModuleRegistry.DEFAULT_BASE_URL;
 
     /** Default period of the module-name refresh timer. */
     public static final Duration DEFAULT_NAME_REFRESH_INTERVAL = Duration.ofMinutes(5);
@@ -61,16 +48,10 @@ public final class ModuleCloud {
      */
     private static final long COMPLETION_REFRESH_GAP_MILLIS = Duration.ofSeconds(10).toMillis();
 
-    private static final Pattern FILENAME = Pattern.compile("filename=\"?([^\";]+)\"?");
-    private static final Pattern SAFE_JAR_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*\\.jar");
-
-    private static final HttpClient CLIENT = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .build();
-
     @Getter @Setter
     private static String baseUrl = DEFAULT_BASE_URL;
+
+    private static final ModuleRegistry REGISTRY = new ModuleRegistry(() -> baseUrl);
 
     /** How soon a failed module-name fetch is retried, independent of the timer period. */
     private static final long NAME_RETRY_MILLIS = Duration.ofSeconds(30).toMillis();
@@ -117,130 +98,15 @@ public final class ModuleCloud {
         }
     }
 
-    /** A download that was refused or failed; the message is meant for the command sender. */
-    /** One version of a module, as the registry lists it. */
-    @Getter
-    public static final class VersionInfo {
-        private final String version;
-        private final long size;
-        private final String sha256;
-        private final String uploadedAt;
-        private final long downloads;
-
-        VersionInfo(String version, long size, String sha256, String uploadedAt, long downloads) {
-            this.version = version;
-            this.size = size;
-            this.sha256 = sha256;
-            this.uploadedAt = uploadedAt;
-            this.downloads = downloads;
-        }
-    }
-
-    /** A module's registry entry: its metadata, total downloads and versions, newest first. */
-    @Getter
-    public static final class ModuleInfo {
-        private final String name;
-        private final String id;
-        private final String description;
-        private final String version;
-        private final String author;
-        private final String license;
-        private final String requires;
-        private final java.util.List<String> dependencies;
-        private final long size;
-        private final String sha256;
-        private final String createdAt;
-        private final String updatedAt;
-        private final long downloads;
-        private final String downloadUrl;
-        private final java.util.List<VersionInfo> versions;
-
-        ModuleInfo(JsonObject json) {
-            this.name = string(json, "name");
-            this.id = string(json, "id");
-            this.description = string(json, "description");
-            this.version = string(json, "version");
-            this.author = string(json, "author");
-            this.license = string(json, "license");
-            this.requires = string(json, "requires");
-            this.dependencies = new java.util.ArrayList<>();
-            if (json.has("dependencies") && json.get("dependencies").isJsonArray()) {
-                for (JsonElement element : json.getAsJsonArray("dependencies")) {
-                    if (element.isJsonPrimitive()) {
-                        dependencies.add(element.getAsString());
-                    } else if (element.isJsonObject()) {
-                        JsonObject dependency = element.getAsJsonObject();
-                        String depId = dependency.has("id") ? string(dependency, "id") : string(dependency, "name");
-                        if (! depId.isEmpty()) dependencies.add(depId);
-                    }
-                }
-            }
-            this.size = number(json, "size");
-            this.sha256 = string(json, "sha256");
-            this.createdAt = string(json, "createdAt");
-            this.updatedAt = string(json, "updatedAt");
-            this.downloads = number(json, "downloads");
-            this.downloadUrl = string(json, "downloadUrl");
-            this.versions = new java.util.ArrayList<>();
-            if (json.has("versions") && json.get("versions").isJsonArray()) {
-                for (JsonElement element : json.getAsJsonArray("versions")) {
-                    if (! element.isJsonObject()) continue;
-                    JsonObject v = element.getAsJsonObject();
-                    versions.add(new VersionInfo(string(v, "version"), number(v, "size"), string(v, "sha256"),
-                            string(v, "uploadedAt"), number(v, "downloads")));
-                }
-            }
-        }
-
-        private static String string(JsonObject json, String key) {
-            JsonElement element = json.get(key);
-            return element == null || element.isJsonNull() ? "" : element.getAsString();
-        }
-
-        private static long number(JsonObject json, String key) {
-            JsonElement element = json.get(key);
-            try {
-                return element == null || element.isJsonNull() ? 0L : element.getAsLong();
-            } catch (RuntimeException e) {
-                return 0L;
-            }
-        }
-    }
-
     /**
      * Looks a module up in the registry by name or Plugin-Id, ignoring case.
      *
      * @param name the module's registry name or Plugin-Id
-     * @return the module's registry entry; fails with a {@link CloudException} when the
+     * @return the module's registry entry; fails with a {@link RegistryException} when the
      *         registry does not know it or cannot be reached
      */
     public static CompletableFuture<ModuleInfo> info(String name) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules/" + encode(name)))
-                        .timeout(Duration.ofSeconds(15))
-                        .header("Accept", "application/json")
-                        .GET().build(), HttpResponse.BodyHandlers.ofString());
-                if (response.statusCode() != 200) {
-                    throw new CloudException(errorMessage(response.statusCode(), response.body()));
-                }
-                return new ModuleInfo(new JsonParser().parse(response.body()).getAsJsonObject());
-            } catch (IOException e) {
-                throw new CloudException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
-            } catch (IllegalStateException | com.google.gson.JsonParseException e) {
-                throw new CloudException("The module registry sent an unreadable answer.", e);
-            }
-        });
-    }
-
-    public static final class CloudException extends RuntimeException {
-        public CloudException(String message) {
-            super(message);
-        }
-
-        public CloudException(String message, Throwable cause) {
-            super(message, cause);
-        }
+        return REGISTRY.info(name);
     }
 
     /**
@@ -250,7 +116,7 @@ public final class ModuleCloud {
      *
      * @param name    the module name or Plugin-Id, matched case-insensitively by the registry
      * @param version a specific version, or {@code null} for the latest
-     * @return a future completed with the result, or exceptionally with a {@link CloudException}
+     * @return a future completed with the result, or exceptionally with a {@link RegistryException}
      */
     public static CompletableFuture<Download> download(String name, String version) {
         return CompletableFuture.supplyAsync(() -> fetch(name, version))
@@ -304,7 +170,7 @@ public final class ModuleCloud {
      * configs are kept.
      *
      * @param name the module's registry name or Plugin-Id
-     * @return a future completed with the result, or exceptionally with a {@link CloudException}
+     * @return a future completed with the result, or exceptionally with a {@link RegistryException}
      */
     public static CompletableFuture<Update> update(String name) {
         return info(name).thenCompose(info -> {
@@ -333,26 +199,9 @@ public final class ModuleCloud {
         return ModuleManager.manifestValue(jar.toFile(), "Plugin-Version");
     }
 
-    /**
-     * Compares dotted versions part by part, numerically where both parts are numbers
-     * ({@code 1.10.0} is newer than {@code 1.9.2}); anything after a {@code -} or {@code +}
-     * is ignored.
-     */
+    /** @see ModuleRegistry#compareVersions */
     static int compareVersions(String a, String b) {
-        String[] left = a.trim().split("[-+]", 2)[0].split("\\.");
-        String[] right = b.trim().split("[-+]", 2)[0].split("\\.");
-        for (int i = 0; i < Math.max(left.length, right.length); i++) {
-            String l = i < left.length ? left[i] : "0";
-            String r = i < right.length ? right[i] : "0";
-            int compared;
-            try {
-                compared = Long.compare(Long.parseLong(l), Long.parseLong(r));
-            } catch (NumberFormatException e) {
-                compared = l.compareToIgnoreCase(r);
-            }
-            if (compared != 0) return compared;
-        }
-        return 0;
+        return ModuleRegistry.compareVersions(a, b);
     }
 
     private static Update replace(Fetched fetched, Path oldJar, String oldVersion) {
@@ -361,7 +210,7 @@ public final class ModuleCloud {
             // Checked before anything is unloaded, so a refused update leaves the old module running.
             String clash = jarOnDiskWithId(fetched.moduleId, fetched.fileName);
             if (clash != null && ! clash.equals(oldName)) {
-                throw new CloudException("'" + clash + "' in the module folder already has the Plugin-Id '"
+                throw new RegistryException("'" + clash + "' in the module folder already has the Plugin-Id '"
                         + fetched.moduleId + "'. Delete it first.");
             }
 
@@ -382,10 +231,10 @@ public final class ModuleCloud {
             }
 
             try {
-                move(fetched.temp, target);
+                ModuleRegistry.move(fetched.temp, target);
             } catch (IOException e) {
                 if (oldJar.toFile().isFile()) reload(oldName, dependents);
-                throw new CloudException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
+                throw new RegistryException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
             }
 
             boolean loaded;
@@ -428,61 +277,16 @@ public final class ModuleCloud {
         final String version;
         final String fileName;
 
-        Fetched(Path temp, String moduleId, String version, String fileName) {
-            this.temp = temp;
-            this.moduleId = moduleId;
-            this.version = version;
-            this.fileName = fileName;
+        Fetched(ModuleRegistry.Fetched fetched) {
+            this.temp = fetched.getTemp();
+            this.moduleId = fetched.getModuleId();
+            this.version = fetched.getVersion();
+            this.fileName = fetched.getFileName();
         }
     }
 
     private static Fetched fetch(String name, String version) {
-        // "latest" is a registry keyword, never a real version.
-        String target = version == null || version.isBlank() ? "latest" : version.trim();
-        String url = apiUrl() + "/" + encode(name) + "/download/" + encode(target);
-
-        Path folder = Singularity.getModuleFolder().toPath();
-        Path temp;
-        try {
-            Files.createDirectories(folder);
-            // Not a .jar, so the module scanner never picks up a partial download.
-            temp = Files.createTempFile(folder, ".ecloud-", ".part");
-        } catch (IOException e) {
-            throw new CloudException("Could not write to the module folder: " + e.getMessage(), e);
-        }
-
-        boolean keep = false;
-        try {
-            HttpResponse<Path> response = send(HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofMinutes(2))
-                    .header("Accept", "application/java-archive")
-                    .GET().build(), HttpResponse.BodyHandlers.ofFile(temp));
-
-            if (response.statusCode() != 200) {
-                throw new CloudException(errorMessage(response.statusCode(), Files.readString(temp)));
-            }
-
-            String moduleId = response.headers().firstValue("X-Module-Id").orElse(name);
-            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(target);
-            String expected = response.headers().firstValue("X-Checksum-SHA256").orElse(null);
-            if (expected != null && ! expected.equalsIgnoreCase(sha256(temp))) {
-                throw new CloudException("Checksum mismatch for '" + moduleId + "'; the download was discarded.");
-            }
-
-            String fileName = response.headers().firstValue("Content-Disposition")
-                    .map(FILENAME::matcher)
-                    .filter(Matcher::find)
-                    .map(m -> m.group(1).trim())
-                    .filter(n -> SAFE_JAR_NAME.matcher(n).matches())
-                    .orElse(name + "-" + moduleVersion + ".jar");
-
-            keep = true;
-            return new Fetched(temp, moduleId, moduleVersion, fileName);
-        } catch (IOException e) {
-            throw new CloudException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
-        } finally {
-            if (! keep) deleteQuietly(temp);
-        }
+        return new Fetched(REGISTRY.fetch(name, version, Singularity.getModuleFolder().toPath()));
     }
 
     private static Download install(Fetched fetched) {
@@ -492,11 +296,11 @@ public final class ModuleCloud {
                 String installedVersion = installed.getDescriptor().getVersion();
                 String installedJar = installed.getPluginPath().getFileName().toString();
                 if (installedVersion.equals(fetched.version)) {
-                    throw new CloudException("'" + fetched.moduleId + "' " + fetched.version + " is already installed (" + installedJar + ").");
+                    throw new RegistryException("'" + fetched.moduleId + "' " + fetched.version + " is already installed (" + installedJar + ").");
                 }
                 // PF4J identifies modules by Plugin-Id, so a second jar with the same id
                 // would clash on the next start; replacing a loaded jar needs a restart.
-                throw new CloudException("'" + fetched.moduleId + "' " + installedVersion + " is already installed (" + installedJar
+                throw new RegistryException("'" + fetched.moduleId + "' " + installedVersion + " is already installed (" + installedJar
                         + "). Use /modules ecloud update " + fetched.moduleId + " to switch to the latest version.");
             }
 
@@ -504,15 +308,15 @@ public final class ModuleCloud {
             // Plugin-Id on the next start. A jar with the target name is simply replaced.
             String clash = jarOnDiskWithId(fetched.moduleId, fetched.fileName);
             if (clash != null) {
-                throw new CloudException("'" + clash + "' in the module folder already has the Plugin-Id '"
+                throw new RegistryException("'" + clash + "' in the module folder already has the Plugin-Id '"
                         + fetched.moduleId + "'. Delete it first.");
             }
 
             Path target = Singularity.getModuleFolder().toPath().resolve(fetched.fileName);
             try {
-                move(fetched.temp, target);
+                ModuleRegistry.move(fetched.temp, target);
             } catch (IOException e) {
-                throw new CloudException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
+                throw new RegistryException("Could not save " + fetched.fileName + ": " + e.getMessage(), e);
             }
 
             try {
@@ -556,11 +360,7 @@ public final class ModuleCloud {
     }
 
     private static void deleteQuietly(Path path) {
-        try {
-            Files.deleteIfExists(path);
-        } catch (IOException ignored) {
-            // A leftover .part file is harmless; it is never loaded.
-        }
+        ModuleRegistry.deleteQuietly(path);
     }
 
     /**
@@ -615,16 +415,8 @@ public final class ModuleCloud {
     private static void fetchModuleNames() {
         boolean ok = false;
         try {
-            HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + "/modules"))
-                    .timeout(Duration.ofSeconds(15))
-                    .header("Accept", "application/json")
-                    .GET().build(), HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) return;
-
             ConcurrentSkipListSet<String> names = new ConcurrentSkipListSet<>();
-            for (JsonElement element : new JsonParser().parse(response.body()).getAsJsonObject().getAsJsonArray("modules")) {
-                names.add(element.getAsJsonObject().get("name").getAsString());
-            }
+            for (ModuleInfo info : REGISTRY.listNow(null)) names.add(info.getName());
             cachedNames.retainAll(names);
             cachedNames.addAll(names);
             ok = true;
@@ -634,63 +426,5 @@ public final class ModuleCloud {
             namesRefreshing.set(false);
             if (! ok) scheduleRetry();
         }
-    }
-
-    private static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException {
-        try {
-            return CLIENT.send(request, handler);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("interrupted", e);
-        }
-    }
-
-    private static String baseUrl() {
-        String url = baseUrl == null || baseUrl.isBlank() ? DEFAULT_BASE_URL : baseUrl.trim();
-        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-    }
-
-    private static String apiUrl() {
-        return baseUrl() + "/api/v1";
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
-    }
-
-    /** The registry answers errors as {@code {"error": "..."}}; falls back to the status code. */
-    private static String errorMessage(int status, String body) {
-        try {
-            JsonObject json = new JsonParser().parse(body).getAsJsonObject();
-            if (json.has("error")) return json.get("error").getAsString();
-        } catch (Exception ignored) {
-            // Not JSON (e.g. a proxy error page).
-        }
-        return "The module registry answered HTTP " + status + ".";
-    }
-
-    private static void move(Path from, Path to) throws IOException {
-        try {
-            Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } catch (AtomicMoveNotSupportedException e) {
-            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
-    private static String sha256(Path file) throws IOException {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-        try (InputStream in = Files.newInputStream(file)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) digest.update(buffer, 0, read);
-        }
-        StringBuilder hex = new StringBuilder();
-        for (byte b : digest.digest()) hex.append(String.format(Locale.ROOT, "%02x", b));
-        return hex.toString();
     }
 }

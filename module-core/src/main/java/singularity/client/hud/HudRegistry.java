@@ -1,7 +1,6 @@
 package singularity.client.hud;
 
-import singularity.Singularity;
-import singularity.utils.MessageUtils;
+import singularity.client.ClientEnvironment;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -112,9 +111,7 @@ public final class HudRegistry {
     }
 
     private static File file() {
-        Singularity<?, ?, ?, ?, ?> instance = Singularity.getInstance();
-        if (instance == null) return null;
-        return new File(new File(instance.getDataFolder(), "client"), "hud-layout.properties");
+        return ClientEnvironment.file("hud-layout.properties");
     }
 
     private static synchronized void ensureLoaded() {
@@ -128,7 +125,7 @@ public final class HudRegistry {
         try (InputStream in = new FileInputStream(file)) {
             properties.load(in);
         } catch (IOException e) {
-            MessageUtils.logWarning("Could not read " + file + ": " + e.getMessage());
+            ClientEnvironment.logWarning("Could not read " + file + ": " + e.getMessage());
             return;
         }
         for (String name : properties.stringPropertyNames()) {
@@ -156,7 +153,7 @@ public final class HudRegistry {
         try (OutputStream out = new FileOutputStream(file)) {
             properties.store(out, "Streamline HUD layout: <module-id>:<element-id> = x,y,scale,enabled");
         } catch (IOException e) {
-            MessageUtils.logWarning("Could not write " + file + ": " + e.getMessage());
+            ClientEnvironment.logWarning("Could not write " + file + ": " + e.getMessage());
         }
     }
 }
