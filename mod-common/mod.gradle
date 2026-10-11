@@ -214,14 +214,18 @@ def devLibrariesJar = tasks.register('devLibrariesJar', shadowJarType) {
 }
 def devLibraries = files(devLibrariesJar.flatMap { it.archiveFile }).builtBy(devLibrariesJar)
 
-// Fabric reads the runtime classpath; ModDevGradle needs non-mod jars in
-// additionalRuntimeClasspath (NeoForge 1.21.8 and older ignore the rest); ForgeGradle 7
-// takes them as each run's extra libraries.
+// Fabric and ModDevGradle from Minecraft 1.21.9 read the runtime classpath. Up to 1.21.8,
+// ModDevGradle's runs ignore non-mod jars there and take them from
+// additionalRuntimeClasspath instead, which it rejects outright on later versions.
+// ForgeGradle 7 takes them as each run's extra libraries.
 dependencies {
     runtimeOnly devLibraries
 }
-configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach { configuration ->
-    project.dependencies.add(configuration.name, devLibraries)
+def mcForRuns = project.mcVersion.toString()
+if (mcForRuns.startsWith('1.20.') || mcForRuns == '1.21.1') {
+    configurations.matching { it.name == 'additionalRuntimeClasspath' }.configureEach { configuration ->
+        project.dependencies.add(configuration.name, devLibraries)
+    }
 }
 plugins.withId('net.minecraftforge.gradle') {
     minecraft.runs.configureEach {
