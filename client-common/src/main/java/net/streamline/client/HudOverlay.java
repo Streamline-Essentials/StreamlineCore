@@ -3,7 +3,7 @@ package net.streamline.client;
 import singularity.client.hud.HudElement;
 import singularity.client.hud.HudPlacement;
 import singularity.client.hud.HudRegistry;
-import singularity.utils.MessageUtils;
+import singularity.client.ClientEnvironment;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +118,7 @@ public final class HudOverlay {
         Failures failures = FAILURES.computeIfAbsent(registered.getKey(), key -> new Failures(registered.getElement()));
         failures.count++;
         if (failures.count == 1 || failures.count == MAX_FAILURES) {
-            MessageUtils.logWarning("HUD element '" + registered.getKey() + "' failed to draw: " + t
+            ClientEnvironment.logWarning("HUD element '" + registered.getKey() + "' failed to draw: " + t
                     + (failures.count >= MAX_FAILURES ? " (no longer drawn until it is registered again)" : ""));
         }
     }

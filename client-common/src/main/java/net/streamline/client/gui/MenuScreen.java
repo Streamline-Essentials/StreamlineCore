@@ -3,29 +3,31 @@ package net.streamline.client.gui;
 import net.streamline.client.Canvas;
 import net.streamline.client.compat.ClientCompat;
 import net.streamline.client.compat.CompatScreen;
-import org.pf4j.PluginDescriptor;
-import org.pf4j.PluginWrapper;
-import singularity.Singularity;
 import singularity.client.hud.HudPlacement;
 import singularity.client.hud.HudRegistry;
+import singularity.client.module.ClientModuleCloud;
+import singularity.client.module.ClientModuleManager;
 import singularity.client.settings.ClientSettingsRegistry;
 import singularity.client.settings.ModuleSettings;
 import singularity.client.settings.Setting;
-import singularity.modules.ModuleLike;
-import singularity.modules.ModuleManager;
-import singularity.utils.MessageUtils;
+import singularity.registry.ModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
- * The client module menu ({@code /slclient menu}): a sidebar of the modules loaded in this
- * game and, for the selected one, its details, an enable switch, the settings it registered
- * with {@link ClientSettingsRegistry}, and its HUD elements.
+ * The client module menu ({@code /slclient menu}): a sidebar of the client modules loaded in
+ * this game and, for the selected one, its details, an enable switch, reload, update and
+ * remove buttons, the settings it registered with {@link ClientSettingsRegistry}, and its HUD
+ * elements. The sidebar's last entry browses eCloud for client modules and installs them
+ * while the game runs.
  *
  * <p>Everything is drawn by hand so it looks the same on every Minecraft version. Each frame
  * records the clickable areas it drew in {@link #regions}; input is matched against the
@@ -41,8 +43,20 @@ public final class MenuScreen extends CompatScreen {
     /** The screen to return to: a version-specific screen object, or {@code null}. */
     private final Object parent;
     private final List<Region> regions = new ArrayList<>();
-    /** Modules whose start or stop is running in the background. */
+    /** Sidebar key of the eCloud browser; never a Plugin-Id, which cannot contain spaces. */
+    private static final String BROWSE = " ecloud";
+
+    /** Modules (by id) with an action running in the background. */
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
+    /** The last action's outcome per module, shown under its controls; red when it starts with "!". */
+    private final Map<String, String> notices = new ConcurrentHashMap<>();
+    /** The module whose Remove button was clicked once; a second click removes it. */
+    private String confirmRemove;
+
+    /** eCloud's client modules, once fetched; {@code null} until then. */
+    private volatile List<ModuleRegistry.ModuleInfo> available;
+    private volatile String availableError;
+    private volatile boolean loadingAvailable;
 
     private String selected;
     private double contentScroll;
@@ -121,34 +135,36 @@ public final class MenuScreen extends CompatScreen {
 
     // ---------------------------------------------------------------- data
 
-    private static List<ModuleLike> modules() {
-        List<ModuleLike> modules = new ArrayList<>();
-        Object base = Singularity.getBaseModule();
-        for (ModuleLike module : ModuleManager.getLoadedModules().values()) {
-            if (module == base || "streamline-base".equals(module.getIdentifier())) continue;
-            modules.add(module);
-        }
-        return modules;
-    }
-
-    private static PluginDescriptor descriptor(ModuleLike module) {
-        try {
-            PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(module.getIdentifier());
-            return wrapper == null ? null : wrapper.getDescriptor();
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
-    private static String displayName(ModuleLike module) {
-        ModuleSettings page = ClientSettingsRegistry.get(module.getIdentifier());
+    private static String displayName(ClientModuleManager.Installed module) {
+        ModuleSettings page = ClientSettingsRegistry.get(module.getId());
         if (page != null && ! page.getDisplayName().isEmpty()) return page.getDisplayName();
-        PluginDescriptor descriptor = descriptor(module);
-        if (descriptor != null && descriptor.getPluginClass() != null) {
-            String type = descriptor.getPluginClass();
-            return type.substring(type.lastIndexOf('.') + 1);
+        return module.getName();
+    }
+
+    /** eCloud's entry for an installed module, once the list has been fetched. */
+    private ModuleRegistry.ModuleInfo listed(String id) {
+        List<ModuleRegistry.ModuleInfo> list = available;
+        if (list == null) return null;
+        for (ModuleRegistry.ModuleInfo info : list) {
+            if (info.getId().equalsIgnoreCase(id)) return info;
         }
-        return module.getIdentifier();
+        return null;
+    }
+
+    private void fetchAvailable() {
+        if (loadingAvailable) return;
+        loadingAvailable = true;
+        availableError = null;
+        ClientModuleCloud.available().whenComplete((list, error) -> {
+            if (error == null) available = list;
+            else availableError = message(error);
+            loadingAvailable = false;
+        });
+    }
+
+    private static String message(Throwable error) {
+        Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+        return cause.getMessage() == null ? cause.toString() : cause.getMessage();
     }
 
     // ---------------------------------------------------------------- drawing
@@ -175,11 +191,12 @@ public final class MenuScreen extends CompatScreen {
         contentX2 = left + width;
         contentY2 = top + height;
 
-        List<ModuleLike> modules = modules();
-        if (selected == null || modules.stream().noneMatch(m -> m.getIdentifier().equals(selected))) {
-            selected = modules.isEmpty() ? null : modules.get(0).getIdentifier();
+        List<ClientModuleManager.Installed> modules = ClientModuleManager.modules();
+        if (selected == null || (! BROWSE.equals(selected) && modules.stream().noneMatch(m -> m.getId().equals(selected)))) {
+            selected = modules.isEmpty() ? BROWSE : modules.get(0).getId();
             contentScroll = 0;
         }
+        if (available == null && availableError == null) fetchAvailable();
 
         drawSidebar(canvas, mouseX, mouseY, modules);
         drawContent(canvas, mouseX, mouseY, modules);
@@ -203,60 +220,60 @@ public final class MenuScreen extends CompatScreen {
         regions.add(new Region(hudX1, top + 4, hudX2, top + 18, null, (x, y, b) -> openHudEditor()));
     }
 
-    private void drawSidebar(Canvas canvas, int mouseX, int mouseY, List<ModuleLike> modules) {
+    private void drawSidebar(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules) {
         canvas.fill(sidebarX1, sidebarY1, sidebarX2, sidebarY2, Theme.SIDEBAR);
         int rowHeight = 18;
-        int total = modules.size() * rowHeight + 8;
+        int total = (modules.size() + 1) * rowHeight + 12;
         sidebarOverflow = Math.max(0, total - (sidebarY2 - sidebarY1));
         sidebarScroll = Math.max(0, Math.min(sidebarScroll, sidebarOverflow));
 
         canvas.clip(sidebarX1, sidebarY1, sidebarX2, sidebarY2);
         int y = sidebarY1 + 4 - (int) sidebarScroll;
-        for (ModuleLike module : modules) {
-            String id = module.getIdentifier();
-            boolean isSelected = id.equals(selected);
-            boolean visible = y + rowHeight > sidebarY1 && y < sidebarY2;
-            boolean hover = visible && Theme.inside(mouseX, mouseY, sidebarX1, Math.max(y, sidebarY1), sidebarX2, Math.min(y + rowHeight, sidebarY2));
-            if (isSelected) {
-                canvas.fill(sidebarX1, y, sidebarX2, y + rowHeight, 0x30FFFFFF);
-                canvas.fill(sidebarX1, y, sidebarX1 + 2, y + rowHeight, Theme.ACCENT);
-            } else if (hover) {
-                canvas.fill(sidebarX1, y, sidebarX2, y + rowHeight, Theme.HOVER);
-            }
+        for (ClientModuleManager.Installed module : modules) {
             int dot = module.isEnabled() ? 0xFF4CC26A : 0xFF6A6F77;
-            canvas.fill(sidebarX1 + 7, y + 7, sidebarX1 + 11, y + 11, dot);
-            canvas.text(Theme.fit(canvas, displayName(module), SIDEBAR_WIDTH - 22), sidebarX1 + 16, y + 5,
-                    isSelected ? Theme.TEXT : Theme.MUTED);
-            if (visible) {
-                regions.add(new Region(sidebarX1, Math.max(y, sidebarY1), sidebarX2, Math.min(y + rowHeight, sidebarY2), null, (x, yy, b) -> {
-                    if (! id.equals(selected)) {
-                        commitEdit();
-                        selected = id;
-                        contentScroll = 0;
-                    }
-                }));
-            }
+            sidebarRow(canvas, mouseX, mouseY, module.getId(), displayName(module), dot, y, rowHeight);
             y += rowHeight;
         }
+        y += 4;
+        canvas.fill(sidebarX1 + 6, y - 2, sidebarX2 - 6, y - 1, Theme.CONTROL_BORDER);
+        sidebarRow(canvas, mouseX, mouseY, BROWSE, "Browse eCloud", Theme.ACCENT_LIGHT, y, rowHeight);
         canvas.endClip();
     }
 
-    private void drawContent(Canvas canvas, int mouseX, int mouseY, List<ModuleLike> modules) {
+    private void sidebarRow(Canvas canvas, int mouseX, int mouseY, String key, String label, int dot, int y, int rowHeight) {
+        boolean isSelected = key.equals(selected);
+        boolean visible = y + rowHeight > sidebarY1 && y < sidebarY2;
+        boolean hover = visible && Theme.inside(mouseX, mouseY, sidebarX1, Math.max(y, sidebarY1), sidebarX2, Math.min(y + rowHeight, sidebarY2));
+        if (isSelected) {
+            canvas.fill(sidebarX1, y, sidebarX2, y + rowHeight, 0x30FFFFFF);
+            canvas.fill(sidebarX1, y, sidebarX1 + 2, y + rowHeight, Theme.ACCENT);
+        } else if (hover) {
+            canvas.fill(sidebarX1, y, sidebarX2, y + rowHeight, Theme.HOVER);
+        }
+        canvas.fill(sidebarX1 + 7, y + 7, sidebarX1 + 11, y + 11, dot);
+        canvas.text(Theme.fit(canvas, label, SIDEBAR_WIDTH - 22), sidebarX1 + 16, y + 5,
+                isSelected ? Theme.TEXT : Theme.MUTED);
+        if (visible) {
+            regions.add(new Region(sidebarX1, Math.max(y, sidebarY1), sidebarX2, Math.min(y + rowHeight, sidebarY2), null, (x, yy, b) -> {
+                if (! key.equals(selected)) {
+                    commitEdit();
+                    selected = key;
+                    contentScroll = 0;
+                    confirmRemove = null;
+                }
+            }));
+        }
+    }
+
+    private void drawContent(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules) {
         int textWidth = contentX2 - contentX1 - PAD * 2;
         canvas.clip(contentX1, contentY1, contentX2, contentY2);
         int y = contentY1 + PAD - (int) contentScroll;
         int start = y;
 
-        if (modules.isEmpty()) {
-            String folder = Singularity.getModuleFolder() == null ? "the modules folder" : Singularity.getModuleFolder().getPath();
-            y = paragraph(canvas, "&lNo client modules installed", y, textWidth, Theme.TEXT);
-            y += 4;
-            y = paragraph(canvas, "Client modules are module jars whose platforms include modded-client. "
-                    + "Put them in " + folder + " and restart the game.", y, textWidth, Theme.MUTED);
-        } else {
-            ModuleLike module = modules.stream().filter(m -> m.getIdentifier().equals(selected)).findFirst().orElse(modules.get(0));
-            y = drawModule(canvas, mouseX, mouseY, module, y, textWidth);
-        }
+        ClientModuleManager.Installed module = modules.stream().filter(m -> m.getId().equals(selected)).findFirst().orElse(null);
+        if (module == null) y = drawBrowse(canvas, mouseX, mouseY, modules, y, textWidth);
+        else y = drawModule(canvas, mouseX, mouseY, module, y, textWidth);
 
         canvas.endClip();
         contentOverflow = Math.max(0, (y - start) + PAD - (contentY2 - contentY1));
@@ -290,26 +307,24 @@ public final class MenuScreen extends CompatScreen {
         return visible(y1, y2) && Theme.inside(mouseX, mouseY, x1, Math.max(y1, contentY1), x2, Math.min(y2, contentY2));
     }
 
-    private int drawModule(Canvas canvas, int mouseX, int mouseY, ModuleLike module, int y, int textWidth) {
-        String id = module.getIdentifier();
-        PluginDescriptor descriptor = descriptor(module);
+    private int drawModule(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module, int y, int textWidth) {
+        String id = module.getId();
         int x1 = contentX1 + PAD;
         int right = contentX2 - PAD - 4;
 
         String name = displayName(module);
         canvas.text("&l" + name, x1, y, Theme.TEXT, false);
-        if (descriptor != null && descriptor.getVersion() != null) {
-            canvas.text("v" + descriptor.getVersion(), x1 + canvas.textWidth("&l" + name) + 6, y, Theme.MUTED);
-        }
+        canvas.text("v" + module.getVersion(), x1 + canvas.textWidth("&l" + name) + 6, y, Theme.MUTED);
         y += canvas.lineHeight() + 3;
-        String authors = module.getAuthorsStringed();
-        if (authors != null && ! authors.isEmpty()) {
-            canvas.text(Theme.fit(canvas, "by " + authors, textWidth), x1, y, Theme.MUTED);
+        if (! module.getProvider().isEmpty()) {
+            canvas.text(Theme.fit(canvas, "by " + module.getProvider(), textWidth), x1, y, Theme.MUTED);
             y += canvas.lineHeight() + 3;
         }
-        if (descriptor != null && descriptor.getPluginDescription() != null && ! descriptor.getPluginDescription().isEmpty()) {
-            y = paragraph(canvas, descriptor.getPluginDescription(), y, textWidth, Theme.MUTED);
+        if (! module.getDescription().isEmpty()) {
+            y = paragraph(canvas, module.getDescription(), y, textWidth, Theme.MUTED);
         }
+        y += 4;
+        y = drawModuleActions(canvas, mouseX, mouseY, module, y, x1);
         y += 6;
 
         // Enable switch.
@@ -320,7 +335,7 @@ public final class MenuScreen extends CompatScreen {
         } else {
             boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
             Theme.toggle(canvas, right - 20, y, module.isEnabled(), hover);
-            addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> toggleModule(module));
+            addRegion(right - 20, y, right, y + 10, null, (cx, cy, b) -> toggleModule(id, module.isEnabled()));
         }
         y += 20;
 
@@ -499,21 +514,156 @@ public final class MenuScreen extends CompatScreen {
 
     // ---------------------------------------------------------------- actions
 
-    private void toggleModule(ModuleLike module) {
-        String id = module.getIdentifier();
-        if (! pending.add(id)) return;
-        boolean stop = module.isEnabled();
-        // Modules start and stop off the render thread: their own code may do I/O.
-        CompletableFuture.runAsync(() -> {
-            try {
-                if (stop) module.stop();
-                else module.start();
-            } catch (Throwable t) {
-                MessageUtils.logWarning("Could not " + (stop ? "disable" : "enable") + " module '" + id + "': " + t);
-            } finally {
-                pending.remove(id);
+    /** Reload, Update (when eCloud lists a newer version) and Remove, then the last action's outcome. */
+    private int drawModuleActions(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module, int y, int x1) {
+        String id = module.getId();
+        if (pending.contains(id)) {
+            canvas.text("Working...", x1, y + 3, Theme.MUTED);
+            return y + 18;
+        }
+        int x = actionButton(canvas, mouseX, mouseY, x1, y, "Reload", false,
+                () -> run(id, ClientModuleManager.reload(id), m -> "Reloaded " + m.getVersion() + "."));
+
+        ModuleRegistry.ModuleInfo listed = listed(id);
+        if (listed != null && ModuleRegistry.compareVersions(module.getVersion(), listed.getVersion()) < 0) {
+            x = actionButton(canvas, mouseX, mouseY, x, y, "Update to " + listed.getVersion(), true,
+                    () -> run(id, ClientModuleCloud.update(id), result -> "Updated to " + result.getVersion() + "."));
+        }
+
+        boolean confirming = id.equals(confirmRemove);
+        actionButton(canvas, mouseX, mouseY, x, y, confirming ? "Click again to remove" : "Remove", confirming, () -> {
+            if (! id.equals(confirmRemove)) {
+                confirmRemove = id;
+                return;
             }
+            confirmRemove = null;
+            run(id, ClientModuleManager.remove(id), jar -> "Removed " + jar + ".");
         });
+        return notice(canvas, id, y + 18, x1, contentX2 - PAD - 4);
+    }
+
+    /** @return the x where the next button goes */
+    private int actionButton(Canvas canvas, int mouseX, int mouseY, int x, int y, String label, boolean primary, Runnable action) {
+        int x2 = x + canvas.textWidth(label) + 14;
+        Theme.button(canvas, x, y, x2, y + 14, label, hovered(mouseX, mouseY, x, y, x2, y + 14), primary);
+        addRegion(x, y, x2, y + 14, null, (cx, cy, b) -> action.run());
+        return x2 + 6;
+    }
+
+    /** Draws the last action's outcome for {@code key}, if any. */
+    private int notice(Canvas canvas, String key, int y, int x1, int right) {
+        String notice = notices.get(key);
+        if (notice == null) return y;
+        boolean failed = notice.startsWith("!");
+        for (String line : Theme.wrap(canvas, failed ? notice.substring(1) : notice, right - x1)) {
+            canvas.text(line, x1, y, failed ? Theme.ACCENT_LIGHT : 0xFF4CC26A);
+            y += canvas.lineHeight() + 2;
+        }
+        return y;
+    }
+
+    /**
+     * Runs a background action for one module, keeping its controls busy until it ends and
+     * noting the outcome. Module code runs off the render thread, on the client module worker.
+     */
+    private <T> void run(String key, CompletableFuture<T> action, Function<T, String> success) {
+        if (! pending.add(key)) return;
+        notices.remove(key);
+        action.whenComplete((value, error) -> {
+            if (error == null) notices.put(key, success.apply(value));
+            else notices.put(key, "!" + message(error));
+            pending.remove(key);
+        });
+    }
+
+    private void toggleModule(String id, boolean enabled) {
+        if (enabled) run(id, ClientModuleManager.disable(id), m -> "Disabled. It stays off until you enable it.");
+        else run(id, ClientModuleManager.enable(id), m -> "Enabled.");
+    }
+
+    /** The eCloud page: every client module the registry lists, with install and update buttons. */
+    private int drawBrowse(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules, int y, int textWidth) {
+        int x1 = contentX1 + PAD;
+        int right = contentX2 - PAD - 4;
+        canvas.text("&lBrowse eCloud", x1, y, Theme.TEXT, false);
+        if (! loadingAvailable) {
+            int refreshX1 = right - canvas.textWidth("Refresh") - 14;
+            Theme.button(canvas, refreshX1, y - 3, right, y + 11, "Refresh", hovered(mouseX, mouseY, refreshX1, y - 3, right, y + 11), false);
+            addRegion(refreshX1, y - 3, right, y + 11, null, (cx, cy, b) -> fetchAvailable());
+        }
+        y += canvas.lineHeight() + 5;
+        y = paragraph(canvas, "Client modules from eCloud. They install and start right away; no restart needed.",
+                y, textWidth, Theme.MUTED);
+        if (modules.isEmpty()) {
+            y = paragraph(canvas, "No client modules are installed yet. Jars put in " + ClientModuleManager.folder()
+                    + " also load as soon as they land.", y, textWidth, Theme.MUTED);
+        }
+        for (String reason : ClientModuleManager.refusals().values()) {
+            y = paragraph(canvas, reason, y, textWidth, Theme.ACCENT_LIGHT);
+        }
+        y += 6;
+
+        List<ModuleRegistry.ModuleInfo> list = available;
+        if (availableError != null) {
+            y = paragraph(canvas, "Could not reach eCloud: " + availableError, y, textWidth, Theme.ACCENT_LIGHT);
+        }
+        if (list == null) return loadingAvailable ? paragraph(canvas, "Loading...", y, textWidth, Theme.MUTED) : y;
+        if (list.isEmpty()) return paragraph(canvas, "eCloud lists no client modules yet.", y, textWidth, Theme.MUTED);
+
+        for (ModuleRegistry.ModuleInfo info : list) {
+            y = drawListing(canvas, mouseX, mouseY, info, y, x1, right);
+        }
+        return y;
+    }
+
+    private int drawListing(Canvas canvas, int mouseX, int mouseY, ModuleRegistry.ModuleInfo info, int y, int x1, int right) {
+        int top = y;
+        String key = info.getId().isEmpty() ? info.getName() : info.getId();
+        ClientModuleManager.Installed installed = ClientModuleManager.module(key);
+        boolean outdated = installed != null && ModuleRegistry.compareVersions(installed.getVersion(), info.getVersion()) < 0;
+
+        String label;
+        Runnable action = null;
+        if (pending.contains(key)) {
+            label = "Working...";
+        } else if (installed == null) {
+            label = "Install";
+            action = () -> run(key, ClientModuleCloud.download(key, null), result -> "Installed " + result.getVersion() + ".");
+        } else if (outdated) {
+            label = "Update";
+            action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated to " + result.getVersion() + ".");
+        } else {
+            label = "Installed";
+        }
+        int buttonX1 = right - Math.max(56, canvas.textWidth(label) + 14);
+        int textWidth = buttonX1 - x1 - 8;
+
+        if (hovered(mouseX, mouseY, x1 - 2, top - 3, right + 2, top + canvas.lineHeight() * 2 + 6)) {
+            canvas.fill(x1 - 2, top - 3, right + 2, top + canvas.lineHeight() * 2 + 6, Theme.HOVER);
+        }
+        canvas.text(Theme.fit(canvas, "&l" + info.getName() + " &r&7v" + info.getVersion(), textWidth), x1, y + 1, Theme.TEXT);
+        if (action != null) {
+            Runnable click = action;
+            Theme.button(canvas, buttonX1, y - 2, right, y + 12, label, hovered(mouseX, mouseY, buttonX1, y - 2, right, y + 12), true);
+            addRegion(buttonX1, y - 2, right, y + 12, null, (cx, cy, b) -> click.run());
+        } else {
+            canvas.text(label, right - canvas.textWidth(label), y + 1, Theme.MUTED);
+        }
+        y += canvas.lineHeight() + 3;
+
+        String byline = (info.getAuthor().isEmpty() ? "" : "by " + info.getAuthor() + "  ")
+                + info.getDownloads() + (info.getDownloads() == 1 ? " download" : " downloads")
+                + (installed != null ? "  (installed " + installed.getVersion() + ")" : "");
+        canvas.text(Theme.fit(canvas, byline, textWidth), x1, y, Theme.MUTED);
+        y += canvas.lineHeight() + 2;
+        for (String line : Theme.wrap(canvas, info.getDescription(), right - x1)) {
+            canvas.text(line, x1, y, Theme.MUTED);
+            y += canvas.lineHeight() + 2;
+        }
+        y = notice(canvas, key, y, x1, right);
+        y += 4;
+        canvas.fill(x1, y, right, y + 1, Theme.CONTROL_BORDER);
+        return y + 7;
     }
 
     private void openHudEditor() {

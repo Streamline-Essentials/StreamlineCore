@@ -73,8 +73,18 @@ ext {
             throw new GradleException("Module '${project.name}' lists unknown platforms in pf.platforms: " +
                     "${unknown.join(', ')}. Use a comma-separated subset of ${known.join(', ')}.")
         }
+        // Client modules extend ClientModule and run in the game client's lean module core,
+        // which servers do not load, so a module is either client-only or for servers.
+        if (tags.contains('modded-client') && tags.size() > 1) {
+            throw new GradleException("Module '${project.name}' lists modded-client with other platforms in " +
+                    "pf.platforms. Client modules are client-only; split the server part into its own module.")
+        }
         return tags.join(', ')
     }()
+
+    // Client-only modules compile against the module core alone: a game client has no
+    // players, permissions, database or commands for them to reach.
+    clientModule = pfPlatforms == 'modded-client'
 
     // PF4J's entry point: the pf.class package plus the module name.
     moduleName = moduleProp('name', project.name).toString()
@@ -92,6 +102,13 @@ repositories {
 }
 
 dependencies {
+    if (project.ext.clientModule) {
+        compileOnly project(':StreamlineCore-ModuleCore')
+        compileOnly 'org.pf4j:pf4j:3.10.0'
+        compileOnly 'com.google.code.gson:gson:2.8.8'
+        return
+    }
+
     compileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
 
     // StreamlineCore resolves from this build, so a module always compiles against the
@@ -121,7 +138,9 @@ dependencies {
 }
 
 // The core shadow JARs must exist before a module compiles against them.
-compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
+if (! project.ext.clientModule) {
+    compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
+}
 
 shadowJar {
     manifest {
