@@ -76,6 +76,57 @@ if (redirectedBuildRoot != null) {
     logger.lifecycle("[StreamlineCore] Build output: ${redirectedBuildRoot}")
 }
 
+// IntelliJ run configurations for the Forge and NeoForge projects and the Forge 1.8.9 build,
+// written on every IntelliJ sync as shared files in .idea/runConfigurations. ForgeGradle 7
+// generates none for IntelliJ, and the Forge 1.8.9 build is not a project IntelliJ links, so
+// all of them run the loaders' own runClient/runServer Gradle tasks, in the same form and
+// naming as the ones Fabric Loom writes for the Fabric projects. ModDevGradle's own IntelliJ
+// runs are turned off in forge.gradle/neoforge.gradle, so each project has one pair.
+if (Boolean.getBoolean('idea.sync.active') && gradle.ext.has('buildMods') && gradle.ext.buildMods) {
+    def writeRun = { String name, String task ->
+        def folder = new File(rootDir, '.idea/runConfigurations')
+        folder.mkdirs()
+        def fileName = name.replaceAll('[^A-Za-z0-9_-]', '_') + '.xml'
+        def escapedName = name.replace('&', '&amp;').replace('"', '&quot;').replace('<', '&lt;')
+        new File(folder, fileName).setText("""<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="${escapedName}" type="GradleRunConfiguration" factoryName="Gradle" >
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="\$PROJECT_DIR\$" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="${task}" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <method v="2" />
+  </configuration>
+</component>
+""", 'UTF-8')
+    }
+
+    gradle.projectsEvaluated {
+        subprojects.findAll { it.projectDir.parentFile.name in ['forge', 'neoforge'] }.each { p ->
+            writeRun("Minecraft Client (${p.path})", "${p.path}:runClient")
+            writeRun("Minecraft Server (${p.path})", "${p.path}:runServer")
+        }
+        // Client-only: 1.8.9 has no server build.
+        if (gradle.includedBuilds.any { it.name == "${rootProject.name}-Forge-189" }) {
+            writeRun("Minecraft Client (:${rootProject.name}-Forge-189)", ":${rootProject.name}-Forge-189:runClient")
+        }
+    }
+}
+
 allprojects {
     apply plugin: "java"
     apply plugin: "com.gradleup.shadow"
