@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
@@ -45,6 +47,13 @@ public final class ModuleRegistry {
 
     private static final Pattern FILENAME = Pattern.compile("filename=\"?([^\";]+)\"?");
     private static final Pattern SAFE_JAR_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]*\\.jar");
+
+    /**
+     * Sent with every request. The registry sits behind Cloudflare, which refuses the default
+     * {@code Java/1.8.0_x} agent that Java 8's HttpURLConnection sends; on Minecraft 1.8.9
+     * these requests go through JvmDowngrader's java.net.http stub, which uses it.
+     */
+    private static final String USER_AGENT = "StreamlineCore-ModuleRegistry";
 
     private static final HttpClient CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -238,6 +247,7 @@ public final class ModuleRegistry {
             HttpResponse<String> response = send(HttpRequest.newBuilder(URI.create(apiUrl() + path))
                     .timeout(Duration.ofSeconds(15))
                     .header("Accept", "application/json")
+                    .header("User-Agent", USER_AGENT)
                     .GET().build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 throw new RegistryException(errorMessage(response.statusCode(), response.body()));
@@ -275,23 +285,29 @@ public final class ModuleRegistry {
 
         boolean keep = false;
         try {
-            HttpResponse<Path> response = send(HttpRequest.newBuilder(URI.create(url))
+            // The body is read into memory and written here rather than through
+            // BodyHandlers.ofFile: on Minecraft 1.8.9 this runs on JvmDowngrader's java.net.http
+            // stub, whose ofFile keeps only the last chunk of a chunked response.
+            HttpResponse<byte[]> response = send(HttpRequest.newBuilder(URI.create(url))
                     .timeout(Duration.ofMinutes(2))
                     .header("Accept", "application/java-archive")
-                    .GET().build(), HttpResponse.BodyHandlers.ofFile(temp));
+                    .header("User-Agent", USER_AGENT)
+                    .GET().build(), HttpResponse.BodyHandlers.ofByteArray());
 
             if (response.statusCode() != 200) {
-                throw new RegistryException(errorMessage(response.statusCode(), Files.readString(temp)));
+                throw new RegistryException(errorMessage(response.statusCode(),
+                        new String(response.body(), StandardCharsets.UTF_8)));
             }
+            Files.write(temp, response.body());
 
-            String moduleId = response.headers().firstValue("X-Module-Id").orElse(name);
-            String moduleVersion = response.headers().firstValue("X-Module-Version").orElse(target);
-            String expected = response.headers().firstValue("X-Checksum-SHA256").orElse(null);
+            String moduleId = header(response, "X-Module-Id").orElse(name);
+            String moduleVersion = header(response, "X-Module-Version").orElse(target);
+            String expected = header(response, "X-Checksum-SHA256").orElse(null);
             if (expected != null && ! expected.equalsIgnoreCase(sha256(temp))) {
                 throw new RegistryException("Checksum mismatch for '" + moduleId + "'; the download was discarded.");
             }
 
-            String fileName = response.headers().firstValue("Content-Disposition")
+            String fileName = header(response, "Content-Disposition")
                     .map(FILENAME::matcher)
                     .filter(Matcher::find)
                     .map(m -> m.group(1).trim())
@@ -385,6 +401,20 @@ public final class ModuleRegistry {
         StringBuilder hex = new StringBuilder();
         for (byte b : digest.digest()) hex.append(String.format(Locale.ROOT, "%02x", b));
         return hex.toString();
+    }
+
+    /**
+     * A response header, matched case-insensitively as HTTP requires. {@code HttpHeaders} does
+     * that on Java 11+, but JvmDowngrader's stub (Minecraft 1.8.9) matches exactly, and the
+     * registry sends its headers in lower case.
+     */
+    private static Optional<String> header(HttpResponse<?> response, String name) {
+        for (Map.Entry<String, List<String>> entry : response.headers().map().entrySet()) {
+            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(name) && ! entry.getValue().isEmpty()) {
+                return Optional.of(entry.getValue().get(0));
+            }
+        }
+        return Optional.empty();
     }
 
     private static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException {
