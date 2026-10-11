@@ -15,10 +15,8 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.net.http.HttpClient;
-import java.net.http.HttpConnectTimeoutException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -82,6 +80,9 @@ public final class PlayerLookup {
     private static final String ASHCON = "https://api.ashcon.app/mojang/v2/user/";
     private static final String GEYSER = "https://api.geysermc.org/v2/";
     private static final String USER_AGENT = "StreamlineCore (+https://github.com/Streamline-Essentials/StreamlineCore)";
+
+    /** {@code java.net.http.HttpConnectTimeoutException}, which Java 8 does not have. */
+    private static final String HTTP_CONNECT_TIMEOUT = "java.net.http.HttpConnectTimeoutException";
     private static final Pattern JAVA_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
 
     /** Whether lookups may use the network at all; the core's {@code no-internet} setting also stops them. */
@@ -545,14 +546,15 @@ public final class PlayerLookup {
                 debug("Player lookup source " + host + " answered HTTP " + status + "; pausing it.");
             }
             return Optional.empty();
-        } catch (HttpConnectTimeoutException | ConnectException | UnknownHostException | NoRouteToHostException e) {
+        } catch (ConnectException | UnknownHostException | NoRouteToHostException e) {
             goOffline(e);
             return Optional.empty();
-        } catch (HttpTimeoutException e) {
-            pauseHost(host, null);
-            return Optional.empty();
         } catch (IOException e) {
-            if (e.getCause() instanceof UnknownHostException || e.getCause() instanceof ConnectException) goOffline(e);
+            // java.net.http's connect timeout is matched by name: a catch clause naming it would
+            // keep this class from loading on Java 8 (Minecraft 1.8.9), which has no such class.
+            // Its other timeouts, like every other failure, pause the host.
+            if (e.getClass().getName().equals(HTTP_CONNECT_TIMEOUT)
+                    || e.getCause() instanceof UnknownHostException || e.getCause() instanceof ConnectException) goOffline(e);
             else pauseHost(host, null);
             return Optional.empty();
         } catch (InterruptedException e) {

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -126,6 +127,9 @@ public class ModuleManager {
         /** Helper classes a transform produced, by binary name, until they are defined. */
         private final Map<String, byte[]> pendingClasses = new ConcurrentHashMap<>();
 
+        /** Packages this loader has defined. */
+        private final Set<String> definedPackages = ConcurrentHashMap.newKeySet();
+
         TransformingPluginClassLoader(PluginManager pluginManager, PluginDescriptor descriptor,
                                       ClassLoader parent, ModuleClassTransformer transformer) {
             super(pluginManager, descriptor, parent);
@@ -180,14 +184,16 @@ public class ModuleManager {
                 }
             }
 
+            // Each package is defined once, tracked here rather than through
+            // getDefinedPackage, which Java 8 (Minecraft 1.8.9's runtime) does not have.
             int lastDot = name.lastIndexOf('.');
             if (lastDot > 0) {
                 String packageName = name.substring(0, lastDot);
-                if (getDefinedPackage(packageName) == null) {
+                if (definedPackages.add(packageName)) {
                     try {
                         definePackage(packageName, null, null, null, null, null, null, null);
                     } catch (IllegalArgumentException ignored) {
-                        // Defined concurrently by another thread.
+                        // The package came with a class defined before this loader tracked it.
                     }
                 }
             }
