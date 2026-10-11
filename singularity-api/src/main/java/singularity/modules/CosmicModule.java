@@ -3,6 +3,7 @@ package singularity.modules;
 import lombok.Getter;
 import lombok.Setter;
 import singularity.Singularity;
+import singularity.client.ClientBridge;
 import singularity.command.ModuleCommand;
 import singularity.events.modules.ModuleDisableEvent;
 import singularity.events.modules.ModuleEnableEvent;
@@ -172,6 +173,7 @@ public abstract class CosmicModule extends ModuleLike {
 
         ModuleUtils.fireEvent(new ModuleDisableEvent(this));
         onDisable();
+        ClientBridge.forgetModule(getIdentifier());
         setEnabled(false);
         ModuleManager.getEnabledModules().remove(getIdentifier());
     }
