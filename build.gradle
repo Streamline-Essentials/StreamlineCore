@@ -186,8 +186,8 @@ allprojects {
 }
 
 // Core platform projects only. Modules under modules/ are configured by
-// modules/module.gradle instead: they have no plugin.yml to expand, are not published
-// to the Streamline Maven repo, and must keep their own version and manifest. Mod-loader
+// modules/module.gradle and the modules block below instead: they have no plugin.yml to
+// expand, publish under their own group, and must keep their own version and manifest. Mod-loader
 // projects are configured by mod-common/mod.gradle.
 configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProject(it) }) {
     apply from: rootDir.toString() + "/dependencies.gradle"
@@ -300,6 +300,7 @@ configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProje
 
     tasks.named('deploy').configure {
         dependsOn 'shadowJar', 'sourcesJar', 'javadocJar'
+        mustRunAfter ':clearDeploys'
     }
 
     java {
@@ -347,9 +348,10 @@ configure(subprojects.findAll { ! it.path.startsWith(':modules') && ! isModProje
     }
 }
 
-// Modules build a shadowed PF4J JAR and drop it next to the platform JARs, but are
-// not published to the Streamline Maven repo -- they are plugins, not API artifacts.
-// ':modules' itself is just a container and produces nothing.
+// Modules build a shadowed PF4J JAR, drop it into deploy/modules and publish it to the
+// Streamline Maven repo as gg.drak.streamlinemodule:<module name>:<module version> (the
+// group comes from each module's gradle.properties). ':modules' itself is just a
+// container and produces nothing.
 configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':modules' }) {
     // Keep the plain jar from colliding with the shadowed module artifact. Both write
     // into build/libs, and CI collects everything it finds there, so an unshaded jar
@@ -365,6 +367,7 @@ configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':m
         // shadowJar and jar both write into build/libs, so the producers of everything
         // in that directory must be declared or Gradle reports an implicit dependency.
         dependsOn tasks.named('shadowJar'), tasks.named('jar')
+        mustRunAfter ':clearDeploys'
 
         doFirst {
             modulesDir.mkdirs()
@@ -382,6 +385,45 @@ configure(subprojects.findAll { it.path.startsWith(':modules') && it.path != ':m
     // is the artifact that ships.
     tasks.named('assemble').configure {
         dependsOn tasks.named('shadowJar')
+    }
+
+    java {
+        withSourcesJar()
+    }
+
+    // The shaded jar is the module itself, published without a classifier. Its POM lists
+    // no dependencies: everything a module compiles against is provided by the core at
+    // runtime or shaded in. The module's own version and name are read when the
+    // publication is built, after module.gradle has set them.
+    afterEvaluate {
+        publishing {
+            publications {
+                maven(MavenPublication) {
+                    groupId project.group.toString()
+                    artifactId project.ext.moduleName.toString()
+                    version project.version.toString()
+
+                    artifact shadowJar
+                    artifact sourcesJar
+                }
+            }
+
+            repositories {
+                maven {
+                    url = "https://repo.codemc.io/repository/streamline-essentials/"
+
+                    def mavenUsername = System.getenv("JENKINS_NEXUS_USERNAME")
+                    def mavenPassword = System.getenv("JENKINS_NEXUS_PASSWORD")
+
+                    if (mavenUsername != null && mavenPassword != null) {
+                        credentials {
+                            username = mavenUsername
+                            password = mavenPassword
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -405,8 +447,16 @@ tasks.register("clearDeploys", Delete) {
 
     // A lazy spec: deleting while the task is configured would empty the folder on
     // every Gradle invocation, since clean.finalizedBy realizes this task. '*' matches
-    // top-level files only, so deploy/modules is kept.
-    delete fileTree(deployDir) { include '*' }
+    // top-level files only, so a local deploy/modules keeps earlier module versions.
+    // Jenkins archives the deploy folder as the build's artifacts and keeps its workspace
+    // between builds, so there deploy/modules is emptied too and holds only this build's
+    // module jars. Jenkins sets BUILD_NUMBER on every build.
+    delete fileTree(deployDir) {
+        include '*'
+        if (System.getenv('BUILD_NUMBER') != null) {
+            include 'modules/**'
+        }
+    }
 }
 
 clean.finalizedBy(clearDeploys)
