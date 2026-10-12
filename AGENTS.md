@@ -42,6 +42,8 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 - `shadowJar` automatically runs `deploy` (copies JAR to `./deploy/` or `$DEPLOY_DIR`)
 - Output JARs are named `{ProjectName}-{version}.jar`
 - In CI (Jenkins/JitPack), only `module-core`, `singularity-api`, `api`, and `backend-api` are built (platform modules skipped)
+- Modules publish to the same Nexus repo as `gg.drak.streamlinemodule:<name>:<version>` (shaded jar + sources, empty POM): `group` and `name` come from each module's `gradle.properties`.
+- CodeMC's Jenkins job (freestyle, `gradlew clean build publish`, Java 21, so no mod jars) archives the `deploy/` folder. Jenkins keeps its workspace, so when `BUILD_NUMBER` is set `clearDeploys` also empties `deploy/modules`.
 
 ### Mod-loader subprojects (Fabric / Forge / NeoForge)
 
