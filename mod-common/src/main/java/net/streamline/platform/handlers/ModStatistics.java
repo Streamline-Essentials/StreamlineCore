@@ -38,7 +38,8 @@ final class ModStatistics {
         Map<String, Long> values = new HashMap<>();
         String typeKey = CosmicItem.normalizeKey(type);
         Set<String> wanted = new HashSet<>();
-        for (String id : ids) wanted.add(CosmicItem.normalizeKey(id));
+        for (String id : ids) wanted.add(id.equals("*") ? "*" : CosmicItem.normalizeKey(id));
+        boolean every = wanted.contains("*");
 
         ServerPlayer online = BasePlugin.getPlayer(uuid);
         if (online != null) {
@@ -61,7 +62,7 @@ final class ModStatistics {
             if (stats == null) return values;
             JsonObject ofType = stats.getAsJsonObject(typeKey);
             if (ofType == null) return values;
-            for (String key : wanted) {
+            for (String key : every ? ofType.keySet() : wanted) {
                 JsonElement value = ofType.get(key);
                 if (value != null && value.isJsonPrimitive() && value.getAsLong() > 0) values.put(key, value.getAsLong());
             }
@@ -75,7 +76,7 @@ final class ModStatistics {
         Registry<T> registry = type.getRegistry();
         for (T entry : registry) {
             String key = registry.getKey(entry).toString();
-            if (! wanted.contains(key)) continue;
+            if (! wanted.contains("*") && ! wanted.contains(key)) continue;
             int value = stats.getValue(type, entry);
             if (value > 0) values.put(key, (long) value);
         }

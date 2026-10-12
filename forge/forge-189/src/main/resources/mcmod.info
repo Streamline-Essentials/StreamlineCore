@@ -1,0 +1,12 @@
+[
+  {
+    "modid": "streamlinecore",
+    "name": "StreamlineCore",
+    "description": "Cross-platform module framework: client modules, HUD elements and the client module menu.",
+    "version": "${version}",
+    "mcversion": "1.8.9",
+    "authorList": ["Drak"],
+    "url": "https://github.com/Streamline-Essentials/StreamlineCore",
+    "dependencies": []
+  }
+]

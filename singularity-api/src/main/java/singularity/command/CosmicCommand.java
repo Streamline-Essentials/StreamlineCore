@@ -102,6 +102,35 @@ public abstract class CosmicCommand implements Comparable<CosmicCommand> {
     }
 
     /**
+     * Extra labels this command answers to besides its base and aliases, such as
+     * {@code <module-id>:<label>} for module commands. They are derived from the current base
+     * and aliases each time a platform registers the command, and are never written to the
+     * command's config file.
+     *
+     * @return the extra labels; empty for plain Streamline commands
+     */
+    public java.util.List<String> getNamespacedLabels() {
+        return new java.util.ArrayList<>();
+    }
+
+    /**
+     * The aliases followed by {@link #getNamespacedLabels()}, without duplicates.
+     *
+     * @return every label except the base
+     */
+    public String[] getAliasesWithNamespaced() {
+        java.util.LinkedHashSet<String> labels = new java.util.LinkedHashSet<>();
+        if (getAliases() != null) {
+            for (String alias : getAliases()) {
+                if (alias != null && ! alias.isEmpty()) labels.add(alias);
+            }
+        }
+        labels.addAll(getNamespacedLabels());
+        labels.remove(getBase());
+        return labels.toArray(new String[0]);
+    }
+
+    /**
      * Registers this command with the platform via {@link CommandHandler} if the command
      * is currently enabled in its configuration file.
      */

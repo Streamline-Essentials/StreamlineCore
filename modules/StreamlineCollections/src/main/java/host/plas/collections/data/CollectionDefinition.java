@@ -20,6 +20,15 @@ public class CollectionDefinition {
     private final long[] tiers;
     /** Source ids by source type ({@code blocks}, {@code drops}, {@code fish}, {@code buckets}). */
     private final Map<String, List<String>> sources = new LinkedHashMap<>();
+    /**
+     * The vanilla statistic this collection follows, such as {@code minecraft:play_time}, or
+     * {@code null} when it counts gameplay events. Its type is {@link #statisticType}.
+     */
+    private String statistic;
+    /** The statistic type of {@link #statistic}, {@code minecraft:custom} unless set. */
+    private String statisticType = "minecraft:custom";
+    /** What the statistic is divided by to give the amount: 72000 turns ticks into hours, 100 centimetres into blocks. */
+    private long divisor = 1L;
 
     public CollectionDefinition(String id, CollectionCategory category, String icon, String displayName, long[] tiers) {
         this.id = id;
@@ -27,6 +36,23 @@ public class CollectionDefinition {
         this.icon = icon;
         this.displayName = displayName;
         this.tiers = tiers;
+    }
+
+    /** Makes this collection follow a vanilla statistic instead of gameplay events. */
+    public void followStatistic(String statisticType, String statistic, long divisor) {
+        this.statisticType = statisticType;
+        this.statistic = statistic;
+        this.divisor = Math.max(1L, divisor);
+    }
+
+    /** Whether this collection follows a vanilla statistic. */
+    public boolean isStatFed() {
+        return statistic != null;
+    }
+
+    /** The amount a statistic value stands for, rounded down. */
+    public long fromStatistic(long value) {
+        return value / divisor;
     }
 
     public void addSource(String sourceType, String id) {

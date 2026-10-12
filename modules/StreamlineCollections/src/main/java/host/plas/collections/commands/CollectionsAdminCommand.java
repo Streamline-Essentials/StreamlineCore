@@ -3,7 +3,7 @@ package host.plas.collections.commands;
 import host.plas.collections.StreamlineCollections;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
-import host.plas.collections.data.CollectionPlayer;
+import host.plas.collections.data.TrackedPlayer;
 import host.plas.collections.data.StatSync;
 import singularity.command.CosmicCommand;
 import singularity.command.ModuleCommand;
@@ -61,7 +61,7 @@ public class CollectionsAdminCommand extends ModuleCommand {
             return;
         }
 
-        Optional<CollectionPlayer> progress = UserUtils.getUUIDFromName(args[1]).flatMap(CollectionManager::getLoaded);
+        Optional<TrackedPlayer> progress = UserUtils.getUUIDFromName(args[1]).flatMap(CollectionManager::getLoaded);
         if (progress.isEmpty()) {
             context.sendMessage("&c" + args[1] + " is not online on this server.");
             return;

@@ -8,6 +8,10 @@ dependencies {
     // Downloadable libs: compile only — Spigot/Bungee/Velocity fetch at runtime.
     compileOnly(PLATFORM_LIBRARIES)
 
+    // The module core rides inside this jar (and from here inside the API and mod jars), so
+    // anything that has Singularity also has the client module API.
+    shadow(implementation(project(':StreamlineCore-ModuleCore')))
+
     // PF4J must ship inside this jar so module PluginClassLoaders can see CosmicModule.
     HOST_SHADED_LIBRARIES.each { coord ->
         shadow(implementation(coord))

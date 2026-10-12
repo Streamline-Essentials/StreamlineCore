@@ -3,6 +3,7 @@ package net.streamline.platform.listeners;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.CommandEvent;
+import net.minecraftforge.event.GameShuttingDownEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraft.world.level.Level;
@@ -33,6 +34,7 @@ public final class ForgeListener {
         ServerStoppingEvent.BUS.addListener(e -> ModEvents.onServerStopping(e.getServer()));
         ServerStoppedEvent.BUS.addListener(e -> ModEvents.onServerStopped(e.getServer()));
         RegisterCommandsEvent.BUS.addListener(e -> ModEvents.onRegisterCommands(e.getDispatcher()));
+        GameShuttingDownEvent.BUS.addListener(e -> ModEvents.onGameStopping());
         PlayerEvent.PlayerLoggedInEvent.BUS.addListener(e -> {
             if (e.getEntity() instanceof ServerPlayer) ModEvents.onPlayerJoin((ServerPlayer) e.getEntity());
         });

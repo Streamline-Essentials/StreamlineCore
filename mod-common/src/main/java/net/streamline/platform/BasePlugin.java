@@ -13,7 +13,11 @@ import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.handlers.GameplayHandler;
 import net.streamline.platform.handlers.gui.ModGuiHandler;
 import singularity.Singularity;
+import singularity.client.ClientEnvironment;
+import singularity.client.module.ClientModuleManager;
+import singularity.client.module.WorldModules;
 import net.streamline.platform.modules.RelocatingModuleTransformer;
+import net.streamline.platform.modules.WorldModuleHost;
 import net.streamline.platform.savables.ConsoleHolder;
 import net.streamline.platform.savables.PlayerInterface;
 import net.streamline.platform.savables.UserManager;
@@ -27,18 +31,24 @@ import singularity.events.server.ServerStopEvent;
 import singularity.gui.GuiManager;
 import singularity.interfaces.IProperEvent;
 import singularity.interfaces.ISingularityExtension;
+import singularity.modules.ModuleManager;
+import singularity.modules.SupportedPlatformTag;
 import singularity.objects.CosmicResourcePack;
 import singularity.scheduler.TaskManager;
 import singularity.utils.MessageUtils;
 import singularity.utils.StorageUtils;
 import singularity.utils.UserUtils;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.logging.Level;
 
 /**
  * Loader-agnostic core of the mod-loader platforms (Fabric, Forge, NeoForge).
@@ -103,11 +113,28 @@ public abstract class BasePlugin implements ISingularityExtension {
     }
 
     /**
-     * Brings Streamline up against a server that is starting. Modules load here, so their
-     * commands register straight into the server's live dispatcher.
+     * Whether Streamline has been brought down for good; set by the first full teardown so a
+     * later shutdown hook does nothing.
      */
-    public void onServerEnable(MinecraftServer server) {
-        setServer(server);
+    private boolean shutDown;
+
+    /**
+     * Whether this is a game client rather than a dedicated server. Set by the loader
+     * entrypoint before {@link #initialize()}.
+     */
+    @Getter
+    @Setter
+    private static volatile boolean client;
+
+    /**
+     * Brings Streamline up: SLAPI, the managers and the task manager, after which modules
+     * load on their own thread. A dedicated server calls it as it starts; a client only once
+     * it hosts a world (singleplayer or LAN), for that world's integrated server, since
+     * players, permissions and the database belong to a server. Runs once; later calls do
+     * nothing.
+     */
+    public synchronized void boot() {
+        if (slapi != null || shutDown) return;
 
         userManager = new UserManager();
         messenger = new Messenger();
@@ -122,6 +149,7 @@ public abstract class BasePlugin implements ISingularityExtension {
         GuiManager.setHandler(new ModGuiHandler());
 
         TaskManager.init();
+        if (isClient()) WorldModules.setHost(new WorldModuleHost(this));
 
         enable();
 
@@ -129,17 +157,90 @@ public abstract class BasePlugin implements ISingularityExtension {
         setPlatformAsEnabled();
     }
 
-    public void onServerDisable() {
-        disable();
+    /**
+     * Brings up the client side of Streamline, and nothing else: the client folder and the
+     * client modules ({@link ClientModuleManager}), which run on any server or none. No
+     * players, permissions, database or SLAPI; those come with {@link #boot()} if the
+     * client hosts a world. Runs once; later calls do nothing.
+     */
+    public synchronized void bootClient() {
+        if (clientBooted || shutDown) return;
+        clientBooted = true;
 
+        File dataFolder = Singularity.resolveDataFolder(getName(), this);
+        ClientEnvironment.setFolder(new File(dataFolder, "client"));
+        ClientEnvironment.setLog((level, message) -> {
+            if (level.intValue() >= Level.WARNING.intValue()) LOGGER.warn(message);
+            else LOGGER.info(message);
+        });
+        // Server modules tagged modded-client run on the worlds this client hosts.
+        WorldModules.setSupported(true);
+        ClientModuleManager.start();
+    }
+
+    /** @return whether Streamline is up: {@link #boot()} ran and it has not been shut down */
+    public boolean isRunning() {
+        return slapi != null && ! shutDown;
+    }
+
+    /** Whether {@link #bootClient()} has run. */
+    private boolean clientBooted;
+
+    /**
+     * Attaches a server that is starting, booting Streamline first if it is not up yet.
+     * Commands registered before now reach the server's dispatcher through the loader's
+     * command-registration hook.
+     *
+     * <p>A client starts an integrated server for every world it opens, but
+     * {@link Singularity} can be built only once per JVM, so the first one boots it and later
+     * ones are only attached: Streamline, its server modules and their commands carry over.</p>
+     */
+    public void onServerEnable(MinecraftServer server) {
+        setServer(server);
+        boot();
+    }
+
+    /**
+     * {@link #boot()} runs Streamline for a server, dedicated or integrated, so it loads
+     * server modules only. A client's own modules are {@link ClientModuleManager}'s.
+     */
+    @Override
+    public Set<SupportedPlatformTag> getSupportedPlatformTags() {
+        return EnumSet.of(SupportedPlatformTag.MODDED_SERVER);
+    }
+
+    /**
+     * Reacts to the server stopping.
+     *
+     * @param last whether Streamline goes down with this server: always on a dedicated server;
+     *             on a client only once the game is exiting, since stopping an integrated
+     *             server otherwise just ends the current world and Streamline stays up for the
+     *             next one
+     */
+    public void onServerDisable(boolean last) {
+        if (last) shutdownStreamline();
+        else fireServerStop();
+    }
+
+    /**
+     * Takes Streamline down for good. Runs once; later calls do nothing.
+     */
+    public synchronized void shutdownStreamline() {
+        if (shutDown || slapi == null) return;
+        shutDown = true;
+
+        disable();
+        fireServerStop();
+        TaskManager.stop();
+    }
+
+    private void fireServerStop() {
         try {
             ServerStopEvent e = new ServerStopEvent().fire();
             if (!e.isCancelled() && e.isSendable()) {
                 SLAPI.sendConsoleMessage(e.getMessage());
             }
         } catch (Exception ignored) {}
-
-        TaskManager.stop();
     }
 
     public void setupProperties() {

@@ -1,0 +1,22 @@
+// StreamlineCore for Minecraft Forge 1.8.9 (game clients only).
+//
+// A build of its own rather than a subproject: it needs Essential's fork of Loom, which
+// shares its packages with the Fabric Loom on the main build's buildscript classpath, so
+// the two cannot load in one classloader. It includes the main build, whose
+// StreamlineCore-API project replaces the published artifact, and the main build includes
+// it back so the root's tasks and the IDE see it too.
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+        maven { url = 'https://maven.fabricmc.net' }
+        maven { url = 'https://maven.architectury.dev/' }
+        maven { url = 'https://repo.essential.gg/repository/maven-public' }
+        maven { url = 'https://maven.minecraftforge.net' }
+    }
+}
+
+rootProject.name = 'StreamlineCore-Forge-189'
+
+includeBuild('../..')

@@ -1,5 +1,6 @@
 package host.plas;
 
+import host.plas.commands.MOTDCommand;
 import host.plas.config.MOTDConfig;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,9 @@ import host.plas.events.MainListener;
 import host.plas.ratapi.MOTDExpansion;
 import host.plas.timers.MOTDRunner;
 import org.pf4j.PluginWrapper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StreamlineMOTD extends CosmicModule {
     @Getter @Setter
@@ -28,7 +32,9 @@ public class StreamlineMOTD extends CosmicModule {
 
     @Override
     protected void registerCommands() {
-
+        setCommands(new ArrayList<>(List.of(
+                new MOTDCommand()
+        )));
     }
 
     public StreamlineMOTD(PluginWrapper wrapper) {

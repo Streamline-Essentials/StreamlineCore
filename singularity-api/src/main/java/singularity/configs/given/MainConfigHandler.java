@@ -59,6 +59,8 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugPrefix();
 
         isNoInternet();
+        isPlayerLookupsEnabled();
+        getPlayerLookupsBedrockPrefix();
 
         isSpoofIPs();
         getSpoofedIP();
@@ -428,6 +430,31 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("no-internet", false);
+    }
+
+    /**
+     * Whether {@link singularity.utils.profiles.PlayerLookup} may look players' names and skins
+     * up online (playerdb.co, api.ashcon.app, GeyserMC's API; never Mojang). {@code no-internet}
+     * turns lookups off as well.
+     *
+     * @return {@code true} unless turned off
+     */
+    public boolean isPlayerLookupsEnabled() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("player-lookups.enabled", true);
+    }
+
+    /**
+     * The prefix Floodgate gives Bedrock usernames, for servers that do not run Floodgate
+     * themselves (proxy backends, for instance). Floodgate's own setting wins where it runs.
+     *
+     * @return the prefix, {@code "."} by default
+     */
+    public String getPlayerLookupsBedrockPrefix() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("player-lookups.bedrock-prefix", ".");
     }
 
     /**

@@ -203,13 +203,13 @@ public class CommandHandler {
         ConcurrentSkipListSet<String> r = new ConcurrentSkipListSet<>();
 
         getLoadedStreamlineCommands().forEach((s, command) -> {
-            r.addAll(Arrays.asList(command.getAliases()));
+            r.addAll(Arrays.asList(command.getAliasesWithNamespaced()));
 
             r.add(command.getBase());
         });
 
         getLoadedModuleCommands().forEach((s, command) -> {
-            r.addAll(Arrays.asList(command.getAliases()));
+            r.addAll(Arrays.asList(command.getAliasesWithNamespaced()));
 
             r.add(command.getBase());
         });
@@ -235,7 +235,7 @@ public class CommandHandler {
         getLoadedStreamlineCommands().forEach((s, c) -> {
             if (commandRef.get() != null) return;
 
-            for (String a : c.getAliases()) {
+            for (String a : c.getAliasesWithNamespaced()) {
                 if (a.equalsIgnoreCase(alias)) {
                     commandRef.set(c);
                     break;
@@ -248,7 +248,7 @@ public class CommandHandler {
         getLoadedModuleCommands().forEach((s, c) -> {
             if (commandRef.get() != null) return;
 
-            for (String a : c.getAliases()) {
+            for (String a : c.getAliasesWithNamespaced()) {
                 if (a.equalsIgnoreCase(alias)) {
                     commandRef.set(c);
                     break;

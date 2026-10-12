@@ -160,6 +160,17 @@ public interface IGameplayHandler {
     boolean heal(String uuid);
 
     /**
+     * Fills the player's hunger and saturation, leaving health alone.
+     *
+     * @param uuid the player's UUID
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change hunger
+     */
+    default boolean feed(String uuid) {
+        return false;
+    }
+
+    /**
      * Allows or forbids creative-style flight. While allowed, the platform keeps it allowed
      * across respawns, world changes and game mode changes until the player logs out; the
      * caller re-applies it at the next login if it should persist. Forbidding flight leaves
@@ -170,6 +181,44 @@ public interface IGameplayHandler {
      * @return {@code false} if the player is not online on this server
      */
     boolean setFlight(String uuid, boolean allowed);
+
+    /**
+     * Sets how fast the player flies, as a multiple of vanilla's default flying speed. The game
+     * saves it with the player's data, so it lasts across relogs on this server.
+     *
+     * @param uuid       the player's UUID
+     * @param multiplier 1 for vanilla's speed, from 0 (cannot move while flying) to 10
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change flying speed
+     */
+    default boolean setFlySpeed(String uuid, float multiplier) {
+        return false;
+    }
+
+    /**
+     * Sets how fast the player walks, as a multiple of vanilla's default walking speed. The game
+     * saves it with the player's data, so it lasts across relogs on this server.
+     *
+     * @param uuid       the player's UUID
+     * @param multiplier 1 for vanilla's speed, from 0 (cannot walk) to 5 (Bukkit's maximum)
+     * @return {@code false} if the player is not online on this server or the platform cannot
+     *         change walking speed
+     */
+    default boolean setWalkSpeed(String uuid, float multiplier) {
+        return false;
+    }
+
+    /**
+     * Switches the player's game mode. Flight turned on with {@link #setFlight} stays on.
+     *
+     * @param uuid the player's UUID
+     * @param mode {@code survival}, {@code creative}, {@code adventure} or {@code spectator}
+     * @return {@code false} if the player is not online on this server, the mode is unknown or
+     *         the platform cannot change game modes
+     */
+    default boolean setGameMode(String uuid, String mode) {
+        return false;
+    }
 
     /**
      * Turns god mode on or off. While on, the player takes no damage (except what the game lets
@@ -268,7 +317,9 @@ public interface IGameplayHandler {
      * {@code minecraft:dropped}, {@code minecraft:killed}, {@code minecraft:killed_by} or
      * {@code minecraft:custom} — and {@code ids} are the blocks, items, entities or custom
      * statistics within it, such as {@code minecraft:stone} or {@code minecraft:fish_caught}.
-     * Ids may omit the {@code minecraft:} namespace.</p>
+     * Ids may omit the {@code minecraft:} namespace. The id {@code *} stands for every entry of
+     * the type, so a caller can total a type without knowing which ids exist; for an offline
+     * player it may be slow, as each entry can mean a read of the stats file.</p>
      *
      * @param uuid the player's UUID
      * @param type the statistic type id
@@ -278,5 +329,25 @@ public interface IGameplayHandler {
      */
     default java.util.Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         return java.util.Collections.emptyMap();
+    }
+
+    /**
+     * Goes over every living entity in every loaded world and hurts each by the amount
+     * {@code damageFor} returns for it. Returns at once; the pass runs later on the server thread
+     * (on Folia, each entity on its region's thread, so {@code damageFor} may run on several
+     * threads at the same time). Dead entities are skipped. Hits are applied after the entity
+     * has been looked at, never while the world's entity list is being walked.
+     *
+     * <p>When {@code attributionRadius} is above zero, a hit on a non-player is dealt as an
+     * attack by the nearest other non-spectator player within that many blocks, if any, so the
+     * entity drops player-kill loot and experience. Hits on players are never attributed, so
+     * they do not count as PvP.</p>
+     *
+     * @param damageFor         the damage for the entity in half-hearts; zero or less leaves it alone
+     * @param attributionRadius how far to look for a player to credit, or zero to credit no one
+     * @return {@code false} if this platform cannot go over entities, in which case nothing runs
+     */
+    default boolean damageLivingEntities(java.util.function.ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        return false;
     }
 }

@@ -5,8 +5,11 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import singularity.data.console.CosmicSender;
+import singularity.objects.ClickableMessage;
+import singularity.utils.Links;
 import singularity.utils.UserUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -178,63 +181,63 @@ public class StreamerSetup implements Comparable<StreamerSetup> {
         return streamerUuid.compareTo(o.getStreamerUuid());
     }
 
+    /** Tells {@code to} that this streamer is live right now, with their link. */
     public void tellStreamLinkCurrentlyLive(CosmicSender... to) {
-        CosmicSender player = UserUtils.getOrCreateSender(getStreamerUuid().toString()).orElse(null);
-        if (player == null) return;
-
-        String playerName = player.getUuid();
-        try {
-            playerName = player.getDisplayName();
-        } catch (Exception e) {
-            // do nothing
-        }
-
-        String goLiveMessage = StreamersUnite.getMainConfig().getLiveMessage();
-        goLiveMessage = goLiveMessage.replace("%display_name%", playerName);
-        goLiveMessage = goLiveMessage.replace("%link%", streamLink);
-
-        for (CosmicSender sender : to) {
-            sender.sendMessage(goLiveMessage);
-        }
+        announce(lines(StreamersUnite.getMainConfig().getLiveMessage()), LiveManager.getLink(this), to);
     }
 
+    /** Tells {@code to} that this streamer just went live, with their link. */
     public void tellStreamLinkGoingLive(CosmicSender... to) {
+        announce(lines(StreamersUnite.getMainConfig().getGoLiveMessage()), LiveManager.getLink(this), to);
+    }
+
+    /** Tells {@code to} that this streamer just went offline. */
+    public void tellStreamLinkGoingOffline(CosmicSender... to) {
+        announce(lines(StreamersUnite.getMainConfig().getGoOfflineMessage()), LiveManager.getLink(this), to);
+    }
+
+    /**
+     * Sends each line to every recipient with {@code %display_name%}, {@code %player%} and
+     * {@code %link%} filled in. A line showing the link opens it when clicked, on every
+     * platform; the rest of the message is plain.
+     */
+    public void announce(List<String> lines, String link, CosmicSender... to) {
         CosmicSender player = UserUtils.getOrCreateSender(getStreamerUuid().toString()).orElse(null);
         if (player == null) return;
 
-        String playerName = player.getUuid();
+        String name = player.getCurrentName();
+        String displayName = name;
         try {
-            playerName = player.getDisplayName();
+            displayName = player.getDisplayName();
         } catch (Exception e) {
-            // do nothing
+            // The display name needs the player's metadata; the name stands in for it.
         }
 
-        String goLiveMessage = StreamersUnite.getMainConfig().getGoLiveMessage();
-        goLiveMessage = goLiveMessage.replace("%display_name%", playerName);
-        goLiveMessage = goLiveMessage.replace("%link%", streamLink);
-
-        for (CosmicSender sender : to) {
-            sender.sendMessage(goLiveMessage);
+        String shown = link == null ? "" : link;
+        String url = Links.toClickUrl(shown);
+        String hover = StreamersUnite.getMainConfig().getLinkHover();
+        for (String line : lines) {
+            boolean hasLink = line.contains("%link%");
+            String text = line
+                    .replace("%display_name%", displayName == null ? "" : displayName)
+                    .replace("%player%", name == null ? "" : name)
+                    .replace("%link%", shown);
+            for (CosmicSender sender : to) {
+                if (sender == null) continue;
+                if (hasLink && url != null) {
+                    new ClickableMessage().text(text.isEmpty() ? " " : text).url(url)
+                            .hover(hover.replace("%link%", url)).send(sender);
+                } else {
+                    sender.sendMessage(text.isEmpty() ? " " : text);
+                }
+            }
         }
     }
 
-    public void tellStreamLinkGoingOffline(CosmicSender... to) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        CosmicSender player = UserUtils.getOrCreateSender(getStreamerUuid().toString()).orElse(null);
-        if (player == null) return;
-
-        String playerName = player.getUuid();
-        try {
-            playerName = player.getDisplayName();
-        } catch (Exception e) {
-            // do nothing
-        }
-
-        stringBuilder.append("&b").append(playerName).append(" &ehas just gone &coffline&8. &eThey were live at&8: &d&o").append(streamLink).append("&8!");
-
-        for (CosmicSender sender : to) {
-            sender.sendMessage(stringBuilder.toString());
-        }
+    private static List<String> lines(String message) {
+        List<String> lines = new ArrayList<>();
+        if (message == null) return lines;
+        for (String line : message.split("\\\\n|\n", -1)) lines.add(line);
+        return lines;
     }
 }

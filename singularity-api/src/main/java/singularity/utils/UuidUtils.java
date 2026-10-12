@@ -9,6 +9,7 @@ import singularity.holders.builtin.CosmicGeyserHolder;
 
 import java.util.Optional;
 import java.util.UUID;
+import singularity.utils.profiles.PlayerLookup;
 
 /**
  * Utility class providing UUID and player-identity helpers used across the
@@ -246,7 +247,14 @@ public class UuidUtils {
      *         Geyser is unavailable or the UUID is a Java player UUID
      */
     public static boolean isBedrockUUID(String uuid) {
-        return getGeyserHolder().map(h -> h.isBedrockUUID(uuid)).orElse(false);
+        return getGeyserHolder().map(h -> h.isBedrockUUID(uuid)).orElseGet(() -> {
+            // Without a Geyser holder, Floodgate's UUID format decides.
+            try {
+                return PlayerLookup.isBedrock(UUID.fromString(uuid));
+            } catch (IllegalArgumentException | NullPointerException e) {
+                return false;
+            }
+        });
     }
 
     /**
@@ -258,7 +266,7 @@ public class UuidUtils {
      *         {@code false} if Geyser is unavailable or the name is a Java player name
      */
     public static boolean isBedrockName(String name) {
-        return getGeyserHolder().map(h -> h.isBedrockName(name)).orElse(false);
+        return getGeyserHolder().map(h -> h.isBedrockName(name)).orElseGet(() -> PlayerLookup.isBedrockName(name));
     }
 
     /**
@@ -267,7 +275,7 @@ public class UuidUtils {
      * @return the Bedrock player prefix, or {@code null} if Geyser is unavailable
      */
     public static String getBedrockPrefix() {
-        return getGeyserHolder().map(CosmicGeyserHolder::getBedrockPrefix).orElse(null);
+        return getGeyserHolder().map(CosmicGeyserHolder::getBedrockPrefix).orElseGet(PlayerLookup::getBedrockPrefix);
     }
 
     /**
@@ -278,7 +286,7 @@ public class UuidUtils {
      *         or the UUID is not recognized
      */
     public static String getUsernameFromBedrockUUID(String uuid) {
-        return getGeyserHolder().map(h -> h.getUsernameFromBedrockUUID(uuid)).orElse(null);
+        return getGeyserHolder().map(h -> h.getUsernameFromBedrockUUID(uuid)).orElseGet(() -> UUIDFetcher.getName(uuid));
     }
 
     /**
@@ -289,6 +297,9 @@ public class UuidUtils {
      *         or the username is not recognized
      */
     public static String getBedrockUUIDFromUsername(String name) {
-        return getGeyserHolder().map(h -> h.getBedrockUUIDFromUsername(name)).orElse(null);
+        return getGeyserHolder().map(h -> h.getBedrockUUIDFromUsername(name)).orElseGet(() -> {
+            UUID uuid = UUIDFetcher.getUUID(name);
+            return uuid == null ? null : uuid.toString();
+        });
     }
 }

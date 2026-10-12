@@ -16,6 +16,7 @@ where powershell >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0clean-build.ps1" -ProjectRoot "%PROJECT_ROOT%" %*
     set "EXIT_CODE=%ERRORLEVEL%"
+    set "RAN_PS=1"
     goto :finish
 )
 
@@ -73,10 +74,12 @@ goto :finish
 
 :success
 echo.
-echo Done. Build directories removed.
+echo Build directories removed.
 set "EXIT_CODE=0"
 
 :finish
 echo.
+REM clean-build.ps1 prints its own "Done!"; only the batch fallback needs one here.
+if not "%RAN_PS%"=="1" echo Done!
 if not "%NO_PAUSE%"=="1" pause
 exit /b %EXIT_CODE%

@@ -1,60 +1,93 @@
 package host.plas.data;
 
 import host.plas.StreamersUnite;
-import host.plas.managers.StreamerUtils;
 import host.plas.managers.TimedEntry;
 import lombok.Getter;
-import lombok.Setter;
 import singularity.data.console.CosmicSender;
 import singularity.utils.UserUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LiveManager {
-    @Getter @Setter
-    private static List<CosmicSender> currentlyLive = new ArrayList<>();
+    /**
+     * UUIDs of the streamers who are live. Keyed by UUID rather than by sender object, since
+     * the same player can be represented by different sender instances over a session.
+     */
+    @Getter
+    private static final Set<String> currentlyLive = ConcurrentHashMap.newKeySet();
+
+    /** The link each live streamer last announced with {@code /imlive}, by UUID. */
+    private static final Map<String, String> liveLinks = new ConcurrentHashMap<>();
+
+    /** When each streamer last announced with {@code /imlive}, by UUID. */
+    private static final Map<String, Long> lastAnnounce = new ConcurrentHashMap<>();
 
     public static void goLive(CosmicSender player) {
-        currentlyLive.add(player);
+        currentlyLive.add(player.getUuid());
     }
 
     public static void goLive(UUID player) {
-        Optional<CosmicSender> optional = StreamerUtils.getOrGetSenderByName(player.toString());
-
-        optional.ifPresent(LiveManager::goLive);
+        currentlyLive.add(player.toString());
     }
 
     public static void goOffline(CosmicSender player) {
-        currentlyLive.remove(player);
+        goOffline(player.getUuid());
     }
 
     public static void goOffline(UUID player) {
-        Optional<CosmicSender> optional = StreamerUtils.getOrGetSenderByName(player.toString());
+        goOffline(player.toString());
+    }
 
-        optional.ifPresent(LiveManager::goOffline);
+    public static void goOffline(String uuid) {
+        currentlyLive.remove(uuid);
+        liveLinks.remove(uuid);
     }
 
     public static boolean isLive(CosmicSender player) {
-        return currentlyLive.contains(player);
+        return player != null && currentlyLive.contains(player.getUuid());
     }
 
     public static boolean isLive(UUID player) {
-        Optional<CosmicSender> optional = StreamerUtils.getOrGetSenderByName(player.toString());
+        return currentlyLive.contains(player.toString());
+    }
 
-        return optional.filter(LiveManager::isLive).isPresent();
+    /** The link a live streamer announced, falling back to the link in their setup. */
+    public static String getLink(StreamerSetup setup) {
+        String link = liveLinks.get(setup.getStreamerUuid().toString());
+        return link == null || link.isEmpty() ? setup.getStreamLink() : link;
+    }
 
+    public static void setLiveLink(String uuid, String link) {
+        if (link == null || link.isEmpty()) liveLinks.remove(uuid);
+        else liveLinks.put(uuid, link);
+    }
+
+    /** Milliseconds until {@code uuid} may announce with {@code /imlive} again; 0 or less when now. */
+    public static long announceCooldownLeft(String uuid) {
+        long cooldown = StreamersUnite.getMainConfig().getAnnounceCooldownSeconds() * 1000L;
+        return lastAnnounce.getOrDefault(uuid, 0L) + cooldown - System.currentTimeMillis();
+    }
+
+    public static void markAnnounced(String uuid) {
+        lastAnnounce.put(uuid, System.currentTimeMillis());
+    }
+
+    public static void clear() {
+        currentlyLive.clear();
+        liveLinks.clear();
     }
 
     public static ConcurrentSkipListSet<StreamerSetup> getCurrentlyLiveSetups() {
         ConcurrentSkipListSet<StreamerSetup> r = new ConcurrentSkipListSet<>();
 
-        for (CosmicSender player : currentlyLive) {
-            Optional<StreamerSetup> setup = StreamersUnite.getStreamerConfig().getSetup(player.getUuid());
+        for (String uuid : currentlyLive) {
+            Optional<StreamerSetup> setup = StreamersUnite.getStreamerConfig().getSetup(uuid);
 
             setup.ifPresent(r::add);
         }

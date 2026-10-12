@@ -38,7 +38,7 @@ public class ProperCommand implements IProperCommand {
 
     /**
      * Every label this command answers to: its base and each of its aliases, each both bare
-     * and prefixed with {@code streamlinecore:}.
+     * and prefixed with {@code streamlinecore:}, then {@link CosmicCommand#getNamespacedLabels()}.
      */
     public List<String> getLabels() {
         List<String> bare = new ArrayList<>();
@@ -52,6 +52,10 @@ public class ProperCommand implements IProperCommand {
         List<String> labels = new ArrayList<>(bare);
         for (String label : bare) {
             labels.add(NAMESPACE + ":" + label);
+        }
+        // Module commands also answer to <module-id>:<label>.
+        for (String label : parent.getNamespacedLabels()) {
+            if (! labels.contains(label)) labels.add(label);
         }
         return labels;
     }

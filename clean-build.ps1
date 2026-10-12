@@ -6,7 +6,8 @@
 .DESCRIPTION
   Stops Gradle daemons, terminates Java processes tied to this project, then
   deletes every "build" folder under the project (root + fabric/forge/neoforge
-  modules, etc.) with retries, attribute clearing, and a robocopy fallback for
+  modules, etc.), plus the out-of-OneDrive build root build.gradle uses for a
+  checkout inside OneDrive, with retries, attribute clearing, and a robocopy fallback for
   stubborn OneDrive / Loom locks.
 
 .PARAMETER ProjectRoot
@@ -155,6 +156,9 @@ function Get-BuildDirectories {
     return @($dirs | ForEach-Object { $_.FullName })
 }
 
+# Get-RedirectedBuildRoot: where build.gradle puts build output for a checkout inside OneDrive.
+. (Join-Path $PSScriptRoot 'build-paths.ps1')
+
 $ProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 
 # Avoid deleting if our shell cwd is inside a target tree.
@@ -200,6 +204,10 @@ if (-not [string]::IsNullOrWhiteSpace($BuildPath)) {
 else {
     Write-Step 'Scanning for build directories'
     $targets = Get-BuildDirectories -Root $ProjectRoot
+    $redirected = Get-RedirectedBuildRoot -Root $ProjectRoot
+    if ($redirected -and (Test-Path -LiteralPath $redirected)) {
+        $targets += $redirected
+    }
     if ($targets.Count -eq 0) {
         Write-Host "  No build directories found." -ForegroundColor DarkGray
     }
@@ -238,10 +246,11 @@ foreach ($target in $targets) {
 
 Write-Host ''
 if ($failed.Count -eq 0) {
-    Write-Host 'Done. All build directories removed.' -ForegroundColor Green
+    Write-Host 'All build directories removed.' -ForegroundColor Green
     if ($Deep) {
         Write-Host 'Deep clean included .gradle — next build will re-download caches.' -ForegroundColor DarkYellow
     }
+    Write-Host 'Done!' -ForegroundColor Green
     exit 0
 }
 
@@ -257,4 +266,5 @@ Write-Host '  - OneDrive syncing files under the project (pause sync, retry)'
 Write-Host '  - A terminal whose cwd is inside a build folder'
 Write-Host 'Close those, then run:  .\clean-build.ps1'
 Write-Host 'For a colder wipe:       .\clean-build.ps1 -Deep'
+Write-Host 'Done!' -ForegroundColor Green
 exit 1

@@ -1,0 +1,100 @@
+# Slayer: how many of each mob a player has killed, with ten levels per mob. Completed
+# levels are claimed by clicking them in the mob's menu (/slayer).
+
+enabled: true
+
+# Raise every count to the player's vanilla "killed" statistic when they join and at each
+# statistics refresh, so kills from before the module was installed count. Counts never go down.
+sync-stats: true
+
+# Kills that complete each level, for every mob but the bosses.
+tiers: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000]
+# Bosses (Ender Dragon, Wither, Warden, Elder Guardian, Giant) take far longer to find and kill.
+boss-tiers: [1, 3, 5, 10, 25, 50, 100, 250, 500, 1000]
+
+rewards:
+  enabled: true
+  # Runs as the console of the server the player claims on. %player%, %uuid%, %level%,
+  # %mob% (its name) and %mob_id% are replaced. Levels beyond the last entry use the last entry.
+  levels:
+    '1':
+      description: "&a+10 XP"
+      commands:
+        - "xp add %player% 10 points"
+    '2':
+      description: "&a+25 XP"
+      commands:
+        - "xp add %player% 25 points"
+    '3':
+      description: "&a+50 XP"
+      commands:
+        - "xp add %player% 50 points"
+    '4':
+      description: "&a+100 XP"
+      commands:
+        - "xp add %player% 100 points"
+    '5':
+      description: "&a+175 XP"
+      commands:
+        - "xp add %player% 175 points"
+    '6':
+      description: "&a+275 XP"
+      commands:
+        - "xp add %player% 275 points"
+    '7':
+      description: "&a+400 XP"
+      commands:
+        - "xp add %player% 400 points"
+    '8':
+      description: "&a+600 XP"
+      commands:
+        - "xp add %player% 600 points"
+    '9':
+      description: "&a+900 XP"
+      commands:
+        - "xp add %player% 900 points"
+    '10':
+      description: "&a+1500 XP"
+      commands:
+        - "xp add %player% 1500 points"
+  remind-on-join: true
+  # Reminds online players with unclaimed levels this often, in minutes; 0 turns it off.
+  remind-interval-minutes: 60
+
+messages:
+  # %level% %mob%
+  level-complete: "#FF5555You completed Slayer Level #FFFFFF%level% #FF5555for #FFED6A%mob%#FF5555. "
+  level-complete-button: "#00FC88&l[CLICK HERE TO CLAIM]"
+  # %reward%
+  level-complete-hover: "#AAAAAAClaim #00FC88%reward%"
+  level-reached: "#FF5555You reached Slayer Level #FFFFFF%level% #FF5555for #FFED6A%mob%#FF5555!"
+  # %count%
+  remind: "#FFED6AYou still have #FFFFFF%count% #FFED6Aslayer reward(s) waiting! "
+  remind-button: "#00FC88&l[CLICK HERE TO CLAIM]"
+  remind-hover: "#FFFFFFOpen slayer to claim your rewards"
+  # %level% %mob% %reward%
+  claimed: "#00FC88Claimed Slayer Level #FFFFFF%level% #00FC88for #FFED6A%mob% #00FC88(%reward%#00FC88)"
+  already-claimed: "#AAAAAAThat reward was already claimed."
+  rewards-disabled: "#FF5555Slayer rewards are currently disabled."
+  claim-elsewhere: "#FF5555Rewards can only be claimed on a game server."
+  locked: "#FF5555You have not completed this level yet."
+  # %mob%
+  unknown: "#FF5555Unknown mob: #FFFFFF%mob%"
+  # %player%
+  unknown-player: "#FF5555No slayer data for #FFFFFF%player%#FF5555."
+  no-permission: "#FF5555You do not have permission to do that."
+  players-only: "#FF5555Only players can do that."
+  no-gui: "#FF5555Menus are not available on this server."
+  admin-usage: "#FF5555Usage: /slayeradmin (sync <all|<player>>|set <player> <mob|all> <kills>|add <player> <mob|all> <kills>|remove <player> <mob|all> <kills>|reset <player> (mob))"
+  # %amount%
+  admin-invalid-amount: "#FF5555Not a valid kill count: #FFFFFF%amount%"
+  # %player% %mob% %amount%
+  admin-set: "#00FC88Set #FFFFFF%player%#00FC88's #FFED6A%mob% #00FC88kills to #FFFFFF%amount%#00FC88."
+  admin-add: "#00FC88Added #FFFFFF%amount% #FFED6A%mob% #00FC88kills to #FFFFFF%player%#00FC88."
+  admin-remove: "#00FC88Removed #FFFFFF%amount% #FFED6A%mob% #00FC88kills from #FFFFFF%player%#00FC88."
+  # %player% %mob%
+  admin-reset: "#00FC88Reset #FFFFFF%player%#00FC88's slayer progress for #FFED6A%mob%#00FC88."
+  # %count% (players synced)
+  sync-done: "#00FC88Synced slayer kills for #FFFFFF%count% #00FC88player(s) with their vanilla statistics."
+  # %player%
+  not-online: "#FF5555#FFFFFF%player% #FF5555is not online on this server."

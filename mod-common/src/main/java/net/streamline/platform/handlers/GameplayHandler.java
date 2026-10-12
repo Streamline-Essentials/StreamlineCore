@@ -1,6 +1,7 @@
 package net.streamline.platform.handlers;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -8,12 +9,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.streamline.platform.BasePlugin;
@@ -25,13 +33,17 @@ import singularity.data.players.location.PlayerRotation;
 import singularity.data.players.location.RandomTeleportArea;
 import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
+import singularity.data.console.CosmicSender;
 import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
+import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -39,6 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * The mod loaders' {@link IGameplayHandler}, written against Mojang-mapped Minecraft only.
@@ -252,6 +265,17 @@ public abstract class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean feed(String uuid) {
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getFoodData().setFoodLevel(20);
+            player.getFoodData().setSaturation(20.0F);
+            return true;
+        }, false);
+    }
+
+    @Override
     public boolean setFlight(String uuid, boolean allowed) {
         return callOnServer(() -> {
             ServerPlayer player = player(uuid);
@@ -259,6 +283,56 @@ public abstract class GameplayHandler implements IGameplayHandler {
             if (allowed) flightKept.add(player.getUUID());
             else flightKept.remove(player.getUUID());
             applyFlight(player, allowed);
+            return true;
+        }, false);
+    }
+
+    /** Vanilla's default flying speed is 0.05; {@link #setFlySpeed} caps at ten times it, as Bukkit does. */
+    private static final float DEFAULT_FLYING_SPEED = 0.05F;
+
+    @Override
+    public boolean setFlySpeed(String uuid, float multiplier) {
+        float speed = Math.max(0F, Math.min(10F, multiplier)) * DEFAULT_FLYING_SPEED;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getAbilities().setFlyingSpeed(speed);
+            player.onUpdateAbilities();
+            return true;
+        }, false);
+    }
+
+    /** Vanilla's default walking speed is 0.1; {@link #setWalkSpeed} caps at five times it, as Bukkit does. */
+    private static final float DEFAULT_WALKING_SPEED = 0.1F;
+
+    /**
+     * Sets both the abilities' walking speed (which the client uses for its field of view) and the
+     * movement speed attribute's base (which actually moves the player), as Bukkit does.
+     */
+    @Override
+    public boolean setWalkSpeed(String uuid, float multiplier) {
+        float speed = Math.max(0F, Math.min(5F, multiplier)) * DEFAULT_WALKING_SPEED;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.getAbilities().setWalkingSpeed(speed);
+            AttributeInstance movement = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movement != null) movement.setBaseValue(speed);
+            player.onUpdateAbilities();
+            return true;
+        }, false);
+    }
+
+    @Override
+    public boolean setGameMode(String uuid, String mode) {
+        GameType type = GameType.byName(mode.toLowerCase(Locale.ROOT), null);
+        if (type == null) return false;
+        return callOnServer(() -> {
+            ServerPlayer player = player(uuid);
+            if (player == null) return false;
+            player.setGameMode(type);
+            // Leaving creative or spectator takes flight away from players who keep it.
+            if (flightKept.contains(player.getUUID())) applyFlight(player, true);
             return true;
         }, false);
     }
@@ -426,6 +500,130 @@ public abstract class GameplayHandler implements IGameplayHandler {
         if (server == null) return ifStopped;
         if (server.isSameThread()) return task.get();
         return server.submit(task).join();
+    }
+
+    /**
+     * Walks each level's entities on the server thread, collecting the hits first and dealing
+     * them afterwards: a hit that kills removes the entity, which the level's entity list must
+     * not see while it is being walked.
+     */
+    @Override
+    public boolean damageLivingEntities(ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        runOnServer(() -> {
+            MinecraftServer server = BasePlugin.getServer();
+            if (server == null) return;
+            // Caught per entity so one bad callback (or one from an unloaded module) neither
+            // skips the rest of the pass nor escapes onto the server thread; reported once.
+            Throwable failure = null;
+            for (ServerLevel level : server.getAllLevels()) {
+                List<LivingEntity> victims = new ArrayList<>();
+                List<Float> amounts = new ArrayList<>();
+                for (Entity entity : level.getAllEntities()) {
+                    if (! (entity instanceof LivingEntity) || ! entity.isAlive()) continue;
+                    LivingEntity living = (LivingEntity) entity;
+                    double damage;
+                    try {
+                        damage = damageFor.applyAsDouble(new ModLivingView(level, living));
+                    } catch (Throwable t) {
+                        failure = failure == null ? t : failure;
+                        continue;
+                    }
+                    if (damage <= 0) continue;
+                    victims.add(living);
+                    amounts.add((float) damage);
+                }
+
+                for (int i = 0; i < victims.size(); i++) {
+                    LivingEntity victim = victims.get(i);
+                    if (! victim.isAlive()) continue;
+                    try {
+                        ServerPlayer attacker = victim instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(level, victim, attributionRadius);
+                        DamageSource source = attacker != null ? level.damageSources().playerAttack(attacker) : level.damageSources().generic();
+                        McCompat.hurt(level, victim, source, amounts.get(i));
+                    } catch (Throwable t) {
+                        failure = failure == null ? t : failure;
+                    }
+                }
+            }
+            if (failure != null) MessageUtils.logDebug("Living entity damage pass failed", failure);
+        });
+        return true;
+    }
+
+    /** The nearest other living, non-spectator player within the radius, or {@code null}. */
+    private static ServerPlayer nearestPlayer(ServerLevel level, LivingEntity entity, double radius) {
+        ServerPlayer nearest = null;
+        double nearestDistance = radius * radius;
+        for (ServerPlayer player : level.players()) {
+            if (player == entity || player.isSpectator() || ! player.isAlive()) continue;
+            double distance = player.distanceToSqr(entity);
+            if (distance <= nearestDistance) {
+                nearestDistance = distance;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+
+    private static final class ModLivingView implements LivingEntityView {
+        private final ServerLevel level;
+        private final LivingEntity entity;
+
+        private ModLivingView(ServerLevel level, LivingEntity entity) {
+            this.level = level;
+            this.entity = entity;
+        }
+
+        @Override
+        public String getUuid() {
+            return entity.getStringUUID();
+        }
+
+        @Override
+        public String getType() {
+            return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        }
+
+        @Override
+        public boolean isPlayer() {
+            return entity instanceof Player;
+        }
+
+        @Override
+        public String getWorldName() {
+            return McCompat.dimensionId(level);
+        }
+
+        @Override
+        public double getX() {
+            return entity.getX();
+        }
+
+        @Override
+        public double getY() {
+            return entity.getY();
+        }
+
+        @Override
+        public double getZ() {
+            return entity.getZ();
+        }
+
+        @Override
+        public String getBlockAt(double dx, double dy, double dz) {
+            BlockPos pos = BlockPos.containing(entity.getX() + dx, entity.getY() + dy, entity.getZ() + dz);
+            if (! level.isLoaded(pos)) return null;
+            return BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).toString();
+        }
+
+        /** Asks the player's Streamline sender, which applies LuckPerms and the operator fallback. */
+        @Override
+        public boolean hasPermission(String permission) {
+            if (! (entity instanceof Player)) return false;
+            Map<String, CosmicSender> loaded = UserUtils.getLoadedSenders();
+            CosmicSender sender = loaded == null ? null : loaded.get(entity.getStringUUID());
+            return sender != null && sender.hasPermission(permission);
+        }
     }
 
     private static void runOnServer(Runnable task) {

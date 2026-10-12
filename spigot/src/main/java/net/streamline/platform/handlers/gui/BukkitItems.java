@@ -10,11 +10,18 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerProfile;
+import org.bukkit.profile.PlayerTextures;
 import singularity.gui.CosmicItem;
+import singularity.utils.profiles.PlayerLookup;
+import singularity.utils.profiles.Textures;
 
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Turns {@link CosmicItem}s into Bukkit {@link ItemStack}s.
@@ -56,7 +63,7 @@ public final class BukkitItems {
             }
         }
 
-        if (item.getSkullOwner() != null && meta instanceof SkullMeta) applySkull((SkullMeta) meta, item.getSkullOwner());
+        if (item.getSkullOwner() != null && meta instanceof SkullMeta) applySkull((SkullMeta) meta, item);
 
         stack.setItemMeta(meta);
         return stack;
@@ -77,18 +84,77 @@ public final class BukkitItems {
     }
 
     /**
-     * Sets a skull's owner from a UUID, or from the name of an online player. A name for an
-     * offline player is skipped: resolving it can block on a Mojang lookup.
+     * Gives a head its owner's skin without the server looking it up. A profile without
+     * textures makes the server ask Mojang's session server for them, which knows no Bedrock
+     * (Floodgate) or offline-mode player, rate-limits busy servers, and logs every failure.
+     *
+     * <p>In order: the skin {@link singularity.gui.GuiManager} attached from
+     * {@link PlayerLookup}; the live profile of an online owner, when it has textures; otherwise
+     * the default head, which the GUI replaces once the lookup finishes. Only with lookups
+     * turned off does a Java owner's UUID go to the server, as plain Bukkit would.</p>
      */
-    private static void applySkull(SkullMeta meta, String owner) {
+    private static void applySkull(SkullMeta meta, CosmicItem item) {
+        String owner = item.getSkullOwner();
+        UUID uuid = null;
         try {
-            meta.setOwningPlayer(Bukkit.getOfflinePlayer(UUID.fromString(owner)));
-            return;
+            uuid = UUID.fromString(owner);
         } catch (IllegalArgumentException notUuid) {
-            // Fall through to a name.
+            // A name.
         }
 
-        Player online = Bukkit.getPlayerExact(owner);
-        if (online != null) meta.setOwningPlayer(online);
+        if (item.getSkinTexture() != null && applyTexture(meta, uuid, owner, item.getSkinTexture())) return;
+
+        Player online = uuid != null ? Bukkit.getPlayer(uuid) : Bukkit.getPlayerExact(owner);
+        if (online != null) {
+            try {
+                PlayerProfile live = online.getPlayerProfile();
+                if (! live.getTextures().isEmpty()) {
+                    meta.setOwnerProfile(live);
+                    return;
+                }
+            } catch (Throwable ignored) {
+                // Before 1.18.1 there are no profiles; fall through.
+            }
+        }
+
+        if (uuid == null || PlayerLookup.isEnabled()) return;
+        if (PlayerLookup.isBedrock(uuid) || PlayerLookup.isOfflineModeUuid(uuid)) return;
+        meta.setOwningPlayer(Bukkit.getOfflinePlayer(uuid));
     }
+
+    /** Puts {@code texturesValue} on the head as its owner's skin; {@code false} when this server cannot. */
+    private static boolean applyTexture(SkullMeta meta, UUID uuid, String owner, String texturesValue) {
+        String name = owner != null && JAVA_NAME.matcher(owner).matches() ? owner : null;
+        // Heads need an id; a value derived from the texture keeps equal skins stacking.
+        UUID id = uuid != null ? uuid : UUID.nameUUIDFromBytes(texturesValue.getBytes(StandardCharsets.UTF_8));
+
+        try {
+            // Paper keeps the property exactly, signature and all.
+            com.destroystokyo.paper.profile.PlayerProfile profile = Bukkit.createProfile(id, name);
+            profile.setProperty(new com.destroystokyo.paper.profile.ProfileProperty("textures", texturesValue));
+            meta.setPlayerProfile(profile);
+            return true;
+        } catch (Throwable notPaper) {
+            // Spigot: only the skin URL can be set.
+        }
+
+        try {
+            String url = Textures.skinUrl(texturesValue).orElse(null);
+            if (url == null) return false;
+            PlayerProfile profile = Bukkit.createPlayerProfile(id, name);
+            PlayerTextures textures = profile.getTextures();
+            try {
+                textures.setSkin(new URL(url), Textures.isSlim(texturesValue) ? PlayerTextures.SkinModel.SLIM : PlayerTextures.SkinModel.CLASSIC);
+            } catch (NoSuchMethodError olderApi) {
+                textures.setSkin(new URL(url));
+            }
+            profile.setTextures(textures);
+            meta.setOwnerProfile(profile);
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    private static final Pattern JAVA_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
 }

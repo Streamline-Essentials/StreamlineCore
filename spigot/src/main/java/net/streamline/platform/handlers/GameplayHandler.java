@@ -1,6 +1,7 @@
 package net.streamline.platform.handlers;
 
 import host.plas.bou.scheduling.TaskManager;
+import host.plas.bou.utils.EntityUtils;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.Messenger;
 import org.bukkit.Bukkit;
@@ -14,6 +15,8 @@ import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MenuType;
@@ -26,12 +29,15 @@ import singularity.data.players.location.PlayerWorld;
 import singularity.data.players.location.WorldPosition;
 import singularity.data.server.CosmicServer;
 import singularity.interfaces.IGameplayHandler;
+import singularity.interfaces.LivingEntityView;
 import singularity.scheduler.BaseRunnable;
+import singularity.utils.MessageUtils;
 import singularity.utils.UserUtils;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -40,6 +46,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Spigot's {@link IGameplayHandler}, on the Bukkit API. Worlds are named by their Bukkit world
@@ -273,6 +280,17 @@ public class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean feed(String uuid) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        TaskManager.schedule(player, () -> {
+            player.setFoodLevel(20);
+            player.setSaturation(20F);
+        });
+        return true;
+    }
+
+    @Override
     public boolean setFlight(String uuid, boolean allowed) {
         Player player = BasePlugin.getPlayer(uuid);
         if (player == null) return false;
@@ -285,6 +303,44 @@ public class GameplayHandler implements IGameplayHandler {
                 player.setFlying(false);
                 player.setAllowFlight(false);
             }
+        });
+        return true;
+    }
+
+    /** Bukkit's fly speed runs from -1 to 1 with 0.1 as the default, so ten times default is its maximum. */
+    @Override
+    public boolean setFlySpeed(String uuid, float multiplier) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        float speed = Math.max(0F, Math.min(1F, multiplier * 0.1F));
+        TaskManager.schedule(player, () -> player.setFlySpeed(speed));
+        return true;
+    }
+
+    /** Bukkit's walk speed runs from -1 to 1 with 0.2 as the default, so five times default is its maximum. */
+    @Override
+    public boolean setWalkSpeed(String uuid, float multiplier) {
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        float speed = Math.max(0F, Math.min(1F, multiplier * 0.2F));
+        TaskManager.schedule(player, () -> player.setWalkSpeed(speed));
+        return true;
+    }
+
+    @Override
+    public boolean setGameMode(String uuid, String mode) {
+        GameMode gameMode;
+        try {
+            gameMode = GameMode.valueOf(mode.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        Player player = BasePlugin.getPlayer(uuid);
+        if (player == null) return false;
+        TaskManager.schedule(player, () -> {
+            player.setGameMode(gameMode);
+            // Leaving creative or spectator takes flight away from players who keep it.
+            if (flightKept.contains(player.getUniqueId())) player.setAllowFlight(true);
         });
         return true;
     }
@@ -434,6 +490,109 @@ public class GameplayHandler implements IGameplayHandler {
     @Override
     public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         return callSync(() -> BukkitStatistics.read(uuid, type, ids));
+    }
+
+    /**
+     * BukkitOfUtils hands each living entity to the consumer on the thread that owns it: the
+     * main thread, or the entity's region thread on Folia. The entity's surroundings are read
+     * and the hit dealt right there, as nothing else may touch it.
+     */
+    @Override
+    public boolean damageLivingEntities(ToDoubleFunction<LivingEntityView> damageFor, double attributionRadius) {
+        EntityUtils.collectLivingEntitiesThenDo(entity -> {
+            // On Folia each entity is its own region task, which BukkitOfUtils does not guard;
+            // a throwing callback (or one from an unloaded module) must not escape onto the region thread.
+            try {
+                if (entity.isDead() || ! entity.isValid()) return;
+                double damage = damageFor.applyAsDouble(new BukkitLivingView(entity));
+                if (damage <= 0) return;
+
+                Player attacker = entity instanceof Player || attributionRadius <= 0 ? null : nearestPlayer(entity, attributionRadius);
+                if (attacker != null) entity.damage(damage, attacker);
+                else entity.damage(damage);
+            } catch (Throwable t) {
+                MessageUtils.logDebug("Living entity damage pass failed for " + entity.getUniqueId(), t);
+            }
+        });
+        return true;
+    }
+
+    /** The nearest other non-spectator player within the radius; {@code getNearbyEntities} is region-safe on Folia. */
+    private static Player nearestPlayer(LivingEntity entity, double radius) {
+        Location at = entity.getLocation();
+        Player nearest = null;
+        double nearestDistance = radius * radius;
+        for (Entity nearby : entity.getNearbyEntities(radius, radius, radius)) {
+            if (! (nearby instanceof Player) || nearby == entity) continue;
+            Player player = (Player) nearby;
+            if (player.getGameMode() == GameMode.SPECTATOR || player.isDead()) continue;
+            double distance = player.getLocation().distanceSquared(at);
+            if (distance <= nearestDistance) {
+                nearestDistance = distance;
+                nearest = player;
+            }
+        }
+        return nearest;
+    }
+
+    private static final class BukkitLivingView implements LivingEntityView {
+        private final LivingEntity entity;
+        private final Location location;
+
+        private BukkitLivingView(LivingEntity entity) {
+            this.entity = entity;
+            this.location = entity.getLocation();
+        }
+
+        @Override
+        public String getUuid() {
+            return entity.getUniqueId().toString();
+        }
+
+        @Override
+        public String getType() {
+            return entity.getType().getKey().toString();
+        }
+
+        @Override
+        public boolean isPlayer() {
+            return entity instanceof Player;
+        }
+
+        @Override
+        public String getWorldName() {
+            return location.getWorld().getName();
+        }
+
+        @Override
+        public double getX() {
+            return location.getX();
+        }
+
+        @Override
+        public double getY() {
+            return location.getY();
+        }
+
+        @Override
+        public double getZ() {
+            return location.getZ();
+        }
+
+        @Override
+        public String getBlockAt(double dx, double dy, double dz) {
+            World world = location.getWorld();
+            int x = (int) Math.floor(location.getX() + dx);
+            int y = (int) Math.floor(location.getY() + dy);
+            int z = (int) Math.floor(location.getZ() + dz);
+            if (! world.isChunkLoaded(x >> 4, z >> 4)) return null;
+            return world.getBlockAt(x, y, z).getType().getKey().toString();
+        }
+
+        @Override
+        public boolean hasPermission(String permission) {
+            return entity instanceof Player && entity.hasPermission(permission);
+        }
     }
 
     private static boolean isWater(Biome biome) {

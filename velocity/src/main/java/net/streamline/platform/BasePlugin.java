@@ -286,6 +286,20 @@ public abstract class BasePlugin implements ISingularityExtension {
         playerInterface = new PlayerInterface();
         slapi = new SLAPI<>(getName(), this, getUserManager(), getMessenger(), getConsoleHolder(), getPlayerInterface(), BaseModule::new);
         getSlapi().setProxyMessenger(new ProxyPluginMessenger());
+        // Online players' names and skins come from their live game profile, never a web lookup.
+        singularity.utils.profiles.PlayerLookup.setLocalSource(uuid -> getProxy().getPlayer(uuid).map(player -> {
+            String value = null;
+            String signature = null;
+            for (com.velocitypowered.api.util.GameProfile.Property property : player.getGameProfileProperties()) {
+                if (property.getName().equals("textures")) {
+                    value = property.getValue();
+                    signature = property.getSignature();
+                }
+            }
+            return new singularity.utils.profiles.CosmicProfile(uuid, player.getUsername(), value, signature,
+                    singularity.utils.profiles.PlayerLookup.isBedrock(uuid),
+                    singularity.utils.profiles.CosmicProfile.Source.LOCAL);
+        }));
 
         registerListener(new PlatformListener());
 

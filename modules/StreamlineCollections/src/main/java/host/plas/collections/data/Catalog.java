@@ -67,6 +67,24 @@ public class Catalog {
         return definitions.values();
     }
 
+    /** The collections that follow a vanilla statistic rather than gameplay events. */
+    public List<CollectionDefinition> statFed() {
+        List<CollectionDefinition> list = new ArrayList<>();
+        for (CollectionDefinition definition : definitions.values()) {
+            if (definition.isStatFed()) list.add(definition);
+        }
+        return list;
+    }
+
+    /** Every collection in a summable category: the ones that add up into the overall board. */
+    public List<CollectionDefinition> summable() {
+        List<CollectionDefinition> list = new ArrayList<>();
+        for (CollectionDefinition definition : definitions.values()) {
+            if (definition.getCategory().isSummable()) list.add(definition);
+        }
+        return list;
+    }
+
     public String blockSource(String blockId) {
         return blocks.get(key(blockId));
     }

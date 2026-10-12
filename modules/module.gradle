@@ -9,7 +9,8 @@
 // all come from here and from the root build.gradle's allprojects block, so a module
 // declares none of them itself.
 //
-// The module's own gradle.properties supplies name, version, and the pf.* values.
+// The module's own gradle.properties supplies name, version, and the pf.* values,
+// pf.platforms (the platforms it runs on) among them.
 // StreamlineCore itself is consumed as a project dependency, so modules always build
 // against the API sitting next to them in this repo rather than a published artifact.
 
@@ -56,6 +57,38 @@ ext {
         return raw == 'none' ? '' : raw
     }()
 
+    // The platforms the module runs on, as SupportedPlatformTag ids. Required: a platform
+    // loads a module only if it accepts one of these, so a module without them would be
+    // guessed at on every server and refused outright on game clients.
+    pfPlatforms = {
+        def known = ['proxy', 'spigot', 'paper', 'modded-server', 'modded-client']
+        def raw = moduleProps.getProperty('pf.platforms')
+        if (raw == null || raw.trim().isEmpty()) {
+            throw new GradleException("Module '${project.name}' must list the platforms it supports in " +
+                    "pf.platforms in its gradle.properties: a comma-separated subset of ${known.join(', ')}.")
+        }
+        def tags = raw.split(',').collect { it.trim().toLowerCase() }.findAll { ! it.isEmpty() }.unique()
+        def unknown = tags.findAll { ! known.contains(it) }
+        if (tags.isEmpty() || ! unknown.isEmpty()) {
+            throw new GradleException("Module '${project.name}' lists unknown platforms in pf.platforms: " +
+                    "${unknown.join(', ')}. Use a comma-separated subset of ${known.join(', ')}.")
+        }
+        // modded-client alone makes a client module: it extends ClientModule and runs in the game
+        // client's lean module core, which servers do not load. Alongside modded-server it marks
+        // a server module that also runs in the worlds a client hosts (its integrated server),
+        // which clients then offer from eCloud. Any other mix is neither.
+        if (tags.contains('modded-client') && tags.size() > 1 && ! tags.contains('modded-server')) {
+            throw new GradleException("Module '${project.name}' lists modded-client with ${(tags - 'modded-client').join(', ')} " +
+                    "in pf.platforms. modded-client alone makes a client module; add modded-server for a server module " +
+                    "that also runs in the worlds a client hosts.")
+        }
+        return tags.join(', ')
+    }()
+
+    // Client-only modules compile against the module core alone: a game client has no
+    // players, permissions, database or commands for them to reach.
+    clientModule = pfPlatforms == 'modded-client'
+
     // PF4J's entry point: the pf.class package plus the module name.
     moduleName = moduleProp('name', project.name).toString()
     pfPluginClass = "${moduleProp('pf.class')}.${moduleName}"
@@ -72,6 +105,13 @@ repositories {
 }
 
 dependencies {
+    if (project.ext.clientModule) {
+        compileOnly project(':StreamlineCore-ModuleCore')
+        compileOnly 'org.pf4j:pf4j:3.10.0'
+        compileOnly 'com.google.code.gson:gson:2.8.8'
+        return
+    }
+
     compileOnly "net.luckperms:api:${rootProject.properties["lp_version"]}"
 
     // StreamlineCore resolves from this build, so a module always compiles against the
@@ -101,7 +141,9 @@ dependencies {
 }
 
 // The core shadow JARs must exist before a module compiles against them.
-compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
+if (! project.ext.clientModule) {
+    compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
+}
 
 shadowJar {
     manifest {
@@ -113,6 +155,7 @@ shadowJar {
         attributes 'Plugin-Description': moduleProp('pf.description', '').toString()
         attributes 'Plugin-Provider': moduleProp('pf.provider', '').toString()
         attributes 'Plugin-License': moduleProp('pf.license', '').toString()
+        attributes 'Plugin-Platforms': project.ext.pfPlatforms
     }
 
     archiveClassifier.set('')
