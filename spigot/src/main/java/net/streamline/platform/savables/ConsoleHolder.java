@@ -1,6 +1,7 @@
 package net.streamline.platform.savables;
 
 import host.plas.bou.commands.Sender;
+import host.plas.bou.scheduling.TaskManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.base.StreamlineSpigot;
@@ -68,7 +69,10 @@ public class ConsoleHolder implements IConsoleHolder<CommandSender> {
 
             @Override
             public void runCommand(String command) {
-                new Sender(getConsole()).executeCommand(command);
+                // Bukkit refuses commands dispatched off the main thread (Folia: the global region).
+                Runnable task = () -> new Sender(getConsole()).executeCommand(command);
+                if (Bukkit.isPrimaryThread()) task.run();
+                else TaskManager.schedule(task);
             }
         };
     }

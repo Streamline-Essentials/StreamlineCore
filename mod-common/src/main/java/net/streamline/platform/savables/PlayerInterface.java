@@ -51,7 +51,10 @@ public class PlayerInterface implements IPlayerInterface<ServerPlayer> {
                 ServerPlayer player = getPlayer();
                 MinecraftServer server = BasePlugin.getServer();
                 if (player == null || server == null) return;
-                server.getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
+                // Commands touch the world, so they run on the server thread.
+                Runnable task = () -> server.getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
+                if (server.isSameThread()) task.run();
+                else server.execute(task);
             }
 
             @Override
