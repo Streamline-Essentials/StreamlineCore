@@ -1,2 +1,8 @@
-+ Fixed 26.3 reading left clicks as right clicks, which stopped HUD elements from dragging, the HUD editor's StreamlineClient Menu button from opening and key settings from binding.
-+ Text fields in the StreamlineClient menu can select text (drag, Shift-click, Shift with the arrow keys, Ctrl+A), copy, cut and delete whole words (Ctrl+Backspace).
++ Fixed left clicks counting as right clicks on 26.3.
+  + HUD elements can be dragged again.
+  + The HUD editor's StreamlineClient Menu button opens again.
+  + Key settings can be bound again.
++ Added text selection to StreamlineClient menu text fields.
+  + Select by dragging, Shift-click, Shift+arrows or Ctrl+A.
+  + Copy and cut the selected text.
+  + Ctrl+Backspace deletes whole words.
