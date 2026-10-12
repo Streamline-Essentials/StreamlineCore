@@ -189,10 +189,10 @@ Each platform has `net.streamline.platform.BasePlugin`:
 
 ## Changelog (`UPDATES.md`)
 
-`UPDATES.md` is the player-facing changelog for the version in `gradle.properties` (`version = ...`, e.g. `2.6.1.4`). After every major change (a feature, a user-visible fix, a behavior change), update it for that version, without being asked:
+`UPDATES.md` is the player-facing changelog for the version in `gradle.properties` (`version = ...`, e.g. `2.6.1.4`), and holds only what changed in that release, never what earlier versions already shipped. After every major change (a feature, a user-visible fix, a behavior change), update it for that version, without being asked:
 
 - One line per change, starting with `+ `, written for players and server owners, not developers: what they can now do or what no longer goes wrong (`+ Fixed left clicks on 26.3 counting as right clicks in the HUD editor.`), never class names or internals.
-- Keep the file's flat list format; add lines next to related ones. Edit an existing line instead of adding a near-duplicate, and do not remove earlier lines unless asked.
+- Keep the file's flat list format; add lines next to related ones. Edit an existing line instead of adding a near-duplicate, and do not remove the current version's lines unless asked.
 - Skip internal-only work (refactors, build scripts, docs, AGENTS.md).
-- If the change ships in a new version, bump `version` first (its own `bump: version` commit) so the entry belongs to the version that ships it.
+- If the change ships in a new version, bump `version` first (its own `bump: version` commit) so the entry belongs to the version that ships it, and start that version's `UPDATES.md` empty: the previous version's lines belong to its release, not the new one.
 - Commit the changelog on its own as `docs: changelog for <version>` (e.g. `docs: changelog for 2.6.1.4`), after the change's own commit.
