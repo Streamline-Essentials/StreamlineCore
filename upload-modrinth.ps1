@@ -6,7 +6,7 @@
 .DESCRIPTION
   Publishes one Modrinth version per platform jar to the StreamlineCore project
   (wEJy5rtv), authenticated with the personal access token in
-  $env:MODRINTH_TOKEN (needs the VERSION_CREATE scope):
+  $env:MODRINTH_TOKEN (needs the VERSION_CREATE and VERSION_WRITE scopes):
 
   - StreamlineCore-Spigot-<v>.jar     bukkit, folia, paper, purpur, spigot
   - StreamlineCore-Bungee-<v>.jar     bungeecord, waterfall
@@ -28,9 +28,25 @@
   loader, and ranks "2.6.0.0+fabric-1.21.1" above "2.6.0.0", so a per-loader
   suffix would tell every up-to-date Spigot server to update.
 
-  A jar whose file name is already on one of the project's versions is
-  skipped, so re-running after a partial upload only sends what is missing.
-  -WhatIf prints the metadata each jar would be published with.
+  A jar whose file name is already on one of the project's versions updates
+  that version in place instead, keeping its id and downloads: its name,
+  changelog, version type, game versions, loaders and dependencies are set
+  to what a new upload would get (PATCH /version/{id}), and when the local
+  jar differs from the uploaded one (by SHA-1) the jar is swapped. So
+  re-running after a rebuild or a changelog edit brings every version of
+  -Version up to date, and a partial upload is finished.
+
+  Modrinth allows one file per name in a version and never deletes a
+  version's last file, so a swap goes through a stand-in: a copy of the new
+  jar with a zip comment (so its hash differs) under "<name>-replacing.jar"
+  is added, the old jar deleted, the new jar added under its own name, and
+  the stand-in deleted. Files added to an existing version are never marked
+  primary and the API cannot mark one, so a swapped version has no primary
+  file; clients then take its only file. The environment (client/server)
+  cannot be edited either and keeps its value from the first upload.
+
+  -WhatIf prints the metadata each jar would be published with, and whether
+  it would be created, updated or have its jar swapped.
 
   API reference: https://docs.modrinth.com/api/operations/createversion/
 
@@ -85,7 +101,7 @@ Add-Type -AssemblyName System.Net.Http
 
 $token = $env:MODRINTH_TOKEN
 if ([string]::IsNullOrWhiteSpace($token) -and -not $WhatIfPreference) {
-    throw 'Set $env:MODRINTH_TOKEN to a Modrinth personal access token with the VERSION_CREATE scope.'
+    throw 'Set $env:MODRINTH_TOKEN to a Modrinth personal access token with the VERSION_CREATE and VERSION_WRITE scopes.'
 }
 
 if (-not $Version) {
@@ -300,7 +316,81 @@ $uploads = @($uploads | Sort-Object { $_.Label })
 
 if (-not $uploads) { throw "No platform jars for $Version in $DeployDir$(if ($Platform) { " matching $($Platform -join ', ')" })." }
 
-$published = @((Invoke-Modrinth Get "/project/$ProjectId/version") | ForEach-Object { $_.files } | ForEach-Object { $_.filename })
+# The project's uploaded files by file name, each with the version that holds it.
+$published = @{}
+foreach ($v in @((Invoke-Modrinth Get "/project/$ProjectId/version"))) {
+    foreach ($f in @($v.files)) { $published[$f.filename] = @{ Version = $v; File = $f } }
+}
+
+# The jar's bytes with a zip comment added: still a valid jar, with a different hash.
+function Get-StandInBytes([byte[]] $Bytes) {
+    # The end of central directory record (PK 05 06) is 22 bytes plus a comment of up to 64 KiB.
+    for ($i = $Bytes.Length - 22; $i -ge [Math]::Max(0, $Bytes.Length - 22 - 65535); $i--) {
+        if ($Bytes[$i] -eq 0x50 -and $Bytes[$i + 1] -eq 0x4B -and $Bytes[$i + 2] -eq 0x05 -and $Bytes[$i + 3] -eq 0x06) {
+            $comment = [Text.Encoding]::ASCII.GetBytes("replacing $([guid]::NewGuid())")
+            $out = New-Object byte[] ($i + 22 + $comment.Length)
+            [Array]::Copy($Bytes, $out, $i + 20)
+            $out[$i + 20] = [byte] ($comment.Length -band 0xFF)
+            $out[$i + 21] = [byte] ($comment.Length -shr 8)
+            [Array]::Copy($comment, 0, $out, $i + 22, $comment.Length)
+            return ,$out
+        }
+    }
+    throw 'not a zip file: no end of central directory record'
+}
+
+function Get-Sha1([byte[]] $Bytes) {
+    $sha = [Security.Cryptography.SHA1]::Create()
+    try { ([BitConverter]::ToString($sha.ComputeHash($Bytes)) -replace '-', '').ToLower() } finally { $sha.Dispose() }
+}
+
+# Sends one request with the token; throws with Modrinth's error on failure, else returns the body.
+function Send-Modrinth([string] $Method, [string] $Path, [System.Net.Http.HttpContent] $Content) {
+    $request = New-Object System.Net.Http.HttpRequestMessage((New-Object System.Net.Http.HttpMethod($Method)), "$Api$Path")
+    if ($Content) { $request.Content = $Content }
+    $response = $client.SendAsync($request).GetAwaiter().GetResult()
+    $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+    if (-not $response.IsSuccessStatusCode) {
+        $detail = $body
+        try { $err = $body | ConvertFrom-Json; $detail = "$($err.error): $($err.description)" } catch { }
+        throw "$Method $Path -> $([int]$response.StatusCode) $detail"
+    }
+    $body
+}
+
+# Adds one file to an existing version.
+function Add-VersionFile([string] $VersionId, [byte[]] $Bytes, [string] $FileName) {
+    $form = New-Object System.Net.Http.MultipartFormDataContent
+    try {
+        # The data part has to come before the file parts.
+        $form.Add((New-Object System.Net.Http.StringContent('{}', [Text.Encoding]::UTF8, 'application/json')), 'data')
+        $content = New-Object System.Net.Http.ByteArrayContent(,$Bytes)
+        $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse('application/java-archive')
+        $form.Add($content, 'file', $FileName)
+        Send-Modrinth 'POST' "/version/$VersionId/file" $form | Out-Null
+    } finally {
+        $form.Dispose()
+    }
+}
+
+function Remove-VersionFile([string] $VersionId, [string] $Sha1) {
+    Send-Modrinth 'DELETE' "/version_file/$($Sha1)?algorithm=sha1&version_id=$($VersionId)" $null | Out-Null
+}
+
+# Replaces the version's jar named $FileName with $Bytes (see the stand-in in the description).
+function Update-VersionJar($Existing, [byte[]] $Bytes, [string] $FileName) {
+    $versionId = $Existing.Version.id
+    $standIn = Get-StandInBytes $Bytes
+    $standInName = $FileName -replace '\.jar$', '-replacing.jar'
+    Add-VersionFile $versionId $standIn $standInName
+    Remove-VersionFile $versionId $Existing.File.hashes.sha1
+    try {
+        Add-VersionFile $versionId $Bytes $FileName
+    } catch {
+        throw "$($_.Exception.Message) (the version now holds only $standInName, the new jar under a temporary name; re-run to finish)"
+    }
+    Remove-VersionFile $versionId (Get-Sha1 $standIn)
+}
 
 $client = New-Object System.Net.Http.HttpClient
 $client.DefaultRequestHeaders.TryAddWithoutValidation('Authorization', [string] $token) | Out-Null
@@ -327,17 +417,49 @@ try {
         }
         if ($u.Environment) { $data.environment = $u.Environment }
 
+        $existing = $published[$file.Name]
+        $bytes = $null
+        $swap = $false
+        if ($existing) {
+            $bytes = [IO.File]::ReadAllBytes($file.FullName)
+            $swap = (Get-Sha1 $bytes) -ne [string] $existing.File.hashes.sha1
+        }
+
         if ($WhatIfPreference) {
             # Everything but the changelog, which is the same for every jar.
             $preview = [ordered]@{}
             foreach ($k in $data.Keys) { if ($k -ne 'changelog') { $preview[$k] = $data[$k] } }
             if ($u.Games.Count -gt 2) { $preview.game_versions = "$($u.Games[0]) .. $($u.Games[-1]) ($($u.Games.Count) versions)" }
-            Write-Host "$($file.Name)$(if ($published -contains $file.Name) { ' (already on Modrinth)' })" -ForegroundColor Cyan
+            $state = if (-not $existing) { '' } elseif ($swap) { ' (on Modrinth: update and swap the jar)' } else { ' (on Modrinth: update, same jar)' }
+            Write-Host "$($file.Name)$state" -ForegroundColor Cyan
             Write-Host ($preview | ConvertTo-Json -Depth 5)
         }
 
-        if ($published -contains $file.Name) {
-            Write-Host "skipped $($file.Name): already on Modrinth" -ForegroundColor DarkGray
+        if ($existing) {
+            $versionId = $existing.Version.id
+            $action = if ($swap) { "PATCH and swap jar $($file.Name)" } else { 'PATCH' }
+            if (-not $PSCmdlet.ShouldProcess("$name ($versionId)", $action)) { continue }
+            try {
+                $edit = [ordered]@{
+                    name           = $name
+                    changelog      = $Changelog
+                    version_type   = $VersionType
+                    loaders        = @($u.Loaders)
+                    game_versions  = @($u.Games)
+                    dependencies   = @($u.Deps)
+                }
+                $json = New-Object System.Net.Http.StringContent(($edit | ConvertTo-Json -Depth 5 -Compress), [Text.Encoding]::UTF8, 'application/json')
+                Send-Modrinth 'PATCH' "/version/$versionId" $json | Out-Null
+                if ($swap) {
+                    Update-VersionJar $existing $bytes $file.Name
+                    Write-Host ("updated {0} ({1}), jar replaced <- {2}" -f $name, $versionId, $file.Name) -ForegroundColor Green
+                } else {
+                    Write-Host ("updated {0} ({1}), jar unchanged" -f $name, $versionId) -ForegroundColor Green
+                }
+            } catch {
+                $failed++
+                Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
+            }
             continue
         }
 
