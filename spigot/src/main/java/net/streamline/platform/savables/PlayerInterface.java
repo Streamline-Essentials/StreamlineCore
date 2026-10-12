@@ -1,6 +1,7 @@
 package net.streamline.platform.savables;
 
 import host.plas.bou.commands.Sender;
+import host.plas.bou.scheduling.TaskManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.streamline.api.permissions.Permissions;
@@ -68,7 +69,10 @@ public class PlayerInterface implements IPlayerInterface<Player> {
 
             @Override
             public void runCommand(String command) {
-                new Sender(getPlayer()).executeCommand(command);
+                // Bukkit refuses commands dispatched off the main thread (Folia: the player's region).
+                Player player = getPlayer();
+                if (player == null) return;
+                TaskManager.schedule(player, () -> new Sender(player).executeCommand(command));
             }
 
             @Override
