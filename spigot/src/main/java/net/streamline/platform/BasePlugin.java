@@ -15,6 +15,7 @@ import net.streamline.platform.handlers.BackendHandler;
 import net.streamline.platform.handlers.GameplayHandler;
 import net.streamline.platform.handlers.gui.SpigotGuiHandler;
 import singularity.gui.GuiManager;
+import net.streamline.platform.listeners.EntityEventsListener;
 import net.streamline.platform.listeners.GameplayEventsListener;
 import net.streamline.platform.listeners.GameplayListener;
 import org.bukkit.permissions.Permission;
@@ -255,6 +256,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         GameplayHandler gameplayHandler = new GameplayHandler();
         Singularity.setGameplayHandler(gameplayHandler);
         GuiManager.setHandler(new SpigotGuiHandler());
+        net.streamline.platform.handlers.SpigotProfiles.register();
         slapiB = new SLAPIB(getSlapi(), this);
 
         // Unregistered nodes are operator-only in Bukkit, so module defaults are registered
@@ -279,6 +281,7 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         this.enable();
         registerListener(new PlatformListener());
         registerListener(new GameplayEventsListener());
+        registerListener(new EntityEventsListener());
         registerListener(new GameplayListener(gameplayHandler));
     }
 

@@ -3,9 +3,9 @@ package host.plas.collections.gui;
 import host.plas.collections.StreamlineCollections;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
-import host.plas.collections.data.CollectionPlayer;
+import host.plas.collections.data.TrackedPlayer;
 import host.plas.collections.data.LevelReward;
-import host.plas.collections.database.CollectionKeeper;
+import host.plas.collections.database.TrackKeeper;
 import singularity.data.players.CosmicPlayer;
 import singularity.gui.CosmicGui;
 import singularity.gui.CosmicItem;
@@ -21,11 +21,11 @@ import java.util.List;
 public class DetailMenu extends CosmicGui {
     private static final List<Integer> LEVEL_SLOTS = GuiLayout.paddedSlots(Menus.ROWS, 3, 1, 1, 1);
 
-    private final CollectionPlayer progress;
+    private final TrackedPlayer progress;
     private final CollectionDefinition definition;
-    private final List<CollectionKeeper.Ranked> board;
+    private final List<TrackKeeper.Ranked> board;
 
-    public DetailMenu(CollectionPlayer progress, CollectionDefinition definition, List<CollectionKeeper.Ranked> board) {
+    public DetailMenu(TrackedPlayer progress, CollectionDefinition definition, List<TrackKeeper.Ranked> board) {
         super("#FFFFFF&l" + definition.getDisplayName(), Menus.ROWS);
         this.progress = progress;
         this.definition = definition;
@@ -33,7 +33,7 @@ public class DetailMenu extends CosmicGui {
     }
 
     /** Loads the collection's leaderboard, then opens its menu. */
-    public static void openFor(CosmicPlayer viewer, CollectionPlayer progress, CollectionDefinition definition) {
+    public static void openFor(CosmicPlayer viewer, TrackedPlayer progress, CollectionDefinition definition) {
         CollectionManager.boardFor(definition).whenComplete((board, error) ->
                 new DetailMenu(progress, definition, board == null ? new ArrayList<>() : board).open(viewer));
     }
@@ -71,7 +71,7 @@ public class DetailMenu extends CosmicGui {
             top.add("#AAAAAANo entries yet.");
         } else {
             for (int i = 0; i < Math.min(10, board.size()); i++) {
-                CollectionKeeper.Ranked row = board.get(i);
+                TrackKeeper.Ranked row = board.get(i);
                 top.add("#FFD700#" + (i + 1) + " #FFFFFF" + (row.name == null ? "?" : row.name)
                         + " #AAAAAA- #FFFFFF" + Menus.grouped(row.amount));
             }

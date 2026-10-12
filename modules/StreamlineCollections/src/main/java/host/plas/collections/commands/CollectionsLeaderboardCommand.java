@@ -49,7 +49,7 @@ public class CollectionsLeaderboardCommand extends ModuleCommand {
         if (category.isPresent()) {
             if (args.length >= 2) {
                 String second = args[1];
-                if (second.equalsIgnoreCase("total") || second.equalsIgnoreCase("all")) {
+                if ((second.equalsIgnoreCase("total") || second.equalsIgnoreCase("all")) && category.get().isSummable()) {
                     LeaderboardMenus.openCategoryTotal(viewer, category.get());
                     return;
                 }
@@ -84,7 +84,7 @@ public class CollectionsLeaderboardCommand extends ModuleCommand {
             for (CollectionDefinition definition : catalog.all()) options.add(definition.getId());
         } else if (args.length == 2) {
             catalog.getCategory(args[0]).ifPresent(category -> {
-                options.add("total");
+                if (category.isSummable()) options.add("total");
                 for (CollectionDefinition definition : catalog.inCategory(category)) options.add(definition.getId());
             });
         }

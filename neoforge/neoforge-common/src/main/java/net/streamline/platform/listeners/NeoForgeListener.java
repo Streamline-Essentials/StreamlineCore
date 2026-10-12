@@ -5,10 +5,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.CommandEvent;
+import net.neoforged.neoforge.event.GameShuttingDownEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.event.entity.EntityMobGriefingEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 import net.neoforged.neoforge.event.entity.player.ItemFishedEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -42,6 +46,11 @@ public class NeoForgeListener {
     @SubscribeEvent
     public void onServerStopped(ServerStoppedEvent event) {
         ModEvents.onServerStopped(event.getServer());
+    }
+
+    @SubscribeEvent
+    public void onGameShuttingDown(GameShuttingDownEvent event) {
+        ModEvents.onGameStopping();
     }
 
     @SubscribeEvent
@@ -98,6 +107,26 @@ public class NeoForgeListener {
     public void onFished(ItemFishedEvent event) {
         if (event.isCanceled() || ! (event.getEntity() instanceof ServerPlayer)) return;
         GameplayEvents.onFishCaught((ServerPlayer) event.getEntity(), event.getDrops());
+    }
+
+    /** High, so mods at the lower priorities see what Streamline modules decided. */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onExplosion(ExplosionEvent.Detonate event) {
+        // Fire is lit on the same positions, so clearing them also keeps an incendiary blast from burning.
+        if (! EntityEvents.onExplosion(event.getExplosion().getDirectSourceEntity(), event.getExplosion().getIndirectSourceEntity())) {
+            event.getAffectedBlocks().clear();
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onMobGriefing(EntityMobGriefingEvent event) {
+        if (event.canGrief() && ! EntityEvents.onMobGrief(event.getEntity())) event.setCanGrief(false);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onIncomingDamage(LivingIncomingDamageEvent event) {
+        if (event.isCanceled()) return;
+        if (! EntityEvents.onDamaged(event.getEntity(), event.getSource(), event.getAmount())) event.setCanceled(true);
     }
 
     @SubscribeEvent

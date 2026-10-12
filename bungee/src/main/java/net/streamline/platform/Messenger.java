@@ -5,6 +5,9 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import singularity.objects.ClickableMessage;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -243,6 +246,52 @@ public class Messenger implements IMessenger {
         if (to == null || other == null) return;
         if (to instanceof CosmicPlayer) sendMessageRaw(StreamlineBungee.getPlayer(to.getUuid()), other, message);
         else sendMessageRaw(ProxyServer.getInstance().getConsole(), other, message);
+    }
+
+    /**
+     * Sends the segments as one chat line, each with its own tooltip and click action.
+     * Console recipients get the joined text.
+     */
+    @Override
+    public void sendClickable(@Nullable CosmicSender to, ClickableMessage message) {
+        if (to == null || message == null || message.isEmpty()) return;
+        ProxiedPlayer player = to instanceof CosmicPlayer ? StreamlineBungee.getPlayer(to.getUuid()) : null;
+        if (player == null) {
+            sendMessage(to, message.joinedText());
+            return;
+        }
+
+        TextComponent root = new TextComponent("");
+        for (ClickableMessage.Segment segment : message.getSegments()) {
+            BaseComponent[] hover = segment.getHover() == null ? null : codedText(segment.getHover());
+            ClickEvent click = toClickEvent(segment);
+            for (BaseComponent component : codedText(segment.getText())) {
+                if (hover != null) component.setHoverEvent(showText(hover));
+                if (click != null) component.setClickEvent(click);
+                root.addExtra(component);
+            }
+        }
+        player.sendMessage(root);
+    }
+
+    // The BaseComponent[] constructor is the one present on every supported proxy version.
+    @SuppressWarnings("deprecation")
+    private static HoverEvent showText(BaseComponent[] text) {
+        return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);
+    }
+
+    private static ClickEvent toClickEvent(ClickableMessage.Segment segment) {
+        if (segment.getClickAction() == null) return null;
+        switch (segment.getClickAction()) {
+            case RUN_COMMAND:
+                return new ClickEvent(ClickEvent.Action.RUN_COMMAND, segment.getClickValue());
+            case SUGGEST_COMMAND:
+                return new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, segment.getClickValue());
+            case OPEN_URL:
+                return new ClickEvent(ClickEvent.Action.OPEN_URL, segment.getClickValue());
+            default:
+                return null;
+        }
     }
 
     /**

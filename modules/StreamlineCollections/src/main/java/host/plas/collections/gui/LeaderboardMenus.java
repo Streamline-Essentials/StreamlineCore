@@ -3,7 +3,7 @@ package host.plas.collections.gui;
 import host.plas.collections.data.CollectionCategory;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
-import host.plas.collections.database.CollectionKeeper;
+import host.plas.collections.database.TrackKeeper;
 import singularity.data.players.CosmicPlayer;
 import singularity.gui.CosmicGui;
 import singularity.gui.CosmicItem;
@@ -46,7 +46,7 @@ public final class LeaderboardMenus {
                 category.getColor() + "&l" + definition.getDisplayName() + " LB", category.getColor(), category);
     }
 
-    private static void openRanking(CosmicPlayer viewer, CompletableFuture<List<CollectionKeeper.Ranked>> board,
+    private static void openRanking(CosmicPlayer viewer, CompletableFuture<List<TrackKeeper.Ranked>> board,
                                     String title, String accent, CollectionCategory backTo) {
         board.whenComplete((rows, error) ->
                 new Ranking(title, accent, rows == null ? new ArrayList<>() : rows, backTo).open(viewer));
@@ -63,7 +63,7 @@ public final class LeaderboardMenus {
             Menus.shell(this, ACCENT);
 
             setIcon(13, CosmicItem.of("minecraft:nether_star", ACCENT + "&lOverall",
-                    "#AAAAAATotal items collected across every collection.", "",
+                    "#AAAAAATotal items collected across every item collection.", "",
                     "#bdc8c9Click: #bbff6aView leaderboard"), click -> openOverall(click.getViewer()));
 
             List<CollectionCategory> categories = new ArrayList<>(CollectionManager.getCatalog().getCategories().values());
@@ -90,9 +90,11 @@ public final class LeaderboardMenus {
         @Override
         protected void drawFrame(CosmicPlayer viewer) {
             Menus.shell(this, category.getColor());
-            setIcon(4, CosmicItem.of("minecraft:gold_ingot", category.getColor() + "&lAll " + category.getName(),
-                    "#AAAAAACombined totals for this category.", "",
-                    "#bdc8c9Click: #bbff6aView leaderboard"), click -> openCategoryTotal(click.getViewer(), category));
+            if (category.isSummable()) {
+                setIcon(4, CosmicItem.of("minecraft:gold_ingot", category.getColor() + "&lAll " + category.getName(),
+                        "#AAAAAACombined totals for this category.", "",
+                        "#bdc8c9Click: #bbff6aView leaderboard"), click -> openCategoryTotal(click.getViewer(), category));
+            }
             setIcon(Menus.BACK_SLOT, Menus.back(() -> openHub(viewer)));
         }
 
@@ -111,10 +113,10 @@ public final class LeaderboardMenus {
 
     private static final class Ranking extends PaginatedGui {
         private final String accent;
-        private final List<CollectionKeeper.Ranked> rows;
+        private final List<TrackKeeper.Ranked> rows;
         private final CollectionCategory backTo;
 
-        private Ranking(String title, String accent, List<CollectionKeeper.Ranked> rows, CollectionCategory backTo) {
+        private Ranking(String title, String accent, List<TrackKeeper.Ranked> rows, CollectionCategory backTo) {
             super(title, Menus.ROWS, Menus.contentSlots());
             this.accent = accent;
             this.rows = rows;
@@ -148,7 +150,7 @@ public final class LeaderboardMenus {
         protected List<GuiIcon> buildEntries(CosmicPlayer viewer) {
             List<GuiIcon> entries = new ArrayList<>();
             for (int i = 0; i < rows.size(); i++) {
-                CollectionKeeper.Ranked row = rows.get(i);
+                TrackKeeper.Ranked row = rows.get(i);
                 CosmicItem head = CosmicItem.of("minecraft:player_head",
                         "#FFD700#" + (i + 1) + " #FFFFFF" + (row.name == null ? "?" : row.name),
                         "#AAAAAACollected: #00FC88" + Menus.grouped(row.amount)).setSkullOwner(row.uuid);

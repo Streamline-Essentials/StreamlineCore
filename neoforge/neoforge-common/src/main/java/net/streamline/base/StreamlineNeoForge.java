@@ -1,5 +1,6 @@
 package net.streamline.base;
 
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -7,15 +8,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.streamline.platform.BasePlugin;
 import net.streamline.platform.handlers.GameplayHandler;
 import net.streamline.platform.listeners.NeoForgeBreakListener;
+import net.streamline.platform.listeners.NeoForgeClientListener;
 import net.streamline.platform.listeners.NeoForgeListener;
 
 @Mod("streamlinecore")
 public class StreamlineNeoForge extends BasePlugin {
 
-    public StreamlineNeoForge(IEventBus modBus) {
+    public StreamlineNeoForge(IEventBus modBus, Dist dist) {
+        setClient(dist.isClient());
         initialize();
         NeoForge.EVENT_BUS.register(new NeoForgeListener());
         NeoForge.EVENT_BUS.register(new NeoForgeBreakListener());
+        // Client classes exist only on a client, so the listener touching them loads only there.
+        if (isClient()) NeoForge.EVENT_BUS.register(new NeoForgeClientListener(modBus));
     }
 
     @Override

@@ -12,6 +12,7 @@ import net.streamline.platform.handlers.StatusPingHandler;
 import net.streamline.platform.handlers.TheBaseShutdown;
 import net.streamline.platform.savables.UserManager;
 import singularity.Singularity;
+import singularity.client.module.ClientModuleManager;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.events.UnloadPlayerEvent;
 import singularity.data.players.events.UnloadSenderEvent;
@@ -38,6 +39,13 @@ import java.util.function.Consumer;
 public final class ModEvents {
 
     private ModEvents() {}
+
+    /**
+     * Set once the game is exiting. A client may announce that before its integrated server
+     * has stopped (Fabric does) or after, so whichever of {@link #onGameStopping()} and the
+     * server stop comes last takes Streamline down.
+     */
+    private static volatile boolean gameStopping;
 
     /**
      * Classes first touched while the server stops or players leave. A mod loader reads class
@@ -79,6 +87,24 @@ public final class ModEvents {
         }
     }
 
+    private static volatile boolean clientStarted;
+
+    /**
+     * The game client has started. Brings up the client side of Streamline only, so client
+     * modules run on any server or none; the full Streamline comes up if the client hosts a
+     * world. Loaders call this from a hook that fires repeatedly (a client tick on Forge and
+     * NeoForge), so only the first call does anything.
+     */
+    public static void onClientStarted() {
+        if (clientStarted) return;
+        clientStarted = true;
+        try {
+            BasePlugin.getInstance().bootClient();
+        } catch (Throwable t) {
+            BasePlugin.getInstance().getSlf4jLogger().warn("Streamline could not start on the client", t);
+        }
+    }
+
     public static void onServerStarting(MinecraftServer server) {
         try {
             BasePlugin.getInstance().onServerEnable(server);
@@ -89,8 +115,9 @@ public final class ModEvents {
 
     public static void onServerStarted(MinecraftServer server) {
         preloadStopPath();
-        // The listening channels are bound by now, which they may not be while starting.
-        StatusPingHandler.install(server);
+        // The listening channels are bound by now, which they may not be while starting. An
+        // integrated server has none until it is opened to LAN, and nothing pings it.
+        if (server.isDedicatedServer()) StatusPingHandler.install(server);
         try {
             BaseEventHandler.fireEvent(new ServerStartEvent());
         } catch (Exception e) {
@@ -100,7 +127,7 @@ public final class ModEvents {
 
     public static void onServerStopping(MinecraftServer server) {
         try {
-            BasePlugin.getInstance().onServerDisable();
+            BasePlugin.getInstance().onServerDisable(server.isDedicatedServer() || gameStopping);
         } catch (Throwable t) {
             logStopFailure("Server disable", t);
         }
@@ -108,6 +135,40 @@ public final class ModEvents {
 
     public static void onServerStopped(MinecraftServer server) {
         BasePlugin.setServer(null);
+        CommandRegistry.forgetDispatcher();
+        // A client's Streamline outlives its integrated servers until the game exits.
+        if (gameStopping) shutdownStreamline();
+        else if (server.isDedicatedServer()) stopTheBaseTasks();
+    }
+
+    /**
+     * The game itself is exiting. On a client this is where the client modules and Streamline
+     * come down, since stopping an integrated server leaves it up for the next world; a server
+     * still running finishes the teardown once it has stopped. On a dedicated server the
+     * server stop already did it and this does nothing.
+     */
+    public static void onGameStopping() {
+        gameStopping = true;
+        try {
+            ClientModuleManager.shutdown();
+        } catch (Throwable t) {
+            logStopFailure("Stopping client modules", t);
+        }
+        if (BasePlugin.getServer() == null) shutdownStreamline();
+    }
+
+    private static void shutdownStreamline() {
+        BasePlugin plugin = BasePlugin.getInstance();
+        if (plugin == null) return;
+        try {
+            plugin.shutdownStreamline();
+        } catch (Throwable t) {
+            logStopFailure("Streamline shutdown", t);
+        }
+        stopTheBaseTasks();
+    }
+
+    private static void stopTheBaseTasks() {
         try {
             TheBaseShutdown.stopQueuedTasks();
         } catch (Throwable t) {

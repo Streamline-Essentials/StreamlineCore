@@ -4,10 +4,11 @@ import host.plas.collections.data.Catalog;
 import host.plas.collections.data.CollectionCategory;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
-import host.plas.collections.data.CollectionPlayer;
+import host.plas.collections.data.TrackedPlayer;
 import singularity.data.players.CosmicPlayer;
 import singularity.gui.CosmicGui;
 import singularity.gui.CosmicItem;
+import singularity.gui.GuiLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +18,12 @@ import java.util.List;
  */
 public class MainMenu extends CosmicGui {
     private static final String ACCENT = "#FFED6A";
+    private static final int ROWS = 5;
 
-    private final CollectionPlayer progress;
+    private final TrackedPlayer progress;
 
-    public MainMenu(CollectionPlayer progress) {
-        super(ACCENT + "&lCollections", Menus.ROWS);
+    public MainMenu(TrackedPlayer progress) {
+        super(ACCENT + "&lCollections", ROWS);
         this.progress = progress;
     }
 
@@ -32,6 +34,7 @@ public class MainMenu extends CosmicGui {
 
         Catalog catalog = CollectionManager.getCatalog();
         boolean own = viewer.getUuid().equals(progress.getIdentifier());
+        boolean claimable = own && CollectionManager.canClaim(viewer, progress);
 
         int tiers = 0;
         int levels = 0;
@@ -51,7 +54,7 @@ public class MainMenu extends CosmicGui {
         lore.add("#AAAAAATier Progress: #00FC88" + Menus.percent(tiers, levels) + "%");
         lore.add("#AAAAAATiers: #00FC88" + tiers + "#AAAAAA/#FFFFFF" + levels);
         lore.add("#AAAAAAMaxed: #00FC88" + maxed + "#AAAAAA/#FFFFFF" + catalog.all().size());
-        if (own && CollectionManager.canClaim(viewer, progress)) {
+        if (claimable) {
             int unclaimed = CollectionManager.unclaimed(progress);
             if (unclaimed > 0) lore.add("#00FC88" + unclaimed + (unclaimed == 1 ? " reward" : " rewards") + " waiting to claim!");
         }
@@ -74,15 +77,28 @@ public class MainMenu extends CosmicGui {
                 if (definition.maxed(amount)) categoryMaxed++;
             }
 
-            CosmicItem item = CosmicItem.of(category.getIcon(), category.getColor() + "&l" + category.getName(),
-                    "#AAAAAAProgress: #FFFFFF" + categoryTiers + "/" + categoryLevels
-                            + " #AAAAAA(" + Menus.percent(categoryTiers, categoryLevels) + "%)",
-                    "#AAAAAAMaxed: #FFFFFF" + categoryMaxed + "/" + inCategory.size(),
-                    "",
-                    "#38C1FCClick to view " + category.getName() + " collections!");
+            List<String> categoryLore = new ArrayList<>();
+            categoryLore.add("#AAAAAAProgress: #FFFFFF" + categoryTiers + "/" + categoryLevels
+                    + " #AAAAAA(" + Menus.percent(categoryTiers, categoryLevels) + "%)");
+            categoryLore.add("#AAAAAAMaxed: #FFFFFF" + categoryMaxed + "/" + inCategory.size());
+            if (claimable && redeemable(inCategory)) {
+                categoryLore.add("");
+                categoryLore.add("#00FC88You have collections you can redeem!");
+            }
+            categoryLore.add("");
+            categoryLore.add("#38C1FCClick to view " + category.getName() + " collections!");
+            CosmicItem item = CosmicItem.of(category.getIcon(), category.getColor() + "&l" + category.getName())
+                    .setLore(categoryLore);
             setIcon(slots[i], item, click -> new CategoryMenu(progress, category).open(click.getViewer()));
         }
 
-        setIcon(Menus.BACK_SLOT, Menus.close());
+        setIcon(GuiLayout.bottomCenter(ROWS), Menus.close());
+    }
+
+    private boolean redeemable(List<CollectionDefinition> definitions) {
+        for (CollectionDefinition definition : definitions) {
+            if (CollectionManager.unclaimed(progress, definition) > 0) return true;
+        }
+        return false;
     }
 }

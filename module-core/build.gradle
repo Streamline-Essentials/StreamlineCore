@@ -1,0 +1,13 @@
+// The lean module core: the client module API (ClientModule, its hot-swapping loader, the
+// HUD and settings registries) and the eCloud registry client. A game client runs only this,
+// never Singularity's users, database or permissions, and client modules compile against it
+// alone.
+//
+// It depends on nothing a client lacks: PF4J ships inside the Singularity shadow jar, and
+// Gson comes with Minecraft (and with every server platform). Nothing here may use a library
+// the mod jars relocate (see mod-common/mod.gradle), so client modules load untransformed.
+dependencies {
+    compileOnly 'org.pf4j:pf4j:3.10.0'
+    compileOnly 'com.google.code.gson:gson:2.8.8'
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}

@@ -12,21 +12,19 @@ import singularity.command.CommandHandler;
 import singularity.command.ModuleCommand;
 import singularity.events.*;
 import singularity.events.modules.ModuleLoadEvent;
+import singularity.loading.TransformingPluginClassLoader;
 import singularity.utils.MessageUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Path;
-import java.security.CodeSigner;
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -84,60 +82,12 @@ public class ModuleManager {
     private static ModuleClassTransformer moduleClassTransformer;
 
     /**
-     * Rewrites the bytecode of one module class.
+     * Rewrites the bytecode of one module class. Server modules load through
+     * {@link TransformingPluginClassLoader} with it; client modules take the same transformer
+     * through {@code ClientModuleManager.setClassTransformer}.
      */
     @FunctionalInterface
-    public interface ModuleClassTransformer {
-        /**
-         * @param className binary name of the class being defined
-         * @param classBytes the class file as read from the module jar
-         * @return the class file to define
-         */
-        byte[] transform(String className, byte[] classBytes);
-    }
-
-    /**
-     * A {@link PluginClassLoader} that passes every class it defines from the module jar
-     * through a {@link ModuleClassTransformer}.
-     */
-    private static class TransformingPluginClassLoader extends PluginClassLoader {
-        private final ModuleClassTransformer transformer;
-
-        TransformingPluginClassLoader(PluginManager pluginManager, PluginDescriptor descriptor,
-                                      ClassLoader parent, ModuleClassTransformer transformer) {
-            super(pluginManager, descriptor, parent);
-            this.transformer = transformer;
-        }
-
-        @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
-            URL resource = findResource(name.replace('.', '/') + ".class");
-            if (resource == null) throw new ClassNotFoundException(name);
-
-            byte[] bytes;
-            try (InputStream in = resource.openStream()) {
-                bytes = in.readAllBytes();
-            } catch (IOException e) {
-                throw new ClassNotFoundException(name, e);
-            }
-            bytes = transformer.transform(name, bytes);
-
-            int lastDot = name.lastIndexOf('.');
-            if (lastDot > 0) {
-                String packageName = name.substring(0, lastDot);
-                if (getDefinedPackage(packageName) == null) {
-                    try {
-                        definePackage(packageName, null, null, null, null, null, null, null);
-                    } catch (IllegalArgumentException ignored) {
-                        // Defined concurrently by another thread.
-                    }
-                }
-            }
-
-            URL[] urls = getURLs();
-            CodeSource source = new CodeSource(urls.length > 0 ? urls[0] : null, (CodeSigner[]) null);
-            return defineClass(name, bytes, 0, bytes.length, source);
-        }
+    public interface ModuleClassTransformer extends singularity.loading.ModuleClassTransformer {
     }
 
     /**
@@ -357,11 +307,16 @@ public class ModuleManager {
 
     /**
      * Iterates every JAR in the plugin manager's root folder and loads each
-     * one through PF4J, skipping any that fail with a logged error.
+     * one through PF4J, skipping jars already loaded, jars whose
+     * {@link SupportedPlatformTag}s exclude this platform, and any that fail
+     * with a logged error.
+     *
+     * <p>Synchronized with {@link #startModules()}: a mod-loader client runs a second pass
+     * when it first hosts a world, which may overlap the pass made at boot.</p>
      *
      * @return the number of JARs successfully handed off to PF4J
      */
-    public static int loadModulesSafe() {
+    public static synchronized int loadModulesSafe() {
         AtomicInteger i = new AtomicInteger(0);
 
         File pathFile = safePluginManager().getPluginsRoot().toFile();
@@ -370,6 +325,8 @@ public class ModuleManager {
 
         Arrays.stream(files).forEach(file -> {
             if (file.getName().endsWith(".jar")) {
+                if (getPluginWrapperByJarName(file.getName()) != null) return;
+                if (! mayLoad(file.toPath())) return;
                 try {
                     safePluginManager().loadPlugin(file.toPath());
 
@@ -384,14 +341,48 @@ public class ModuleManager {
     }
 
     /**
+     * Logs why a jar may not load here, and warns about jars that declare no platforms.
+     *
+     * @return whether the jar may load
+     */
+    private static boolean mayLoad(Path jar) {
+        String refusal = ModulePlatforms.refusal(jar);
+        if (refusal != null) {
+            MessageUtils.logInfo("&eSkipping module " + refusal);
+            return false;
+        }
+        if (ModulePlatforms.isUntagged(jar)) {
+            MessageUtils.logWarning("Module '" + jar.getFileName() + "' declares no supported platforms ("
+                    + SupportedPlatformTag.MANIFEST_ATTRIBUTE + "); loading it anyway. Rebuild it with pf.platforms set.");
+        }
+        return true;
+    }
+
+    /**
      * Loads and starts a single external module JAR by file name.
      *
      * @param jarName the JAR file name (with or without the {@code .jar}
      *                extension) located in the plugin manager's root folder
      */
     public static void registerExternalModule(@NotNull String jarName) {
+        String refusal = tryRegisterExternalModule(jarName);
+        if (refusal != null) MessageUtils.logInfo("&eSkipping module " + refusal);
+    }
+
+    /**
+     * Loads and starts a single external module JAR by file name, unless its
+     * {@link SupportedPlatformTag}s exclude this platform.
+     *
+     * @param jarName the JAR file name (with or without the {@code .jar}
+     *                extension) located in the plugin manager's root folder
+     * @return why the module was not loaded, or {@code null} if it was handed to PF4J
+     */
+    public static String tryRegisterExternalModule(@NotNull String jarName) {
         if (! jarName.endsWith(".jar")) jarName += ".jar";
         Path path = safePluginManager().getPluginsRoot().resolve(jarName);
+
+        String refusal = ModulePlatforms.refusal(path);
+        if (refusal != null) return refusal;
 
         // If a previous unload left a RESOLVED/STOPPED wrapper, drop it first.
         PluginWrapper existingByJar = getPluginWrapperByJarName(jarName);
@@ -403,9 +394,10 @@ public class ModuleManager {
         PluginWrapper plugin = getPluginWrapperByJarName(jarName);
         if (plugin == null) {
             MessageUtils.logSevere("Could not load module '" + jarName + "': plugin wrapper missing after loadPlugin.");
-            return;
+            return "'" + jarName + "' could not be loaded; see the log.";
         }
         safePluginManager().startPlugin(plugin.getPluginId());
+        return null;
     }
 
     /**
@@ -611,6 +603,146 @@ public class ModuleManager {
     }
 
     /**
+     * The jar in the module folder behind a module: the jar PF4J loaded it from, a jar with
+     * that file name (the {@code .jar} may be left off), or a jar whose manifest declares that
+     * Plugin-Id. Ids and file names match case-insensitively.
+     *
+     * @param idOrJar a module identifier (Plugin-Id) or jar file name
+     * @return the jar, or {@code null} when nothing in the module folder matches
+     */
+    public static Path findModuleJar(String idOrJar) {
+        if (idOrJar == null || idOrJar.isBlank()) return null;
+        for (PluginWrapper wrapper : safePluginManager().getPlugins()) {
+            if (wrapper.getPluginId().equalsIgnoreCase(idOrJar)) return wrapper.getPluginPath();
+        }
+        String jarName = idOrJar.toLowerCase(java.util.Locale.ROOT).endsWith(".jar") ? idOrJar : idOrJar + ".jar";
+        for (File file : getModuleFiles().values()) {
+            if (file.getName().equalsIgnoreCase(jarName)) return file.toPath();
+        }
+        for (File file : getModuleFiles().values()) {
+            String id = manifestValue(file, "Plugin-Id");
+            if (id != null && id.equalsIgnoreCase(idOrJar)) return file.toPath();
+        }
+        return null;
+    }
+
+    /**
+     * A main attribute of a jar's manifest.
+     *
+     * @return the trimmed value, or {@code null} when the jar is unreadable or lacks it
+     */
+    public static String manifestValue(File jar, String attribute) {
+        try (java.util.jar.JarFile file = new java.util.jar.JarFile(jar)) {
+            java.util.jar.Manifest manifest = file.getManifest();
+            if (manifest == null) return null;
+            String value = manifest.getMainAttributes().getValue(attribute);
+            return value == null ? null : value.trim();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Jar file names of the loaded modules that depend on {@code pluginId}, directly or through
+     * other modules. PF4J unloads all of them together with it.
+     */
+    public static List<String> getDependentJarNames(String pluginId) {
+        List<String> ids = new ArrayList<>();
+        ids.add(pluginId);
+        List<String> jars = new ArrayList<>();
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (PluginWrapper wrapper : safePluginManager().getPlugins()) {
+                if (ids.contains(wrapper.getPluginId())) continue;
+                for (PluginDependency dependency : wrapper.getDescriptor().getDependencies()) {
+                    if (! ids.contains(dependency.getPluginId())) continue;
+                    ids.add(wrapper.getPluginId());
+                    jars.add(wrapper.getPluginPath().getFileName().toString());
+                    grew = true;
+                    break;
+                }
+            }
+        }
+        return jars;
+    }
+
+    /**
+     * Stops and unloads the module behind a jar, wherever it is registered: in Streamline's
+     * registry, in PF4J, or both. Modules that depend on it are unloaded with it.
+     *
+     * @param jar the module's jar in the module folder
+     * @return the module's Plugin-Id, or {@code null} when nothing was loaded from that jar
+     */
+    public static String unloadModuleJar(Path jar) {
+        PluginWrapper wrapper = getPluginWrapperByJarName(jar.getFileName().toString());
+        if (wrapper == null) return null;
+        String id = wrapper.getPluginId();
+        ModuleLike module = getModule(id);
+        if (module != null) {
+            unregisterModule(module);
+        } else {
+            try {
+                safePluginManager().unloadPlugin(id);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return id;
+    }
+
+    /** Outcome of {@link #deleteModule(String)}. */
+    @Getter
+    public static final class Deletion {
+        public enum Status {
+            /** The jar is gone. */
+            DELETED,
+            /** The module was unloaded but the jar is still in use; it is deleted when the server stops. */
+            DELETED_ON_EXIT,
+            /** No jar in the module folder matches. */
+            NOT_FOUND,
+        }
+
+        private final Status status;
+        /** The jar's file name, or what was asked for when {@link Status#NOT_FOUND}. */
+        private final String fileName;
+        /** Jar names of the modules that depended on it and were unloaded with it. */
+        private final List<String> unloadedDependents;
+
+        Deletion(Status status, String fileName, List<String> unloadedDependents) {
+            this.status = status;
+            this.fileName = fileName;
+            this.unloadedDependents = unloadedDependents;
+        }
+    }
+
+    /**
+     * Unloads a module and deletes its jar from the module folder. The module's data folder and
+     * configs are kept. Modules that depend on it are unloaded too and stay unloaded.
+     *
+     * @param idOrJar a module identifier (Plugin-Id) or jar file name; see {@link #findModuleJar(String)}
+     * @return what happened
+     */
+    public static Deletion deleteModule(String idOrJar) {
+        Path jar = findModuleJar(idOrJar);
+        if (jar == null || ! jar.toFile().isFile()) return new Deletion(Deletion.Status.NOT_FOUND, idOrJar, new ArrayList<>());
+
+        PluginWrapper wrapper = getPluginWrapperByJarName(jar.getFileName().toString());
+        List<String> dependents = wrapper == null ? new ArrayList<>() : getDependentJarNames(wrapper.getPluginId());
+        unloadModuleJar(jar);
+
+        String fileName = jar.getFileName().toString();
+        try {
+            java.nio.file.Files.deleteIfExists(jar);
+            return new Deletion(Deletion.Status.DELETED, fileName, dependents);
+        } catch (IOException e) {
+            // Windows refuses to delete a jar while any handle to it is still open.
+            jar.toFile().deleteOnExit();
+            return new Deletion(Deletion.Status.DELETED_ON_EXIT, fileName, dependents);
+        }
+    }
+
+    /**
      * Returns the registered {@link ModuleLike} for the given identifier, or
      * {@code null} if no such module is loaded.
      *
@@ -704,7 +836,7 @@ public class ModuleManager {
     /**
      * Starts all plugins known to the underlying PF4J plugin manager.
      */
-    public static void startModules() {
+    public static synchronized void startModules() {
         safePluginManager().startPlugins();
     }
 

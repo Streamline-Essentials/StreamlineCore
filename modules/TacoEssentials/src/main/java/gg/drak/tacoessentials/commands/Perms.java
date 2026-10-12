@@ -19,8 +19,12 @@ public final class Perms {
     public static final String LISTHOMES_OTHERS = command("listhomes.others");
     public static final String DBACK_OTHERS = command("dback.others");
     public static final String EC_OTHERS = command("ec.others");
+    /** Setting or clearing another player's nickname with {@code /nick}. */
+    public static final String NICK_OTHERS = command("nick.others");
     public static final String RTP_BYPASS_COOLDOWN = PREFIX + "rtp.bypasscooldown";
     public static final String HOMES_UNLIMITED = PREFIX + "homes.unlimited";
+    /** Colour codes in chat messages count instead of being stripped. */
+    public static final String CHAT_COLOR = PREFIX + "chat.color";
 
     /** Running any custom alias; an alias with its permission toggle on also needs {@link #aliasUse}. */
     public static final String ALIAS = PREFIX + "alias";

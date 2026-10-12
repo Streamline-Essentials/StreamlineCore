@@ -3,7 +3,7 @@ package host.plas.collections.gui;
 import host.plas.collections.data.CollectionCategory;
 import host.plas.collections.data.CollectionDefinition;
 import host.plas.collections.data.CollectionManager;
-import host.plas.collections.data.CollectionPlayer;
+import host.plas.collections.data.TrackedPlayer;
 import singularity.data.players.CosmicPlayer;
 import singularity.gui.CosmicItem;
 import singularity.gui.GuiIcon;
@@ -16,10 +16,10 @@ import java.util.List;
  * One category's collections, paged, each opening its {@link DetailMenu}.
  */
 public class CategoryMenu extends PaginatedGui {
-    private final CollectionPlayer progress;
+    private final TrackedPlayer progress;
     private final CollectionCategory category;
 
-    public CategoryMenu(CollectionPlayer progress, CollectionCategory category) {
+    public CategoryMenu(TrackedPlayer progress, CollectionCategory category) {
         super(category.getColor() + "&l" + category.getName() + " Collections", Menus.ROWS, Menus.contentSlots());
         this.progress = progress;
         this.category = category;

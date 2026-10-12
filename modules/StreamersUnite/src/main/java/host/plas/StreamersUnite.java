@@ -37,7 +37,9 @@ public final class StreamersUnite extends SimpleModule {
                 new CheckLiveCMD(),
                 new GoLiveCMD(),
                 new GoOfflineCMD(),
-                new SetUpStreamerCMD()
+                new SetUpStreamerCMD(),
+                new ImLiveCMD(),
+                new StreamerCMD()
         )));
     }
 
@@ -61,7 +63,7 @@ public final class StreamersUnite extends SimpleModule {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        LiveManager.getCurrentlyLive().clear();
+        LiveManager.clear();
 
         getStreamerExpansion().stop();
     }

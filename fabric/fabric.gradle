@@ -8,7 +8,12 @@ def obfuscated = project.obfuscated as boolean
 
 apply plugin: obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
 
-ext.modSourceDirs = ['fabric/fabric-common']
+// Fabric API's HUD hook is HudRenderCallback up to 1.21.1 and HudElementRegistry from 1.21.6.
+def mc = project.mcVersion.toString()
+def hudHook = (mc.startsWith('1.20.') || mc == '1.21.1') ? 'fabric-hud-callback' : 'fabric-hud-elements'
+// Fabric API registers key mappings through KeyBindingHelper up to 1.21.11 and KeyMappingHelper from 26.1.
+def keyHook = mc.startsWith('1.') ? 'fabric-keys-binding' : 'fabric-keys-mapping'
+ext.modSourceDirs = ['fabric/fabric-common', "fabric/${hudHook}", "fabric/${keyHook}"]
 ext.metadataExtras = [fabricLoaderVersion: rootProject.properties['fabric_loader_version'].toString()]
 // The remapped jar is the one Fabric loads; without remapping the shaded jar ships as is.
 ext.modJarTask = obfuscated ? 'remapJar' : 'shadowJar'
@@ -29,6 +34,15 @@ dependencies {
     } else {
         implementation "net.fabricmc:fabric-loader:${rootProject.properties['fabric_loader_version']}"
         implementation "net.fabricmc.fabric-api:fabric-api:${project.fabricApiVersion}"
+    }
+}
+
+// Loom writes IDE run configurations only for the root project unless told otherwise.
+loom {
+    runs {
+        configureEach {
+            ideConfigGenerated(true)
+        }
     }
 }
 

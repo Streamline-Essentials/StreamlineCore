@@ -6,8 +6,8 @@ license="MIT"
     modId="streamlinecore"
     version="${version}"
     displayName="${name}"
-    description="StreamlineCore for Forge servers."
-    # Server-side only: clients connect whether or not they have the mod.
+    description="StreamlineCore for Forge servers and clients."
+    # Optional on both ends: clients connect whether or not they or the server have the mod.
     displayTest="IGNORE_ALL_VERSION"
 
 [[dependencies.streamlinecore]]
@@ -15,11 +15,11 @@ license="MIT"
     mandatory=true
     versionRange="[${loaderMajor},)"
     ordering="NONE"
-    side="SERVER"
+    side="BOTH"
 
 [[dependencies.streamlinecore]]
     modId="minecraft"
     mandatory=true
     versionRange="${minecraftRange}"
     ordering="NONE"
-    side="SERVER"
+    side="BOTH"

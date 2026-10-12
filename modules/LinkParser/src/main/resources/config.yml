@@ -1,0 +1,31 @@
+# LinkParser: links in chat become clickable for players allowed to post them.
+#
+# A chat message from an allowed player that holds a link is taken over: the server's own
+# chat line is cancelled and this module sends the line below instead, with every link
+# clickable. Messages without links, and messages from players who are not allowed, are left
+# to the server (or to another chat module) untouched.
+
+# Who may post clickable links: players with this permission. Without LuckPerms, server
+# operators count as having it too.
+permission: "streamline.linkparser.use"
+
+# Whether links without "https://" or "www." (like example.com/page) count as links.
+bare-domains: true
+
+# The chat line sent in place of the original. %message% is the message (placeholders in it
+# are never resolved); every other Streamline placeholder is resolved for the sender.
+format: "%streamline_user_formatted%&8: &f%message%"
+
+# The tooltip on each link; %url% is the link.
+link-hover: "#AAAAAAClick to open #FFFFFF%url%"
+
+# Whether players with this permission may use & colour codes in a message with links.
+color-permission: "streamline.linkparser.colors"
+
+# Proxies (Velocity / BungeeCord). Recent clients sign chat, and a proxy cancelling signed
+# chat can get the player kicked, so this is off by default; running the module on the game
+# servers instead is the safe choice.
+proxy:
+  enabled: false
+  # "server": only players on the sender's server see the line; "network": everyone.
+  scope: server

@@ -5,6 +5,10 @@ import singularity.Singularity;
 import singularity.modules.ModuleLike;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * A {@link CosmicCommand} that is owned by a PF4J module ({@link ModuleLike}).
@@ -47,18 +51,29 @@ public abstract class ModuleCommand extends CosmicCommand {
         this.owningModule = module;
     }
 
-//    public static String[] withLabel(ModuleLike module, String base, String... before) {
-//        List<String> names = new ArrayList<>(List.of(before));
-//        names.add(base);
-//
-//        List<String> newAliases = new ArrayList<>();
-//        for (String name : names) {
-//            newAliases.add(name);
-//            newAliases.add(module.getIdentifier() + ":" + name);
-//        }
-//
-//        return newAliases.toArray(String[]::new);
-//    }
+    /**
+     * {@code <module-id>:<label>} for the base and every alias, so a module's command stays
+     * reachable as {@code /<module-id>:<command>} when another plugin or module takes the bare
+     * name. Built from the live base and aliases, so labels renamed in the command's config
+     * file are namespaced too.
+     */
+    @Override
+    public List<String> getNamespacedLabels() {
+        List<String> labels = new ArrayList<>();
+        String namespace = getOwningModule().getIdentifier();
+        if (namespace == null || namespace.isEmpty()) return labels;
+        namespace = namespace.toLowerCase(Locale.ROOT);
+
+        List<String> bare = new ArrayList<>();
+        bare.add(getBase());
+        if (getAliases() != null) bare.addAll(Arrays.asList(getAliases()));
+        for (String label : bare) {
+            if (label == null || label.isEmpty() || label.contains(":")) continue;
+            String namespaced = namespace + ":" + label.toLowerCase(Locale.ROOT);
+            if (! labels.contains(namespaced)) labels.add(namespaced);
+        }
+        return labels;
+    }
 
     /**
      * Adds this command to the owning module's internal command list, enabling the
