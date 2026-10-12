@@ -6,3 +6,4 @@
   + Select by dragging, Shift-click, Shift+arrows or Ctrl+A.
   + Copy and cut the selected text.
   + Ctrl+Backspace deletes whole words.
++ Fixed proxy-sent commands erroring as async on backend servers.
