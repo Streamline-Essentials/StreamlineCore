@@ -1,11 +1,12 @@
 package net.streamline.client.gui;
 
 import net.streamline.client.Canvas;
-import net.streamline.client.CanvasHudRenderer;
 import net.streamline.client.compat.ClientCompat;
 import net.streamline.client.compat.CompatScreen;
 import singularity.client.hud.CustomHudElements;
 import singularity.client.hud.HudElement;
+import singularity.client.hud.HudGroup;
+import singularity.client.hud.HudHistory;
 import singularity.client.hud.HudPlacement;
 import singularity.client.hud.HudRegistry;
 import singularity.client.module.ClientModuleCloud;
@@ -35,9 +36,10 @@ import java.util.function.Function;
  * The client module menu ({@code /slclient menu}): a sidebar of the client modules loaded in
  * this game and, for the selected one, its details, an enable switch, reload, update and
  * remove buttons, the settings it registered with {@link ClientSettingsRegistry}, and its HUD
- * elements, whose text can be edited where the element allows it, plus an add button for
- * modules that let the player add text elements of their own. The sidebar's first entry,
- * Client Settings, holds StreamlineClient's own settings ({@link StreamlineClientSettings}); its last entry browses eCloud for client modules, and for world modules
+ * elements, each with an Edit popup for its frame, its group and, where the element allows it,
+ * its text, plus an add button for modules that let the player add text elements of their own.
+ * The sidebar's first entry, Client Settings, holds StreamlineClient's own settings
+ * ({@link StreamlineClientSettings}) and the HUD groups; its last entry browses eCloud for client modules, and for world modules
  * (server modules that run in the worlds this client hosts), and installs them
  * while the game runs.
  *
@@ -107,8 +109,18 @@ public final class MenuScreen extends CompatScreen {
     private ModuleSettings capturingPage;
     private long openedAt = System.currentTimeMillis();
 
-    /** The HUD element (registry key) whose text editor is open. */
-    private String expandedElement;
+    /** The HUD element (registry key) whose Edit popup is open, or {@code null}. */
+    private String editedElement;
+    /** The frame and group sections of the Edit popup, while it is open. */
+    private HudStylePopup elementStyle;
+    /** Owns the Edit popup's frame and group area, so a click there keeps their field focused. */
+    private final Object elementStyleArea = new Object();
+    /** How far the Edit popup is scrolled, how far it can be, and its content height last frame. */
+    private double popupScroll;
+    private int popupOverflow;
+    private int popupContentHeight = 200;
+    /** The group popup opened from the HUD Groups list, or {@code null}. */
+    private HudStylePopup groupPopup;
     /** The HUD element (registry key) whose Delete button was clicked once. */
     private String confirmDelete;
     /** The module whose add-element form is open, and what has been typed into it. */
@@ -367,6 +379,11 @@ public final class MenuScreen extends CompatScreen {
         drawSidebar(canvas, mouseX, mouseY, modules);
         drawContent(canvas, mouseX, mouseY, modules);
         drawDetails(canvas, mouseX, mouseY, modules);
+        if (elementStyle != null) drawElementPopup(canvas, mouseX, mouseY);
+        if (groupPopup != null) {
+            groupPopup.draw(canvas, mouseX, mouseY);
+            if (groupPopup.isClosed()) groupPopup = null;
+        }
     }
 
     /**
@@ -443,6 +460,136 @@ public final class MenuScreen extends CompatScreen {
     private void closeDetails() {
         detailsFor = null;
         listingDetailsFor = null;
+    }
+
+    /** Opens the Edit popup of one HUD element, closing any other popup. */
+    private void openElementPopup(HudRegistry.Registered registered) {
+        commitEdit();
+        closeDetails();
+        closeGroupPopup();
+        closeElementPopup();
+        editedElement = registered.getKey();
+        elementStyle = HudStylePopup.forElement(registered).onTextInput(focused -> textInput(focused));
+        popupScroll = 0;
+    }
+
+    private void closeElementPopup() {
+        commitEdit();
+        if (elementStyle != null) elementStyle.close();
+        elementStyle = null;
+        editedElement = null;
+        confirmDelete = null;
+    }
+
+    /** Opens the popup of one HUD group, closing any other popup. */
+    private void openGroupPopup(HudGroup group) {
+        commitEdit();
+        closeDetails();
+        closeElementPopup();
+        closeGroupPopup();
+        groupPopup = HudStylePopup.forGroup(group).onTextInput(focused -> textInput(focused));
+    }
+
+    private void closeGroupPopup() {
+        if (groupPopup != null) groupPopup.close();
+        groupPopup = null;
+    }
+
+    /** @return the registered element with this key, or {@code null} once its module stopped */
+    private static HudRegistry.Registered registeredElement(String key) {
+        if (key == null) return null;
+        for (HudRegistry.Registered registered : HudRegistry.elements()) {
+            if (registered.getKey().equals(key)) return registered;
+        }
+        return null;
+    }
+
+    /**
+     * The Edit popup of one HUD element, over the whole menu like the details popup: its text
+     * editor where the element has a template (field, preview, Reset / Delete for custom ones,
+     * placeholders), then its frame and group ({@link HudStylePopup}). It takes every click while
+     * open, scrolls when taller than the screen, and a click outside it, Close or Escape closes it.
+     *
+     * <p>While it draws, the content bounds point at the popup's scrolling area, so the menu's
+     * fields, buttons and notices clip and take clicks there.</p>
+     */
+    private void drawElementPopup(Canvas canvas, int mouseX, int mouseY) {
+        HudRegistry.Registered registered = registeredElement(editedElement);
+        if (registered == null || elementStyle.isClosed()) {
+            closeElementPopup();
+            return;
+        }
+        HudElement element = registered.getElement();
+        String template = template(element);
+        CustomHudElements custom = HudRegistry.customElements(registered.getOwner());
+
+        regions.clear();
+        regions.add(new Region(0, 0, canvas.width(), canvas.height(), null, (x, y, b) -> closeElementPopup()));
+        canvas.fill(0, 0, canvas.width(), canvas.height(), 0xA0000000);
+
+        int line = canvas.lineHeight() + 2;
+        int width = Math.min(canvas.width() - 40, 320);
+        int height = Math.min(PAD + line + 4 + popupContentHeight + 8 + 14 + PAD, canvas.height() - 20);
+        int x1 = (canvas.width() - width) / 2;
+        int y1 = (canvas.height() - height) / 2;
+        int x2 = x1 + width;
+        int y2 = y1 + height;
+        regions.add(new Region(x1, y1, x2, y2, null, (x, y, b) -> { }));
+        canvas.fill(x1, y1, x2, y2, Theme.PANEL);
+        canvas.outline(x1, y1, x2, y2, Theme.CONTROL_BORDER);
+        String title = "&l" + elementName(element) + (custom(element) ? "&r &8(custom)" : "");
+        canvas.text(Theme.fit(canvas, title, width - PAD * 2), x1 + PAD, y1 + PAD, Theme.TEXT, false);
+
+        int viewY1 = y1 + PAD + line + 4;
+        int viewY2 = y2 - PAD - 18;
+        popupOverflow = Math.max(0, popupContentHeight - (viewY2 - viewY1));
+        popupScroll = Math.max(0, Math.min(popupScroll, popupOverflow));
+
+        int savedX1 = contentX1, savedY1 = contentY1, savedX2 = contentX2, savedY2 = contentY2;
+        contentX1 = x1;
+        contentY1 = viewY1;
+        contentX2 = x2;
+        contentY2 = viewY2;
+        canvas.clip(x1, viewY1, x2, viewY2);
+        try {
+            int left = x1 + PAD;
+            int right = x2 - PAD - 4;
+            int start = viewY1 - (int) popupScroll;
+            int y = start;
+            elementStyle.setBodyPreview(template == null);
+            if (template != null) {
+                y = section(canvas, "Text", y, right);
+                y = drawTemplateEditor(canvas, mouseX, mouseY, registered, custom, y, left, right) + 4;
+            }
+            int styleTop = y;
+            y = elementStyle.drawBody(canvas, mouseX, mouseY, left, y, right, viewY1, viewY2);
+            // Clicks in the frame and group area go to the popup; leaving the menu's field first
+            // keeps a single field focused.
+            addRegion(left - 2, styleTop, right + 2, y, elementStyleArea, (cx, cy, b) -> {
+                commitEdit();
+                if (elementStyle != null) elementStyle.clickBody(cx, cy, b);
+            });
+            popupContentHeight = y - start;
+        } finally {
+            canvas.endClip();
+            contentX1 = savedX1;
+            contentY1 = savedY1;
+            contentX2 = savedX2;
+            contentY2 = savedY2;
+        }
+        if (popupOverflow > 0) {
+            int track = viewY2 - viewY1;
+            int barHeight = Math.max(12, track * track / (track + popupOverflow));
+            int barY = viewY1 + (int) ((track - barHeight) * (popupScroll / popupOverflow));
+            canvas.fill(x2 - 3, barY, x2 - 1, barY + barHeight, 0x60FFFFFF);
+        }
+
+        int closeX2 = x2 - PAD;
+        int closeX1 = closeX2 - 50;
+        int closeY1 = y2 - PAD - 14;
+        Theme.button(canvas, closeX1, closeY1, closeX2, closeY1 + 14, "Close",
+                Theme.inside(mouseX, mouseY, closeX1, closeY1, closeX2, closeY1 + 14), true);
+        regions.add(new Region(closeX1, closeY1, closeX2, closeY1 + 14, null, (x, yy, b) -> closeElementPopup()));
     }
 
     /**
@@ -700,7 +847,7 @@ public final class MenuScreen extends CompatScreen {
                 if (adding) y = drawAddForm(canvas, mouseX, mouseY, id, custom, y, x1, right);
             }
             for (HudRegistry.Registered registered : elements) {
-                y = drawElement(canvas, mouseX, mouseY, registered, custom, y, x1, right);
+                y = drawElement(canvas, mouseX, mouseY, registered, y, x1, right);
             }
             y += 2;
             int buttonX2 = x1 + 100;
@@ -726,6 +873,8 @@ public final class MenuScreen extends CompatScreen {
             y = drawSetting(canvas, mouseX, mouseY, page, setting, y, x1, right);
         }
         y += 4;
+        y = drawHudGroups(canvas, mouseX, mouseY, y, x1, right);
+        y += 4;
         y = section(canvas, "Placeholders", y, right);
         y = paragraph(canvas, "Usable in HUD element text.", y, textWidth, Theme.MUTED);
         y += 2;
@@ -741,6 +890,42 @@ public final class MenuScreen extends CompatScreen {
             }
             canvas.text(Theme.fit(canvas, entry.getValue(), right - textX), textX, y, Theme.MUTED);
             y += canvas.lineHeight() + 4;
+        }
+        return y;
+    }
+
+    /**
+     * The HUD Groups section of the Client Settings page: each group's name and member count,
+     * with Edit (its frame, name and members) and Ungroup.
+     */
+    private int drawHudGroups(Canvas canvas, int mouseX, int mouseY, int y, int x1, int right) {
+        y = section(canvas, "HUD Groups", y, right);
+        List<HudGroup> groups = HudRegistry.groups();
+        if (groups.isEmpty()) {
+            return paragraph(canvas, "Select elements with Ctrl+click in the HUD Editor and press G to group them.",
+                    y, right - x1, Theme.MUTED);
+        }
+        for (HudGroup group : groups) {
+            String id = group.getId();
+            int count = HudRegistry.memberKeys(id).size();
+            if (hovered(mouseX, mouseY, x1 - 2, y - 2, right + 2, y + 12)) canvas.fill(x1 - 2, y - 2, right + 2, y + 12, Theme.HOVER);
+            int ungroupX1 = right - canvas.textWidth("Ungroup") - 10;
+            int editX2 = ungroupX1 - 4;
+            int editX1 = editX2 - canvas.textWidth("Edit") - 10;
+            String label = group.getName() + " &8(" + count + (count == 1 ? " element)" : " elements)");
+            canvas.text(Theme.fit(canvas, label, editX1 - 4 - x1), x1, y + 1, Theme.TEXT);
+            Theme.button(canvas, editX1, y - 1, editX2, y + 11, "Edit", hovered(mouseX, mouseY, editX1, y - 1, editX2, y + 11), false);
+            addRegion(editX1, y - 1, editX2, y + 11, null, (cx, cy, b) -> {
+                HudGroup current = HudRegistry.group(id);
+                if (current != null) openGroupPopup(current);
+            });
+            Theme.button(canvas, ungroupX1, y - 1, right, y + 11, "Ungroup", hovered(mouseX, mouseY, ungroupX1, y - 1, right, y + 11), false);
+            addRegion(ungroupX1, y - 1, right, y + 11, null, (cx, cy, b) -> {
+                HudHistory.record();
+                HudRegistry.ungroup(id);
+                HudRegistry.save();
+            });
+            y += 16;
         }
         return y;
     }
@@ -996,38 +1181,26 @@ public final class MenuScreen extends CompatScreen {
 
     // ---------------------------------------------------------------- hud elements
 
-    /** One HUD element: its name, an Edit button where its text can be edited, and its show switch. */
+    /**
+     * One HUD element: its name and an Edit button, which both open its Edit popup, and its show
+     * switch. The name says which group the element is in, if any.
+     */
     private int drawElement(Canvas canvas, int mouseX, int mouseY, HudRegistry.Registered registered,
-                            CustomHudElements custom, int y, int x1, int right) {
+                            int y, int x1, int right) {
         HudElement element = registered.getElement();
         HudPlacement placement = registered.getPlacement();
-        String key = registered.getKey();
-        boolean editable = template(element) != null;
-        boolean expanded = editable && key.equals(expandedElement);
 
         if (hovered(mouseX, mouseY, x1 - 2, y - 2, right + 2, y + 12)) canvas.fill(x1 - 2, y - 2, right + 2, y + 12, Theme.HOVER);
-        int labelRight = right - 30;
-        if (editable) {
-            String label = expanded ? "Close" : "Edit";
-            int editX2 = right - 26;
-            int editX1 = editX2 - canvas.textWidth(label) - 10;
-            Theme.button(canvas, editX1, y - 1, editX2, y + 11, label, hovered(mouseX, mouseY, editX1, y - 1, editX2, y + 11), false);
-            addRegion(editX1, y - 1, editX2, y + 11, null, (cx, cy, b) -> {
-                commitEdit();
-                expandedElement = expanded ? null : key;
-                confirmDelete = null;
-            });
-            labelRight = editX1 - 4;
-        }
-        if (editable) {
-            // The name opens the editor too, not only the Edit button.
-            addRegion(x1 - 2, y - 2, labelRight, y + 12, null, (cx, cy, b) -> {
-                commitEdit();
-                expandedElement = expanded ? null : key;
-                confirmDelete = null;
-            });
-        }
-        String name = element.getDisplayName() + (custom(element) ? " &8(custom)" : "");
+        int editX2 = right - 26;
+        int editX1 = editX2 - canvas.textWidth("Edit") - 10;
+        Theme.button(canvas, editX1, y - 1, editX2, y + 11, "Edit", hovered(mouseX, mouseY, editX1, y - 1, editX2, y + 11), false);
+        addRegion(editX1, y - 1, editX2, y + 11, null, (cx, cy, b) -> openElementPopup(registered));
+        int labelRight = editX1 - 4;
+        addRegion(x1 - 2, y - 2, labelRight, y + 12, null, (cx, cy, b) -> openElementPopup(registered));
+
+        HudGroup group = HudRegistry.groupOf(registered);
+        String name = elementName(element) + (custom(element) ? " &8(custom)" : "")
+                + (group == null ? "" : " &8- " + group.getName());
         canvas.text(Theme.fit(canvas, name, labelRight - x1), x1, y + 1, Theme.TEXT);
         boolean hover = hovered(mouseX, mouseY, right - 20, y, right, y + 10);
         Theme.toggle(canvas, right - 20, y, placement.isEnabled(), hover);
@@ -1037,26 +1210,25 @@ public final class MenuScreen extends CompatScreen {
             else placement.show();
             HudRegistry.save();
         });
-        y += 16;
-        if (expanded) y = drawTemplateEditor(canvas, mouseX, mouseY, registered, custom, y, x1, right);
-        return y;
+        return y + 16;
     }
 
-    /** The open text editor of one element: the field, a preview, Reset / Delete, and its placeholders. */
+    /**
+     * The Edit popup's text editor: the field, a preview with the element's frame, Reset / Delete,
+     * and the element's placeholders.
+     */
     private int drawTemplateEditor(Canvas canvas, int mouseX, int mouseY, HudRegistry.Registered registered,
                                    CustomHudElements custom, int y, int x1, int right) {
         HudElement element = registered.getElement();
         String key = registered.getKey();
-        int inner = x1 + 6;
-        int top = y;
         Consumer<String> apply = text -> guard(key, () -> element.setTemplate(text));
 
-        field(canvas, mouseX, mouseY, element, inner, y, right, template(element), true, TEMPLATE_MAX_LENGTH, apply);
+        field(canvas, mouseX, mouseY, element, x1, y, right, template(element), true, TEMPLATE_MAX_LENGTH, apply);
         y += 16;
 
-        y = drawPreview(canvas, registered, y, inner, right);
+        y = elementStyle.drawPreview(canvas, x1, y, right) + 4;
 
-        int x = actionButton(canvas, mouseX, mouseY, inner, y, "Reset", false, () -> {
+        int x = actionButton(canvas, mouseX, mouseY, x1, y, "Reset", false, () -> {
             if (editing != null && editing.owner == element) dropEdit();
             guard(key, () -> element.setTemplate(""));
         });
@@ -1071,61 +1243,37 @@ public final class MenuScreen extends CompatScreen {
                 if (editing != null && editing.owner == element) dropEdit();
                 String error = call(key, () -> custom.remove(element.getId()));
                 if (error == null) {
-                    expandedElement = null;
+                    closeElementPopup();
                     HudRegistry.forgetPlacement(registered.getOwner(), element.getId());
                     HudRegistry.save();
                 }
             });
         }
-        y = notice(canvas, key, y + 18, inner, right);
+        y = notice(canvas, key, y + 18, x1, right);
 
         Map<String, String> placeholders = placeholders(element);
         if (! placeholders.isEmpty()) {
-            canvas.text("Placeholders (click to insert):", inner, y + 2, Theme.MUTED);
+            canvas.text("Placeholders (click to insert):", x1, y + 2, Theme.MUTED);
             y += canvas.lineHeight() + 5;
             for (Map.Entry<String, String> entry : placeholders.entrySet()) {
                 String token = entry.getKey();
                 int tokenWidth = canvas.rawTextWidth(token);
                 int rowY2 = y + canvas.lineHeight();
-                boolean hover = hovered(mouseX, mouseY, inner - 2, y - 1, right + 2, rowY2);
-                if (hover) canvas.fill(inner - 2, y - 1, right + 2, rowY2, Theme.HOVER);
-                canvas.rawText(token, inner, y, hover ? Theme.ACCENT_LIGHT : Theme.TEXT);
+                boolean hover = hovered(mouseX, mouseY, x1 - 2, y - 1, right + 2, rowY2);
+                if (hover) canvas.fill(x1 - 2, y - 1, right + 2, rowY2, Theme.HOVER);
+                canvas.rawText(token, x1, y, hover ? Theme.ACCENT_LIGHT : Theme.TEXT);
                 if (! entry.getValue().isEmpty()) {
-                    canvas.text(Theme.fit(canvas, entry.getValue(), right - inner - tokenWidth - 8), inner + tokenWidth + 6, y, Theme.MUTED);
+                    canvas.text(Theme.fit(canvas, entry.getValue(), right - x1 - tokenWidth - 8), x1 + tokenWidth + 6, y, Theme.MUTED);
                 }
                 // Owned by the element's field, so clicking here keeps typing in it.
-                addRegion(inner - 2, y - 1, right + 2, rowY2, element, (cx, cy, b) -> {
+                addRegion(x1 - 2, y - 1, right + 2, rowY2, element, (cx, cy, b) -> {
                     focus(element, template(element), TEMPLATE_MAX_LENGTH, apply);
                     editing.insert(token);
                 });
                 y += canvas.lineHeight() + 2;
             }
         }
-        canvas.fill(x1, top - 2, x1 + 2, y, Theme.CONTROL_BORDER);
-        return y + 6;
-    }
-
-    /** Draws the element as the HUD would, scaled down if it is wider than the menu. */
-    private int drawPreview(Canvas canvas, HudRegistry.Registered registered, int y, int x1, int right) {
-        HudElement element = registered.getElement();
-        try {
-            CanvasHudRenderer renderer = new CanvasHudRenderer(canvas);
-            int width = element.width(renderer, true);
-            int height = element.height(renderer, true);
-            if (width <= 0 || height <= 0) return y;
-            float scale = Math.min(1f, (right - x1) / (float) width);
-            canvas.push();
-            try {
-                canvas.translate(x1, y);
-                canvas.scale(scale);
-                element.render(renderer, true);
-            } finally {
-                canvas.pop();
-            }
-            return y + (int) Math.ceil(height * scale) + 4;
-        } catch (Throwable t) {
-            return paragraph(canvas, "Preview failed: " + t, y, right - x1, Theme.ACCENT_LIGHT);
-        }
+        return y + 2;
     }
 
     /** The form the + button opens: an identifier, the text, and Add / Cancel. */
@@ -1148,7 +1296,8 @@ public final class MenuScreen extends CompatScreen {
             String error = call(noticeKey, () -> custom.add(id, addText));
             if (error == null) {
                 notices.put(noticeKey, "Added '" + id + "'.");
-                expandedElement = HudRegistry.key(moduleId, id);
+                HudRegistry.Registered added = registeredElement(HudRegistry.key(moduleId, id));
+                if (added != null) openElementPopup(added);
                 addId = "";
                 addText = "";
             }
@@ -1171,6 +1320,14 @@ public final class MenuScreen extends CompatScreen {
 
     // Element methods are module code, so each call is caught: a module that throws only
     // fails its own element.
+
+    private static String elementName(HudElement element) {
+        try {
+            return element.getDisplayName();
+        } catch (Throwable t) {
+            return String.valueOf(element.getId());
+        }
+    }
 
     private static String template(HudElement element) {
         try {
@@ -1469,21 +1626,29 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean mouseDown(double x, double y, int button) {
+        if (groupPopup != null) {
+            groupPopup.mouseDown(x, y, button);
+            if (groupPopup.isClosed()) groupPopup = null;
+            return true;
+        }
         for (int i = regions.size() - 1; i >= 0; i--) {
             Region region = regions.get(i);
             if (! Theme.inside(x, y, region.x1, region.y1, region.x2, region.y2)) continue;
             if (editing != null && region.owner != editing.owner) commitEdit();
+            if (elementStyle != null && region.owner != elementStyleArea) elementStyle.commitField();
             if (capturing != null && region.owner != capturing) capturing = null;
             region.click.click(x, y, button);
             return true;
         }
         commitEdit();
+        if (elementStyle != null) elementStyle.commitField();
         capturing = null;
         return false;
     }
 
     @Override
     protected boolean mouseDrag(double x, double y, int button, double dx, double dy) {
+        if (groupPopup != null) return true;
         if (sliderDrag == null) return false;
         sliderDrag.moveTo(x);
         return true;
@@ -1492,6 +1657,11 @@ public final class MenuScreen extends CompatScreen {
     @Override
     protected boolean mouseUp(double x, double y, int button) {
         if (button == 0) selectingText = false;
+        if (groupPopup != null) {
+            groupPopup.mouseUp(x, y, button);
+            return true;
+        }
+        if (elementStyle != null) elementStyle.mouseUp(x, y, button);
         if (sliderDrag == null) return false;
         sliderDrag.page.save();
         sliderDrag = null;
@@ -1500,6 +1670,11 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean scroll(double x, double y, double amount) {
+        if (groupPopup != null) return groupPopup.scroll(x, y, amount);
+        if (elementStyle != null) {
+            popupScroll = Math.max(0, Math.min(popupOverflow, popupScroll - amount * SCROLL_STEP));
+            return true;
+        }
         if (detailsOpen()) return true;
         if (Theme.inside(x, y, sidebarX1, sidebarY1, sidebarX2, sidebarY2)) {
             sidebarScroll = Math.max(0, Math.min(sidebarOverflow, sidebarScroll - amount * SCROLL_STEP));
@@ -1529,6 +1704,23 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean key(int key, int modifiers) {
+        if (groupPopup != null) {
+            groupPopup.key(key, modifiers);
+            if (groupPopup.isClosed()) groupPopup = null;
+            return true;
+        }
+        if (elementStyle != null) {
+            if (elementStyle.hasFocus()) {
+                elementStyle.key(key, modifiers);
+                return true;
+            }
+            // Escape leaves the text field first, then closes the popup; the popup takes every
+            // other key so nothing behind it reacts.
+            if (editing == null) {
+                if (key == Theme.GLFW_ESCAPE) closeElementPopup();
+                return true;
+            }
+        }
         if (detailsOpen() && key == Theme.GLFW_ESCAPE) {
             closeDetails();
             return true;
@@ -1584,7 +1776,14 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean typed(String text) {
-        if (editing == null || text == null) return false;
+        if (text == null) return false;
+        HudStylePopup popup = groupPopup != null ? groupPopup
+                : elementStyle != null && elementStyle.hasFocus() ? elementStyle : null;
+        if (popup != null) {
+            for (int i = 0; i < text.length(); i++) popup.charTyped(text.charAt(i));
+            return true;
+        }
+        if (editing == null) return false;
         editing.insert(text);
         return true;
     }
@@ -1592,6 +1791,8 @@ public final class MenuScreen extends CompatScreen {
     @Override
     public void onClose() {
         commitEdit();
+        closeElementPopup();
+        closeGroupPopup();
         ClientCompat.setScreen(parent);
     }
 }
