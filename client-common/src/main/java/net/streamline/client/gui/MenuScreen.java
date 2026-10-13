@@ -1512,16 +1512,18 @@ public final class MenuScreen extends CompatScreen {
         return false;
     }
 
-    /** Binds the key the player pressed to the setting waiting for one; Escape leaves it as it was. */
+    /**
+     * Binds the key the player pressed to the setting waiting for one; Escape unbinds it, since a
+     * module key bound to Escape would fire whenever a screen is closed. Clicking the field again
+     * leaves the binding as it was.
+     */
     @Override
     protected boolean keyNamed(String name) {
         if (capturing == null) return false;
         Setting.Key key = capturing;
         capturing = null;
-        if (! "key.keyboard.escape".equals(name)) {
-            key.set(name);
-            if (capturingPage != null) capturingPage.save();
-        }
+        key.set("key.keyboard.escape".equals(name) ? Setting.Key.NONE : name);
+        if (capturingPage != null) capturingPage.save();
         return true;
     }
 
