@@ -58,7 +58,7 @@ public final class ModuleKeys {
         try {
             action.run();
         } catch (RuntimeException | LinkageError e) {
-            ClientEnvironment.logWarning("Key '" + setting.getDisplayName() + "' failed: " + e);
+            ClientEnvironment.logWarning("Key '" + setting.getDisplayName() + "' failed", e);
         }
     }
 }

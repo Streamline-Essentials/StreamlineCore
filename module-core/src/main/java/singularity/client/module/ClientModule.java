@@ -107,4 +107,9 @@ public abstract class ClientModule extends Plugin {
     public void logWarning(String message) {
         ClientEnvironment.logWarning("[" + getIdentifier() + "] " + message);
     }
+
+    /** Logs a warning; {@code slclient-latest.log} also gets {@code error}'s stack trace. */
+    public void logWarning(String message, Throwable error) {
+        ClientEnvironment.logWarning("[" + getIdentifier() + "] " + message, error);
+    }
 }
