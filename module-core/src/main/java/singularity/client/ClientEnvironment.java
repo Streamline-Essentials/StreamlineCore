@@ -20,6 +20,8 @@ import java.util.logging.Logger;
  *     <li>{@code client-settings.properties} StreamlineClient's own settings (Client Settings)</li>
  *     <li>{@code hud-layout.properties} where the player placed each HUD element</li>
  *     <li>{@code modules.properties} which modules the player turned off</li>
+ *     <li>{@code slclient-latest.log} this session's StreamlineClient log, and
+ *         {@code slclient-<yyyy-MM-dd_HH-mm-ss>.log.gz} earlier sessions' (see {@link ClientLogFile})</li>
  * </ul>
  */
 public final class ClientEnvironment {
@@ -44,21 +46,49 @@ public final class ClientEnvironment {
         return current;
     }
 
-    /** Sets the client folder; called once by the mod-loader client. */
+    /**
+     * Sets the client folder and opens {@link ClientLogFile} ({@code slclient-latest.log}) in it;
+     * called once by the mod-loader client.
+     */
     public static void setFolder(File clientFolder) {
         folder = clientFolder;
+        ClientLogFile.open(clientFolder);
     }
 
-    /** Routes client log output to the game's logger. */
+    /** Routes client log output to the game's logger; {@code slclient-latest.log} gets it as well. */
     public static void setLog(BiConsumer<Level, String> sink) {
         if (sink != null) log = sink;
     }
 
+    /**
+     * Logs to {@code slclient-latest.log} (when open) and to the game's logger. A failing sink
+     * never breaks the caller.
+     */
+    public static void log(Level level, String message, Throwable error) {
+        ClientLogFile.write(level, message, error);
+        String line = error == null ? message : message + ": " + error;
+        try {
+            log.accept(level, line);
+        } catch (Throwable t) {
+            System.err.println("[StreamlineClient] " + line);
+        }
+    }
+
     public static void logInfo(String message) {
-        log.accept(Level.INFO, message);
+        log(Level.INFO, message, null);
     }
 
     public static void logWarning(String message) {
-        log.accept(Level.WARNING, message);
+        log(Level.WARNING, message, null);
+    }
+
+    /** Logs a warning; {@code slclient-latest.log} also gets {@code error}'s stack trace. */
+    public static void logWarning(String message, Throwable error) {
+        log(Level.WARNING, message, error);
+    }
+
+    /** Flushes and closes {@code slclient-latest.log}; the game is exiting. */
+    public static void closeLog() {
+        ClientLogFile.close();
     }
 }

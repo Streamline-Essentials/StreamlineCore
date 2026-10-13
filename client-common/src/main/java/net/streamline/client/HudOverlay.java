@@ -117,9 +117,11 @@ public final class HudOverlay {
     public static void fail(HudRegistry.Registered registered, Throwable t) {
         Failures failures = FAILURES.computeIfAbsent(registered.getKey(), key -> new Failures(registered.getElement()));
         failures.count++;
-        if (failures.count == 1 || failures.count == MAX_FAILURES) {
+        if (failures.count == 1) {
+            ClientEnvironment.logWarning("HUD element '" + registered.getKey() + "' failed to draw", t);
+        } else if (failures.count == MAX_FAILURES) {
             ClientEnvironment.logWarning("HUD element '" + registered.getKey() + "' failed to draw: " + t
-                    + (failures.count >= MAX_FAILURES ? " (no longer drawn until it is registered again)" : ""));
+                    + " (no longer drawn until it is registered again)");
         }
     }
 }
