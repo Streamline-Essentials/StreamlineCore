@@ -35,6 +35,11 @@ public abstract class CompatScreen extends GuiScreen {
             {Keyboard.KEY_A, 65},
             {Keyboard.KEY_C, 67},
             {Keyboard.KEY_X, 88},
+            {Keyboard.KEY_E, 69},
+            {Keyboard.KEY_G, 71},
+            {Keyboard.KEY_U, 85},
+            {Keyboard.KEY_Y, 89},
+            {Keyboard.KEY_Z, 90},
     };
 
     /** GLFW's modifier bits, which {@link #key} receives as on every other version. */

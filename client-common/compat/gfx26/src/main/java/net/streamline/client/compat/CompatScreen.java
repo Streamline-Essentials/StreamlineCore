@@ -157,6 +157,11 @@ public abstract class CompatScreen extends Screen {
             {InputConstants.KEY_A, 65},
             {InputConstants.KEY_C, 67},
             {InputConstants.KEY_X, 88},
+            {InputConstants.KEY_E, 69},
+            {InputConstants.KEY_G, 71},
+            {InputConstants.KEY_U, 85},
+            {InputConstants.KEY_Y, 89},
+            {InputConstants.KEY_Z, 90},
     };
 
     /** @return the GLFW code of a key the screens use, or {@code -1} for any other key */
