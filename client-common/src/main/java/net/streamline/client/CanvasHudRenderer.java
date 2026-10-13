@@ -8,9 +8,21 @@ import singularity.client.hud.HudRenderer;
 public final class CanvasHudRenderer implements HudRenderer {
 
     private final Canvas canvas;
+    private final boolean playerBackground;
 
     public CanvasHudRenderer(Canvas canvas) {
+        this(canvas, false);
+    }
+
+    /** @param playerBackground whether the core draws the player's own background under the element */
+    public CanvasHudRenderer(Canvas canvas, boolean playerBackground) {
         this.canvas = canvas;
+        this.playerBackground = playerBackground;
+    }
+
+    @Override
+    public boolean hasPlayerBackground() {
+        return playerBackground;
     }
 
     @Override

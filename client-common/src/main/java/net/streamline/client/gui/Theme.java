@@ -49,6 +49,11 @@ final class Theme {
     static final int GLFW_C = 67;
     static final int GLFW_V = 86;
     static final int GLFW_X = 88;
+    static final int GLFW_E = 69;
+    static final int GLFW_G = 71;
+    static final int GLFW_U = 85;
+    static final int GLFW_Y = 89;
+    static final int GLFW_Z = 90;
     static final int GLFW_MOD_SHIFT = 0x1;
     /** Control, or Command on macOS, as GLFW modifier bits. */
     static final int GLFW_MOD_SHORTCUT = 0x2 | 0x8;
