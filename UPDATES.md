@@ -7,3 +7,4 @@
 + Modules differing from eCloud's copy now offer an update.
 + Install and update messages now fade after 3 seconds.
 + All modules are now authored by Drak.
++ Press Escape while binding a module key to unbind it.
