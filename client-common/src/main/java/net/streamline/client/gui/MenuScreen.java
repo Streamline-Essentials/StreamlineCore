@@ -77,8 +77,8 @@ public final class MenuScreen extends CompatScreen {
      * Short-lived notices also disappear when the menu switches pages.
      */
     private final Map<String, Long> noticeExpiry = new ConcurrentHashMap<>();
-    /** How long a successful update's notice stays up. */
-    private static final long UPDATED_NOTICE_MILLIS = 3000L;
+    /** How long a successful install or update notice stays up. */
+    private static final long SHORT_NOTICE_MILLIS = 3000L;
     /** The module whose Remove button was clicked once; a second click removes it. */
     private String confirmRemove;
 
@@ -1276,7 +1276,7 @@ public final class MenuScreen extends CompatScreen {
                     () -> run(id, ClientModuleManager.reload(id), m -> "Reloaded " + m.getVersion() + "."));
             if (update != null) {
                 x = actionButton(canvas, mouseX, mouseY, x, y, update, true,
-                        () -> run(id, ClientModuleCloud.update(id), result -> "Updated!", UPDATED_NOTICE_MILLIS));
+                        () -> run(id, ClientModuleCloud.update(id), result -> "Updated!", SHORT_NOTICE_MILLIS));
             }
             actionButton(canvas, mouseX, mouseY, x, y, remove, confirming, () -> {
                 if (! id.equals(confirmRemove)) {
@@ -1371,10 +1371,6 @@ public final class MenuScreen extends CompatScreen {
                 + (WorldModules.isSupported() ? " Modules tagged with " + WORLD_TAG_TOKEN
                         + " only work in Singleplayer or if you are hosting a LAN world." : ""),
                 y, textWidth, Theme.MUTED);
-        if (modules.isEmpty()) {
-            y = paragraph(canvas, "No client modules are installed yet. Jars put in " + ClientModuleManager.folder()
-                    + " also load as soon as they land.", y, textWidth, Theme.MUTED);
-        }
         for (String reason : ClientModuleManager.refusals().values()) {
             y = paragraph(canvas, reason, y, textWidth, Theme.ACCENT_LIGHT);
         }
@@ -1406,13 +1402,14 @@ public final class MenuScreen extends CompatScreen {
             label = "Working...";
         } else if (installed == null) {
             label = "Install";
-            action = () -> run(key, ClientModuleCloud.download(key, null), result -> "Installed " + result.getVersion()
-                    + (result.isWorld() && ! result.isEnabled() ? ". It starts with the next world you open." : "."));
+            action = () -> run(key, ClientModuleCloud.download(key, null), result -> "Installed " + result.getVersion() + "!"
+                    + (result.isWorld() && ! result.isEnabled() ? " It starts with the next world you open." : ""),
+                    SHORT_NOTICE_MILLIS);
         } else if (outdated) {
             label = "Update";
             action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated!"
                     + (result.isWorld() && ! result.isEnabled() ? " It starts with the next world you open." : ""),
-                    UPDATED_NOTICE_MILLIS);
+                    SHORT_NOTICE_MILLIS);
         } else {
             label = "Installed";
         }

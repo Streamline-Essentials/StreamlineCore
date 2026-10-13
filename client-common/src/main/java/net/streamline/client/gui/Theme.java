@@ -68,13 +68,16 @@ final class Theme {
         canvas.text(label, textX, textY, TEXT);
     }
 
-    /** @return the width of {@link #tag} for {@code label}: the label plus a button's 7-pixel sides */
+    /**
+     * @return the width of {@link #tag} for {@code label}: the label with a 2-pixel left side and a
+     *         1-pixel right one, since the font's advance already ends each glyph with a blank column
+     */
     static int tagWidth(Canvas canvas, String label) {
-        return canvas.textWidth(label) + 14;
+        return canvas.textWidth(label) + 3;
     }
 
     /**
-     * A tag pill: {@code label} on a blue rectangle padded like a button, with its text on the
+     * A tag pill: {@code label} on a blue rectangle hugging the text, with its text on the
      * line at {@code textY} so it sits inline with text there. A label only; it takes no clicks.
      *
      * @return the x right after the pill
@@ -82,7 +85,7 @@ final class Theme {
     static int tag(Canvas canvas, int x, int textY, String label) {
         int x2 = x + tagWidth(canvas, label);
         canvas.fill(x, textY - 2, x2, textY + canvas.lineHeight() + 1, TAG);
-        canvas.text(label, x + 7, textY, TEXT);
+        canvas.text(label, x + 2, textY, TEXT);
         return x2;
     }
 
