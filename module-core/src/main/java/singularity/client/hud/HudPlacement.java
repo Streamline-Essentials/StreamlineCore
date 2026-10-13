@@ -6,7 +6,7 @@ import lombok.Setter;
 /**
  * Where the player put one {@link HudElement}: its top-left corner as a fraction of the
  * GUI-scaled screen (so it keeps its place across window sizes), its scale, and whether it
- * is shown.
+ * is shown, plus the frame drawn around it and the {@link HudGroup} it belongs to, if any.
  *
  * <p>A hidden element stays in the HUD editor, dimmed, to be shown again there; a removed one
  * is also hidden but leaves the editor too, and comes back only from the module menu's toggle.</p>
@@ -23,17 +23,31 @@ public class HudPlacement {
     private volatile double scale;
     private volatile boolean enabled;
     private volatile boolean removed;
+    /** The frame drawn around the element; never {@code null}. */
+    private final HudBoxStyle style;
+    /** The id of the {@link HudGroup} the element moves with, or {@code null}. */
+    private volatile String group;
 
     public HudPlacement(double x, double y, double scale, boolean enabled) {
         this(x, y, scale, enabled, false);
     }
 
     public HudPlacement(double x, double y, double scale, boolean enabled, boolean removed) {
+        this(x, y, scale, enabled, removed, new HudBoxStyle(), null);
+    }
+
+    public HudPlacement(double x, double y, double scale, boolean enabled, boolean removed, HudBoxStyle style, String group) {
+        this.style = style == null ? new HudBoxStyle() : style;
+        this.group = group == null || group.isEmpty() ? null : group;
         this.x = clamp(x, 0, 1);
         this.y = clamp(y, 0, 1);
         this.scale = clamp(scale, MIN_SCALE, MAX_SCALE);
         this.enabled = enabled && ! removed;
         this.removed = removed;
+    }
+
+    public HudPlacement copy() {
+        return new HudPlacement(x, y, scale, enabled, removed, style.copy(), group);
     }
 
     /** Hides the element and takes it out of the HUD editor. */
@@ -55,6 +69,20 @@ public class HudPlacement {
 
     public void scaleTo(double scale) {
         this.scale = clamp(scale, MIN_SCALE, MAX_SCALE);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (! (o instanceof HudPlacement)) return false;
+        HudPlacement other = (HudPlacement) o;
+        return x == other.x && y == other.y && scale == other.scale && enabled == other.enabled
+                && removed == other.removed && style.equals(other.style)
+                && (group == null ? other.group == null : group.equals(other.group));
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(x) * 31 + Double.hashCode(y);
     }
 
     public static double clamp(double value, double min, double max) {

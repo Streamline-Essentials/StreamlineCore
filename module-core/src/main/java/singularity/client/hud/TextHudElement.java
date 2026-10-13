@@ -7,7 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A {@link HudElement} made of lines of text, drawn over an optional background.
+ * A {@link HudElement} made of lines of text, drawn over an optional background. The
+ * background is left out while the player has set one of their own on the element.
  */
 public abstract class TextHudElement extends HudElement {
 
@@ -50,7 +51,7 @@ public abstract class TextHudElement extends HudElement {
         if (lines.isEmpty()) return;
         int width = width(renderer, lines);
         int height = height(renderer, lines);
-        if (background != 0) renderer.fill(0, 0, width, height, background);
+        if (background != 0 && ! renderer.hasPlayerBackground()) renderer.fill(0, 0, width, height, background);
         int y = PADDING;
         for (String line : lines) {
             renderer.text(line, PADDING, y, textColor, shadow);

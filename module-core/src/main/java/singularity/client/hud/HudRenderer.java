@@ -22,4 +22,12 @@ public interface HudRenderer {
 
     /** Fills the rectangle from ({@code x1}, {@code y1}) to ({@code x2}, {@code y2}), exclusive. */
     void fill(int x1, int y1, int x2, int y2, int color);
+
+    /**
+     * @return whether the player gave this element a background of their own in the HUD editor,
+     * which an element drawing its own background should then leave out
+     */
+    default boolean hasPlayerBackground() {
+        return false;
+    }
 }
