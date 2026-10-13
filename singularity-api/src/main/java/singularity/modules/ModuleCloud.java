@@ -164,7 +164,8 @@ public final class ModuleCloud {
     }
 
     /**
-     * Replaces an installed module with the registry's latest version, if that is newer. The
+     * Replaces an installed module with the registry's latest version, if that is newer or is
+     * the installed version with a different jar ({@link ModuleRegistry#updateAvailable}). The
      * old module is unloaded and its jar deleted, then the new jar is saved and loaded; modules
      * that depend on it are unloaded with it and loaded again afterwards. Data folders and
      * configs are kept.
@@ -182,7 +183,7 @@ public final class ModuleCloud {
                         null, false, null, null));
             }
             String oldVersion = installedVersion(oldJar);
-            if (oldVersion != null && compareVersions(oldVersion, info.getVersion()) >= 0) {
+            if (oldVersion != null && ! ModuleRegistry.updateAvailable(oldVersion, oldJar, info)) {
                 return CompletableFuture.completedFuture(new Update(Update.Status.UP_TO_DATE, id, oldVersion, info.getVersion(),
                         oldJar, true, null, null));
             }

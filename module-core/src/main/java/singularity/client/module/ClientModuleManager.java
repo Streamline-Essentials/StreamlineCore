@@ -126,11 +126,18 @@ public final class ClientModuleManager {
     /** What the menu and {@code /slclient modules list} show for a loaded module. */
     public static final class Installed {
         private final ClientModule module;
+        private final Path jar;
         private final String fileName;
 
-        Installed(ClientModule module, String fileName) {
+        Installed(ClientModule module, Path jar) {
             this.module = module;
-            this.fileName = fileName;
+            this.jar = jar;
+            this.fileName = jar.getFileName().toString();
+        }
+
+        /** The module's jar in {@code client/modules/}, not the private copy it was loaded from. */
+        public Path getJar() {
+            return jar;
         }
 
         public ClientModule getModule() {
@@ -199,6 +206,7 @@ public final class ClientModuleManager {
             return;
         }
         started = true;
+        ClientEnvironment.logInfo("StreamlineClient starting; client folder: " + folder.getAbsolutePath());
         StreamlineClientSettings.loadSaved();
         submit(() -> {
             folder.mkdirs();
@@ -209,32 +217,42 @@ public final class ClientModuleManager {
             pluginManager = new ClientPluginManager(cache);
             scan(true);
             return null;
+        }).whenComplete((ignored, error) -> {
+            if (error != null) ClientEnvironment.logWarning("Client modules could not start", error);
         });
         WORKER.scheduleWithFixedDelay(() -> {
             try {
                 scan(false);
             } catch (Throwable t) {
-                ClientEnvironment.logWarning("Could not check the client module folder: " + t);
+                ClientEnvironment.logWarning("Could not check the client module folder", t);
             }
         }, SCAN_MILLIS, SCAN_MILLIS, TimeUnit.MILLISECONDS);
     }
 
-    /** Disables and unloads every client module; the game is exiting. */
+    /**
+     * Disables and unloads every client module, then closes {@code slclient-latest.log}; the
+     * game is exiting.
+     */
     public static void shutdown() {
         synchronized (ClientModuleManager.class) {
             if (stopped) return;
             stopped = true;
         }
-        if (! started) return;
+        if (! started) {
+            ClientEnvironment.closeLog();
+            return;
+        }
         try {
             submit(() -> {
                 for (Entry entry : new ArrayList<>(LOADED.values())) unload(entry);
                 return null;
             }).get(10, TimeUnit.SECONDS);
         } catch (Exception e) {
-            ClientEnvironment.logWarning("Client modules did not all stop: " + e);
+            ClientEnvironment.logWarning("Client modules did not all stop", e);
         }
         WORKER.shutdownNow();
+        ClientEnvironment.logInfo("StreamlineClient stopped.");
+        ClientEnvironment.closeLog();
     }
 
     /** @return whether client modules are running, i.e. this is a game client */
@@ -248,7 +266,7 @@ public final class ClientModuleManager {
     public static List<Installed> modules() {
         List<Installed> result = new ArrayList<>();
         for (Entry entry : new TreeMap<>(LOADED).values()) {
-            result.add(new Installed(entry.module, entry.jar.getFileName().toString()));
+            result.add(new Installed(entry.module, entry.jar));
         }
         return result;
     }
@@ -256,7 +274,7 @@ public final class ClientModuleManager {
     /** The loaded module with this Plugin-Id, ignoring case, or {@code null}. */
     public static Installed module(String id) {
         Entry entry = entry(id);
-        return entry == null ? null : new Installed(entry.module, entry.jar.getFileName().toString());
+        return entry == null ? null : new Installed(entry.module, entry.jar);
     }
 
     /** Jars in the module folder that were not loaded, by file name, with the reason. */
@@ -559,7 +577,7 @@ public final class ClientModuleManager {
                 try {
                     module.start();
                 } catch (Throwable t) {
-                    ClientEnvironment.logWarning("Client module '" + loadedId + "' failed to enable: " + t);
+                    ClientEnvironment.logWarning("Client module '" + loadedId + "' failed to enable", t);
                 }
             }
             ClientEnvironment.logInfo("Loaded client module '" + loadedId + "' " + descriptor.getVersion()
@@ -617,7 +635,7 @@ public final class ClientModuleManager {
         try {
             entry.module.stop();
         } catch (Throwable t) {
-            ClientEnvironment.logWarning("Client module '" + entry.id + "' failed to disable: " + t);
+            ClientEnvironment.logWarning("Client module '" + entry.id + "' failed to disable", t);
         }
         // Closes the module's class loader, which releases the copy it was loaded from.
         pluginManager.forget(entry.id);
@@ -665,6 +683,16 @@ public final class ClientModuleManager {
             }
         }
         return null;
+    }
+
+    /** The client module jar in the folder that did not load, by Plugin-Id, or {@code null} when there is none. */
+    public static Path unloadedJar(String id) {
+        if (entry(id) != null) return null;
+        try {
+            return jarWithId(id, null);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     /**

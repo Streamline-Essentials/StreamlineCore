@@ -584,8 +584,9 @@ public class ModulesCommand extends CosmicCommand {
         String installed = installedVersion(info.getId());
         String installedText;
         if (installed == null) installedText = "&cnot installed";
-        else if (installed.equals(info.getVersion())) installedText = "&a" + installed + " &7(latest)";
-        else installedText = "&e" + installed + " &7(update available)";
+        else if (ModuleRegistry.updateAvailable(installed, installedJar(info.getId()), info)) installedText = "&e" + installed + " &7(update available)";
+        else if (ModuleRegistry.compareVersions(installed, info.getVersion()) > 0) installedText = "&a" + installed + " &7(newer than eCloud)";
+        else installedText = "&a" + installed + " &7(latest)";
 
         String sha = info.getSha256();
         return template
@@ -621,6 +622,16 @@ public class ModulesCommand extends CosmicCommand {
         try {
             org.pf4j.PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(id);
             return wrapper == null ? null : wrapper.getDescriptor().getVersion();
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /** The jar of the module with Plugin-Id {@code id} loaded on this server, or {@code null}. */
+    private static java.nio.file.Path installedJar(String id) {
+        try {
+            org.pf4j.PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(id);
+            return wrapper == null ? null : wrapper.getPluginPath();
         } catch (Throwable e) {
             return null;
         }
