@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -175,6 +176,17 @@ public final class ModuleRegistry {
                 if (info.getVersion().equalsIgnoreCase(name)) return info;
             }
             return null;
+        }
+
+        /**
+         * @return the SHA-256 the registry lists for the jar of version {@code name}, or an
+         *         empty string when it lists none
+         */
+        public String sha256Of(String name) {
+            if (name == null) return "";
+            VersionInfo listed = version(name);
+            if (listed != null && ! listed.getSha256().isEmpty()) return listed.getSha256();
+            return version.equalsIgnoreCase(name) ? sha256 : "";
         }
     }
 
@@ -343,6 +355,71 @@ public final class ModuleRegistry {
             if (compared != 0) return compared;
         }
         return 0;
+    }
+
+    /**
+     * Whether the registry has something other than the installed jar: a newer version, or
+     * the same version whose jar has a different SHA-256 than the one installed (a rebuilt or
+     * altered jar). With no SHA-256 listed for that version, only the versions are compared.
+     *
+     * @param installedVersion the installed module's version, or {@code null} when it is not installed
+     * @param installedJar     the installed jar, or {@code null} when unknown (versions only)
+     * @param info             the module's registry entry, whose latest version is the update
+     */
+    public static boolean updateAvailable(String installedVersion, Path installedJar, ModuleInfo info) {
+        if (installedVersion == null || info == null) return false;
+        int compared = compareVersions(installedVersion, info.getVersion());
+        if (compared != 0) return compared < 0;
+        return ! matchesRegistry(info, info.getVersion(), installedJar);
+    }
+
+    /**
+     * Whether {@code jar} is the registry's jar of {@code version}: true when their SHA-256s
+     * match, and also when the registry lists none for that version or the jar cannot be read,
+     * since then there is nothing to tell them apart by.
+     */
+    public static boolean matchesRegistry(ModuleInfo info, String version, Path jar) {
+        String expected = info == null ? "" : info.sha256Of(version);
+        if (expected.isEmpty() || jar == null) return true;
+        String actual = cachedSha256(jar);
+        return actual == null || actual.equalsIgnoreCase(expected.trim());
+    }
+
+    /** Hashes of jars already read, by absolute path, valid while their size and modification time stay. */
+    private static final Map<Path, CachedHash> HASHES = new ConcurrentHashMap<>();
+
+    private static final class CachedHash {
+        final long size;
+        final long modified;
+        final String sha256;
+
+        CachedHash(long size, long modified, String sha256) {
+            this.size = size;
+            this.modified = modified;
+            this.sha256 = sha256;
+        }
+    }
+
+    /**
+     * {@link #sha256} of a file, read again only when its size or modification time changes,
+     * so screens can ask every frame.
+     *
+     * @return the lower-case hex hash, or {@code null} when the file cannot be read
+     */
+    public static String cachedSha256(Path file) {
+        if (file == null) return null;
+        try {
+            Path key = file.toAbsolutePath().normalize();
+            long size = Files.size(key);
+            long modified = Files.getLastModifiedTime(key).toMillis();
+            CachedHash cached = HASHES.get(key);
+            if (cached != null && cached.size == size && cached.modified == modified) return cached.sha256;
+            String sha = sha256(key);
+            HASHES.put(key, new CachedHash(size, modified, sha));
+            return sha;
+        } catch (IOException | RuntimeException e) {
+            return null;
+        }
     }
 
     /** A main attribute of a jar's manifest, trimmed, or {@code null}. */

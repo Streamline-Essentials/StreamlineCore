@@ -187,7 +187,7 @@ final class ClientModulesCommand {
     private static String status(ModuleRegistry.ModuleInfo info) {
         String installed = ClientModuleCloud.installedVersion(info.getId());
         if (installed == null) return "";
-        if (ModuleRegistry.compareVersions(installed, info.getVersion()) < 0) {
+        if (ClientModuleCloud.updateAvailable(info)) {
             return " &6(installed " + installed + ", update available)";
         }
         return " &a(installed)";
