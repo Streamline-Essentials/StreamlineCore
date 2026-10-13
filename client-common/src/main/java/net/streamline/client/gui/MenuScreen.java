@@ -61,6 +61,10 @@ public final class MenuScreen extends CompatScreen {
     private static final String BROWSE = " ecloud";
     /** Sidebar key of the Client Settings page; never a Plugin-Id either. */
     private static final String CLIENT = " client";
+    /** The tag pill on eCloud entries for world modules. */
+    private static final String WORLD_TAG = "world";
+    /** Stands for the {@link #WORLD_TAG} pill inside text drawn by {@link #taggedParagraph}. */
+    private static final String WORLD_TAG_TOKEN = "[" + WORLD_TAG + "]";
     /** The page the menu was last on, reopened when Remember Last Page is on. */
     private static volatile String lastSelected;
 
@@ -68,6 +72,13 @@ public final class MenuScreen extends CompatScreen {
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
     /** The last action's outcome per module, shown under its controls; red when it starts with "!". */
     private final Map<String, String> notices = new ConcurrentHashMap<>();
+    /**
+     * When each short-lived notice disappears (epoch millis), by the same key as {@link #notices}.
+     * Short-lived notices also disappear when the menu switches pages.
+     */
+    private final Map<String, Long> noticeExpiry = new ConcurrentHashMap<>();
+    /** How long a successful update's notice stays up. */
+    private static final long UPDATED_NOTICE_MILLIS = 3000L;
     /** The module whose Remove button was clicked once; a second click removes it. */
     private String confirmRemove;
 
@@ -104,6 +115,8 @@ public final class MenuScreen extends CompatScreen {
     private String addingFor;
     /** The module whose details popup is open, or {@code null}. */
     private String detailsFor;
+    /** The eCloud entry (its key on the Browse eCloud page) whose details popup is open, or {@code null}. */
+    private String listingDetailsFor;
     private String addId = "";
     private String addText = "";
     /** Owners of the add form's two fields, so input can tell them apart. */
@@ -361,25 +374,89 @@ public final class MenuScreen extends CompatScreen {
      * outside it, its Close button or Escape closes it.
      */
     private void drawDetails(Canvas canvas, int mouseX, int mouseY, List<ClientModuleManager.Installed> modules) {
-        if (detailsFor == null) return;
-        ClientModuleManager.Installed module = modules.stream().filter(m -> m.getId().equals(detailsFor)).findFirst().orElse(null);
-        if (module == null) {
-            detailsFor = null;
-            return;
+        if (detailsFor != null) {
+            ClientModuleManager.Installed module = modules.stream().filter(m -> m.getId().equals(detailsFor)).findFirst().orElse(null);
+            if (module == null) {
+                closeDetails();
+                return;
+            }
+            List<String> rows = new ArrayList<>();
+            rows.add("&7Version: &f" + module.getVersion());
+            if (! module.getProvider().isEmpty()) rows.add("&7Author: &f" + module.getProvider());
+            rows.add("&7Identifier: &f" + module.getId());
+            if (module.getFileName() != null && ! module.getFileName().isEmpty()) rows.add("&7File: &f" + module.getFileName());
+            rows.add("&7Status: &f" + (module.isEnabled() ? "Enabled" : "Disabled"));
+            drawPopup(canvas, mouseX, mouseY, displayName(module), rows, module.getDescription());
+        } else if (listingDetailsFor != null) {
+            List<ModuleRegistry.ModuleInfo> list = available;
+            ModuleRegistry.ModuleInfo info = list == null ? null
+                    : list.stream().filter(i -> listingKey(i).equals(listingDetailsFor)).findFirst().orElse(null);
+            if (info == null) {
+                closeDetails();
+                return;
+            }
+            drawPopup(canvas, mouseX, mouseY, info.getName(), listingRows(info), info.getDescription());
         }
+    }
+
+    /** The details popup's rows for an eCloud entry: everything the registry says about it. */
+    private static List<String> listingRows(ModuleRegistry.ModuleInfo info) {
+        String key = listingKey(info);
+        List<String> rows = new ArrayList<>();
+        rows.add("&7Latest version: &f" + info.getVersion());
+        String installed = ClientModuleCloud.installedVersion(key);
+        rows.add("&7Installed: &f" + (installed == null ? "No" : installed));
+        if (! info.getAuthor().isEmpty()) rows.add("&7Author: &f" + info.getAuthor());
+        rows.add("&7Identifier: &f" + key);
+        rows.add("&7Type: &f" + (ClientModuleCloud.isWorldModule(info)
+                ? "World module (singleplayer or a LAN world you host)" : "Client module"));
+        if (! info.getPlatforms().isEmpty()) rows.add("&7Platforms: &f" + String.join(", ", info.getPlatforms()));
+        if (! info.getLicense().isEmpty()) rows.add("&7License: &f" + info.getLicense());
+        if (! info.getRequires().isEmpty()) rows.add("&7Requires: &f" + info.getRequires());
+        if (! info.getDependencies().isEmpty()) rows.add("&7Dependencies: &f" + String.join(", ", info.getDependencies()));
+        rows.add("&7Downloads: &f" + info.getDownloads());
+        if (info.getSize() > 0) rows.add("&7Size: &f" + formatSize(info.getSize()));
+        if (! info.getUpdatedAt().isEmpty()) rows.add("&7Updated: &f" + info.getUpdatedAt());
+        if (! info.getVersions().isEmpty()) {
+            List<String> versions = new ArrayList<>();
+            for (ModuleRegistry.VersionInfo version : info.getVersions()) versions.add(version.getVersion());
+            rows.add("&7Versions: &f" + String.join(", ", versions));
+        }
+        return rows;
+    }
+
+    private static String formatSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format(Locale.ROOT, "%.1f KB", bytes / 1024.0);
+        return String.format(Locale.ROOT, "%.1f MB", bytes / (1024.0 * 1024.0));
+    }
+
+    /** The key an eCloud entry is installed, updated and tracked under: its id, else its name. */
+    private static String listingKey(ModuleRegistry.ModuleInfo info) {
+        return info.getId().isEmpty() ? info.getName() : info.getId();
+    }
+
+    private boolean detailsOpen() {
+        return detailsFor != null || listingDetailsFor != null;
+    }
+
+    private void closeDetails() {
+        detailsFor = null;
+        listingDetailsFor = null;
+    }
+
+    /**
+     * Draws the details popup: {@code title}, then one {@code &}-coded line per row, then the
+     * wrapped description, with a Close button at the bottom.
+     */
+    private void drawPopup(Canvas canvas, int mouseX, int mouseY, String title, List<String> rows, String descriptionText) {
         regions.clear();
-        regions.add(new Region(0, 0, canvas.width(), canvas.height(), null, (x, y, b) -> detailsFor = null));
+        regions.add(new Region(0, 0, canvas.width(), canvas.height(), null, (x, y, b) -> closeDetails()));
         canvas.fill(0, 0, canvas.width(), canvas.height(), 0xA0000000);
 
         int width = Math.min(canvas.width() - 40, 300);
         int textWidth = width - PAD * 2;
-        List<String> rows = new ArrayList<>();
-        rows.add("&7Version: &f" + module.getVersion());
-        if (! module.getProvider().isEmpty()) rows.add("&7Author: &f" + module.getProvider());
-        rows.add("&7Identifier: &f" + module.getId());
-        if (module.getFileName() != null && ! module.getFileName().isEmpty()) rows.add("&7File: &f" + module.getFileName());
-        rows.add("&7Status: &f" + (module.isEnabled() ? "Enabled" : "Disabled"));
-        List<String> description = Theme.wrap(canvas, module.getDescription(), textWidth);
+        List<String> description = Theme.wrap(canvas, descriptionText, textWidth);
 
         int line = canvas.lineHeight() + 2;
         int height = PAD + line + 4 + rows.size() * line + (description.isEmpty() ? 0 : 6 + description.size() * line) + 8 + 14 + PAD;
@@ -394,7 +471,7 @@ public final class MenuScreen extends CompatScreen {
 
         canvas.clip(x1, y1, x2, y2 - PAD - 18);
         int y = y1 + PAD;
-        canvas.text(Theme.fit(canvas, "&l" + displayName(module), textWidth), x1 + PAD, y, Theme.TEXT, false);
+        canvas.text(Theme.fit(canvas, "&l" + title, textWidth), x1 + PAD, y, Theme.TEXT, false);
         y += line + 4;
         for (String row : rows) {
             canvas.text(Theme.fit(canvas, row, textWidth), x1 + PAD, y, Theme.TEXT, false);
@@ -414,7 +491,7 @@ public final class MenuScreen extends CompatScreen {
         int closeY1 = y2 - PAD - 14;
         Theme.button(canvas, closeX1, closeY1, closeX2, closeY1 + 14, "Close",
                 Theme.inside(mouseX, mouseY, closeX1, closeY1, closeX2, closeY1 + 14), true);
-        regions.add(new Region(closeX1, closeY1, closeX2, closeY1 + 14, null, (x, yy, b) -> detailsFor = null));
+        regions.add(new Region(closeX1, closeY1, closeX2, closeY1 + 14, null, (x, yy, b) -> closeDetails()));
     }
 
     private void drawHeader(Canvas canvas, int mouseX, int mouseY, int left, int top, int width) {
@@ -498,6 +575,7 @@ public final class MenuScreen extends CompatScreen {
                     selected = key;
                     contentScroll = 0;
                     confirmRemove = null;
+                    clearShortNotices();
                 }
             }));
         }
@@ -529,6 +607,49 @@ public final class MenuScreen extends CompatScreen {
         for (String line : Theme.wrap(canvas, text, width)) {
             canvas.text(line, contentX1 + PAD, y, color, false);
             y += canvas.lineHeight() + 2;
+        }
+        return y;
+    }
+
+    /**
+     * A {@link #paragraph} where each {@link #WORLD_TAG_TOKEN} word is drawn as the world tag
+     * pill, inline with the words around it. Lines holding a pill get two extra pixels above and
+     * below, since the pill is taller than the text.
+     */
+    private int taggedParagraph(Canvas canvas, String text, int y, int width, int color) {
+        int x1 = contentX1 + PAD;
+        int space = canvas.textWidth(" ");
+        List<List<String>> lines = new ArrayList<>();
+        List<String> current = new ArrayList<>();
+        int used = 0;
+        for (String word : text.split(" ")) {
+            if (word.isEmpty()) continue;
+            int wordWidth = WORLD_TAG_TOKEN.equals(word) ? Theme.tagWidth(canvas, WORLD_TAG) : canvas.textWidth(word);
+            int needed = current.isEmpty() ? wordWidth : used + space + wordWidth;
+            if (! current.isEmpty() && needed > width) {
+                lines.add(current);
+                current = new ArrayList<>();
+                needed = wordWidth;
+            }
+            current.add(word);
+            used = needed;
+        }
+        if (! current.isEmpty()) lines.add(current);
+
+        for (List<String> line : lines) {
+            boolean tagged = line.contains(WORLD_TAG_TOKEN);
+            if (tagged) y += 2;
+            int x = x1;
+            for (String word : line) {
+                if (WORLD_TAG_TOKEN.equals(word)) {
+                    x = Theme.tag(canvas, x, y, WORLD_TAG);
+                } else {
+                    canvas.text(word, x, y, color, false);
+                    x += canvas.textWidth(word);
+                }
+                x += space;
+            }
+            y += canvas.lineHeight() + 2 + (tagged ? 2 : 0);
         }
         return y;
     }
@@ -1083,6 +1204,7 @@ public final class MenuScreen extends CompatScreen {
             notices.remove(key);
         } catch (Throwable t) {
             notices.put(key, "!" + message(t));
+            singularity.client.ClientEnvironment.logWarning("Menu action '" + key + "' failed", t);
         }
     }
 
@@ -1093,6 +1215,7 @@ public final class MenuScreen extends CompatScreen {
             error = action.call();
         } catch (Throwable t) {
             error = message(t);
+            singularity.client.ClientEnvironment.logWarning("Menu action '" + key + "' failed", t);
         }
         if (error == null) notices.remove(key);
         else notices.put(key, "!" + error);
@@ -1109,7 +1232,7 @@ public final class MenuScreen extends CompatScreen {
 
     /**
      * The module's one-line header, {@code <name> <version> by <author>}, with Details, Reload,
-     * Update (when eCloud lists a newer version) and Remove beside it, or below it when the line
+     * Update (when eCloud lists a newer version, or another jar of this one) and Remove beside it, or below it when the line
      * is too narrow; then the last action's outcome.
      */
     private int drawModuleActions(Canvas canvas, int mouseX, int mouseY, ClientModuleManager.Installed module,
@@ -1120,7 +1243,7 @@ public final class MenuScreen extends CompatScreen {
 
         boolean busy = pending.contains(id);
         ModuleRegistry.ModuleInfo listed = listed(id);
-        String update = listed != null && ModuleRegistry.compareVersions(module.getVersion(), listed.getVersion()) < 0
+        String update = listed != null && ModuleRegistry.updateAvailable(module.getVersion(), module.getJar(), listed)
                 ? "Update to " + listed.getVersion() : null;
         boolean confirming = id.equals(confirmRemove);
         String remove = confirming ? "Click again to remove" : "Remove";
@@ -1153,7 +1276,7 @@ public final class MenuScreen extends CompatScreen {
                     () -> run(id, ClientModuleManager.reload(id), m -> "Reloaded " + m.getVersion() + "."));
             if (update != null) {
                 x = actionButton(canvas, mouseX, mouseY, x, y, update, true,
-                        () -> run(id, ClientModuleCloud.update(id), result -> "Updated to " + result.getVersion() + "."));
+                        () -> run(id, ClientModuleCloud.update(id), result -> "Updated!", UPDATED_NOTICE_MILLIS));
             }
             actionButton(canvas, mouseX, mouseY, x, y, remove, confirming, () -> {
                 if (! id.equals(confirmRemove)) {
@@ -1177,6 +1300,11 @@ public final class MenuScreen extends CompatScreen {
 
     /** Draws the last action's outcome for {@code key}, if any. */
     private int notice(Canvas canvas, String key, int y, int x1, int right) {
+        Long expiry = noticeExpiry.get(key);
+        if (expiry != null && System.currentTimeMillis() >= expiry) {
+            noticeExpiry.remove(key);
+            notices.remove(key);
+        }
         String notice = notices.get(key);
         if (notice == null) return y;
         boolean failed = notice.startsWith("!");
@@ -1192,13 +1320,34 @@ public final class MenuScreen extends CompatScreen {
      * noting the outcome. Module code runs off the render thread, on the client module worker.
      */
     private <T> void run(String key, CompletableFuture<T> action, Function<T, String> success) {
+        run(key, action, success, 0L);
+    }
+
+    /**
+     * Like {@link #run(String, CompletableFuture, Function)}, but a success notice disappears after
+     * {@code successMillis} or when the menu switches pages ({@code 0} keeps it). Failures always stay.
+     */
+    private <T> void run(String key, CompletableFuture<T> action, Function<T, String> success, long successMillis) {
         if (! pending.add(key)) return;
         notices.remove(key);
+        noticeExpiry.remove(key);
         action.whenComplete((value, error) -> {
-            if (error == null) notices.put(key, success.apply(value));
-            else notices.put(key, "!" + message(error));
+            if (error == null) {
+                if (successMillis > 0) noticeExpiry.put(key, System.currentTimeMillis() + successMillis);
+                notices.put(key, success.apply(value));
+            } else {
+                notices.put(key, "!" + message(error));
+            }
             pending.remove(key);
         });
+    }
+
+    /** Drops every short-lived notice, so none follows the player to another page. */
+    private void clearShortNotices() {
+        for (String key : noticeExpiry.keySet()) {
+            noticeExpiry.remove(key);
+            notices.remove(key);
+        }
     }
 
     private void toggleModule(String id, boolean enabled) {
@@ -1217,12 +1366,11 @@ public final class MenuScreen extends CompatScreen {
             addRegion(refreshX1, y - 3, right, y + 11, null, (cx, cy, b) -> fetchAvailable());
         }
         y += canvas.lineHeight() + 5;
-        y = paragraph(canvas, "Client modules from eCloud. They install and start right away; no restart needed.",
+        // eCloud offers world modules only where they can run, so the tag is explained only there.
+        y = taggedParagraph(canvas, "You can install client modules straight from the eCloud below!"
+                + (WorldModules.isSupported() ? " Modules tagged with " + WORLD_TAG_TOKEN
+                        + " only work in Singleplayer or if you are hosting a LAN world." : ""),
                 y, textWidth, Theme.MUTED);
-        if (WorldModules.isSupported()) {
-            y = paragraph(canvas, "World modules are server modules that run in the worlds you host (singleplayer or LAN). "
-                    + "They go to " + WorldModules.folder() + " and start with your world.", y, textWidth, Theme.MUTED);
-        }
         if (modules.isEmpty()) {
             y = paragraph(canvas, "No client modules are installed yet. Jars put in " + ClientModuleManager.folder()
                     + " also load as soon as they land.", y, textWidth, Theme.MUTED);
@@ -1249,7 +1397,7 @@ public final class MenuScreen extends CompatScreen {
         int top = y;
         String key = info.getId().isEmpty() ? info.getName() : info.getId();
         String installed = ClientModuleCloud.installedVersion(key);
-        boolean outdated = installed != null && ModuleRegistry.compareVersions(installed, info.getVersion()) < 0;
+        boolean outdated = installed != null && ClientModuleCloud.updateAvailable(info);
         boolean world = ClientModuleCloud.isWorldModule(info);
 
         String label;
@@ -1262,18 +1410,29 @@ public final class MenuScreen extends CompatScreen {
                     + (result.isWorld() && ! result.isEnabled() ? ". It starts with the next world you open." : "."));
         } else if (outdated) {
             label = "Update";
-            action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated to " + result.getVersion()
-                    + (result.isWorld() && ! result.isEnabled() ? ". It starts with the next world you open." : "."));
+            action = () -> run(key, ClientModuleCloud.update(key), result -> "Updated!"
+                    + (result.isWorld() && ! result.isEnabled() ? " It starts with the next world you open." : ""),
+                    UPDATED_NOTICE_MILLIS);
         } else {
             label = "Installed";
         }
         int buttonX1 = right - Math.max(56, canvas.textWidth(label) + 14);
-        int textWidth = buttonX1 - x1 - 8;
+        int detailsX2 = buttonX1 - 6;
+        int detailsX1 = detailsX2 - canvas.textWidth("Details") - 14;
+        int textWidth = detailsX1 - x1 - 8;
 
         if (hovered(mouseX, mouseY, x1 - 2, top - 3, right + 2, top + canvas.lineHeight() * 2 + 6)) {
             canvas.fill(x1 - 2, top - 3, right + 2, top + canvas.lineHeight() * 2 + 6, Theme.HOVER);
         }
-        canvas.text(Theme.fit(canvas, "&l" + info.getName() + " &r&7v" + info.getVersion(), textWidth), x1, y + 1, Theme.TEXT);
+        // <name> v<version> by <author>, then the entry's tags.
+        int tagsWidth = world ? 4 + Theme.tagWidth(canvas, WORLD_TAG) : 0;
+        String title = Theme.fit(canvas, "&l" + info.getName() + " &r&7v" + info.getVersion()
+                + (info.getAuthor().isEmpty() ? "" : " by " + info.getAuthor()), Math.max(0, textWidth - tagsWidth));
+        canvas.text(title, x1, y + 1, Theme.TEXT);
+        if (world) Theme.tag(canvas, x1 + canvas.textWidth(title) + 4, y + 1, WORLD_TAG);
+
+        Theme.button(canvas, detailsX1, y - 2, detailsX2, y + 12, "Details", hovered(mouseX, mouseY, detailsX1, y - 2, detailsX2, y + 12), false);
+        addRegion(detailsX1, y - 2, detailsX2, y + 12, null, (cx, cy, b) -> listingDetailsFor = key);
         if (action != null) {
             Runnable click = action;
             Theme.button(canvas, buttonX1, y - 2, right, y + 12, label, hovered(mouseX, mouseY, buttonX1, y - 2, right, y + 12), true);
@@ -1283,10 +1442,9 @@ public final class MenuScreen extends CompatScreen {
         }
         y += canvas.lineHeight() + 3;
 
-        String byline = (world ? "World module  " : "") + (info.getAuthor().isEmpty() ? "" : "by " + info.getAuthor() + "  ")
-                + info.getDownloads() + (info.getDownloads() == 1 ? " download" : " downloads")
+        String byline = info.getDownloads() + (info.getDownloads() == 1 ? " download" : " downloads")
                 + (installed != null ? "  (installed " + installed + ")" : "");
-        canvas.text(Theme.fit(canvas, byline, textWidth), x1, y, Theme.MUTED);
+        canvas.text(Theme.fit(canvas, byline, right - x1), x1, y, Theme.MUTED);
         y += canvas.lineHeight() + 2;
         for (String line : Theme.wrap(canvas, info.getDescription(), right - x1)) {
             canvas.text(line, x1, y, Theme.MUTED);
@@ -1345,7 +1503,7 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean scroll(double x, double y, double amount) {
-        if (detailsFor != null) return true;
+        if (detailsOpen()) return true;
         if (Theme.inside(x, y, sidebarX1, sidebarY1, sidebarX2, sidebarY2)) {
             sidebarScroll = Math.max(0, Math.min(sidebarOverflow, sidebarScroll - amount * SCROLL_STEP));
             return true;
@@ -1372,8 +1530,8 @@ public final class MenuScreen extends CompatScreen {
 
     @Override
     protected boolean key(int key, int modifiers) {
-        if (detailsFor != null && key == Theme.GLFW_ESCAPE) {
-            detailsFor = null;
+        if (detailsOpen() && key == Theme.GLFW_ESCAPE) {
+            closeDetails();
             return true;
         }
         if (editing == null) return false;
