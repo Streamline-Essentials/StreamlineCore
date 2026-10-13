@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -202,11 +203,12 @@ public final class HudRegistry {
      */
     public static HudGroup createGroup(Collection<String> keys) {
         ensureLoaded();
-        List<HudPlacement> placements = new ArrayList<>();
+        Map<String, HudPlacement> byKey = new LinkedHashMap<>();
         for (String key : keys) {
             HudPlacement placement = PLACEMENTS.get(key);
-            if (placement != null && ! placements.contains(placement)) placements.add(placement);
+            if (placement != null) byKey.put(key, placement);
         }
+        List<HudPlacement> placements = new ArrayList<>(byKey.values());
         if (placements.size() < 2) return null;
         int n = 1;
         while (GROUPS.containsKey(String.valueOf(n))) n++;
@@ -259,7 +261,14 @@ public final class HudRegistry {
         public boolean equals(Object o) {
             if (! (o instanceof Snapshot)) return false;
             Snapshot other = (Snapshot) o;
-            return placements.equals(other.placements) && groups.equals(other.groups);
+            if (! placements.keySet().equals(other.placements.keySet()) || ! groups.keySet().equals(other.groups.keySet())) return false;
+            for (Map.Entry<String, HudPlacement> entry : placements.entrySet()) {
+                if (! entry.getValue().sameAs(other.placements.get(entry.getKey()))) return false;
+            }
+            for (Map.Entry<String, HudGroup> entry : groups.entrySet()) {
+                if (! entry.getValue().sameAs(other.groups.get(entry.getKey()))) return false;
+            }
+            return true;
         }
 
         @Override

@@ -29,15 +29,11 @@ public final class HudGroup {
         return new HudGroup(id, name, style.copy());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (! (o instanceof HudGroup)) return false;
-        HudGroup other = (HudGroup) o;
-        return id.equals(other.id) && name.equals(other.name) && style.equals(other.style);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    /**
+     * @return whether {@code other} holds the same values; groups are mutable, so
+     * {@link #equals} stays identity
+     */
+    public boolean sameAs(HudGroup other) {
+        return other != null && id.equals(other.id) && name.equals(other.name) && style.equals(other.style);
     }
 }

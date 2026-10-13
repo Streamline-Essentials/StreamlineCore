@@ -71,18 +71,14 @@ public class HudPlacement {
         this.scale = clamp(scale, MIN_SCALE, MAX_SCALE);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (! (o instanceof HudPlacement)) return false;
-        HudPlacement other = (HudPlacement) o;
-        return x == other.x && y == other.y && scale == other.scale && enabled == other.enabled
+    /**
+     * @return whether {@code other} holds the same values; placements are mutable, so
+     * {@link #equals} stays identity
+     */
+    public boolean sameAs(HudPlacement other) {
+        return other != null && x == other.x && y == other.y && scale == other.scale && enabled == other.enabled
                 && removed == other.removed && style.equals(other.style)
                 && (group == null ? other.group == null : group.equals(other.group));
-    }
-
-    @Override
-    public int hashCode() {
-        return Double.hashCode(x) * 31 + Double.hashCode(y);
     }
 
     public static double clamp(double value, double min, double max) {
