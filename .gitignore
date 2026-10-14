@@ -138,3 +138,6 @@ run/
 # Screenshots
 Screenshot**
 **.gz
+**.log
+**/img.png
+**img**.png
