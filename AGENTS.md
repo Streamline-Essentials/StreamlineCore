@@ -48,7 +48,7 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 ### Mod-loader subprojects (Fabric / Forge / NeoForge)
 
 ```powershell
-$env:JAVA_HOME = 'C:\Users\nitra\.jdks\temurin-25.0.4.1'
+$env:JAVA_HOME = "$env:USERPROFILE\.jdks\temurin-25.0.4.1"
 .\gradlew.bat :StreamlineCore-NeoForge-1211:assemble   # one target
 .\gradlew.bat assemble                                 # everything, mods included
 ```
@@ -68,7 +68,7 @@ $env:JAVA_HOME = 'C:\Users\nitra\.jdks\temurin-25.0.4.1'
 ### Forge 1.8.9 (game clients only)
 
 ```powershell
-$env:JAVA_HOME = 'C:\Users\nitra\.jdks\temurin-25.0.4.1'
+$env:JAVA_HOME = "$env:USERPROFILE\.jdks\temurin-25.0.4.1"
 .\gradlew.bat :StreamlineCore-Forge-189:remapJar          # jar to ./deploy
 .\gradlew.bat -p forge/forge-189 runClient               # dev client (Java 8 toolchain)
 ```
