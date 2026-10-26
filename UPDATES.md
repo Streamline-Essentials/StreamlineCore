@@ -1,4 +1,8 @@
 + Fixed proxy-sent commands erroring as async on backend servers.
++ Fixed module event priorities being ignored.
+  + Discord relays chat again alongside TacoEssentials.
++ Switching between menus no longer closes and reopens them.
++ StreamQuests: /quests opens a menu of every quest.
 + StreamlineClient now keeps its own log file.
   + Written to slclient-latest.log in the client folder.
   + Earlier sessions are gzipped; the newest 10 are kept.
