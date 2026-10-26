@@ -1,6 +1,7 @@
 package host.plas.events;
 
 import gg.drak.thebase.events.BaseEventListener;
+import gg.drak.thebase.events.processing.BaseEventPriority;
 import gg.drak.thebase.events.processing.BaseProcessor;
 import host.plas.StreamQuests;
 import host.plas.data.Quest;
@@ -9,6 +10,7 @@ import host.plas.data.players.QuestPlayer;
 import host.plas.data.require.RequirementType;
 import host.plas.events.own.QuestCompletedEvent;
 import singularity.data.players.CosmicPlayer;
+import singularity.events.player.CosmicCommandPreprocessEvent;
 import singularity.events.player.CosmicDeathEvent;
 import singularity.events.player.gameplay.PlayerBrokeBlockEvent;
 import singularity.events.player.gameplay.PlayerKilledEntityEvent;
@@ -47,12 +49,18 @@ public class QuestsListener implements BaseEventListener {
 
         QuestPlayer p = StreamQuests.getLoader().getOrCreate(player.getUuid());
 
-        String message = event.getMessage();
-        if (message.startsWith("/")) {
-            QuestManager.fireQuestEvent(player.getUuid(), RequirementType.RUN_COMMAND, message, 1);
-        } else {
-            QuestManager.fireQuestEvent(player.getUuid(), RequirementType.CHAT, message, 1);
-        }
+        QuestManager.fireQuestEvent(player.getUuid(), RequirementType.CHAT, event.getMessage(), 1);
+    }
+
+    // Commands never pass through chat; this fires for each one a player runs, on every backend.
+    @BaseProcessor(priority = BaseEventPriority.MONITOR)
+    public void onPlayerCommand(CosmicCommandPreprocessEvent event) {
+        if (event.isCancelled()) return;
+
+        String command = event.getCommandLine();
+        if (! command.startsWith("/")) command = "/" + command;
+
+        QuestManager.fireQuestEvent(event.getPlayer().getUuid(), RequirementType.RUN_COMMAND, command, 1);
     }
 
     // Gameplay events fire on Spigot and the mod loaders alike, each for an action that already
