@@ -37,8 +37,6 @@ public class QuestsMenu extends PaginatedGui {
 
     @Override
     protected void drawFrame(CosmicPlayer viewer) {
-        border(CosmicItem.of("minecraft:gray_stained_glass_pane", " "));
-
         int total = QuestManager.getQuests().size();
         int completed = 0;
         for (Quest quest : QuestManager.getQuests()) if (progress.hasCompletedQuest(quest)) completed++;
