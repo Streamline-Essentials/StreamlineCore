@@ -1,5 +1,6 @@
 package net.streamline.platform.handlers.gui;
 
+import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
@@ -28,26 +29,13 @@ public class ModGuiHandler implements IGuiHandler {
         if (viewer == null) return false;
         return runOnServer(() -> {
             ServerPlayer player = BasePlugin.getPlayer(viewer.getUuid());
-            if (player != null) show(player, view);
+            if (player != null) display(player, view);
         });
     }
 
     @Override
     public boolean update(CosmicPlayer viewer, GuiView view) {
-        if (viewer == null) return false;
-        return runOnServer(() -> {
-            ServerPlayer player = BasePlugin.getPlayer(viewer.getUuid());
-            if (player == null) return;
-
-            CosmicMenu menu = current.get(player.getStringUUID());
-            if (menu != null && player.containerMenu == menu
-                    && menu.getView().getId().equals(view.getId())
-                    && menu.getView().isLayoutCompatible(view)) {
-                menu.apply(view);
-            } else {
-                show(player, view);
-            }
-        });
+        return open(viewer, view);
     }
 
     @Override
@@ -65,6 +53,28 @@ public class ModGuiHandler implements IGuiHandler {
     /** Drops {@code menu} if it is its player's current menu, returning whether it was. */
     boolean release(CosmicMenu menu) {
         return current.remove(menu.getViewer().getStringUUID(), menu);
+    }
+
+    /**
+     * Shows {@code view} in the player's open Streamline menu when it has the same number of rows,
+     * swapping the items in place, so going from one GUI to another neither closes the window nor
+     * moves the cursor. Otherwise opens a new menu.
+     */
+    private void display(ServerPlayer player, GuiView view) {
+        CosmicMenu menu = current.get(player.getStringUUID());
+        if (menu != null && player.containerMenu == menu && menu.getView().isLayoutCompatible(view)) {
+            boolean retitle = ! menu.getView().getTitle().equals(view.getTitle());
+            menu.apply(view);
+            if (retitle) {
+                // Reopening the same container id changes the client's title without the close
+                // packet openMenu sends first.
+                player.connection.send(new ClientboundOpenScreenPacket(menu.containerId, menu.getType(),
+                        LegacyText.parse(view.getTitle())));
+                menu.sendAllDataToRemote();
+            }
+        } else {
+            show(player, view);
+        }
     }
 
     private void show(ServerPlayer player, GuiView view) {
