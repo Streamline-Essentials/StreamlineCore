@@ -39,7 +39,12 @@ public class MainListener implements BaseEventListener {
         StreamlineDiscord.getInstance().logInfo(getClass().getSimpleName() + " is now registered!");
     }
 
-    @BaseProcessor
+    /**
+     * Runs at {@link BaseEventPriority#NORMAL}: after mutes and channels (which cancel what they
+     * take), before chat formatters such as TacoEssentials' (at {@code HIGH}), which cancel the
+     * event to broadcast their own line.
+     */
+    @BaseProcessor(priority = BaseEventPriority.NORMAL)
     public void onStreamlineMessage(CosmicChatEvent event) {
         if (event.isCanceled()) return;
         if (ModuleUtils.isCommand(event.getMessage())) return;

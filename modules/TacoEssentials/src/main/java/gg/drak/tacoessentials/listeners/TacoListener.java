@@ -9,6 +9,7 @@ import gg.drak.tacoessentials.data.TacoDatabase;
 import gg.drak.tacoessentials.teleport.Teleports;
 import gg.drak.tacoessentials.teleport.TpaManager;
 import gg.drak.thebase.events.BaseEventListener;
+import gg.drak.thebase.events.processing.BaseEventPriority;
 import gg.drak.thebase.events.processing.BaseProcessor;
 import singularity.data.players.CosmicPlayer;
 import singularity.events.player.CosmicCommandPreprocessEvent;
@@ -78,7 +79,11 @@ public class TacoListener implements BaseEventListener {
         Sessions.unload(uuid);
     }
 
-    @BaseProcessor
+    /**
+     * Runs at {@link BaseEventPriority#LOW}, so a muted player's line or an alias-prompt answer is
+     * cancelled before chat relays (StreamlineDiscord, at {@code NORMAL}) and the formatter see it.
+     */
+    @BaseProcessor(priority = BaseEventPriority.LOW)
     public void onChat(CosmicChatEvent event) {
         CosmicPlayer player = event.getPlayer();
         if (player == null) return;
