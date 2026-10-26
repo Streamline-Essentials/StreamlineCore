@@ -2,6 +2,8 @@ package host.plas.data;
 
 import host.plas.StreamQuests;
 import host.plas.adapters.placeholderapi.PlaceholderAdapter;
+import host.plas.adapters.spigot.InventoryRequirements;
+import host.plas.adapters.spigot.SpigotAdapter;
 import host.plas.configs.QuestConfig;
 import host.plas.data.players.QuestPlayer;
 import host.plas.data.require.Requirement;
@@ -9,12 +11,9 @@ import host.plas.data.require.RequirementType;
 import singularity.data.console.CosmicSender;
 import singularity.modules.ModuleUtils;
 import singularity.utils.UserUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,20 +65,9 @@ public class QuestManager {
                     }
                 }
             } else if (requirement.getType() == RequirementType.ITEMS_IN_INVENTORY) {
-                Player bukkitPlayer = Bukkit.getPlayer(UUID.fromString(player.getIdentifier()));
-                if (bukkitPlayer == null) {
+                // Items are stored as Bukkit-serialized stacks, so elsewhere nothing can hold them.
+                if (! SpigotAdapter.isBukkit() || ! InventoryRequirements.has(player.getIdentifier(), requirement)) {
                     atomicBoolean.set(false);
-                } else {
-                    boolean hasItems = requirement.getItems().values().stream().allMatch(item -> {
-                        if (requirement.getAmount() < 0) {
-                            return bukkitPlayer.getInventory().contains(item);
-                        } else {
-                            return bukkitPlayer.getInventory().containsAtLeast(item, (int) requirement.getAmount());
-                        }
-                    });
-                    if (! hasItems) {
-                        atomicBoolean.set(false);
-                    }
                 }
             } else {
                 double currentAmount = getCurrentQuestValue(player, requirement.getType(), requirement.getValue()).orElse(0.0);

@@ -2,6 +2,7 @@ package host.plas.data.players;
 
 import host.plas.StreamQuests;
 import host.plas.data.Quest;
+import host.plas.data.require.QuestKeys;
 import host.plas.data.require.RequirementType;
 import lombok.Getter;
 import lombok.Setter;
@@ -127,7 +128,7 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
             this.questValues.put(type, new ConcurrentSkipListMap<>());
         }
 
-        this.questValues.get(type).put(value, amount);
+        this.questValues.get(type).put(QuestKeys.key(type, value), amount);
 
         return this;
     }
@@ -137,7 +138,7 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
             return Optional.empty();
         }
 
-        Double d = this.questValues.get(type).get(value);
+        Double d = this.questValues.get(type).get(QuestKeys.key(type, value));
         return d == null ? Optional.empty() : Optional.of(d);
     }
 
@@ -146,7 +147,7 @@ public class QuestPlayer implements Loadable<QuestPlayer> {
             return this;
         }
 
-        this.questValues.get(type).remove(value);
+        this.questValues.get(type).remove(QuestKeys.key(type, value));
 
         return this;
     }
