@@ -3,6 +3,7 @@ package host.plas.tags.gui;
 import host.plas.tags.StreamlineTags;
 import host.plas.tags.data.TagStore;
 import singularity.data.players.CosmicPlayer;
+import singularity.gui.CornerColor;
 import singularity.gui.CosmicItem;
 import singularity.gui.GuiIcon;
 import singularity.gui.GuiLayout;
@@ -25,9 +26,7 @@ public class TagsMenu extends PaginatedGui {
 
     @Override
     protected void drawFrame(CosmicPlayer viewer) {
-        border(CosmicItem.of("minecraft:black_stained_glass_pane", " "));
-        CosmicItem corner = CosmicItem.of("minecraft:light_blue_stained_glass_pane", " ");
-        for (int slot : GuiLayout.cornerSlots(ROWS)) setItem(slot, corner);
+        shell(CornerColor.LIGHT_BLUE);
 
         if (TagStore.usable(viewer).isEmpty()) {
             setItem(22, CosmicItem.of("minecraft:barrier", "#FF5555No tags available",

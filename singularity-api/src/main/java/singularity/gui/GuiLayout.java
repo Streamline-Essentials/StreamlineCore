@@ -63,4 +63,36 @@ public final class GuiLayout {
     public static int bottomCenter(int rows) {
         return slot(CosmicGui.clampRows(rows) - 1, 4);
     }
+
+    /** Where the back (or close) button goes: the middle of the bottom row. */
+    public static int defaultBackSlot(int rows) {
+        return bottomCenter(rows);
+    }
+
+    /** The previous-page button, left of the back button. */
+    public static int pagePrevSlot(int backSlot) {
+        return backSlot - 1;
+    }
+
+    /** The next-page button, right of the back button. */
+    public static int pageNextSlot(int backSlot) {
+        return backSlot + 1;
+    }
+
+    /** The middle of the top row, where a summary or balance header goes. */
+    public static int defaultHeaderSlot() {
+        return 4;
+    }
+
+    /**
+     * Frames {@code gui} the way BukkitOfUtils' shell GUIs look: a black pane border with the four
+     * corners in {@code cornerColor} ({@link CornerColor#YELLOW} when {@code null}). The inside is
+     * left as it is.
+     */
+    public static void fillShell(CosmicGui gui, CornerColor cornerColor) {
+        CosmicItem border = GuiItems.borderPane();
+        CosmicItem corner = GuiItems.cornerPane(cornerColor);
+        for (int slot : borderSlots(gui.getRows())) gui.setItem(slot, border.copy());
+        for (int slot : cornerSlots(gui.getRows())) gui.setItem(slot, corner.copy());
+    }
 }
