@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import singularity.events.EventDispatcher;
 import gg.drak.thebase.events.BaseEventHandler;
 import lombok.Getter;
 import lombok.Setter;
@@ -469,7 +470,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
     @Override
     public void fireEvent(CosmicEvent event, boolean async) {
         try {
-            BaseEventHandler.fireEvent(event);
+            EventDispatcher.fire(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -480,7 +481,7 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
      */
     @Override
     public void handleMisSync(CosmicEvent event, boolean async) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     /**

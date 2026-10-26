@@ -1,5 +1,6 @@
 package net.streamline.platform.listeners;
 
+import singularity.events.EventDispatcher;
 import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.events.BaseEventHandler;
 import gg.drak.thebase.events.BaseEventListener;
@@ -147,7 +148,7 @@ public class PlatformListener implements Listener {
         if (streamPlayer == null) return;
 
         LoginReceivedEvent loginReceivedEvent = new LoginReceivedEvent(streamPlayer);
-        BaseEventHandler.fireEvent(loginReceivedEvent);
+        EventDispatcher.fire(loginReceivedEvent);
 
         if (loginReceivedEvent.getResult().isCancelled()) {
             if (! loginReceivedEvent.getResult().validate()) return;

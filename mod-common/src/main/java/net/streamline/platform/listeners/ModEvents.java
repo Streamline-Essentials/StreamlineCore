@@ -1,5 +1,6 @@
 package net.streamline.platform.listeners;
 
+import singularity.events.EventDispatcher;
 import com.mojang.brigadier.CommandDispatcher;
 import gg.drak.thebase.events.BaseEventHandler;
 import net.minecraft.commands.CommandSourceStack;
@@ -119,7 +120,7 @@ public final class ModEvents {
         // integrated server has none until it is opened to LAN, and nothing pings it.
         if (server.isDedicatedServer()) StatusPingHandler.install(server);
         try {
-            BaseEventHandler.fireEvent(new ServerStartEvent());
+            EventDispatcher.fire(new ServerStartEvent());
         } catch (Exception e) {
             MessageUtils.logWarning("Error firing ServerStartEvent: " + e.getMessage());
         }
