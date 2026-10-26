@@ -2,6 +2,7 @@ package host.plas;
 
 import host.plas.adapters.spigot.SpigotAdapter;
 import host.plas.commands.GrantCommand;
+import host.plas.commands.QuestsCommand;
 import host.plas.commands.ReloadCommand;
 import host.plas.commands.RevokeCommand;
 import host.plas.configs.QuestConfig;
@@ -62,6 +63,7 @@ public class StreamQuests extends SimpleModule {
         new GrantCommand().register();
         new ReloadCommand().register();
         new RevokeCommand().register();
+        new QuestsCommand().register();
     }
 
     @Override
