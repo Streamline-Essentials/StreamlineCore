@@ -2,6 +2,8 @@
 + Fixed module event priorities being ignored.
   + Discord relays chat again alongside TacoEssentials.
 + Switching between menus no longer closes and reopens them.
++ Menus now match BukkitOfUtils' look with colored corners.
+  + Page buttons match BukkitOfUtils menus too.
 + StreamQuests: /quests opens a menu of every quest.
 + StreamQuests now runs on Fabric, Forge and NeoForge servers.
   + Inventory item requirements still need Spigot or Paper.
