@@ -9,6 +9,10 @@ import host.plas.data.players.QuestPlayer;
 import host.plas.data.require.RequirementType;
 import host.plas.events.own.QuestCompletedEvent;
 import singularity.data.players.CosmicPlayer;
+import singularity.events.player.CosmicDeathEvent;
+import singularity.events.player.gameplay.PlayerBrokeBlockEvent;
+import singularity.events.player.gameplay.PlayerKilledEntityEvent;
+import singularity.events.player.gameplay.PlayerPlacedBlockEvent;
 import singularity.events.server.CosmicChatEvent;
 import singularity.events.server.LoginCompletedEvent;
 import singularity.events.server.LogoutEvent;
@@ -49,6 +53,28 @@ public class QuestsListener implements BaseEventListener {
         } else {
             QuestManager.fireQuestEvent(player.getUuid(), RequirementType.CHAT, message, 1);
         }
+    }
+
+    // Gameplay events fire on Spigot and the mod loaders alike, each for an action that already
+    // went through; their ids are namespaced, which QuestKeys maps onto the configs' Bukkit names.
+    @BaseProcessor
+    public void onBlockBreak(PlayerBrokeBlockEvent event) {
+        QuestManager.fireQuestEvent(event.getPlayer().getUuid(), RequirementType.BREAK_BLOCK, event.getBlock().getType(), 1.0);
+    }
+
+    @BaseProcessor
+    public void onBlockPlace(PlayerPlacedBlockEvent event) {
+        QuestManager.fireQuestEvent(event.getPlayer().getUuid(), RequirementType.PLACE_BLOCK, event.getBlock().getType(), 1.0);
+    }
+
+    @BaseProcessor
+    public void onKillEntity(PlayerKilledEntityEvent event) {
+        QuestManager.fireQuestEvent(event.getPlayer().getUuid(), RequirementType.KILL_ENTITY, event.getEntityType(), 1.0);
+    }
+
+    @BaseProcessor
+    public void onDeath(CosmicDeathEvent event) {
+        QuestManager.fireQuestEvent(event.getPlayer().getUuid(), RequirementType.DEATHS, "", 1.0);
     }
 
     @BaseProcessor
