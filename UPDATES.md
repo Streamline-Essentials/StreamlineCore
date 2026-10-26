@@ -3,6 +3,11 @@
   + Discord relays chat again alongside TacoEssentials.
 + Switching between menus no longer closes and reopens them.
 + StreamQuests: /quests opens a menu of every quest.
++ StreamQuests now runs on Fabric, Forge and NeoForge servers.
+  + Inventory item requirements still need Spigot or Paper.
++ StreamQuests: command quests now count commands players run.
++ StreamQuests: portal and teleport world changes count toward quests.
++ StreamQuests: killed-by quests now count the actual killer.
 + StreamlineClient now keeps its own log file.
   + Written to slclient-latest.log in the client folder.
   + Earlier sessions are gzipped; the newest 10 are kept.
