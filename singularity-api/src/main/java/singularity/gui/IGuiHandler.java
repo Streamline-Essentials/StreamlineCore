@@ -14,14 +14,14 @@ import singularity.data.players.CosmicPlayer;
  * title, must not report a close for the view that replaced it.</p>
  */
 public interface IGuiHandler {
-    /** Opens {@code view} for {@code viewer}, replacing whatever screen they have open. */
+    /**
+     * Shows {@code view} to {@code viewer}, replacing whatever they have open. When that is a
+     * Streamline GUI with a {@linkplain GuiView#isLayoutCompatible compatible layout}, its items
+     * (and title) are swapped in place instead of the window closing and reopening.
+     */
     boolean open(CosmicPlayer viewer, GuiView view);
 
-    /**
-     * Shows {@code view} to a viewer who may already have it open. When the open screen shows a
-     * view with the same id and a {@linkplain GuiView#isLayoutCompatible compatible layout}, its
-     * items are swapped in place; otherwise this behaves like {@link #open}.
-     */
+    /** Shows {@code view} to a viewer who may already have it open; the same as {@link #open}. */
     boolean update(CosmicPlayer viewer, GuiView view);
 
     /** Closes whatever GUI {@code viewer} has open. */
