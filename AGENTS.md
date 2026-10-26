@@ -153,7 +153,7 @@ Two layers: platform-native events (Velocity `@Subscribe`, Bungee `Listener`, Bu
 
 `IGameplayHandler.statistics(uuid, type, ids)` reads vanilla statistics (live online, stats file offline) and waits for the server thread; the id `*` reads every entry of the type. Modules that read statistics for many players should do it off Streamline's single task thread (StreamlineCollections uses a small `StatReader` pool).
 
-Chat formatting order on `CosmicChatEvent`: StreamlineMessaging channels (LOWEST) → TacoEssentials mute/alias prompts (NORMAL) → TacoEssentials `ChatFormatter` (HIGH, `chat.format`) → LinkParser (HIGHEST). Each cancels what it takes over and skips cancelled events.
+Event priority: `@BaseProcessor(priority = ...)` is honored because Streamline fires every event through `singularity.events.EventDispatcher` (LOWEST first, MONITOR last, ties in registration order); TheBase's own `BaseEventHandler.fireEvent` ignores priority, so never call it directly. Chat order on `CosmicChatEvent`: StreamlineMessaging channels (LOWEST) → TacoEssentials mute/alias prompts (LOW) → StreamlineDiscord relay (NORMAL) → TacoEssentials `ChatFormatter` (HIGH, `chat.format`) → LinkParser (HIGHEST). Each cancels what it takes over and skips cancelled events.
 
 Module commands also register as `/<module-id>:<label>` (`CosmicCommand.getNamespacedLabels()`), never written to the command's YAML.
 

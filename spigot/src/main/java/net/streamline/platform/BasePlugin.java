@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import singularity.events.EventDispatcher;
 import gg.drak.thebase.events.BaseEventHandler;
 import host.plas.bou.BetterPlugin;
 import host.plas.bou.libs.usched.UniversalScheduler;
@@ -562,14 +563,14 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     /**
      * {@inheritDoc}
      *
-     * <p>Fires the event via {@link gg.drak.thebase.events.BaseEventHandler}. If an
+     * <p>Fires the event via {@link singularity.events.EventDispatcher}. If an
      * exception is thrown (e.g. due to a thread mis-sync), falls back to
      * {@link #handleMisSync(CosmicEvent, boolean)}.
      */
     @Override
     public void fireEvent(CosmicEvent event, boolean async) {
         try {
-            BaseEventHandler.fireEvent(event);
+            EventDispatcher.fire(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -579,12 +580,12 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
      * {@inheritDoc}
      *
      * <p>Re-fires the event synchronously via
-     * {@link gg.drak.thebase.events.BaseEventHandler} as a fallback when the
+     * {@link singularity.events.EventDispatcher} as a fallback when the
      * primary fire in {@link #fireEvent(CosmicEvent, boolean)} threw an exception.
      */
     @Override
     public void handleMisSync(CosmicEvent event, boolean async) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     /**

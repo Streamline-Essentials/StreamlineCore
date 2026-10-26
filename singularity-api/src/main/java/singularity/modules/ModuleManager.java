@@ -1,5 +1,6 @@
 package singularity.modules;
 
+import singularity.events.EventDispatcher;
 import com.google.common.base.Preconditions;
 import gg.drak.thebase.events.BaseEventHandler;
 import gg.drak.thebase.events.BaseEventListener;
@@ -848,12 +849,12 @@ public class ModuleManager {
     }
 
     /**
-     * Fires a {@link CosmicEvent} through the TheBase event bus.
+     * Fires a {@link CosmicEvent} to its TheBase listeners in priority order.
      *
      * @param event the event to fire; must not be {@code null}
      */
     public static void fireEvent(@NotNull CosmicEvent event) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     /**

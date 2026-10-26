@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import singularity.events.EventDispatcher;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -555,7 +556,7 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Override
     public void fireEvent(CosmicEvent event, boolean async) {
         try {
-            BaseEventHandler.fireEvent(event);
+            EventDispatcher.fire(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -568,7 +569,7 @@ public abstract class BasePlugin implements ISingularityExtension {
 
     @Override
     public void handleMisSync(CosmicEvent event, boolean async) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     @Override
