@@ -585,3 +585,988 @@ smp-legend:
       commands:
         - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
         - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+copper-crafter:
+  pretty-name: "&eCopper Crafter"
+  requirements:
+    copper:
+      type: BREAK_BLOCK
+      value: "COPPER_ORE"
+      amount: 64
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+gold-rush:
+  pretty-name: "&eGold Rush"
+  requirements:
+    gold:
+      type: BREAK_BLOCK
+      value: "DEEPSLATE_GOLD_ORE"
+      amount: 32
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+emerald-prospector:
+  pretty-name: "&6Emerald Prospector"
+  requirements:
+    emerald:
+      type: BREAK_BLOCK
+      value: "EMERALD_ORE"
+      amount: 8
+  rewards:
+    300p:
+      points: 300
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+geode-cracker:
+  pretty-name: "&dGeode Cracker"
+  requirements:
+    amethyst:
+      type: BREAK_BLOCK
+      value: "AMETHYST_CLUSTER"
+      amount: 32
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+obsidian-breaker:
+  pretty-name: "&5Obsidian Breaker"
+  requirements:
+    obsidian:
+      type: BREAK_BLOCK
+      value: "OBSIDIAN"
+      amount: 64
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+quarry-master:
+  pretty-name: "&eQuarry Master"
+  requirements:
+    granite:
+      type: BREAK_BLOCK
+      value: "GRANITE"
+      amount: 256
+    diorite:
+      type: BREAK_BLOCK
+      value: "DIORITE"
+      amount: 256
+    andesite:
+      type: BREAK_BLOCK
+      value: "ANDESITE"
+      amount: 256
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+beachcomber:
+  pretty-name: "&eBeachcomber"
+  requirements:
+    sand:
+      type: BREAK_BLOCK
+      value: "SAND"
+      amount: 256
+    gravel:
+      type: BREAK_BLOCK
+      value: "GRAVEL"
+      amount: 128
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+clay-collector:
+  pretty-name: "&eClay Collector"
+  requirements:
+    clay:
+      type: BREAK_BLOCK
+      value: "CLAY"
+      amount: 64
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+master-miner:
+  pretty-name: "&6&lMaster Miner"
+  requirements:
+    coal-miner:
+      type: QUEST_COMPLETED
+      value: "coal-miner"
+      amount: 1
+    copper-crafter:
+      type: QUEST_COMPLETED
+      value: "copper-crafter"
+      amount: 1
+    iron-age:
+      type: QUEST_COMPLETED
+      value: "iron-age"
+      amount: 1
+    gold-rush:
+      type: QUEST_COMPLETED
+      value: "gold-rush"
+      amount: 1
+    redstone-engineer:
+      type: QUEST_COMPLETED
+      value: "redstone-engineer"
+      amount: 1
+    lapis-hunter:
+      type: QUEST_COMPLETED
+      value: "lapis-hunter"
+      amount: 1
+    emerald-prospector:
+      type: QUEST_COMPLETED
+      value: "emerald-prospector"
+      amount: 1
+    diamond-hoarder:
+      type: QUEST_COMPLETED
+      value: "diamond-hoarder"
+      amount: 1
+  rewards:
+    1000p:
+      points: 1000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+jungle-explorer:
+  pretty-name: "&aJungle Explorer"
+  requirements:
+    jungle:
+      type: BREAK_BLOCK
+      value: "JUNGLE_LOG"
+      amount: 128
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+savanna-woodsman:
+  pretty-name: "&6Savanna Woodsman"
+  requirements:
+    acacia:
+      type: BREAK_BLOCK
+      value: "ACACIA_LOG"
+      amount: 128
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+dark-forest:
+  pretty-name: "&8Dark Forest"
+  requirements:
+    dark-oak:
+      type: BREAK_BLOCK
+      value: "DARK_OAK_LOG"
+      amount: 128
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+swamp-logger:
+  pretty-name: "&2Swamp Logger"
+  requirements:
+    mangrove:
+      type: BREAK_BLOCK
+      value: "MANGROVE_LOG"
+      amount: 128
+  rewards:
+    125p:
+      points: 125
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+cherry-blossom:
+  pretty-name: "&dCherry Blossom"
+  requirements:
+    cherry:
+      type: BREAK_BLOCK
+      value: "CHERRY_LOG"
+      amount: 128
+  rewards:
+    125p:
+      points: 125
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+nether-forester:
+  pretty-name: "&cNether Forester"
+  requirements:
+    crimson:
+      type: BREAK_BLOCK
+      value: "CRIMSON_STEM"
+      amount: 128
+    warped:
+      type: BREAK_BLOCK
+      value: "WARPED_STEM"
+      amount: 128
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+master-forester:
+  pretty-name: "&6&lMaster Forester"
+  requirements:
+    lumberjack:
+      type: QUEST_COMPLETED
+      value: "lumberjack"
+      amount: 1
+    jungle-explorer:
+      type: QUEST_COMPLETED
+      value: "jungle-explorer"
+      amount: 1
+    savanna-woodsman:
+      type: QUEST_COMPLETED
+      value: "savanna-woodsman"
+      amount: 1
+    dark-forest:
+      type: QUEST_COMPLETED
+      value: "dark-forest"
+      amount: 1
+    swamp-logger:
+      type: QUEST_COMPLETED
+      value: "swamp-logger"
+      amount: 1
+    cherry-blossom:
+      type: QUEST_COMPLETED
+      value: "cherry-blossom"
+      amount: 1
+    nether-forester:
+      type: QUEST_COMPLETED
+      value: "nether-forester"
+      amount: 1
+  rewards:
+    1000p:
+      points: 1000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+beet-farmer:
+  pretty-name: "&eBeet Farmer"
+  requirements:
+    beetroots:
+      type: BREAK_BLOCK
+      value: "BEETROOTS"
+      amount: 128
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+wart-farmer:
+  pretty-name: "&cWart Farmer"
+  requirements:
+    wart:
+      type: BREAK_BLOCK
+      value: "NETHER_WART"
+      amount: 256
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+cocoa-grower:
+  pretty-name: "&6Cocoa Grower"
+  requirements:
+    cocoa:
+      type: BREAK_BLOCK
+      value: "COCOA"
+      amount: 64
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+bamboo-cutter:
+  pretty-name: "&aBamboo Cutter"
+  requirements:
+    bamboo:
+      type: BREAK_BLOCK
+      value: "BAMBOO"
+      amount: 256
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+cactus-farmer:
+  pretty-name: "&2Cactus Farmer"
+  requirements:
+    cactus:
+      type: BREAK_BLOCK
+      value: "CACTUS"
+      amount: 128
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+berry-picker:
+  pretty-name: "&cBerry Picker"
+  requirements:
+    berries:
+      type: BREAK_BLOCK
+      value: "SWEET_BERRY_BUSH"
+      amount: 64
+  rewards:
+    75p:
+      points: 75
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+mushroom-forager:
+  pretty-name: "&cMushroom Forager"
+  requirements:
+    red:
+      type: BREAK_BLOCK
+      value: "RED_MUSHROOM"
+      amount: 32
+    brown:
+      type: BREAK_BLOCK
+      value: "BROWN_MUSHROOM"
+      amount: 32
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+rancher:
+  pretty-name: "&eRancher"
+  requirements:
+    cows:
+      type: KILL_ENTITY
+      value: "COW"
+      amount: 32
+    pigs:
+      type: KILL_ENTITY
+      value: "PIG"
+      amount: 32
+    sheep:
+      type: KILL_ENTITY
+      value: "SHEEP"
+      amount: 32
+    chickens:
+      type: KILL_ENTITY
+      value: "CHICKEN"
+      amount: 32
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+master-farmer:
+  pretty-name: "&6&lMaster Farmer"
+  requirements:
+    green-thumb:
+      type: QUEST_COMPLETED
+      value: "green-thumb"
+      amount: 1
+    root-vegetables:
+      type: QUEST_COMPLETED
+      value: "root-vegetables"
+      amount: 1
+    sweet-tooth:
+      type: QUEST_COMPLETED
+      value: "sweet-tooth"
+      amount: 1
+    pumpkin-patch:
+      type: QUEST_COMPLETED
+      value: "pumpkin-patch"
+      amount: 1
+    beet-farmer:
+      type: QUEST_COMPLETED
+      value: "beet-farmer"
+      amount: 1
+    wart-farmer:
+      type: QUEST_COMPLETED
+      value: "wart-farmer"
+      amount: 1
+    cocoa-grower:
+      type: QUEST_COMPLETED
+      value: "cocoa-grower"
+      amount: 1
+    rancher:
+      type: QUEST_COMPLETED
+      value: "rancher"
+      amount: 1
+  rewards:
+    1000p:
+      points: 1000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+home-sweet-home:
+  pretty-name: "&aHome Sweet Home"
+  requirements:
+    table:
+      type: PLACE_BLOCK
+      value: "CRAFTING_TABLE"
+      amount: 1
+    furnace:
+      type: PLACE_BLOCK
+      value: "FURNACE"
+      amount: 1
+    chest:
+      type: PLACE_BLOCK
+      value: "CHEST"
+      amount: 1
+  rewards:
+    25p:
+      points: 25
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+plank-builder:
+  pretty-name: "&ePlank Builder"
+  requirements:
+    planks:
+      type: PLACE_BLOCK
+      value: "OAK_PLANKS"
+      amount: 512
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+cobble-castle:
+  pretty-name: "&eCobble Castle"
+  requirements:
+    cobble:
+      type: PLACE_BLOCK
+      value: "COBBLESTONE"
+      amount: 1000
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+brick-layer:
+  pretty-name: "&eBrick Layer"
+  requirements:
+    bricks:
+      type: PLACE_BLOCK
+      value: "BRICKS"
+      amount: 256
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+lamplighter:
+  pretty-name: "&eLamplighter"
+  requirements:
+    lanterns:
+      type: PLACE_BLOCK
+      value: "LANTERN"
+      amount: 32
+  rewards:
+    100p:
+      points: 100
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+storage-solutions:
+  pretty-name: "&eStorage Solutions"
+  requirements:
+    chests:
+      type: PLACE_BLOCK
+      value: "CHEST"
+      amount: 32
+    hoppers:
+      type: PLACE_BLOCK
+      value: "HOPPER"
+      amount: 8
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+enchanter:
+  pretty-name: "&dEnchanter"
+  requirements:
+    table:
+      type: PLACE_BLOCK
+      value: "ENCHANTING_TABLE"
+      amount: 1
+    shelves:
+      type: PLACE_BLOCK
+      value: "BOOKSHELF"
+      amount: 15
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+blacksmith:
+  pretty-name: "&7Blacksmith"
+  requirements:
+    anvil:
+      type: PLACE_BLOCK
+      value: "ANVIL"
+      amount: 1
+    smithing:
+      type: PLACE_BLOCK
+      value: "SMITHING_TABLE"
+      amount: 1
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+railway-engineer:
+  pretty-name: "&eRailway Engineer"
+  requirements:
+    rails:
+      type: PLACE_BLOCK
+      value: "RAIL"
+      amount: 256
+    powered:
+      type: PLACE_BLOCK
+      value: "POWERED_RAIL"
+      amount: 32
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+circuit-builder:
+  pretty-name: "&cCircuit Builder"
+  requirements:
+    wire:
+      type: PLACE_BLOCK
+      value: "REDSTONE_WIRE"
+      amount: 128
+    repeaters:
+      type: PLACE_BLOCK
+      value: "REPEATER"
+      amount: 16
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+beacon-of-hope:
+  pretty-name: "&b&lBeacon of Hope"
+  requirements:
+    beacon:
+      type: PLACE_BLOCK
+      value: "BEACON"
+      amount: 1
+  rewards:
+    1000p:
+      points: 1000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+master-architect:
+  pretty-name: "&6&lMaster Architect"
+  requirements:
+    master-builder:
+      type: QUEST_COMPLETED
+      value: "master-builder"
+      amount: 1
+    plank-builder:
+      type: QUEST_COMPLETED
+      value: "plank-builder"
+      amount: 1
+    cobble-castle:
+      type: QUEST_COMPLETED
+      value: "cobble-castle"
+      amount: 1
+    brick-layer:
+      type: QUEST_COMPLETED
+      value: "brick-layer"
+      amount: 1
+    glass-house:
+      type: QUEST_COMPLETED
+      value: "glass-house"
+      amount: 1
+    lamplighter:
+      type: QUEST_COMPLETED
+      value: "lamplighter"
+      amount: 1
+    storage-solutions:
+      type: QUEST_COMPLETED
+      value: "storage-solutions"
+      amount: 1
+  rewards:
+    1000p:
+      points: 1000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+undead-patrol:
+  pretty-name: "&eUndead Patrol"
+  requirements:
+    drowned:
+      type: KILL_ENTITY
+      value: "DROWNED"
+      amount: 25
+    husks:
+      type: KILL_ENTITY
+      value: "HUSK"
+      amount: 25
+    strays:
+      type: KILL_ENTITY
+      value: "STRAY"
+      amount: 25
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+cave-crawler:
+  pretty-name: "&eCave Crawler"
+  requirements:
+    cave-spiders:
+      type: KILL_ENTITY
+      value: "CAVE_SPIDER"
+      amount: 25
+    silverfish:
+      type: KILL_ENTITY
+      value: "SILVERFISH"
+      amount: 25
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+night-terrors:
+  pretty-name: "&9Night Terrors"
+  requirements:
+    phantoms:
+      type: KILL_ENTITY
+      value: "PHANTOM"
+      amount: 15
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+witch-hunter:
+  pretty-name: "&5Witch Hunter"
+  requirements:
+    witches:
+      type: KILL_ENTITY
+      value: "WITCH"
+      amount: 15
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+slime-time:
+  pretty-name: "&aSlime Time"
+  requirements:
+    slimes:
+      type: KILL_ENTITY
+      value: "SLIME"
+      amount: 50
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+raid-breaker:
+  pretty-name: "&6Raid Breaker"
+  requirements:
+    ravager:
+      type: KILL_ENTITY
+      value: "RAVAGER"
+      amount: 3
+    evoker:
+      type: KILL_ENTITY
+      value: "EVOKER"
+      amount: 3
+  rewards:
+    500p:
+      points: 500
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+guardian-hunter:
+  pretty-name: "&3Guardian Hunter"
+  requirements:
+    guardians:
+      type: KILL_ENTITY
+      value: "GUARDIAN"
+      amount: 30
+  rewards:
+    250p:
+      points: 250
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+ghast-buster:
+  pretty-name: "&cGhast Buster"
+  requirements:
+    ghasts:
+      type: KILL_ENTITY
+      value: "GHAST"
+      amount: 10
+  rewards:
+    250p:
+      points: 250
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+magma-mayhem:
+  pretty-name: "&cMagma Mayhem"
+  requirements:
+    magma:
+      type: KILL_ENTITY
+      value: "MAGMA_CUBE"
+      amount: 40
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+bastion-raider:
+  pretty-name: "&6Bastion Raider"
+  requirements:
+    brutes:
+      type: KILL_ENTITY
+      value: "PIGLIN_BRUTE"
+      amount: 5
+    hoglins:
+      type: KILL_ENTITY
+      value: "HOGLIN"
+      amount: 10
+  rewards:
+    400p:
+      points: 400
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+shulker-hunter:
+  pretty-name: "&5Shulker Hunter"
+  requirements:
+    shulkers:
+      type: KILL_ENTITY
+      value: "SHULKER"
+      amount: 20
+  rewards:
+    400p:
+      points: 400
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+aww-man:
+  pretty-name: "&aAww Man"
+  requirements:
+    creeper:
+      type: KILLED_BY_ENTITY
+      value: "CREEPER"
+      amount: 1
+  rewards:
+    25p:
+      points: 25
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+lesson-learned:
+  pretty-name: "&7Lesson Learned"
+  requirements:
+    deaths:
+      type: DEATHS
+      value: ""
+      amount: 10
+  rewards:
+    50p:
+      points: 50
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+master-warrior:
+  pretty-name: "&6&lMaster Warrior"
+  requirements:
+    monster-hunter:
+      type: QUEST_COMPLETED
+      value: "monster-hunter"
+      amount: 1
+    undead-patrol:
+      type: QUEST_COMPLETED
+      value: "undead-patrol"
+      amount: 1
+    witch-hunter:
+      type: QUEST_COMPLETED
+      value: "witch-hunter"
+      amount: 1
+    raid-breaker:
+      type: QUEST_COMPLETED
+      value: "raid-breaker"
+      amount: 1
+    ghast-buster:
+      type: QUEST_COMPLETED
+      value: "ghast-buster"
+      amount: 1
+    bastion-raider:
+      type: QUEST_COMPLETED
+      value: "bastion-raider"
+      amount: 1
+    shulker-hunter:
+      type: QUEST_COMPLETED
+      value: "shulker-hunter"
+      amount: 1
+  rewards:
+    1500p:
+      points: 1500
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+glowstone-gatherer:
+  pretty-name: "&eGlowstone Gatherer"
+  requirements:
+    glowstone:
+      type: BREAK_BLOCK
+      value: "GLOWSTONE"
+      amount: 64
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+nether-gold:
+  pretty-name: "&6Nether Gold"
+  requirements:
+    nether-gold:
+      type: BREAK_BLOCK
+      value: "NETHER_GOLD_ORE"
+      amount: 64
+  rewards:
+    150p:
+      points: 150
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+end-quarry:
+  pretty-name: "&eEnd Quarry"
+  requirements:
+    end-stone:
+      type: BREAK_BLOCK
+      value: "END_STONE"
+      amount: 256
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+chorus-harvest:
+  pretty-name: "&dChorus Harvest"
+  requirements:
+    chorus:
+      type: BREAK_BLOCK
+      value: "CHORUS_PLANT"
+      amount: 64
+  rewards:
+    200p:
+      points: 200
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+world-traveler:
+  pretty-name: "&b&lWorld Traveler"
+  requirements:
+    overworld:
+      type: ENVIRONMENT_JOINS
+      value: "NORMAL"
+      amount: 10
+    nether:
+      type: ENVIRONMENT_JOINS
+      value: "NETHER"
+      amount: 10
+    end:
+      type: ENVIRONMENT_JOINS
+      value: "THE_END"
+      amount: 10
+  rewards:
+    500p:
+      points: 500
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+streamline-champion:
+  pretty-name: "&d&l&nStreamline Champion"
+  requirements:
+    smp-legend:
+      type: QUEST_COMPLETED
+      value: "smp-legend"
+      amount: 1
+    master-miner:
+      type: QUEST_COMPLETED
+      value: "master-miner"
+      amount: 1
+    master-forester:
+      type: QUEST_COMPLETED
+      value: "master-forester"
+      amount: 1
+    master-farmer:
+      type: QUEST_COMPLETED
+      value: "master-farmer"
+      amount: 1
+    master-architect:
+      type: QUEST_COMPLETED
+      value: "master-architect"
+      amount: 1
+    master-warrior:
+      type: QUEST_COMPLETED
+      value: "master-warrior"
+      amount: 1
+    world-traveler:
+      type: QUEST_COMPLETED
+      value: "world-traveler"
+      amount: 1
+    silence-in-the-deep:
+      type: QUEST_COMPLETED
+      value: "silence-in-the-deep"
+      amount: 1
+  rewards:
+    5000p:
+      points: 5000
+      commands:
+        - "@c firestring (title) %streamline_user_absolute% &bQuest &acompleted&8!\\n&7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
+        - "@c firestring (message) %streamline_user_absolute% &7You completed&8: %quests_quest_%quests_completed_current%_pretty_name%"
