@@ -10,8 +10,9 @@
 + StreamQuests: command quests now count commands players run.
 + StreamQuests: portal and teleport world changes count toward quests.
 + StreamQuests: killed-by quests now count the actual killer.
-+ StreamQuests ships 39 default SMP quests.
-  + Mining, farming, combat, Nether, End and boss quests.
++ StreamQuests ships 96 default SMP quests.
+  + Mining, forestry, farming, building, combat, Nether and End.
+  + Master quests chain up to Streamline Champion.
   + Only new installs get them; existing quests.yml stays.
 + StreamlineClient now keeps its own log file.
   + Written to slclient-latest.log in the client folder.
