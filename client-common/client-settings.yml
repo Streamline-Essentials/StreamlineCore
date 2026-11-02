@@ -1,0 +1,101 @@
+# Names and descriptions of the settings on the /slclient menu pages.
+#
+# Read at build time only (client-common/client-settings.gradle): each entry is compiled into a
+# generated class, so players see these texts but cannot change them. This file is not packaged.
+#
+#   built-in.<built-in-type-id>.<setting-key>  StreamlineClient's own pages, compiled into
+#                                              StreamlineCore-ModuleCore (BuiltInSettingTexts).
+#   modules.<module-name>.<setting-key>        a client module's page, compiled into that module
+#                                              as <pf.class>.SettingTexts. <module-name> is the
+#                                              module's `name` (or `pf.id`) in its gradle.properties.
+#
+# <setting-key> is the key the setting is saved under. A setting missing here shows its key.
+# Names are Title Case.
+
+built-in:
+  client-settings:
+    show-hud:
+      name: "Show HUD"
+      description: "Draws module HUD elements in game."
+    background:
+      name: "HUD Element Backgrounds?"
+      description: "Globally toggles HUD elements' backgrounds."
+    background-color:
+      name: "HUD Background Color"
+      description: "Background color for HUD elements that use the default."
+    text-shadow:
+      name: "Text Shadow?"
+      description: "Globally toggles the drop shadow on HUD text."
+    strip-colors:
+      name: "Strip Colors?"
+      description: "Removes all color from HUD text."
+    chroma-everywhere:
+      name: "Chroma Everywhere?"
+      description: "Sets all HUD elements to use chroma."
+    remember-page:
+      name: "Remember Last Page"
+      description: "Reopens this menu on the page it was closed on."
+    check-ecloud:
+      name: "Check eCloud For Updates"
+      description: "Asks eCloud for newer versions when the menu opens."
+    chroma-type:
+      name: "Chroma Type"
+      description: "What %streamlineclient_colors_chroma% uses."
+    chroma-cycle:
+      name: "Chroma Cycle Seconds"
+      description: "Time for the chroma hue to go once round."
+    chroma-saturation:
+      name: "Chroma Saturation"
+      description: "Percent; lower is more pastel."
+    chroma-brightness:
+      name: "Chroma Brightness"
+      description: "Percent; the peak for breathing and pulsing."
+
+modules:
+  StreamlineHUD:
+    main-color:
+      name: "Main Color"
+      description: "Used for labels. Has a placeholder."
+    text-color:
+      name: "Text Color"
+      description: "Used for uncolored text. Has a placeholder."
+    background:
+      name: "StreamlineHUD Backgrounds?"
+      description: "Toggles StreamlineHUD elements' backgrounds."
+    background-color:
+      name: "Background Color"
+      description: "Color of the box behind each element. Left at the default, it follows Client Settings."
+    shadow:
+      name: "Text Shadow"
+      description: "Draw text with a drop shadow."
+    coordinate-decimals:
+      name: "Coordinate Decimals"
+      description: "Decimal places shown in coordinates."
+    clock-format:
+      name: "Clock Format"
+      description: "24-hour or 12-hour clocks."
+  ClientTogglesModule:
+    sprint-key:
+      name: "Toggle Sprint Key"
+      description: "Turns toggle sprint on or off."
+    sneak-key:
+      name: "Toggle Sneak Key"
+      description: "Turns toggle sneak on or off."
+    yes-text:
+      name: "Toggled Value"
+      description: "What the _toggled placeholders show while toggled."
+    no-text:
+      name: "Not Toggled Value"
+      description: "What the _toggled placeholders show while not toggled."
+    sprinting-on-text:
+      name: "Sprinting Toggled Text"
+      description: "What %clienttogglesmodule_sprinting_text% shows while toggled."
+    sprinting-off-text:
+      name: "Sprinting Not Toggled Text"
+      description: "What %clienttogglesmodule_sprinting_text% shows while not toggled."
+    sneaking-on-text:
+      name: "Sneaking Toggled Text"
+      description: "What %clienttogglesmodule_sneaking_text% shows while toggled."
+    sneaking-off-text:
+      name: "Sneaking Not Toggled Text"
+      description: "What %clienttogglesmodule_sneaking_text% shows while not toggled."

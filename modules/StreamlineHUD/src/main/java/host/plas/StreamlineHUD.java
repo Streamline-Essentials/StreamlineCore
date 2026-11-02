@@ -182,23 +182,27 @@ public class StreamlineHUD extends ClientModule {
                 "Styles the HUD elements. Edit an element's text with its Edit button below, add your own with +, "
                         + "and move, scale and hide them with /slclient hud (or Edit HUD Layout below).");
 
-        settings.add(new Setting.Color("main-color", "Main Color",
-                        "Used for labels. Has a placeholder.", HudStyle.DEFAULT_MAIN_COLOR))
+        // Names and descriptions come from client-common/client-settings.yml (modules.StreamlineHUD).
+        settings.add(new Setting.Color("main-color", SettingTexts.name("main-color"),
+                        SettingTexts.description("main-color"), HudStyle.DEFAULT_MAIN_COLOR))
                 .onChange(HudStyle::setMainColor);
-        settings.add(new Setting.Color("text-color", "Text Color",
-                        "Used for uncolored text. Has a placeholder.", HudStyle.DEFAULT_TEXT_COLOR))
+        settings.add(new Setting.Color("text-color", SettingTexts.name("text-color"),
+                        SettingTexts.description("text-color"), HudStyle.DEFAULT_TEXT_COLOR))
                 .onChange(HudStyle::setTextColor);
-        settings.add(new Setting.Toggle("background", "Background", "Draw a box behind each element.", true))
+        settings.add(new Setting.Toggle("background", SettingTexts.name("background"),
+                        SettingTexts.description("background"), true))
                 .onChange(HudStyle::setBackground);
-        settings.add(new Setting.Color("background-color", "Background Color", "Color of the box behind each element.", 0x60000000))
+        settings.add(new Setting.Color("background-color", SettingTexts.name("background-color"),
+                        SettingTexts.description("background-color"), HudStyle.DEFAULT_BACKGROUND_COLOR))
                 .onChange(HudStyle::setBackgroundColor);
-        settings.add(new Setting.Toggle("shadow", "Text Shadow", "Draw text with a drop shadow.", true))
+        settings.add(new Setting.Toggle("shadow", SettingTexts.name("shadow"),
+                        SettingTexts.description("shadow"), true))
                 .onChange(HudStyle::setShadow);
-        settings.add(new Setting.Slider("coordinate-decimals", "Coordinate Decimals",
-                        "Decimal places shown in coordinates.", 1, 0, 3, 1))
+        settings.add(new Setting.Slider("coordinate-decimals", SettingTexts.name("coordinate-decimals"),
+                        SettingTexts.description("coordinate-decimals"), 1, 0, 3, 1))
                 .onChange(value -> HudStyle.setCoordinateDecimals((int) Math.round(value)));
-        settings.add(new Setting.Choice("clock-format", "Clock Format", "24-hour or 12-hour clocks.",
-                        CLOCK_24H, Arrays.asList(CLOCK_24H, CLOCK_12H)))
+        settings.add(new Setting.Choice("clock-format", SettingTexts.name("clock-format"),
+                        SettingTexts.description("clock-format"), CLOCK_24H, Arrays.asList(CLOCK_24H, CLOCK_12H)))
                 .onChange(value -> HudStyle.setTwelveHourClock(CLOCK_12H.equals(value)));
 
         return settings;

@@ -8,16 +8,23 @@ import java.util.List;
 
 /**
  * A {@link HudElement} made of lines of text, drawn over an optional background. The
- * background is left out while the player has set one of their own on the element.
+ * background is left out while the player has set one of their own on the element, and while
+ * Client Settings turns HUD backgrounds off.
  */
 public abstract class TextHudElement extends HudElement {
 
     private static final int PADDING = 2;
 
-    /** ARGB background behind the text; 0 draws none. */
+    /** The background an element starts with; it is drawn in the Client Settings color. */
+    public static final int DEFAULT_BACKGROUND = HudBoxStyle.DEFAULT_BACKGROUND_COLOR;
+
+    /**
+     * ARGB background behind the text; 0 draws none, and {@link #DEFAULT_BACKGROUND} draws the
+     * color chosen in Client Settings.
+     */
     @Getter
     @Setter
-    private volatile int background = 0x60000000;
+    private volatile int background = DEFAULT_BACKGROUND;
     @Getter
     @Setter
     private volatile int textColor = 0xFFFFFFFF;
@@ -51,7 +58,10 @@ public abstract class TextHudElement extends HudElement {
         if (lines.isEmpty()) return;
         int width = width(renderer, lines);
         int height = height(renderer, lines);
-        if (background != 0 && ! renderer.hasPlayerBackground()) renderer.fill(0, 0, width, height, background);
+        int fill = background;
+        if (fill != 0 && renderer.backgroundsAllowed() && ! renderer.hasPlayerBackground()) {
+            renderer.fill(0, 0, width, height, fill == DEFAULT_BACKGROUND ? renderer.backgroundColor() : fill);
+        }
         int y = PADDING;
         for (String line : lines) {
             renderer.text(line, PADDING, y, textColor, shadow);

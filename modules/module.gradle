@@ -140,6 +140,14 @@ dependencies {
     compileOnly(PLATFORM_LIBRARIES)
 }
 
+// A client module's setting names and descriptions, from client-common/client-settings.yml
+// (modules.<name>, or modules.<pf.id>), as <pf.class>.SettingTexts.
+if (project.ext.clientModule) {
+    apply from: rootProject.file('client-common/client-settings.gradle')
+    generateModuleSettingTexts([project.ext.moduleName, moduleProp('pf.id', project.name).toString()],
+            moduleProp('pf.class').toString(), 'SettingTexts')
+}
+
 // The core shadow JARs must exist before a module compiles against them.
 if (! project.ext.clientModule) {
     compileJava.dependsOn("${project.ext.needsBapi ? ':StreamlineCore-BAPI' : ':StreamlineCore-API'}:shadowJar")
