@@ -6,6 +6,10 @@
 // It depends on nothing a client lacks: PF4J ships inside the Singularity shadow jar, and
 // Gson comes with Minecraft (and with every server platform). Nothing here may use a library
 // the mod jars relocate (see mod-common/mod.gradle), so client modules load untransformed.
+// The built-in settings' names and descriptions, from client-common/client-settings.yml.
+apply from: rootProject.file('client-common/client-settings.gradle')
+generateBuiltInSettingTexts('singularity.client.settings', 'BuiltInSettingTexts')
+
 dependencies {
     compileOnly 'org.pf4j:pf4j:3.10.0'
     compileOnly 'com.google.code.gson:gson:2.8.8'

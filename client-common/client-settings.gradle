@@ -1,0 +1,164 @@
+// Compiles the setting names and descriptions in client-common/client-settings.yml into Java.
+//
+// The yml is read at build time only and never packaged, so players see its texts but cannot
+// change them. A project applying this file calls one of:
+//
+//     generateBuiltInSettingTexts('singularity.client.settings', 'BuiltInSettingTexts')
+//         the `built-in` section: name(type, key) / description(type, key)
+//     generateModuleSettingTexts(['StreamlineHUD', 'streamline-hud'], 'host.plas', 'SettingTexts')
+//         the first `modules.<name>` entry found: name(key) / description(key)
+//
+// Either way the class is generated into this project's build directory and added to its main
+// sources. A key with no entry returns the key itself, so a missing text shows up in the menu
+// instead of failing the build.
+
+def settingsYml = rootProject.file('client-common/client-settings.yml')
+
+// SnakeYAML is on the root buildscript classpath, which an applied script cannot import from.
+def yamlClass = rootProject.buildscript.classLoader.loadClass('org.yaml.snakeyaml.Yaml')
+
+// Reads one settings map (key -> {name, description}) into key -> [name, description].
+def readTexts = { Object section, String where ->
+    def texts = new LinkedHashMap<String, List<String>>()
+    if (section == null) return texts
+    if (! (section instanceof Map)) throw new GradleException("${where} in client-settings.yml must be a map of settings.")
+    section.each { key, value ->
+        if (! (value instanceof Map)) throw new GradleException("${where}.${key} in client-settings.yml needs a name and a description.")
+        texts.put(key.toString(), [value.name?.toString() ?: key.toString(), value.description?.toString() ?: ''])
+    }
+    return texts
+}
+
+def javaString = { String text ->
+    def out = new StringBuilder('"')
+    text.each { String c ->
+        char ch = c.charAt(0)
+        if (ch == '"' as char) out.append('\\"')
+        else if (ch == '\\' as char) out.append('\\\\')
+        else if (ch == '\n' as char) out.append('\\n')
+        else if (ch < (' ' as char) || ch > ('~' as char)) out.append(String.format('\\u%04x', (int) ch))
+        else out.append(ch)
+    }
+    return out.append('"').toString()
+}
+
+def register = { String taskName, String packageName, String className, Closure<String> body ->
+    def outDir = layout.buildDirectory.dir("generated/sources/client-settings/java")
+    def generate = tasks.register(taskName) {
+        description = "Generates ${packageName}.${className} from client-settings.yml."
+        inputs.file(settingsYml)
+        inputs.property('packageName', packageName)
+        inputs.property('className', className)
+        outputs.dir(outDir)
+        doLast {
+            def root = outDir.get().asFile
+            root.deleteDir()
+            def file = new File(root, packageName.replace('.', '/') + "/${className}.java")
+            file.parentFile.mkdirs()
+            file.setText(body.call(), 'UTF-8')
+        }
+    }
+    sourceSets.main.java.srcDir(generate)
+}
+
+def loadYml = {
+    def data = settingsYml.withInputStream { yamlClass.getDeclaredConstructor().newInstance().load(it) }
+    return data instanceof Map ? data : [:]
+}
+
+ext.generateBuiltInSettingTexts = { String packageName, String className ->
+    register('generateBuiltInSettingTexts', packageName, className) {
+        def builtIn = loadYml().get('built-in') ?: [:]
+        def lines = new StringBuilder()
+        builtIn.each { type, settings ->
+            readTexts(settings, "built-in.${type}").each { key, texts ->
+                lines.append("        put(${javaString("${type}/${key}")}, ${javaString(texts[0])}, ${javaString(texts[1])});\n")
+            }
+        }
+        return """\
+package ${packageName};
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Names and descriptions of StreamlineClient's built-in settings, generated from
+ * {@code client-common/client-settings.yml} at build time.
+ */
+public final class ${className} {
+
+    private static final Map<String, String[]> TEXTS = new HashMap<>();
+
+    static {
+${lines}    }
+
+    private ${className}() {}
+
+    private static void put(String key, String name, String description) {
+        TEXTS.put(key, new String[] {name, description});
+    }
+
+    /** @return the name of {@code key} on the built-in page {@code type}, or {@code key} if it has none */
+    public static String name(String type, String key) {
+        String[] texts = TEXTS.get(type + "/" + key);
+        return texts == null ? key : texts[0];
+    }
+
+    /** @return the description of {@code key} on the built-in page {@code type}, or an empty string */
+    public static String description(String type, String key) {
+        String[] texts = TEXTS.get(type + "/" + key);
+        return texts == null ? "" : texts[1];
+    }
+}
+"""
+    }
+}
+
+ext.generateModuleSettingTexts = { List<String> moduleNames, String packageName, String className ->
+    register('generateModuleSettingTexts', packageName, className) {
+        def modules = loadYml().get('modules') ?: [:]
+        def found = moduleNames.find { modules.containsKey(it) }
+        def lines = new StringBuilder()
+        if (found != null) {
+            readTexts(modules.get(found), "modules.${found}").each { key, texts ->
+                lines.append("        put(${javaString(key)}, ${javaString(texts[0])}, ${javaString(texts[1])});\n")
+            }
+        }
+        return """\
+package ${packageName};
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Names and descriptions of this module's client settings, generated from
+ * {@code client-common/client-settings.yml} at build time.
+ */
+public final class ${className} {
+
+    private static final Map<String, String[]> TEXTS = new HashMap<>();
+
+    static {
+${lines}    }
+
+    private ${className}() {}
+
+    private static void put(String key, String name, String description) {
+        TEXTS.put(key, new String[] {name, description});
+    }
+
+    /** @return the name of the setting {@code key}, or {@code key} if it has none */
+    public static String name(String key) {
+        String[] texts = TEXTS.get(key);
+        return texts == null ? key : texts[0];
+    }
+
+    /** @return the description of the setting {@code key}, or an empty string */
+    public static String description(String key) {
+        String[] texts = TEXTS.get(key);
+        return texts == null ? "" : texts[1];
+    }
+}
+"""
+    }
+}

@@ -28,6 +28,8 @@ buildscript {
     dependencies {
         classpath("com.gradleup.shadow:shadow-gradle-plugin:9.6.1") // for shadowing
         classpath("io.freefair.gradle:lombok-plugin:9.8.0")
+        // Reads client-common/client-settings.yml (client-common/client-settings.gradle).
+        classpath("org.yaml:snakeyaml:2.3")
 
         // The mod-loader toolchains share this one classloader so every mod subproject
         // sees the same plugin versions. They are only resolved when settings.gradle

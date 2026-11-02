@@ -17,13 +17,18 @@ public final class HudStyle {
 
     public static final int DEFAULT_MAIN_COLOR = 0xFFAAAAAA;
     public static final int DEFAULT_TEXT_COLOR = 0xFFFFFFFF;
+    /**
+     * The core's default element background. Elements left at it are drawn in the Client
+     * Settings background color; any other color is drawn as set.
+     */
+    public static final int DEFAULT_BACKGROUND_COLOR = 0x60000000;
 
     private static final List<TextHudElement> ELEMENTS = new CopyOnWriteArrayList<>();
 
     private static volatile int textColor = DEFAULT_TEXT_COLOR;
     private static volatile String mainCode = code(DEFAULT_MAIN_COLOR);
     private static volatile String textCode = code(DEFAULT_TEXT_COLOR);
-    private static volatile int backgroundColor = 0x60000000;
+    private static volatile int backgroundColor = DEFAULT_BACKGROUND_COLOR;
     private static volatile boolean background = true;
     private static volatile boolean shadow = true;
     private static volatile int coordinateDecimals = 1;

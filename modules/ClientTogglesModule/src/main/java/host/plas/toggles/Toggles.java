@@ -77,30 +77,25 @@ final class Toggles {
                 "Toggle sprint and sneak with a key press; they stay on through deaths and respawns. "
                         + "Click a key to bind it, press Escape to cancel, or right-click to unbind.");
 
-        settings.add(new Setting.Key("sprint-key", "Toggle Sprint Key", "Turns toggle sprint on or off.", "key.keyboard.r"))
+        // Names and descriptions come from client-common/client-settings.yml (modules.ClientTogglesModule).
+        settings.add(new Setting.Key("sprint-key", SettingTexts.name("sprint-key"),
+                        SettingTexts.description("sprint-key"), "key.keyboard.r"))
                 .onPress(() -> setSprinting(! sprinting));
-        settings.add(new Setting.Key("sneak-key", "Toggle Sneak Key", "Turns toggle sneak on or off.", "key.keyboard.g"))
+        settings.add(new Setting.Key("sneak-key", SettingTexts.name("sneak-key"),
+                        SettingTexts.description("sneak-key"), "key.keyboard.g"))
                 .onPress(() -> setSneaking(! sneaking));
 
-        settings.add(new Setting.Text("yes-text", "Toggled Value",
-                        "What the _toggled placeholders show while toggled.", "Yes", 64))
-                .onChange(value -> yes = value);
-        settings.add(new Setting.Text("no-text", "Not Toggled Value",
-                        "What the _toggled placeholders show while not toggled.", "No", 64))
-                .onChange(value -> no = value);
-        settings.add(new Setting.Text("sprinting-on-text", "Sprinting Toggled Text",
-                        "What %clienttogglesmodule_sprinting_text% shows while toggled.", "Sprinting Toggled", 64))
-                .onChange(value -> sprintingOn = value);
-        settings.add(new Setting.Text("sprinting-off-text", "Sprinting Not Toggled Text",
-                        "What %clienttogglesmodule_sprinting_text% shows while not toggled.", "Sprinting Not Toggled", 64))
-                .onChange(value -> sprintingOff = value);
-        settings.add(new Setting.Text("sneaking-on-text", "Sneaking Toggled Text",
-                        "What %clienttogglesmodule_sneaking_text% shows while toggled.", "Sneaking Toggled", 64))
-                .onChange(value -> sneakingOn = value);
-        settings.add(new Setting.Text("sneaking-off-text", "Sneaking Not Toggled Text",
-                        "What %clienttogglesmodule_sneaking_text% shows while not toggled.", "Sneaking Not Toggled", 64))
-                .onChange(value -> sneakingOff = value);
+        settings.add(text("yes-text", "Yes")).onChange(value -> yes = value);
+        settings.add(text("no-text", "No")).onChange(value -> no = value);
+        settings.add(text("sprinting-on-text", "Sprinting Toggled")).onChange(value -> sprintingOn = value);
+        settings.add(text("sprinting-off-text", "Sprinting Not Toggled")).onChange(value -> sprintingOff = value);
+        settings.add(text("sneaking-on-text", "Sneaking Toggled")).onChange(value -> sneakingOn = value);
+        settings.add(text("sneaking-off-text", "Sneaking Not Toggled")).onChange(value -> sneakingOff = value);
         return settings;
+    }
+
+    private static Setting.Text text(String key, String defaultValue) {
+        return new Setting.Text(key, SettingTexts.name(key), SettingTexts.description(key), defaultValue, 64);
     }
 
     static void setSprinting(boolean on) {
