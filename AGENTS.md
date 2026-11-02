@@ -195,4 +195,4 @@ Each platform has `net.streamline.platform.BasePlugin`:
 
 ## Changelog (`UPDATES.md`)
 
-`UPDATES.md` follows the global changelog rules in `~/.claude/CLAUDE.md` (update it after every major change, `+ ` lines of at most 10 words, `docs: changelog for <version>` commits). Here the version is `version = ...` in `gradle.properties` (e.g. `2.6.1.4`), and its readers are players and server owners.
+`UPDATES.md` follows the global changelog rules in `~/.claude/CLAUDE.md` (update it after every major change, `+ ` lines of at most 10 words, `docs: changelog for <version>` commits). Here the version is `version = ...` in `gradle.properties` (e.g. `2.6.1.4`), and its readers are players and server owners. It covers the core only (the platform plugins, the mods and the client UI), never the modules under `modules/`, which have their own versions.
