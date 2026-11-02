@@ -31,3 +31,8 @@
   + Groups get their own background and border too.
   + Unlink elements or ungroup from the Edit popup.
 + Ctrl+Z and Ctrl+Y undo and redo HUD Editor changes.
++ Client Settings can turn off every HUD element's background.
+  + HUD background color is now set in Client Settings.
++ Client Settings can turn off text shadow everywhere.
++ New Strip Colors? setting draws HUD text plain white.
++ New Chroma Everywhere? setting makes all HUD text chroma.
