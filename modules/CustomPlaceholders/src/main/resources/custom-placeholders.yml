@@ -9,6 +9,11 @@
 #
 # WARNING : Putting the ' marks ensures that the plugin
 # does not get confused or corrupt messages.
+#
+# Every key also works as %streamline_<key>%, which
+# PlaceholderAPI can use too. A key wrapped in % marks
+# drops them: '%foo%' becomes %streamline_foo%, and
+# ':foo:' becomes %streamline_:foo:%.
 ':shrug:': "&e¯\\_(ツ)_/¯"
 ':tableflip:': "&c(╯°□°）╯︵ ┻━┻"
 ':unflip:': "&5┬─┬ ノ( ゜-゜ノ)"

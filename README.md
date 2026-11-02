@@ -22,6 +22,7 @@ The currently made modules add functionality such as:
 - Network staff chat, whispering, and friends. (**StreamlineMessaging Module**)
 - Discord to Minecraft and Minecraft to Discord. (**StreamlineDiscord Module**)
 - Aliases, buildable functions, online list (per server, per group, or network wide), cross-network tpa, cross-network homes, cross-network teleporting, and more. (**StreamlineUtilities Module**)
+- Your own text placeholders, usable in Streamline messages and PlaceholderAPI. (**CustomPlaceholders Module**)
 - Data-Driven event-based protection for proxy and backend servers. (**ProxProtect Module**)
 - Spying on all commands sent by players and sending them to Discord. (**SimpleLogger Module**)
 - Send resourcepacks to players on join. (**ResourcePackUtils Module**)

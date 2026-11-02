@@ -34,8 +34,6 @@ public class StreamlineUtilities extends SimpleModule {
     @Getter
     static File aliasesFolder;
     @Getter
-    static CustomPlaceholdersConfig customPlaceholdersConfig;
-    @Getter
     static ServersConfig serversConfig;
     @Getter
     static GroupedPermissionConfig groupedPermissionConfig;
@@ -178,7 +176,6 @@ public class StreamlineUtilities extends SimpleModule {
         ExecutableHandler.enableAllFunctions();
         ExecutableHandler.loadAllAliases(aliasesFolder);
 
-        customPlaceholdersConfig = new CustomPlaceholdersConfig();
         serversConfig = new ServersConfig();
         serversConfig.reloadResource(true);
         groupedPermissionConfig = new GroupedPermissionConfig();

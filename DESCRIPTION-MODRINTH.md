@@ -35,6 +35,7 @@ Current modules include:
 - Sending resource packs to players when they join, even through BungeeCord and Velocity. (**ResourcePackUtils**)
 - An MOTD system along the lines of MiniMOTD: version, description, player sample, player count, and server icons. (**StreamlineMOTD**)
 - Clickable links in chat for players allowed to post them. (**LinkParser**)
+- Your own text placeholders, in Streamline messages and PlaceholderAPI as `%streamline_<key>%`. (**CustomPlaceholders**)
 - Stopping creepers, ghasts, endermen, and withers from breaking blocks, with per-mob damage toggles. (**MobGriefControl**)
 - Stonecutters that damage entities standing on them. (**StoneDamager**)
 - Streamline placeholders in TAB configs. (**TAB-SL**)
