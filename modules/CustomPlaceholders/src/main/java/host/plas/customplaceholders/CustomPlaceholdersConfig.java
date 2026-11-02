@@ -21,9 +21,12 @@ public class CustomPlaceholdersConfig extends SimpleConfiguration {
     public static final String FILE_NAME = "custom-placeholders.yml";
     public static final String STREAMLINE_PREFIX = "%streamline_";
 
-    private ConcurrentSkipListMap<String, String> loadedPlaceholders = new ConcurrentSkipListMap<>();
+    // No field initializers: SimpleConfiguration's constructor already calls
+    // reloadResource, before they would run, and running them afterwards would
+    // forget the replaceables registered by that call.
+    private ConcurrentSkipListMap<String, String> loadedPlaceholders;
 
-    private final List<GenericReplaceable> registered = new ArrayList<>();
+    private List<GenericReplaceable> registered;
 
     public CustomPlaceholdersConfig() {
         super(FILE_NAME, CustomPlaceholders.getInstance().getDataFolder(), true);
@@ -32,7 +35,6 @@ public class CustomPlaceholdersConfig extends SimpleConfiguration {
 
     @Override
     public void init() {
-        loadedPlaceholders = new ConcurrentSkipListMap<>();
     }
 
     @Override
@@ -67,10 +69,12 @@ public class CustomPlaceholdersConfig extends SimpleConfiguration {
     private void register(String key, String value) {
         GenericReplaceable replaceable = new GenericReplaceable(key, (s) -> value);
         RATRegistry.register(replaceable);
+        if (registered == null) registered = new ArrayList<>();
         registered.add(replaceable);
     }
 
     public synchronized void unregisterAll() {
+        if (registered == null) return;
         registered.forEach(RATRegistry::unregister);
         registered.clear();
     }
