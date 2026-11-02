@@ -195,4 +195,8 @@ Each platform has `net.streamline.platform.BasePlugin`:
 
 ## Changelog (`UPDATES.md`)
 
-`UPDATES.md` follows the global changelog rules in `~/.claude/CLAUDE.md` (update it after every major change, `+ ` lines of at most 10 words, `docs: changelog for <version>` commits). Here the version is `version = ...` in `gradle.properties` (e.g. `2.6.1.4`), and its readers are players and server owners. It covers the core only (the platform plugins, the mods and the client UI), never the modules under `modules/`, which have their own versions.
+`UPDATES.md` follows the global changelog rules in `~/.claude/CLAUDE.md` (update it after every major change, `+ ` lines of at most 10 words, `docs: changelog for <version>` commits). Here the version is `version = ...` in `gradle.properties` (e.g. `2.6.1.4`), and its readers are players and server owners.
+
+- **Core only.** It covers the core: the platform plugins, the mods and the client UI (`client-common`, Client Settings, the HUD, the module menu). Changes to modules under `modules/` never go in it, since modules have their own versions, even when the core and a module change in one commit.
+- **Reset on every version bump.** Whenever `version` in `gradle.properties` changes, empty `UPDATES.md` in the same session (commit `docs: changelog for <new version>`); the old lines belong to the release that shipped them.
+- **Check before adding.** Before writing a line, run `git log --oneline -- UPDATES.md gradle.properties`. If a `bump: version` commit is newer than the last `docs: changelog for ...` commit, the file still holds the previous release: clear it first, then add a line for every user-visible core commit made since the bump (`git log <bump commit>..HEAD`), not just the current change.
