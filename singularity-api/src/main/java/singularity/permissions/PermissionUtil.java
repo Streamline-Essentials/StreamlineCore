@@ -39,6 +39,17 @@ public class PermissionUtil {
     }
 
     /**
+     * Whether the registered {@link MetaGrabber} currently knows the player's real prefix
+     * and suffix; see {@link MetaGrabber#hasChatMeta(CosmicPlayer)}.
+     *
+     * @param player the player to check
+     * @return {@code false} when no grabber is registered
+     */
+    public static boolean hasChatMeta(CosmicPlayer player) {
+        return optionalMetaGrabber.map(metaGrabber -> metaGrabber.hasChatMeta(player)).orElse(false);
+    }
+
+    /**
      * Retrieves the prefix meta-value for the given player.
      *
      * @param player the player whose prefix should be retrieved

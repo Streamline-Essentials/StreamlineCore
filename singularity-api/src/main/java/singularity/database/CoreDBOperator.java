@@ -155,10 +155,69 @@ public class CoreDBOperator extends DBOperator {
      * has always declared the composite key.</p>
      */
     private void migrateSchema() {
+        migratePlayerMetaTags();
+
         if (getType() != DatabaseType.MYSQL) return;
 
         migrateUpdateTable();
         migratePlayerColumns();
+    }
+
+    /**
+     * Adds the {@code Tags} column to a {@code player_meta} table created before meta tags
+     * (such as the plain-name flag) were stored, on MySQL and SQLite alike.
+     */
+    private void migratePlayerMetaTags() {
+        String table = this.getConnectorSet().getTablePrefix() + "player_meta";
+        if (! Boolean.FALSE.equals(hasColumn(table, "Tags"))) return;
+
+        MessageUtils.logInfo("Adding '" + table + "'.Tags to store player meta tags.");
+        this.executeSingle("ALTER TABLE `" + table + "` ADD COLUMN Tags TEXT;", stmt -> {});
+    }
+
+    /**
+     * Whether {@code table} has a column named {@code column}.
+     *
+     * @return {@code null} when that could not be determined, in which case no migration
+     *         should be attempted
+     */
+    private Boolean hasColumn(String table, String column) {
+        AtomicReference<Boolean> found = new AtomicReference<>(null);
+
+        if (getType() == DatabaseType.MYSQL) {
+            this.executeQuery(
+                    "SELECT COUNT(*) FROM information_schema.COLUMNS " +
+                            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?;",
+                    stmt -> {
+                        try {
+                            stmt.setString(1, table);
+                            stmt.setString(2, column);
+                        } catch (Exception e) {
+                            MessageUtils.logWarning("Failed to bind column lookup for " + table + "." + column, e);
+                        }
+                    },
+                    rs -> {
+                        try {
+                            if (rs.next()) found.set(rs.getLong(1) > 0);
+                        } catch (Exception e) {
+                            MessageUtils.logWarning("Failed to read column metadata for " + table + "." + column, e);
+                        }
+                    });
+        } else {
+            this.executeQuery("PRAGMA table_info(`" + table + "`);", stmt -> {}, rs -> {
+                try {
+                    boolean present = false;
+                    while (rs.next()) {
+                        if (column.equalsIgnoreCase(rs.getString("name"))) present = true;
+                    }
+                    found.set(present);
+                } catch (Exception e) {
+                    MessageUtils.logWarning("Failed to read column metadata for " + table + "." + column, e);
+                }
+            });
+        }
+
+        return found.get();
     }
 
     /**
@@ -449,12 +508,14 @@ public class CoreDBOperator extends DBOperator {
                         stmt.setString(2, player.getMeta().getNickname());
                         stmt.setString(3, player.getMeta().getPrefix());
                         stmt.setString(4, player.getMeta().getSuffix());
+                        stmt.setString(5, player.getMeta().getTagsAsString());
 
                         // Repeat everything except the Uuid parameter (which is the first parameter) for MySql.
                         if (getType() == DatabaseType.MYSQL) {
-                            stmt.setString(5, player.getMeta().getNickname());
-                            stmt.setString(6, player.getMeta().getPrefix());
-                            stmt.setString(7, player.getMeta().getSuffix());
+                            stmt.setString(6, player.getMeta().getNickname());
+                            stmt.setString(7, player.getMeta().getPrefix());
+                            stmt.setString(8, player.getMeta().getSuffix());
+                            stmt.setString(9, player.getMeta().getTagsAsString());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -621,12 +682,14 @@ public class CoreDBOperator extends DBOperator {
                         stmt.setString(2, sender.getMeta().getNickname());
                         stmt.setString(3, sender.getMeta().getPrefix());
                         stmt.setString(4, sender.getMeta().getSuffix());
+                        stmt.setString(5, sender.getMeta().getTagsAsString());
 
                         // Repeat everything except the Uuid parameter (which is the first parameter) for MySql.
                         if (getType() == DatabaseType.MYSQL) {
-                            stmt.setString(5, sender.getMeta().getNickname());
-                            stmt.setString(6, sender.getMeta().getPrefix());
-                            stmt.setString(7, sender.getMeta().getSuffix());
+                            stmt.setString(6, sender.getMeta().getNickname());
+                            stmt.setString(7, sender.getMeta().getPrefix());
+                            stmt.setString(8, sender.getMeta().getSuffix());
+                            stmt.setString(9, sender.getMeta().getTagsAsString());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -717,6 +780,7 @@ public class CoreDBOperator extends DBOperator {
 
                 if (! existsSync(uuid)) {
                     CosmicPlayer player = UserUtils.createPlayer(uuid);
+                    UserUtils.syncChatMeta(player);
                     savePlayer(player, false);
 
                     return Optional.of(player);
@@ -765,6 +829,8 @@ public class CoreDBOperator extends DBOperator {
                             player.getMeta().setNickname(rs.getString("Nickname"));
                             player.getMeta().setPrefix(rs.getString("Prefix"));
                             player.getMeta().setSuffix(rs.getString("Suffix"));
+                            player.getMeta().getTags().clear();
+                            player.getMeta().setTagsFromString(rs.getString("Tags"));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -816,6 +882,10 @@ public class CoreDBOperator extends DBOperator {
                         e.printStackTrace();
                     }
                 });
+
+                // The stored prefix and suffix may predate a LuckPerms change (or prefixes being
+                // kept in the meta at all); the live copy replaces them and is saved back.
+                if (UserUtils.syncChatMeta(player)) savePlayer(player, false);
 
                 return Optional.of(player);
             }, getDatabaseExecutor()));

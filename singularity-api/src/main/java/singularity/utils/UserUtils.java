@@ -13,6 +13,7 @@ import singularity.data.players.location.CosmicLocation;
 import singularity.data.teleportation.TPTicket;
 import singularity.data.uuid.UuidManager;
 import singularity.modules.ModuleUtils;
+import singularity.data.players.meta.SenderMeta;
 import singularity.permissions.MetaValue;
 import singularity.permissions.PermissionUtil;
 
@@ -552,42 +553,54 @@ public class UserUtils {
     }
 
     /**
-     * Returns the effective prefix for the given sender: the {@link singularity.data.players.meta.SenderMeta} prefix
-     * when it is set (non-empty), otherwise, for players, the permission plugin's prefix
-     * via {@link singularity.permissions.PermissionUtil}. A meta prefix of only a reset
-     * code ({@code &r}) therefore shows no prefix at all, even when LuckPerms has one.
+     * Returns the sender's prefix: the one held in their
+     * {@link SenderMeta}. With a permission plugin that has
+     * chat meta (LuckPerms), that is a copy of its prefix kept current by
+     * {@link #syncChatMeta(CosmicPlayer)}; otherwise it is Streamline's own.
      *
      * @param user the sender whose prefix to retrieve
      * @return the prefix string, possibly empty
      */
     public static String getPrefix(CosmicSender user) {
-        String own = user.getMeta().getPrefix();
-        if (! (user instanceof CosmicPlayer) || (own != null && ! own.isEmpty())) return own == null ? "" : own;
-        CosmicPlayer player = (CosmicPlayer) user;
-
-        Optional<MetaValue> optional = PermissionUtil.getPrefix(player);
-        if (optional.isEmpty()) return user.getMeta().getPrefix();
-
-        return optional.get().getValue();
+        String prefix = user.getMeta().getPrefix();
+        return prefix == null ? "" : prefix;
     }
 
     /**
-     * Returns the effective suffix for the given sender, resolved like
-     * {@link #getPrefix(CosmicSender)}: the {@link singularity.data.players.meta.SenderMeta} suffix when set, otherwise
-     * the permission plugin's suffix for players.
+     * Returns the sender's suffix, held like the prefix; see {@link #getPrefix(CosmicSender)}.
      *
      * @param user the sender whose suffix to retrieve
      * @return the suffix string, possibly empty
      */
     public static String getSuffix(CosmicSender user) {
-        String own = user.getMeta().getSuffix();
-        if (! (user instanceof CosmicPlayer) || (own != null && ! own.isEmpty())) return own == null ? "" : own;
-        CosmicPlayer player = (CosmicPlayer) user;
+        String suffix = user.getMeta().getSuffix();
+        return suffix == null ? "" : suffix;
+    }
 
-        Optional<MetaValue> optional = PermissionUtil.getSuffix(player);
-        if (optional.isEmpty()) return user.getMeta().getSuffix();
+    /**
+     * Copies the permission plugin's prefix and suffix (LuckPerms) into the player's
+     * {@link SenderMeta}, from which display names are built.
+     * Does nothing without such a plugin, or while it does not hold the player (e.g. before
+     * LuckPerms has loaded them), so a stored copy is never replaced by an unknown value.
+     *
+     * <p>Runs whenever a player's data loads, when they finish logging in, after a proxy
+     * sends their data, and when LuckPerms recalculates them, so stored rows written before
+     * prefixes were kept in the meta are brought over as each player loads.</p>
+     *
+     * @param player the player to update
+     * @return {@code true} if the prefix or suffix changed
+     */
+    public static boolean syncChatMeta(CosmicPlayer player) {
+        if (player == null || ! PermissionUtil.hasChatMeta(player)) return false;
 
-        return optional.get().getValue();
+        String prefix = PermissionUtil.getPrefix(player).map(MetaValue::getValue).orElse("");
+        String suffix = PermissionUtil.getSuffix(player).map(MetaValue::getValue).orElse("");
+
+        SenderMeta meta = player.getMeta();
+        boolean changed = ! prefix.equals(meta.getPrefix()) || ! suffix.equals(meta.getSuffix());
+        meta.setPrefix(prefix);
+        meta.setSuffix(suffix);
+        return changed;
     }
 
     /**

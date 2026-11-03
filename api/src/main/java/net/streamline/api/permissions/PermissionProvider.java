@@ -2,6 +2,7 @@ package net.streamline.api.permissions;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * A permission backend Streamline reads from and writes to. {@link Permissions} holds the
@@ -73,4 +74,24 @@ public interface PermissionProvider {
      * @return the player's highest-priority suffix; an empty value when there is none
      */
     ChatMeta getSuffix(UUID uuid);
+
+    /**
+     * Whether {@link #getPrefix(UUID)} and {@link #getSuffix(UUID)} currently reflect this
+     * player's real prefix and suffix. {@code false} when the provider has no chat meta at all,
+     * or does not hold the player (e.g. offline), in which case their empty answers mean
+     * "unknown" rather than "none".
+     */
+    default boolean hasChatMeta(UUID uuid) {
+        return false;
+    }
+
+    /**
+     * Calls {@code listener} with a player's UUID whenever their prefix or suffix may have
+     * changed.
+     *
+     * @return a handle that stops the notifications when closed
+     */
+    default AutoCloseable onChatMetaChange(Consumer<UUID> listener) {
+        return () -> {};
+    }
 }

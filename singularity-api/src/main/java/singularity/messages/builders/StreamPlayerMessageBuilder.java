@@ -2,6 +2,7 @@ package singularity.messages.builders;
 
 import lombok.Getter;
 import singularity.data.players.CosmicPlayer;
+import singularity.utils.UserUtils;
 import singularity.messages.proxied.ProxiedMessage;
 import singularity.utils.MessageUtils;
 
@@ -127,6 +128,10 @@ public class StreamPlayerMessageBuilder {
         player.getLocation().setPitch(pitch);
 
         player.getPermissions().setBypassingPermissions(bypassingPermissions);
+
+        // The sending server's copy of the prefix and suffix gives way to this server's own
+        // permission plugin, when it holds the player.
+        UserUtils.syncChatMeta(player);
 
         return player;
     }

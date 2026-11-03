@@ -50,7 +50,8 @@ public class Statements {
                 "Uuid VARCHAR(36) PRIMARY KEY, " +
                 "Nickname VARCHAR(255), " +
                 "Prefix VARCHAR(255), " +
-                "Suffix VARCHAR(255)" +
+                "Suffix VARCHAR(255), " +
+                "Tags TEXT" +
                 ");;" +
                 "CREATE TABLE IF NOT EXISTS `%table_prefix%player_location` (" +
                 "Uuid VARCHAR(36) PRIMARY KEY, " +
@@ -120,13 +121,13 @@ public class Statements {
                 "FirstJoin = ?, LastJoin = ?, CurrentName = ?, CurrentIP = ?, " +
                 "PlaySeconds = ?, ProxyTouched = ?;"),
 
-        /** Inserts or updates the player metadata row (nickname, prefix, suffix). */
+        /** Inserts or updates the player metadata row (nickname, prefix, suffix, tags). */
         PUSH_PLAYER_META("INSERT INTO `%table_prefix%player_meta` (" +
-                "Uuid, Nickname, Prefix, Suffix" +
+                "Uuid, Nickname, Prefix, Suffix, Tags" +
                 ") VALUES (" +
-                "?, ?, ?, ? " +
+                "?, ?, ?, ?, ? " +
                 ") ON DUPLICATE KEY UPDATE  " +
-                "Nickname = ?, Prefix = ?, Suffix = ?;"),
+                "Nickname = ?, Prefix = ?, Suffix = ?, Tags = ?;"),
 
         /** Inserts or updates the player's last known location (server, world, coordinates, angles). */
         PUSH_PLAYER_LOCATION("INSERT INTO `%table_prefix%player_location` (" +
@@ -292,6 +293,7 @@ public class Statements {
                         "    Nickname TEXT, " +
                         "    Prefix TEXT, " +
                         "    Suffix TEXT, " +
+                        "    Tags TEXT, " +
                         "    PRIMARY KEY (Uuid)" +
                         ");;" +
                         "CREATE TABLE IF NOT EXISTS `%table_prefix%player_location` (" +
@@ -372,11 +374,11 @@ public class Statements {
                 "    ?, ?, ?, ?, ?, ?, ?" +
                 ");"),
 
-        /** Inserts or replaces the player metadata row (nickname, prefix, suffix). */
+        /** Inserts or replaces the player metadata row (nickname, prefix, suffix, tags). */
         PUSH_PLAYER_META("INSERT OR REPLACE INTO `%table_prefix%player_meta` (" +
-                "    Uuid, Nickname, Prefix, Suffix" +
+                "    Uuid, Nickname, Prefix, Suffix, Tags" +
                 ") VALUES (" +
-                "    ?, ?, ?, ? " +
+                "    ?, ?, ?, ?, ? " +
                 ");"),
 
         /** Inserts or replaces the player's last known location (server, world, coordinates, angles). */

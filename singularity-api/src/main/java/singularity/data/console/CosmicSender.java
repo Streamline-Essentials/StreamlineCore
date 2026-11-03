@@ -616,11 +616,12 @@ public class CosmicSender implements Loadable<CosmicSender> {
     }
 
     /**
-     * Builds and returns the formatted display name for this sender. The console
-     * shows its meta override ({@link SenderMeta#getFull()}) or the console display
-     * name. Players show their effective prefix, their nickname (or username when
-     * none is set) and their effective suffix; see {@link UserUtils#getPrefix} for
-     * how the {@link SenderMeta} prefix and the LuckPerms prefix combine.
+     * Builds and returns the formatted display name for this sender, entirely from its
+     * {@link SenderMeta}. The console shows its meta override ({@link SenderMeta#getFull()})
+     * or the console display name. Players show their meta prefix, their nickname (or
+     * username when none is set) and their meta suffix; the prefix and suffix are left out
+     * when {@link SenderMeta#isPlainName()} is set. With LuckPerms the meta prefix and
+     * suffix are copies of LuckPerms' ({@link UserUtils#syncChatMeta}).
      *
      * @return the fully formatted display name string
      */
@@ -631,9 +632,10 @@ public class CosmicSender implements Loadable<CosmicSender> {
         }
 
         String nickname = getMeta().getNickname();
-        return UserUtils.getPrefix(this)
-                + (nickname == null || nickname.isBlank() ? getCurrentName() : nickname)
-                + UserUtils.getSuffix(this);
+        String name = nickname == null || nickname.isBlank() ? getCurrentName() : nickname;
+        if (getMeta().isPlainName()) return name;
+
+        return UserUtils.getPrefix(this) + name + UserUtils.getSuffix(this);
     }
 
     /**
