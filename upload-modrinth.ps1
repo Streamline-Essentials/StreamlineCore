@@ -67,6 +67,9 @@
 .PARAMETER DeployDir
   Folder holding the built jars. Defaults to $env:DEPLOY_DIR, else .\deploy.
 
+.PARAMETER ThrottleLimit
+  How many jars are sent at once. Defaults to 10.
+
 .EXAMPLE
   .\upload-modrinth.ps1                          # every platform jar
 .EXAMPLE
@@ -84,10 +87,15 @@ param(
     [string] $Changelog,
     [ValidateSet('release', 'beta', 'alpha')]
     [string] $VersionType = 'release',
-    [string] $DeployDir
+    [string] $DeployDir,
+    [ValidateRange(1, 64)]
+    [int] $ThrottleLimit = 10
 )
 
 $ErrorActionPreference = 'Stop'
+# Invoke-RestMethod otherwise redraws a progress bar for every request.
+$ProgressPreference = 'SilentlyContinue'
+. (Join-Path $PSScriptRoot 'upload-parallel.ps1')
 
 # Also returned by BasePlugin#getModrinthId() on Spigot for BOU's version checker.
 $ProjectId = 'wEJy5rtv'
@@ -398,7 +406,8 @@ $client.DefaultRequestHeaders.TryAddWithoutValidation('User-Agent', $UserAgent) 
 
 $failed = 0
 try {
-    foreach ($u in $uploads) {
+    # Previews and -Confirm prompts run here, in file order; the requests run on the pool below.
+    $jobs = foreach ($u in $uploads) {
         $file = $u.File
         $name = "StreamlineCore $Version ($($u.Label))"
         $data = [ordered]@{
@@ -436,63 +445,81 @@ try {
         }
 
         if ($existing) {
-            $versionId = $existing.Version.id
             $action = if ($swap) { "PATCH and swap jar $($file.Name)" } else { 'PATCH' }
-            if (-not $PSCmdlet.ShouldProcess("$name ($versionId)", $action)) { continue }
-            try {
-                $edit = [ordered]@{
-                    name           = $name
-                    changelog      = $Changelog
-                    version_type   = $VersionType
-                    loaders        = @($u.Loaders)
-                    game_versions  = @($u.Games)
-                    dependencies   = @($u.Deps)
+            if (-not $PSCmdlet.ShouldProcess("$name ($($existing.Version.id))", $action)) { continue }
+        } else {
+            $games = if ($u.Games.Count -gt 2) { "$($u.Games[0])-$($u.Games[-1])" } else { $u.Games -join ', ' }
+            if (-not $PSCmdlet.ShouldProcess("$name [$($u.Loaders -join ', ')] [$games]", "POST $($file.Name)")) { continue }
+        }
+        [pscustomobject]@{ U = $u; File = $file; Name = $name; Data = $data; Existing = $existing; Bytes = $bytes; Swap = $swap }
+    }
+    $jobs = @($jobs)
+
+    if ($jobs.Count) {
+        $results = @(Invoke-Parallel -Items $jobs -ThrottleLimit $ThrottleLimit `
+            -Variables @{ client = $client; Api = $Api; Changelog = $Changelog; VersionType = $VersionType } `
+            -Functions 'Send-Modrinth', 'Add-VersionFile', 'Remove-VersionFile', 'Update-VersionJar', 'Get-StandInBytes', 'Get-Sha1' `
+            -ScriptBlock {
+            param($job)
+            $u = $job.U; $file = $job.File; $name = $job.Name; $existing = $job.Existing
+            if ($existing) {
+                $versionId = $existing.Version.id
+                try {
+                    $edit = [ordered]@{
+                        name           = $name
+                        changelog      = $Changelog
+                        version_type   = $VersionType
+                        loaders        = @($u.Loaders)
+                        game_versions  = @($u.Games)
+                        dependencies   = @($u.Deps)
+                    }
+                    $json = New-Object System.Net.Http.StringContent(($edit | ConvertTo-Json -Depth 5 -Compress), [Text.Encoding]::UTF8, 'application/json')
+                    Send-Modrinth 'PATCH' "/version/$versionId" $json | Out-Null
+                    if ($job.Swap) {
+                        Update-VersionJar $existing $job.Bytes $file.Name
+                        Write-Host ("updated {0} ({1}), jar replaced <- {2}" -f $name, $versionId, $file.Name) -ForegroundColor Green
+                    } else {
+                        Write-Host ("updated {0} ({1}), jar unchanged" -f $name, $versionId) -ForegroundColor Green
+                    }
+                    $true
+                } catch {
+                    Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
+                    $false
                 }
-                $json = New-Object System.Net.Http.StringContent(($edit | ConvertTo-Json -Depth 5 -Compress), [Text.Encoding]::UTF8, 'application/json')
-                Send-Modrinth 'PATCH' "/version/$versionId" $json | Out-Null
-                if ($swap) {
-                    Update-VersionJar $existing $bytes $file.Name
-                    Write-Host ("updated {0} ({1}), jar replaced <- {2}" -f $name, $versionId, $file.Name) -ForegroundColor Green
+                return
+            }
+
+            $form = New-Object System.Net.Http.MultipartFormDataContent
+            $stream = [IO.File]::OpenRead($file.FullName)
+            try {
+                $json = New-Object System.Net.Http.StringContent(($job.Data | ConvertTo-Json -Depth 5 -Compress), [Text.Encoding]::UTF8, 'application/json')
+                $form.Add($json, 'data')
+                $content = New-Object System.Net.Http.StreamContent($stream)
+                $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse('application/java-archive')
+                $form.Add($content, 'file', $file.Name)
+
+                $response = $client.PostAsync("$Api/version", $form).GetAwaiter().GetResult()
+                $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                if ($response.IsSuccessStatusCode) {
+                    $result = $body | ConvertFrom-Json
+                    Write-Host ("uploaded {0} ({1}) <- {2}" -f $name, $result.id, $file.Name) -ForegroundColor Green
+                    $true
                 } else {
-                    Write-Host ("updated {0} ({1}), jar unchanged" -f $name, $versionId) -ForegroundColor Green
+                    $detail = $body
+                    try { $err = $body | ConvertFrom-Json; $detail = "$($err.error): $($err.description)" } catch { }
+                    Write-Host "failed  $($file.Name): $([int]$response.StatusCode) $detail" -ForegroundColor Red
+                    $false
                 }
             } catch {
-                $failed++
                 Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
+                $false
+            } finally {
+                $stream.Dispose()
+                $form.Dispose()
             }
-            continue
-        }
-
-        $games = if ($u.Games.Count -gt 2) { "$($u.Games[0])-$($u.Games[-1])" } else { $u.Games -join ', ' }
-        if (-not $PSCmdlet.ShouldProcess("$name [$($u.Loaders -join ', ')] [$games]", "POST $($file.Name)")) { continue }
-
-        $form = New-Object System.Net.Http.MultipartFormDataContent
-        $stream = [IO.File]::OpenRead($file.FullName)
-        try {
-            $json = New-Object System.Net.Http.StringContent(($data | ConvertTo-Json -Depth 5 -Compress), [Text.Encoding]::UTF8, 'application/json')
-            $form.Add($json, 'data')
-            $content = New-Object System.Net.Http.StreamContent($stream)
-            $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse('application/java-archive')
-            $form.Add($content, 'file', $file.Name)
-
-            $response = $client.PostAsync("$Api/version", $form).GetAwaiter().GetResult()
-            $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-            if ($response.IsSuccessStatusCode) {
-                $result = $body | ConvertFrom-Json
-                Write-Host ("uploaded {0} ({1}) <- {2}" -f $name, $result.id, $file.Name) -ForegroundColor Green
-            } else {
-                $failed++
-                $detail = $body
-                try { $err = $body | ConvertFrom-Json; $detail = "$($err.error): $($err.description)" } catch { }
-                Write-Host "failed  $($file.Name): $([int]$response.StatusCode) $detail" -ForegroundColor Red
-            }
-        } catch {
-            $failed++
-            Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
-        } finally {
-            $stream.Dispose()
-            $form.Dispose()
-        }
+        })
+        foreach ($r in $results | Where-Object Error) { Write-Host "failed  $($r.Item.File.Name): $($r.Error)" -ForegroundColor Red }
+        $failed += $jobs.Count - @($results | Where-Object { $_ -eq $true }).Count
     }
 } finally {
     $client.Dispose()

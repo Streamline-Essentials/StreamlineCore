@@ -57,6 +57,9 @@
 .PARAMETER DeployDir
   Folder holding the built jars. Defaults to $env:DEPLOY_DIR, else .\deploy.
 
+.PARAMETER ThrottleLimit
+  How many jars are sent at once. Defaults to 10.
+
 .EXAMPLE
   .\upload-curseforge.ps1                        # every mod jar
 .EXAMPLE
@@ -74,10 +77,15 @@ param(
     [string] $Changelog,
     [ValidateSet('release', 'beta', 'alpha')]
     [string] $ReleaseType = 'release',
-    [string] $DeployDir
+    [string] $DeployDir,
+    [ValidateRange(1, 64)]
+    [int] $ThrottleLimit = 10
 )
 
 $ErrorActionPreference = 'Stop'
+# Invoke-RestMethod otherwise redraws a progress bar for every request.
+$ProgressPreference = 'SilentlyContinue'
+. (Join-Path $PSScriptRoot 'upload-parallel.ps1')
 
 $ProjectId = 1780822
 $Api = 'https://minecraft.curseforge.com/api'
@@ -304,7 +312,8 @@ function New-JsonPart($Value) {
 
 $failed = 0
 try {
-    foreach ($u in $uploads) {
+    # Previews and -Confirm prompts run here, in file order; the requests run on the pool below.
+    $jobs = foreach ($u in $uploads) {
         $file = $u.File
         $name = "StreamlineCore $Version ($($u.Label))"
         $metadata = [ordered]@{
@@ -336,38 +345,46 @@ try {
         if ($existing) {
             if (-not $PSCmdlet.ShouldProcess("$name (file $($existing.id))", 'update-file')) { continue }
             $metadata.fileID = [int] $existing.id
+        } else {
+            if (-not $PSCmdlet.ShouldProcess("$name [$($u.Loader)] [$($u.Games -join ', ')]", "upload-file $($file.Name)")) { continue }
+        }
+        [pscustomobject]@{ File = $file; Name = $name; Metadata = $metadata; Existing = $existing }
+    }
+    $jobs = @($jobs)
+
+    if ($jobs.Count) {
+        $results = @(Invoke-Parallel -Items $jobs -ThrottleLimit $ThrottleLimit `
+            -Variables @{ client = $client; Api = $Api; ProjectId = $ProjectId } `
+            -Functions 'Send-CurseForge', 'New-JsonPart' `
+            -ScriptBlock {
+            param($job)
+            $file = $job.File; $name = $job.Name; $existing = $job.Existing
             $form = New-Object System.Net.Http.MultipartFormDataContent
+            $stream = $null
             try {
-                $form.Add((New-JsonPart $metadata), 'metadata')
-                Send-CurseForge "/projects/$ProjectId/update-file" $form | Out-Null
-                Write-Host ("updated {0} (file {1}), jar unchanged" -f $name, $existing.id) -ForegroundColor Green
+                $form.Add((New-JsonPart $job.Metadata), 'metadata')
+                if ($existing) {
+                    Send-CurseForge "/projects/$ProjectId/update-file" $form | Out-Null
+                    Write-Host ("updated {0} (file {1}), jar unchanged" -f $name, $existing.id) -ForegroundColor Green
+                } else {
+                    $stream = [IO.File]::OpenRead($file.FullName)
+                    $content = New-Object System.Net.Http.StreamContent($stream)
+                    $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse('application/java-archive')
+                    $form.Add($content, 'file', $file.Name)
+                    $result = Send-CurseForge "/projects/$ProjectId/upload-file" $form
+                    Write-Host ("uploaded {0} (file {1}) <- {2}" -f $name, $result.id, $file.Name) -ForegroundColor Green
+                }
+                $true
             } catch {
-                $failed++
                 Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
+                $false
             } finally {
+                if ($stream) { $stream.Dispose() }
                 $form.Dispose()
             }
-            continue
-        }
-
-        if (-not $PSCmdlet.ShouldProcess("$name [$($u.Loader)] [$($u.Games -join ', ')]", "upload-file $($file.Name)")) { continue }
-
-        $form = New-Object System.Net.Http.MultipartFormDataContent
-        $stream = [IO.File]::OpenRead($file.FullName)
-        try {
-            $form.Add((New-JsonPart $metadata), 'metadata')
-            $content = New-Object System.Net.Http.StreamContent($stream)
-            $content.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::Parse('application/java-archive')
-            $form.Add($content, 'file', $file.Name)
-            $result = Send-CurseForge "/projects/$ProjectId/upload-file" $form
-            Write-Host ("uploaded {0} (file {1}) <- {2}" -f $name, $result.id, $file.Name) -ForegroundColor Green
-        } catch {
-            $failed++
-            Write-Host "failed  $($file.Name): $($_.Exception.Message)" -ForegroundColor Red
-        } finally {
-            $stream.Dispose()
-            $form.Dispose()
-        }
+        })
+        foreach ($r in $results | Where-Object Error) { Write-Host "failed  $($r.Item.File.Name): $($r.Error)" -ForegroundColor Red }
+        $failed += $jobs.Count - @($results | Where-Object { $_ -eq $true }).Count
     }
 } finally {
     $client.Dispose()

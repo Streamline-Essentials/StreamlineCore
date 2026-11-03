@@ -41,12 +41,17 @@
 .PARAMETER Build
   Runs "gradlew shadowJar" for the selected modules before uploading.
 
+.PARAMETER ThrottleLimit
+  How many jars are looked up and uploaded at once. Defaults to 10.
+
 .EXAMPLE
   .\upload-modules.ps1                                # every built module
 .EXAMPLE
   .\upload-modules.ps1 StreamlineMOTD TacoEssentials -Build
 .EXAMPLE
   .\upload-modules.ps1 -Jar .\deploy\StreamlineMOTD-1.9.0.jar
+.EXAMPLE
+  .\upload-modules.ps1 -ThrottleLimit 4               # at most 4 uploads at once
 .EXAMPLE
   .\upload-modules.ps1 -WhatIf                        # list what would be uploaded, and how
 #>
@@ -56,12 +61,17 @@ param(
     [string[]] $Module,
     [string[]] $Jar,
     [string] $BaseUrl = 'https://modules.drak.gg',
-    [switch] $Build
+    [switch] $Build,
+    [ValidateRange(1, 64)]
+    [int] $ThrottleLimit = 10
 )
 
 $ErrorActionPreference = 'Stop'
+# Invoke-RestMethod otherwise redraws a progress bar for every request.
+$ProgressPreference = 'SilentlyContinue'
 $modulesRoot = Join-Path $PSScriptRoot 'modules'
 . (Join-Path $PSScriptRoot 'build-paths.ps1')
+. (Join-Path $PSScriptRoot 'upload-parallel.ps1')
 
 # SupportedPlatformTag ids, which are also the registry's PlatformTag values.
 $knownPlatforms = @('proxy', 'spigot', 'paper', 'modded-server', 'modded-client')
@@ -143,19 +153,17 @@ function Get-Platforms([hashtable] $manifest) {
     @($raw -split ',' | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
 }
 
-# Versions the registry already stores for a module; empty when the module is new.
-function Get-RemoteVersions([string] $name) {
-    try {
-        $remote = Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/v1/modules/$([Uri]::EscapeDataString($name))"
-        @($remote.versions | ForEach-Object { $_.version })
-    } catch {
-        if ($_.Exception.Response.StatusCode.value__ -eq 404) { return @() }
-        throw
-    }
+# The registry's error message for a failed request, with its HTTP status when there is one.
+function Get-ErrorText($record) {
+    $detail = $record.ErrorDetails.Message
+    try { $detail = ($detail | ConvertFrom-Json).error } catch { }
+    if (-not $detail) { $detail = $record.Exception.Message }
+    $status = $record.Exception.Response.StatusCode.value__
+    if ($status) { "$status $detail" } else { $detail }
 }
 
 $failed = 0
-foreach ($file in $jars) {
+$pending = foreach ($file in $jars) {
     # "StreamlineMOTD-1.9.0" / "Foo-1.0.0-beta" -> name "StreamlineMOTD" / "Foo", suffix "1.9.0" / "1.0.0-beta".
     $suffix = '-(\d+(\.\d+)*([-+.][A-Za-z0-9.+-]*)?)$'
     $name = $file.BaseName -replace $suffix, ''
@@ -182,43 +190,74 @@ foreach ($file in $jars) {
         Write-Host "failed  $($file.Name): unknown platform tags $($unknown -join ', ') (known: $($knownPlatforms -join ', '))" -ForegroundColor Red
         continue
     }
-    $platformList = $platforms -join ', '
 
-    $path = "$([Uri]::EscapeDataString($name))/{0}/$([Uri]::EscapeDataString($version))"
-
-    try {
-        # POST /upload never replaces a version (409), so an existing one goes through PATCH /upsert.
-        if ((Get-RemoteVersions $name) -contains $version) {
-            $method = 'Patch'; $verb = 'patched'
-            $url = "$BaseUrl/api/v1/$($path -f 'upsert')"
-        } else {
-            $method = 'Post'; $verb = 'uploaded'
-            $url = "$BaseUrl/api/v1/$($path -f 'upload')"
-        }
-
-        if (-not $PSCmdlet.ShouldProcess($url, "$($method.ToUpper()) $($file.Name) as $name $version [$platformList]")) { continue }
-
-        $result = Invoke-RestMethod -Method $method -Uri $url -InFile $file.FullName `
-            -ContentType 'application/java-archive' `
-            -Headers @{ Authorization = "Bearer $token" }
-        Write-Host ("{0} {1} {2} ({3}) [{4}] <- {5}" -f $verb.PadRight(8), $result.name, $version, $result.id, $platformList, $file.Name) -ForegroundColor Green
-
-        # The registry derives platforms from the stored jar; say so if they came out different.
-        $stored = @($result.versions | Where-Object { $_.version -eq $version } | Select-Object -First 1)
-        if ($stored.Count -and $null -ne $stored[0].platforms) {
-            $storedList = (@($stored[0].platforms) | Sort-Object) -join ', '
-            if ($storedList -ne (($platforms | Sort-Object) -join ', ')) {
-                Write-Warning "$name $($version): the registry recorded platforms [$storedList], the jar declares [$platformList]."
-            }
-        }
-    } catch {
-        $failed++
-        $detail = $_.ErrorDetails.Message
-        try { $detail = ($detail | ConvertFrom-Json).error } catch { }
-        if (-not $detail) { $detail = $_.Exception.Message }
-        $status = $_.Exception.Response.StatusCode.value__
-        Write-Host "failed  $($file.Name): $status $detail" -ForegroundColor Red
+    [pscustomobject]@{
+        File = $file; Name = $name; Version = $version
+        Platforms = $platforms; PlatformList = $platforms -join ', '
+        Path = "$([Uri]::EscapeDataString($name))/{0}/$([Uri]::EscapeDataString($version))"
+        Method = $null; Verb = $null; Url = $null
     }
+}
+$pending = @($pending)
+
+$shared = @{ BaseUrl = $BaseUrl; token = $token }
+
+# Which versions the registry already has, looked up for every jar at once.
+# POST /upload never replaces a version (409), so an existing one goes through PATCH /upsert.
+$lookups = @(Invoke-Parallel -Items $pending -ThrottleLimit $ThrottleLimit -Variables $shared -Functions 'Get-ErrorText' -ScriptBlock {
+    param($job)
+    try {
+        $remote = Invoke-RestMethod -Method Get -Uri "$BaseUrl/api/v1/modules/$([Uri]::EscapeDataString($job.Name))"
+        $versions = @($remote.versions | ForEach-Object { $_.version })
+    } catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) {
+            Write-Host "failed  $($job.File.Name): $(Get-ErrorText $_)" -ForegroundColor Red
+            return
+        }
+        $versions = @()
+    }
+    if ($versions -contains $job.Version) {
+        $job.Method = 'Patch'; $job.Verb = 'patched'
+        $job.Url = "$BaseUrl/api/v1/$($job.Path -f 'upsert')"
+    } else {
+        $job.Method = 'Post'; $job.Verb = 'uploaded'
+        $job.Url = "$BaseUrl/api/v1/$($job.Path -f 'upload')"
+    }
+    $job
+})
+$failed += $pending.Count - @($lookups | Where-Object { $_.Url }).Count
+foreach ($l in $lookups | Where-Object Error) { Write-Host "failed  $($l.Item.File.Name): $($l.Error)" -ForegroundColor Red }
+
+# Asked on this thread, in file order, so -WhatIf and -Confirm read as before.
+$approved = @($pending | Where-Object { $_.Url } | Where-Object {
+    $PSCmdlet.ShouldProcess($_.Url, "$($_.Method.ToUpper()) $($_.File.Name) as $($_.Name) $($_.Version) [$($_.PlatformList)]")
+})
+
+if ($approved.Count) {
+    $results = @(Invoke-Parallel -Items $approved -ThrottleLimit $ThrottleLimit -Variables $shared -Functions 'Get-ErrorText' -ScriptBlock {
+        param($job)
+        try {
+            $result = Invoke-RestMethod -Method $job.Method -Uri $job.Url -InFile $job.File.FullName `
+                -ContentType 'application/java-archive' `
+                -Headers @{ Authorization = "Bearer $token" }
+            Write-Host ("{0} {1} {2} ({3}) [{4}] <- {5}" -f $job.Verb.PadRight(8), $result.name, $job.Version, $result.id, $job.PlatformList, $job.File.Name) -ForegroundColor Green
+
+            # The registry derives platforms from the stored jar; say so if they came out different.
+            $stored = @($result.versions | Where-Object { $_.version -eq $job.Version } | Select-Object -First 1)
+            if ($stored.Count -and $null -ne $stored[0].platforms) {
+                $storedList = (@($stored[0].platforms) | Sort-Object) -join ', '
+                if ($storedList -ne (($job.Platforms | Sort-Object) -join ', ')) {
+                    Write-Host "WARNING: $($job.Name) $($job.Version): the registry recorded platforms [$storedList], the jar declares [$($job.PlatformList)]." -ForegroundColor Yellow
+                }
+            }
+            $true
+        } catch {
+            Write-Host "failed  $($job.File.Name): $(Get-ErrorText $_)" -ForegroundColor Red
+            $false
+        }
+    })
+    foreach ($r in $results | Where-Object Error) { Write-Host "failed  $($r.Item.File.Name): $($r.Error)" -ForegroundColor Red }
+    $failed += $approved.Count - @($results | Where-Object { $_ -eq $true }).Count
 }
 
 Write-Host 'Done!' -ForegroundColor Green
