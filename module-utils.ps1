@@ -44,27 +44,27 @@
     Show what would change without editing or committing anything.
 
 .EXAMPLE
-    .\bump-modules.ps1
+    .\module-utils.ps1
     Lists modules with commits since their last bump.
 
 .EXAMPLE
-    .\bump-modules.ps1 -Changed -DryRun
+    .\module-utils.ps1 -Changed -DryRun
     Previews minor bumps of every module with code changes.
 
 .EXAMPLE
-    .\bump-modules.ps1 StreamQuests TacoEssentials -Part Patch
+    .\module-utils.ps1 StreamQuests TacoEssentials -Part Patch
     Patch-bumps two modules, one commit each.
 
 .EXAMPLE
-    .\bump-modules.ps1 StreamlineHUD -Version 2.0.0
+    .\module-utils.ps1 StreamlineHUD -Version 2.0.0
     Sets one module's version exactly.
 
 .EXAMPLE
-    .\bump-modules.ps1 StreamQuests=1.8.0 TacoEssentials=1.2.1
+    .\module-utils.ps1 StreamQuests=1.8.0 TacoEssentials=1.2.1
     Sets several modules to exact versions, one commit each.
 
 .EXAMPLE
-    .\bump-modules.ps1 -Get StreamQuests
+    .\module-utils.ps1 -Get StreamQuests
     Prints StreamQuests' version (e.g. 1.7.0).
 #>
 [CmdletBinding()]
@@ -192,6 +192,6 @@ try {
     exit 0
 }
 catch {
-    [Console]::Error.WriteLine("bump-modules: $($_.Exception.Message)")
+    [Console]::Error.WriteLine("module-utils: $($_.Exception.Message)")
     exit 1
 }
