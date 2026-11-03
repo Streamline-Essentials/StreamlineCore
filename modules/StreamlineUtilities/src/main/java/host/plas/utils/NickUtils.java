@@ -8,24 +8,39 @@ import singularity.data.players.CosmicPlayer;
 import singularity.data.players.meta.SenderMeta;
 import singularity.modules.ModuleUtils;
 
-import java.util.function.BiConsumer;
-
 public class NickUtils {
-    public static void handleNickChange(CosmicSender user, String newName, String oldName, @Nullable BiConsumer<String, String> ifCancelled) {
+    /**
+     * Fires a {@link NicknameUpdateEvent} and, unless a listener cancels it, stores the
+     * resulting nickname. An empty nickname clears it, so the player shows their own name.
+     *
+     * @return the nickname that was stored (possibly changed by a listener), or {@code null}
+     *         when the change was cancelled
+     */
+    @Nullable
+    public static String handleNickChange(CosmicSender user, String newName, String oldName) {
         NicknameUpdateEvent updateEvent = new NicknameUpdateEvent(user, newName, oldName);
         ModuleUtils.fireEvent(updateEvent);
-        if (updateEvent.isCancelled()) {
-            if (ifCancelled == null) return;
-            ifCancelled.accept(newName, oldName);
-            return;
-        }
+        if (updateEvent.isCancelled()) return null;
+
+        String changeTo = updateEvent.getChangeTo() == null ? "" : updateEvent.getChangeTo();
 
         SenderMeta meta = user.getMeta();
-        meta.setNickname(updateEvent.getChangeTo());
+        meta.setNickname(changeTo);
 
         if (user instanceof CosmicPlayer) {
             CosmicPlayer player = (CosmicPlayer) user;
-            SpigotAccessor.updateCustomName(player, updateEvent.getChangeTo());
+            SpigotAccessor.updateCustomName(player, user.getDisplayName());
         }
+
+        return changeTo;
+    }
+
+    /**
+     * The name a player currently goes by: their nickname, or their username when none is set.
+     */
+    public static String currentNickname(CosmicSender user) {
+        String nick = user.getMeta().getNickname();
+        if (nick == null || nick.isBlank()) return user.getCurrentName();
+        return nick;
     }
 }

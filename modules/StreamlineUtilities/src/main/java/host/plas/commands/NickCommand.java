@@ -18,6 +18,7 @@ import host.plas.accessors.SpigotAccessor;
 import host.plas.events.NicknameUpdateEvent;
 import singularity.utils.UserUtils;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
@@ -56,16 +57,16 @@ public class NickCommand extends ModuleCommand {
 //        }
 //        CosmicPlayer sender = (CosmicPlayer) s;
 
-        String message = ModuleUtils.argsToString(strings);
-
         CosmicSender user = s;
+        int start = 0;
 
-        if (message.startsWith("-p:")) {
-            if (user.hasPermission(getPermissionSetOthers())) {
-                String name = strings[0].substring("-p:".length());
-                user = UserUtils.getOrGetPlayerByNameNullable(name);
-                message = message.substring(message.indexOf(' ') + 1);
+        if (strings.length > 0 && strings[0].startsWith("-p:")) {
+            if (! s.hasPermission(getPermissionSetOthers())) {
+                ctx.sendMessage(MainMessagesHandler.MESSAGES.INVALID.PERMISSIONS.get());
+                return;
             }
+            user = UserUtils.getOrGetPlayerByNameNullable(strings[0].substring("-p:".length()));
+            start = 1;
         }
 
         if (user == null) {
@@ -73,48 +74,35 @@ public class NickCommand extends ModuleCommand {
             return;
         }
 
-        if (message.isBlank()) {
-            strings = new String[]{"-clear"};
-            message = ModuleUtils.argsToString(strings);
-        }
+        String[] nickArgs = Arrays.copyOfRange(strings, start, strings.length);
+        String message = ModuleUtils.argsToString(nickArgs);
 
-        if (strings.length <= 2) {
-            if (strings[strings.length - 1].equals("-clear")) {
-                String current = user.getDisplayName();
-                final CosmicSender finalUser = user;
-                NickUtils.handleNickChange(user, message, current, (newNick, previous) -> {
-                    ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), finalUser)
-                            .replace("%this_new%", newNick)
-                            .replace("%this_previous%", previous)
-                    );
-                });
+        // "-clear", no nickname at all, or a bare "!" all reset the nickname to the username.
+        boolean clear = message.isBlank() || message.equals("-clear") || message.equals("!");
 
-                ctx.sendMessage(getWithOther(s, getMessageResultCleared(), user)
-                        .replace("%this_new%", ModuleUtils.replaceAllPlayerBungee(user, "%streamline_user_formatted%"))
-                        .replace("%this_previous%", current)
-                );
-                return;
-            }
-        }
-
-        if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
-            message = message.substring("!".length());
+        String nickname;
+        if (clear) {
+            nickname = "";
+        } else if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
+            nickname = message.substring("!".length());
         } else {
-            message = StreamlineUtilities.getConfigs().getNicknamesFormat().replace("%this_input%", message);
+            nickname = StreamlineUtilities.getConfigs().getNicknamesFormat().replace("%this_input%", message);
         }
 
-        String current = user.getDisplayName();
-        final CosmicSender finalUser = user;
-        NickUtils.handleNickChange(user, message, current, (newNick, previous) -> {
-            ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), finalUser)
-                    .replace("%this_new%", newNick)
+        String previous = NickUtils.currentNickname(user);
+        String applied = NickUtils.handleNickChange(user, nickname, previous);
+
+        if (applied == null) {
+            ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), user)
+                    .replace("%this_new%", nickname)
                     .replace("%this_previous%", previous)
             );
-        });
+            return;
+        }
 
-        ctx.sendMessage(getWithOther(s, getMessageResultChanged(), user)
-                .replace("%this_new%", message)
-                .replace("%this_previous%", current)
+        ctx.sendMessage(getWithOther(s, applied.isBlank() ? getMessageResultCleared() : getMessageResultChanged(), user)
+                .replace("%this_new%", NickUtils.currentNickname(user))
+                .replace("%this_previous%", previous)
         );
     }
 
