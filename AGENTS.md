@@ -60,6 +60,23 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 - The CurseForge project is a mod project (mod loaders only), so `upload-curseforge.ps1` uploads only the Fabric/Forge/NeoForge jars. Game versions, loader and environment are resolved to CurseForge ids from its `/api/game/versions`; the Minecraft range comes from each jar's own metadata.
 - CurseForge cannot replace a file's jar: a file name already among the project's public files only gets its metadata updated (`update-file`). Files still in moderation may not be listed yet, so re-running right after an upload can duplicate them.
 
+### Module versions
+
+**Always use `bump-modules.ps1` to read or change a module's version**, never by reading or editing `modules/<Module>/gradle.properties` by hand or with ad-hoc `git log` loops. It prints one short line per module, so it costs few tokens.
+
+```powershell
+.\bump-modules.ps1 -Get StreamQuests                           # just the version: 1.7.0
+.\bump-modules.ps1 -Get StreamQuests TacoEssentials            # StreamQuests=1.7.0 lines; -Get alone lists every module
+.\bump-modules.ps1                                             # modules with commits since their last bump (code vs metadata only)
+.\bump-modules.ps1 StreamQuests TacoEssentials -CoAuthor "Claude Opus 5.5 <noreply@anthropic.com>"   # minor bump, one commit each
+.\bump-modules.ps1 StreamQuests=1.8.0 RunOn=2.0.0              # exact versions (or: StreamQuests -Version 1.8.0)
+.\bump-modules.ps1 -Changed -Part Patch -DryRun                # every module with code changes since its bump
+```
+
+- A module's last bump is the newest commit changing its `version` line. Later commits count as code changes when they touch anything besides `gradle.properties`; `-IncludeMetadata` also takes modules whose only changes are tags, group, license or authors.
+- Each bump is its own `bump: <module> version` commit touching only the version line (`-NoCommit` leaves it uncommitted, `-CoAuthor` adds the commit trailer; agents pass their attribution there). It refuses to run with other changes staged.
+- Bump before the change, per the changelog rules: a module bumped and then changed in the same release still shows up in the listing, so check the commits before bumping it again.
+
 ### Mod-loader subprojects (Fabric / Forge / NeoForge)
 
 ```powershell
