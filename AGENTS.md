@@ -45,6 +45,18 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 - Modules publish to the same Nexus repo as `gg.drak.streamlinemodule:<name>:<version>` (shaded jar + sources, empty POM): `group` and `name` come from each module's `gradle.properties`.
 - CodeMC's Jenkins job (freestyle, `gradlew clean build publish`, Java 21, so no mod jars) archives the `deploy/` folder. Jenkins keeps its workspace, so when `BUILD_NUMBER` is set `clearDeploys` also empties `deploy/modules`.
 
+### Release uploads
+
+```powershell
+.\upload-modrinth.ps1 -WhatIf          # every platform jar in deploy\ to Modrinth (wEJy5rtv), $env:MODRINTH_TOKEN
+.\upload-curseforge.ps1 -WhatIf        # every mod jar in deploy\ to CurseForge (1780822), $env:CURSEFORGE_TOKEN
+.\upload-curseforge.bat Fabric NeoForge-1211 -ReleaseType beta
+```
+
+- Both take the jars of `version` in `gradle.properties` and use `UPDATES.md` as the changelog; drop `-WhatIf` to publish.
+- The CurseForge project is a mod project (mod loaders only), so `upload-curseforge.ps1` uploads only the Fabric/Forge/NeoForge jars. Game versions, loader and environment are resolved to CurseForge ids from its `/api/game/versions`; the Minecraft range comes from each jar's own metadata.
+- CurseForge cannot replace a file's jar: a file name already among the project's public files only gets its metadata updated (`update-file`). Files still in moderation may not be listed yet, so re-running right after an upload can duplicate them.
+
 ### Mod-loader subprojects (Fabric / Forge / NeoForge)
 
 ```powershell
