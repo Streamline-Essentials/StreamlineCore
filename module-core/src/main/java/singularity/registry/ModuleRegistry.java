@@ -75,13 +75,28 @@ public final class ModuleRegistry {
 
     /** A request that was refused or failed; the message is meant for whoever asked. */
     public static final class RegistryException extends RuntimeException {
+        /** The HTTP status the registry answered with, or 0 when the request never got an answer. */
+        @Getter
+        private final int status;
+
         public RegistryException(String message) {
+            this(message, 0);
+        }
+
+        public RegistryException(String message, int status) {
             super(message);
+            this.status = status;
         }
 
         public RegistryException(String message, Throwable cause) {
             super(message, cause);
+            this.status = 0;
         }
+    }
+
+    /** Whether {@code error} is the registry saying it does not host the requested module (HTTP 404). */
+    public static boolean isNotFound(Throwable error) {
+        return error instanceof RegistryException && ((RegistryException) error).getStatus() == 404;
     }
 
     /** One version of a module, as the registry lists it. */
@@ -262,7 +277,7 @@ public final class ModuleRegistry {
                     .header("User-Agent", USER_AGENT)
                     .GET().build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                throw new RegistryException(errorMessage(response.statusCode(), response.body()));
+                throw new RegistryException(errorMessage(response.statusCode(), response.body()), response.statusCode());
             }
             return new JsonParser().parse(response.body()).getAsJsonObject();
         } catch (IOException e) {
