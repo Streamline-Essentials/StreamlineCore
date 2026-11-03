@@ -45,6 +45,8 @@ public final class Afk {
         if (session.isAfk() == afk) return;
         session.setAfk(afk);
         if (! afk) session.markActive();
+        // From here on only moving away from where they are now counts as coming back.
+        if (afk) gameplay().getLocation(uuid).ifPresent(here -> session.setLastSeen(Loc.of(here)));
         Optional<CosmicPlayer> player = UserUtils.getPlayer(uuid).filter(CosmicPlayer::isOnline);
         if (player.isEmpty()) return;
         String name = player.get().getCurrentName();

@@ -138,31 +138,50 @@ public final class TacoDatabase {
         migrateHomes();
     }
 
+    /** The {@code flags} row, under a uuid no player has, recording that {@link #migrateHomes()} ran. */
+    private static final String SERVER_FLAG_UUID = "*";
+    private static final String FLAG_HOMES_SLOTTED = "homes_slotted";
+
     /**
-     * Copies homes from the name-keyed table into numbered slots, the first time the slot table
-     * is empty while the old one has rows. Each player's homes take slots 1, 2, ... in name order
-     * and keep their names.
+     * Copies homes from the name-keyed table into numbered slots, once per database. A home whose
+     * name is a number ({@code /sethome 2} made it) takes that slot unnamed, so {@code /home 2}
+     * still finds it; the rest take the lowest free slots in name order and keep their names.
      */
     private static void migrateHomes() {
+        if (hasFlag(SERVER_FLAG_UUID, FLAG_HOMES_SLOTTED)) return;
         int slotted = queryOne("SELECT COUNT(*) AS `n` FROM `" + table("home_slots") + "`;", rs -> rs.getInt("n")).orElse(0);
-        if (slotted > 0) return;
-        List<String[]> rows = new ArrayList<>();
-        List<Loc> locs = new ArrayList<>();
-        queryAll("SELECT * FROM `" + table("homes") + "` ORDER BY `uuid`, `name`;", rs -> {
-            rows.add(new String[] {rs.getString("uuid"), rs.getString("name")});
-            locs.add(readLoc(rs));
-            return null;
-        });
-        if (rows.isEmpty()) return;
-        String lastUuid = null;
-        int slot = 0;
-        for (int i = 0; i < rows.size(); i++) {
-            String uuid = rows.get(i)[0];
-            slot = uuid.equals(lastUuid) ? slot + 1 : 1;
-            lastUuid = uuid;
-            setHome(uuid, slot, rows.get(i)[1], locs.get(i));
+        int moved = 0;
+        if (slotted == 0) {
+            Map<String, List<Named>> byPlayer = new TreeMap<>();
+            queryAll("SELECT * FROM `" + table("homes") + "` ORDER BY `uuid`, `name`;", rs -> {
+                byPlayer.computeIfAbsent(rs.getString("uuid"), k -> new ArrayList<>()).add(new Named(rs.getString("name"), readLoc(rs)));
+                return null;
+            });
+            for (Map.Entry<String, List<Named>> player : byPlayer.entrySet()) {
+                moved += migrateHomes(player.getKey(), player.getValue());
+            }
+            if (moved > 0) MessageUtils.logInfo("[TacoEssentials] Moved " + moved + " homes into numbered slots.");
         }
-        MessageUtils.logInfo("[TacoEssentials] Moved " + rows.size() + " homes into numbered slots.");
+        setFlag(SERVER_FLAG_UUID, FLAG_HOMES_SLOTTED, true);
+    }
+
+    private static int migrateHomes(String uuid, List<Named> homes) {
+        java.util.Set<Integer> used = new java.util.HashSet<>();
+        List<Named> rest = new ArrayList<>();
+        for (Named home : homes) {
+            int slot = home.getName().matches("\\d{1,9}") ? Integer.parseInt(home.getName()) : 0;
+            if (slot >= 1 && used.add(slot)) setHome(uuid, slot, null, home.getLocation());
+            else rest.add(home);
+        }
+        int slot = 1;
+        for (Named home : rest) {
+            while (used.contains(slot)) slot++;
+            used.add(slot);
+            // Only-digit names cannot be home names any more, since they would read as slots.
+            String name = home.getName().matches("\\d+") ? null : home.getName();
+            setHome(uuid, slot, name, home.getLocation());
+        }
+        return homes.size();
     }
 
     // ---- players ----
