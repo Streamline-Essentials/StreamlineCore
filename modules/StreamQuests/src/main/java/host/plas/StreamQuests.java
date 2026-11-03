@@ -2,10 +2,12 @@ package host.plas;
 
 import host.plas.adapters.spigot.SpigotAdapter;
 import host.plas.commands.GrantCommand;
+import host.plas.commands.QuestShopCommand;
 import host.plas.commands.QuestsCommand;
 import host.plas.commands.ReloadCommand;
 import host.plas.commands.RevokeCommand;
 import host.plas.configs.QuestConfig;
+import host.plas.configs.ShopConfig;
 import host.plas.data.WorldTracker;
 import host.plas.database.Keeper;
 import host.plas.database.MyLoader;
@@ -23,6 +25,8 @@ public class StreamQuests extends SimpleModule {
 
     @Getter @Setter
     private static QuestConfig exampleConfig; // This will be used to access the config instance from anywhere in the plugin.
+    @Getter @Setter
+    private static ShopConfig shopConfig;
     @Getter @Setter
     private static QuestsListener questsListener; // This will be used to access the listener instance from anywhere in the plugin.
     @Getter @Setter
@@ -54,6 +58,7 @@ public class StreamQuests extends SimpleModule {
     @Override
     public void onEnable() {
         exampleConfig = new QuestConfig(); // Initialize the config.
+        shopConfig = new ShopConfig();
 
         keeper = new Keeper(); // Initialize the database.
         loader = new MyLoader(); // Initialize the loader.
@@ -70,6 +75,7 @@ public class StreamQuests extends SimpleModule {
         new ReloadCommand().register();
         new RevokeCommand().register();
         new QuestsCommand().register();
+        new QuestShopCommand().register();
     }
 
     @Override

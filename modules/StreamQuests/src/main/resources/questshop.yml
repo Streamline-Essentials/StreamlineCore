@@ -1,0 +1,702 @@
+# StreamQuests quest shop: /questshop (alias /qshop).
+# Players spend the points they earn from quests (see quests.yml) on the items below.
+#
+# Each item:
+#   category:     a key under "categories".
+#   name:         the item's display name (& and hex colors).
+#   icon:         the menu icon's item id; modded ids work (e.g. "create:wrench").
+#   icon-amount:  (optional) the icon's stack size.
+#   glowing:      (optional) gives the icon an enchanted glint.
+#   description:  (optional) lore lines above the rewards.
+#   price:        the cost in quest points.
+#   permission:   (optional) needed to see and buy it.
+#   order:        (optional) sort order in its category; ties sort by price.
+#   rewards:      a list, given top to bottom. Every item can have several.
+#
+# Reward types:
+#   ITEM       item: <namespaced id>   amount: <count>   data: (optional) components or NBT,
+#              written right after the id, e.g. '[minecraft:custom_name="Lucky"]' (1.20.5+)
+#              or '{display:{Name:"..."}}' (1.20.4 and older).
+#   EXP        amount: <number>   levels: true (levels) / false (experience points).
+#   POTION     effect: <namespaced id>   duration: <seconds, 0 = infinite>   level: <1 = I>
+#              hide-particles: true/false.
+#   MESSAGE    message: <text or list>, sent to the buyer.
+#   BROADCAST  message: <text or list>, sent to everyone online.
+#   COMMAND    commands: <list>, prefixed like quest rewards: "@c" console, "@s" the buyer,
+#              '@u:"<uuid>"' / '@n:"<name>"' someone else. Unprefixed commands run as the console.
+#   Any reward can set display: "<lore line>" (or "" to hide it from the menu).
+#
+# Text and commands accept placeholders, plus %player% (the buyer's name) and %uuid%.
+# Items, experience and effects are given with the server's own give / experience / effect
+# commands, so anything registered on the server works, including modded items and effects.
+# An item or effect the server does not have is never charged for: with hide-unavailable on,
+# its shop item is hidden (this is how the "New Additions" below only show on versions that
+# have them).
+
+settings:
+  title: "&6&lQuest Shop"
+  # Open a confirmation screen before spending points.
+  confirm-purchases: true
+  # Hide shop items whose item or effect this server does not have.
+  hide-unavailable: true
+
+# %item% the shop item's name, %price% its price, %points% the buyer's points after the
+# purchase, %missing% how many more points the buyer needs.
+messages:
+  purchased: "&aYou bought &f%item% &afor &e%price% &apoints&8. &7(&e%points% &7left)"
+  not-enough-points: "&cYou need &e%missing% &cmore points for &f%item%&c."
+  no-permission: "&cYou cannot buy &f%item%&c."
+  unavailable: "&f%item% &cis not available on this server."
+  not-loaded: "&cYour quest points are still loading. Try again in a moment."
+
+categories:
+  rare:
+    order: 1
+    name: "&d&lRare Finds"
+    icon: "minecraft:nether_star"
+    description:
+      - "&7Items that are hard to come by."
+  experience:
+    order: 2
+    name: "&a&lExperience"
+    icon: "minecraft:experience_bottle"
+    description:
+      - "&7Levels for enchanting and repairs."
+  new:
+    order: 3
+    name: "&b&lNew Additions"
+    icon: "minecraft:spyglass"
+    description:
+      - "&7Items from recent Minecraft updates."
+  effects:
+    order: 4
+    name: "&5&lEffects"
+    icon: "minecraft:brewing_stand"
+    description:
+      - "&7Temporary boosts."
+  bundles:
+    order: 5
+    name: "&6&lBundles"
+    icon: "minecraft:chest"
+    description:
+      - "&7Several rewards in one purchase."
+
+items:
+  # ---------------------------------------------------------------- Rare Finds
+  elytra:
+    category: rare
+    name: "&d&lElytra"
+    icon: "minecraft:elytra"
+    glowing: true
+    description:
+      - "&7Wings from an End City ship."
+    price: 3000
+    rewards:
+      - type: ITEM
+        item: "minecraft:elytra"
+        amount: 1
+      - type: BROADCAST
+        message: "&d%player% &7bought an &d&lElytra &7from the &6/questshop&7!"
+  nether-star:
+    category: rare
+    name: "&fNether Star"
+    icon: "minecraft:nether_star"
+    description:
+      - "&7Dropped by the Wither. Crafts a beacon."
+    price: 2500
+    rewards:
+      - type: ITEM
+        item: "minecraft:nether_star"
+        amount: 1
+  dragon-head:
+    category: rare
+    name: "&5Dragon Head"
+    icon: "minecraft:dragon_head"
+    description:
+      - "&7Found on End City ships."
+    price: 1500
+    rewards:
+      - type: ITEM
+        item: "minecraft:dragon_head"
+        amount: 1
+  netherite-ingot:
+    category: rare
+    name: "&8Netherite Ingot"
+    icon: "minecraft:netherite_ingot"
+    price: 1200
+    rewards:
+      - type: ITEM
+        item: "minecraft:netherite_ingot"
+        amount: 1
+  netherite-upgrade:
+    category: rare
+    name: "&8Netherite Upgrade Template"
+    icon: "minecraft:netherite_upgrade_smithing_template"
+    description:
+      - "&7Needed to upgrade diamond gear."
+    price: 600
+    rewards:
+      - type: ITEM
+        item: "minecraft:netherite_upgrade_smithing_template"
+        amount: 1
+  trident:
+    category: rare
+    name: "&3Trident"
+    icon: "minecraft:trident"
+    description:
+      - "&7Only drowned ever drop one."
+    price: 900
+    rewards:
+      - type: ITEM
+        item: "minecraft:trident"
+        amount: 1
+  totem-of-undying:
+    category: rare
+    name: "&eTotem of Undying"
+    icon: "minecraft:totem_of_undying"
+    description:
+      - "&7Cheats death once."
+    price: 800
+    rewards:
+      - type: ITEM
+        item: "minecraft:totem_of_undying"
+        amount: 1
+  heart-of-the-sea:
+    category: rare
+    name: "&9Heart of the Sea"
+    icon: "minecraft:heart_of_the_sea"
+    description:
+      - "&7Crafts a conduit."
+    price: 700
+    rewards:
+      - type: ITEM
+        item: "minecraft:heart_of_the_sea"
+        amount: 1
+  enchanted-golden-apple:
+    category: rare
+    name: "&6Enchanted Golden Apple"
+    icon: "minecraft:enchanted_golden_apple"
+    price: 600
+    rewards:
+      - type: ITEM
+        item: "minecraft:enchanted_golden_apple"
+        amount: 1
+  music-disc-pigstep:
+    category: rare
+    name: "&6Music Disc &7- &fPigstep"
+    icon: "minecraft:music_disc_pigstep"
+    description:
+      - "&7Only found in bastion chests."
+    price: 500
+    rewards:
+      - type: ITEM
+        item: "minecraft:music_disc_pigstep"
+        amount: 1
+  shulker-shells:
+    category: rare
+    name: "&5Shulker Shells"
+    icon: "minecraft:shulker_shell"
+    icon-amount: 2
+    description:
+      - "&7Enough for one shulker box."
+    price: 400
+    rewards:
+      - type: ITEM
+        item: "minecraft:shulker_shell"
+        amount: 2
+  echo-shards:
+    category: rare
+    name: "&3Echo Shards"
+    icon: "minecraft:echo_shard"
+    icon-amount: 4
+    description:
+      - "&7From ancient city chests."
+    price: 400
+    rewards:
+      - type: ITEM
+        item: "minecraft:echo_shard"
+        amount: 4
+  wither-skeleton-skull:
+    category: rare
+    name: "&8Wither Skeleton Skull"
+    icon: "minecraft:wither_skeleton_skull"
+    price: 350
+    rewards:
+      - type: ITEM
+        item: "minecraft:wither_skeleton_skull"
+        amount: 1
+  sponges:
+    category: rare
+    name: "&eSponges"
+    icon: "minecraft:sponge"
+    icon-amount: 4
+    description:
+      - "&7From ocean monuments."
+    price: 300
+    rewards:
+      - type: ITEM
+        item: "minecraft:sponge"
+        amount: 4
+
+  # ---------------------------------------------------------------- Experience
+  xp-5-levels:
+    category: experience
+    name: "&a5 Levels"
+    icon: "minecraft:experience_bottle"
+    icon-amount: 5
+    price: 50
+    rewards:
+      - type: EXP
+        amount: 5
+        levels: true
+  xp-15-levels:
+    category: experience
+    name: "&a15 Levels"
+    icon: "minecraft:experience_bottle"
+    icon-amount: 15
+    price: 140
+    rewards:
+      - type: EXP
+        amount: 15
+        levels: true
+  xp-30-levels:
+    category: experience
+    name: "&a&l30 Levels"
+    icon: "minecraft:experience_bottle"
+    icon-amount: 30
+    glowing: true
+    description:
+      - "&7Enough for a top enchantment."
+    price: 260
+    rewards:
+      - type: EXP
+        amount: 30
+        levels: true
+  xp-1000-points:
+    category: experience
+    name: "&a1,000 Experience Points"
+    icon: "minecraft:lime_dye"
+    description:
+      - "&7Added on top of your current progress."
+    price: 90
+    rewards:
+      - type: EXP
+        amount: 1000
+        levels: false
+  xp-bottles:
+    category: experience
+    name: "&aBottles o' Enchanting"
+    icon: "minecraft:experience_bottle"
+    icon-amount: 32
+    description:
+      - "&7Throw them when you need them."
+    price: 120
+    rewards:
+      - type: ITEM
+        item: "minecraft:experience_bottle"
+        amount: 32
+
+  # ---------------------------------------------------------------- New Additions
+  # Each of these is hidden on servers whose Minecraft version does not have it yet.
+  mace:
+    category: new
+    name: "&7&lMace"
+    icon: "minecraft:mace"
+    glowing: true
+    description:
+      - "&7Hits harder the further you fall."
+      - "&8Minecraft 1.21"
+    price: 4000
+    rewards:
+      - type: ITEM
+        item: "minecraft:mace"
+        amount: 1
+      - type: BROADCAST
+        message: "&7%player% &7bought a &7&lMace &7from the &6/questshop&7!"
+  heavy-core:
+    category: new
+    name: "&8Heavy Core"
+    icon: "minecraft:heavy_core"
+    description:
+      - "&7Crafts a mace with a breeze rod."
+      - "&8Minecraft 1.21"
+    price: 1500
+    rewards:
+      - type: ITEM
+        item: "minecraft:heavy_core"
+        amount: 1
+  ominous-trial-key:
+    category: new
+    name: "&5Ominous Trial Key"
+    icon: "minecraft:ominous_trial_key"
+    description:
+      - "&7Opens an ominous vault."
+      - "&8Minecraft 1.21"
+    price: 600
+    rewards:
+      - type: ITEM
+        item: "minecraft:ominous_trial_key"
+        amount: 1
+  trial-keys:
+    category: new
+    name: "&6Trial Keys"
+    icon: "minecraft:trial_key"
+    icon-amount: 3
+    description:
+      - "&7Open vaults in trial chambers."
+      - "&8Minecraft 1.21"
+    price: 300
+    rewards:
+      - type: ITEM
+        item: "minecraft:trial_key"
+        amount: 3
+  breeze-rods:
+    category: new
+    name: "&bBreeze Rods"
+    icon: "minecraft:breeze_rod"
+    icon-amount: 8
+    description:
+      - "&8Minecraft 1.21"
+    price: 250
+    rewards:
+      - type: ITEM
+        item: "minecraft:breeze_rod"
+        amount: 8
+  wind-charges:
+    category: new
+    name: "&fWind Charges"
+    icon: "minecraft:wind_charge"
+    icon-amount: 16
+    description:
+      - "&7Launch yourself into the air."
+      - "&8Minecraft 1.21"
+    price: 150
+    rewards:
+      - type: ITEM
+        item: "minecraft:wind_charge"
+        amount: 16
+  crafter:
+    category: new
+    name: "&7Crafter"
+    icon: "minecraft:crafter"
+    description:
+      - "&7Crafts with redstone."
+      - "&8Minecraft 1.21"
+    price: 200
+    rewards:
+      - type: ITEM
+        item: "minecraft:crafter"
+        amount: 1
+  music-disc-creator:
+    category: new
+    name: "&6Music Disc &7- &fCreator"
+    icon: "minecraft:music_disc_creator"
+    description:
+      - "&7Only from ominous vaults."
+      - "&8Minecraft 1.21"
+    price: 700
+    rewards:
+      - type: ITEM
+        item: "minecraft:music_disc_creator"
+        amount: 1
+  wolf-armor:
+    category: new
+    name: "&6Wolf Armor"
+    icon: "minecraft:wolf_armor"
+    description:
+      - "&7Keeps your dog safe."
+      - "&8Minecraft 1.20.5"
+    price: 400
+    rewards:
+      - type: ITEM
+        item: "minecraft:wolf_armor"
+        amount: 1
+  armadillo-scutes:
+    category: new
+    name: "&6Armadillo Scutes"
+    icon: "minecraft:armadillo_scute"
+    icon-amount: 6
+    description:
+      - "&8Minecraft 1.20.5"
+    price: 200
+    rewards:
+      - type: ITEM
+        item: "minecraft:armadillo_scute"
+        amount: 6
+  sniffer-egg:
+    category: new
+    name: "&2Sniffer Egg"
+    icon: "minecraft:sniffer_egg"
+    description:
+      - "&7Hatch your own sniffer."
+      - "&8Minecraft 1.20"
+    price: 800
+    rewards:
+      - type: ITEM
+        item: "minecraft:sniffer_egg"
+        amount: 1
+  torchflower-seeds:
+    category: new
+    name: "&6Torchflower Seeds"
+    icon: "minecraft:torchflower_seeds"
+    icon-amount: 4
+    description:
+      - "&8Minecraft 1.20"
+    price: 250
+    rewards:
+      - type: ITEM
+        item: "minecraft:torchflower_seeds"
+        amount: 4
+  pitcher-pods:
+    category: new
+    name: "&3Pitcher Pods"
+    icon: "minecraft:pitcher_pod"
+    icon-amount: 2
+    description:
+      - "&8Minecraft 1.20"
+    price: 250
+    rewards:
+      - type: ITEM
+        item: "minecraft:pitcher_pod"
+        amount: 2
+  cherry-saplings:
+    category: new
+    name: "&dCherry Saplings"
+    icon: "minecraft:cherry_sapling"
+    icon-amount: 4
+    description:
+      - "&8Minecraft 1.20"
+    price: 100
+    rewards:
+      - type: ITEM
+        item: "minecraft:cherry_sapling"
+        amount: 4
+  creaking-heart:
+    category: new
+    name: "&6Creaking Heart"
+    icon: "minecraft:creaking_heart"
+    description:
+      - "&7Spawns creaking at night."
+      - "&8Minecraft 1.21.4"
+    price: 400
+    rewards:
+      - type: ITEM
+        item: "minecraft:creaking_heart"
+        amount: 1
+  pale-oak-saplings:
+    category: new
+    name: "&7Pale Oak Saplings"
+    icon: "minecraft:pale_oak_sapling"
+    icon-amount: 4
+    description:
+      - "&8Minecraft 1.21.4"
+    price: 150
+    rewards:
+      - type: ITEM
+        item: "minecraft:pale_oak_sapling"
+        amount: 4
+  resin-clumps:
+    category: new
+    name: "&6Resin Clumps"
+    icon: "minecraft:resin_clump"
+    icon-amount: 16
+    description:
+      - "&8Minecraft 1.21.4"
+    price: 150
+    rewards:
+      - type: ITEM
+        item: "minecraft:resin_clump"
+        amount: 16
+  dried-ghast:
+    category: new
+    name: "&fDried Ghast"
+    icon: "minecraft:dried_ghast"
+    description:
+      - "&7Rehydrate it to raise a happy ghast."
+      - "&8Minecraft 1.21.6"
+    price: 500
+    rewards:
+      - type: ITEM
+        item: "minecraft:dried_ghast"
+        amount: 1
+  harness:
+    category: new
+    name: "&fHarness"
+    icon: "minecraft:white_harness"
+    description:
+      - "&7Ride a happy ghast."
+      - "&8Minecraft 1.21.6"
+    price: 300
+    rewards:
+      - type: ITEM
+        item: "minecraft:white_harness"
+        amount: 1
+
+  # ---------------------------------------------------------------- Effects
+  effect-haste:
+    category: effects
+    name: "&eHaste II"
+    icon: "minecraft:golden_pickaxe"
+    description:
+      - "&7Mine faster for 10 minutes."
+    price: 150
+    rewards:
+      - type: POTION
+        effect: "minecraft:haste"
+        duration: 600
+        level: 2
+  effect-speed:
+    category: effects
+    name: "&bSpeed II"
+    icon: "minecraft:sugar"
+    price: 120
+    rewards:
+      - type: POTION
+        effect: "minecraft:speed"
+        duration: 600
+        level: 2
+  effect-night-vision:
+    category: effects
+    name: "&9Night Vision"
+    icon: "minecraft:golden_carrot"
+    description:
+      - "&7See in the dark for 30 minutes."
+    price: 80
+    rewards:
+      - type: POTION
+        effect: "minecraft:night_vision"
+        duration: 1800
+        level: 1
+        hide-particles: true
+  effect-fire-resistance:
+    category: effects
+    name: "&6Fire Resistance"
+    icon: "minecraft:magma_cream"
+    price: 120
+    rewards:
+      - type: POTION
+        effect: "minecraft:fire_resistance"
+        duration: 600
+        level: 1
+  effect-resistance:
+    category: effects
+    name: "&7Resistance"
+    icon: "minecraft:shield"
+    price: 200
+    rewards:
+      - type: POTION
+        effect: "minecraft:resistance"
+        duration: 300
+        level: 1
+  effect-regeneration:
+    category: effects
+    name: "&dRegeneration II"
+    icon: "minecraft:ghast_tear"
+    price: 150
+    rewards:
+      - type: POTION
+        effect: "minecraft:regeneration"
+        duration: 60
+        level: 2
+  effect-hero-of-the-village:
+    category: effects
+    name: "&aHero of the Village"
+    icon: "minecraft:emerald"
+    description:
+      - "&7Villagers give you discounts for 10 minutes."
+    price: 300
+    rewards:
+      - type: POTION
+        effect: "minecraft:hero_of_the_village"
+        duration: 600
+        level: 1
+
+  # ---------------------------------------------------------------- Bundles
+  explorer-bundle:
+    category: bundles
+    name: "&aExplorer's Bundle"
+    icon: "minecraft:compass"
+    description:
+      - "&7Ready for a long trip."
+    price: 300
+    rewards:
+      - type: POTION
+        effect: "minecraft:speed"
+        duration: 900
+        level: 1
+      - type: POTION
+        effect: "minecraft:night_vision"
+        duration: 900
+        level: 1
+        hide-particles: true
+      - type: ITEM
+        item: "minecraft:cooked_beef"
+        amount: 32
+      - type: ITEM
+        item: "minecraft:ender_pearl"
+        amount: 8
+      - type: MESSAGE
+        message: "&aHave a good trip&8!"
+  enchanters-bundle:
+    category: bundles
+    name: "&dEnchanter's Bundle"
+    icon: "minecraft:enchanting_table"
+    description:
+      - "&7Everything for a fresh enchanting setup."
+    price: 600
+    rewards:
+      - type: EXP
+        amount: 30
+        levels: true
+      - type: ITEM
+        item: "minecraft:lapis_lazuli"
+        amount: 64
+      - type: ITEM
+        item: "minecraft:bookshelf"
+        amount: 15
+      - type: ITEM
+        item: "minecraft:enchanting_table"
+        amount: 1
+  champions-bundle:
+    category: bundles
+    name: "&6&lChampion's Bundle"
+    icon: "minecraft:golden_apple"
+    glowing: true
+    description:
+      - "&7For players who have done it all."
+    price: 5000
+    rewards:
+      - type: ITEM
+        item: "minecraft:elytra"
+        amount: 1
+      - type: ITEM
+        item: "minecraft:totem_of_undying"
+        amount: 2
+      - type: ITEM
+        item: "minecraft:enchanted_golden_apple"
+        amount: 2
+      - type: EXP
+        amount: 30
+        levels: true
+      - type: COMMAND
+        display: "&8- &6A celebration title"
+        commands:
+          - "@c firestring (title) %streamline_user_absolute% &6&lChampion&8!\\n&7Thanks for questing."
+      - type: BROADCAST
+        message:
+          - "&6&l%player% &7bought the &6&lChampion's Bundle&7!"
+          - "&7Earn points with &f/quests &7and spend them in &f/questshop&7."
+
+  # ---------------------------------------------------------------- Modded items
+  # Modded items and effects work like vanilla ones: use their namespaced id. This example
+  # is commented out because it needs the Create mod (or a hybrid server running it).
+  #
+  # create-wrench:
+  #   category: rare
+  #   name: "&6Wrench"
+  #   icon: "create:wrench"
+  #   price: 250
+  #   rewards:
+  #     - type: ITEM
+  #       item: "create:wrench"
+  #       amount: 1
