@@ -51,9 +51,12 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 .\upload-modrinth.ps1 -WhatIf          # every platform jar in deploy\ to Modrinth (wEJy5rtv), $env:MODRINTH_TOKEN
 .\upload-curseforge.ps1 -WhatIf        # every mod jar in deploy\ to CurseForge (1780822), $env:CURSEFORGE_TOKEN
 .\upload-curseforge.bat Fabric NeoForge-1211 -ReleaseType beta
+.\upload-modules.ps1 -WhatIf           # every built module jar to modules.drak.gg, $env:SLMODULES_MASTER_TOKEN
+.\upload-modules.bat StreamlineMOTD TacoEssentials -Build -ThrottleLimit 4
 ```
 
-- Both take the jars of `version` in `gradle.properties` and use `UPDATES.md` as the changelog; drop `-WhatIf` to publish.
+- Modrinth and CurseForge take the jars of `version` in `gradle.properties` and use `UPDATES.md` as the changelog; drop `-WhatIf` to publish.
+- All three send up to `-ThrottleLimit` (default 10) jars at once through `upload-parallel.ps1`'s `Invoke-Parallel` (a runspace pool, so it runs on Windows PowerShell 5.1 too) and set `$ProgressPreference = 'SilentlyContinue'`, so `Invoke-RestMethod` draws no progress bar. `-WhatIf` previews and `-Confirm` prompts stay on the main thread, in file order; only the requests run in parallel, and their result lines print in completion order.
 - The CurseForge project is a mod project (mod loaders only), so `upload-curseforge.ps1` uploads only the Fabric/Forge/NeoForge jars. Game versions, loader and environment are resolved to CurseForge ids from its `/api/game/versions`; the Minecraft range comes from each jar's own metadata.
 - CurseForge cannot replace a file's jar: a file name already among the project's public files only gets its metadata updated (`update-file`). Files still in moderation may not be listed yet, so re-running right after an upload can duplicate them.
 
