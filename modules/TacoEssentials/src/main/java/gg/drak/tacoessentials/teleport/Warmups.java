@@ -4,10 +4,10 @@ import gg.drak.tacoessentials.TacoEssentials;
 import gg.drak.tacoessentials.commands.Msg;
 import gg.drak.tacoessentials.commands.Perms;
 import gg.drak.tacoessentials.data.Loc;
+import gg.drak.tacoessentials.data.Sessions;
 import singularity.data.players.CosmicPlayer;
 import singularity.data.players.location.CosmicLocation;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +62,10 @@ public final class Warmups {
     public static void teleport(CosmicPlayer player, Destination destination, boolean recordBack, Consumer<Loc> onArrive) {
         String uuid = player.getUuid();
         cancel(uuid, false);
+        if (Sessions.isFrozen(uuid)) {
+            player.sendMessage(Msg.error("You cannot teleport while you are frozen."));
+            return;
+        }
         int seconds = player.hasPermission(Perms.BYPASS_WARMUP) ? 0 : TacoEssentials.getConfig().warmupSeconds();
         Optional<CosmicLocation> here = gameplay().getLocation(uuid);
         if (seconds <= 0 || here.isEmpty()) {
@@ -76,23 +80,20 @@ public final class Warmups {
     /** Checks every waiting player; runs on Streamline's scheduler twice a second. */
     public static void tick() {
         long now = System.currentTimeMillis();
-        Iterator<Map.Entry<String, Pending>> it = PENDING.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Pending> entry = it.next();
+        for (Map.Entry<String, Pending> entry : PENDING.entrySet()) {
             Pending pending = entry.getValue();
             Optional<CosmicLocation> here = gameplay().getLocation(entry.getKey());
             if (here.isEmpty()) {
-                it.remove();
+                PENDING.remove(entry.getKey(), pending);
                 continue;
             }
             if (! Loc.of(here.get()).sameBlock(pending.start)) {
-                it.remove();
-                pending.player.sendMessage(Msg.error("Teleport cancelled because you moved."));
+                if (PENDING.remove(entry.getKey(), pending)) pending.player.sendMessage(Msg.error("Teleport cancelled because you moved."));
                 continue;
             }
             if (now < pending.dueMillis) continue;
-            it.remove();
-            go(pending.player, pending.destination, pending.recordBack, pending.onArrive);
+            // Removed only if still this countdown: a newer one may have replaced it meanwhile.
+            if (PENDING.remove(entry.getKey(), pending)) go(pending.player, pending.destination, pending.recordBack, pending.onArrive);
         }
     }
 
