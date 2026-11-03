@@ -616,29 +616,24 @@ public class CosmicSender implements Loadable<CosmicSender> {
     }
 
     /**
-     * Builds and returns the formatted display name for this sender. If the
-     * meta object has a non-blank full override it is returned as-is; otherwise
-     * the console display name is used for the console, and for players the
-     * LuckPerms prefix/suffix and nickname (or username fallback) are assembled.
+     * Builds and returns the formatted display name for this sender. The console
+     * shows its meta override ({@link SenderMeta#getFull()}) or the console display
+     * name. Players show their effective prefix, their nickname (or username when
+     * none is set) and their effective suffix; see {@link UserUtils#getPrefix} for
+     * how the {@link SenderMeta} prefix and the LuckPerms prefix combine.
      *
      * @return the fully formatted display name string
      */
     public String getDisplayName() {
-        if (! getMeta().getFull().isEmpty() && ! getMeta().getFull().isBlank()) {
-            return getMeta().getFull();
+        if (isConsole()) {
+            String full = getMeta().getFull();
+            return full.isBlank() ? getConsoleDisplayName() : full;
         }
 
-        return isConsole() ?
-                getConsoleDisplayName() :
-                (
-                        UserUtils.getPrefix(this) +
-                                (
-                                        (getMeta().getNickname().isEmpty() || getMeta().getNickname().isBlank()) ?
-                                                getCurrentName() :
-                                                getMeta().getNickname()
-                                ) +
-                                UserUtils.getSuffix(this)
-                );
+        String nickname = getMeta().getNickname();
+        return UserUtils.getPrefix(this)
+                + (nickname == null || nickname.isBlank() ? getCurrentName() : nickname)
+                + UserUtils.getSuffix(this);
     }
 
     /**

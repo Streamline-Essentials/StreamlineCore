@@ -552,15 +552,17 @@ public class UserUtils {
     }
 
     /**
-     * Returns the effective prefix for the given sender.  For players, the prefix is
-     * fetched from LuckPerms via {@link singularity.permissions.PermissionUtil}; for
-     * non-player senders the meta prefix is used directly.
+     * Returns the effective prefix for the given sender: the {@link singularity.data.players.meta.SenderMeta} prefix
+     * when it is set (non-empty), otherwise, for players, the permission plugin's prefix
+     * via {@link singularity.permissions.PermissionUtil}. A meta prefix of only a reset
+     * code ({@code &r}) therefore shows no prefix at all, even when LuckPerms has one.
      *
      * @param user the sender whose prefix to retrieve
      * @return the prefix string, possibly empty
      */
     public static String getPrefix(CosmicSender user) {
-        if (! (user instanceof CosmicPlayer)) return user.getMeta().getPrefix();
+        String own = user.getMeta().getPrefix();
+        if (! (user instanceof CosmicPlayer) || (own != null && ! own.isEmpty())) return own == null ? "" : own;
         CosmicPlayer player = (CosmicPlayer) user;
 
         Optional<MetaValue> optional = PermissionUtil.getPrefix(player);
@@ -570,15 +572,16 @@ public class UserUtils {
     }
 
     /**
-     * Returns the effective suffix for the given sender.  For players, the suffix is
-     * fetched from LuckPerms via {@link singularity.permissions.PermissionUtil}; for
-     * non-player senders the meta suffix is used directly.
+     * Returns the effective suffix for the given sender, resolved like
+     * {@link #getPrefix(CosmicSender)}: the {@link singularity.data.players.meta.SenderMeta} suffix when set, otherwise
+     * the permission plugin's suffix for players.
      *
      * @param user the sender whose suffix to retrieve
      * @return the suffix string, possibly empty
      */
     public static String getSuffix(CosmicSender user) {
-        if (! (user instanceof CosmicPlayer)) return user.getMeta().getSuffix();
+        String own = user.getMeta().getSuffix();
+        if (! (user instanceof CosmicPlayer) || (own != null && ! own.isEmpty())) return own == null ? "" : own;
         CosmicPlayer player = (CosmicPlayer) user;
 
         Optional<MetaValue> optional = PermissionUtil.getSuffix(player);
