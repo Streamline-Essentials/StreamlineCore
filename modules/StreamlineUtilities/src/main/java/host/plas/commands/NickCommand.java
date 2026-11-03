@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 @Getter
 public class NickCommand extends ModuleCommand {
     private final String messageResultCleared;
+    private final String messageResultReset;
     private final String messageResultChanged;
     private final String messageResultCancelled;
     private final String permissionSetOthers;
@@ -38,6 +39,8 @@ public class NickCommand extends ModuleCommand {
 
         messageResultCleared = getCommandResource().getOrSetDefault("messages.result.cleared",
                 "&eChanged &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname to &b'%this_new%&b' &7(&efrom &b'%this_previous%&b'&7)");
+        messageResultReset = getCommandResource().getOrSetDefault("messages.result.reset",
+                "&eReset &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname &7(&efrom &b'%this_previous%&b'&7)");
         messageResultChanged = getCommandResource().getOrSetDefault("messages.result.changed",
                 "&eChanged &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname to &b'%this_new%&b' &7(&efrom &b'%this_previous%&b'&7)");
         messageResultCancelled = getCommandResource().getOrSetDefault("messages.result.cancelled",
@@ -77,12 +80,16 @@ public class NickCommand extends ModuleCommand {
         String[] nickArgs = Arrays.copyOfRange(strings, start, strings.length);
         String message = ModuleUtils.argsToString(nickArgs);
 
-        // "-clear", no nickname at all, or a bare "!" all reset the nickname to the username.
-        boolean clear = message.isBlank() || message.equals("-clear") || message.equals("!");
+        // "-reset", a bare "!" or no nickname at all go back to no nickname: the usual
+        // prefix + username + suffix. "-clear" shows the bare username, with no prefix or suffix.
+        boolean reset = message.isBlank() || message.equalsIgnoreCase("-reset") || message.equals("!");
+        boolean clear = message.equalsIgnoreCase("-clear");
 
         String nickname;
-        if (clear) {
+        if (reset) {
             nickname = "";
+        } else if (clear) {
+            nickname = user.getCurrentName();
         } else if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
             nickname = message.substring("!".length());
         } else {
@@ -90,7 +97,7 @@ public class NickCommand extends ModuleCommand {
         }
 
         String previous = NickUtils.currentNickname(user);
-        String applied = NickUtils.handleNickChange(user, nickname, previous);
+        String applied = NickUtils.handleNickChange(user, nickname, previous, clear);
 
         if (applied == null) {
             ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), user)
@@ -100,7 +107,8 @@ public class NickCommand extends ModuleCommand {
             return;
         }
 
-        ctx.sendMessage(getWithOther(s, applied.isBlank() ? getMessageResultCleared() : getMessageResultChanged(), user)
+        String result = reset ? getMessageResultReset() : clear ? getMessageResultCleared() : getMessageResultChanged();
+        ctx.sendMessage(getWithOther(s, result, user)
                 .replace("%this_new%", NickUtils.currentNickname(user))
                 .replace("%this_previous%", previous)
         );
@@ -117,6 +125,7 @@ public class NickCommand extends ModuleCommand {
                     r.add("!" + s);
                 });
                 r.add("-clear");
+                r.add("-reset");
                 r.add("!");
 
                 return r;
@@ -131,6 +140,7 @@ public class NickCommand extends ModuleCommand {
             });
 
             r.add("-clear");
+            r.add("-reset");
             r.add("!");
 
             return r;
@@ -142,13 +152,14 @@ public class NickCommand extends ModuleCommand {
 
                 r.addAll(ModuleUtils.getOnlinePlayerNames());
                 r.add("-clear");
+                r.add("-reset");
 
                 return r;
             }
         }
 
         if (strings.length >= 2) {
-            if (strings[strings.length - 2].equals("-clear")) {
+            if (strings[strings.length - 2].equals("-clear") || strings[strings.length - 2].equals("-reset")) {
                 return new ConcurrentSkipListSet<>();
             }
         }
