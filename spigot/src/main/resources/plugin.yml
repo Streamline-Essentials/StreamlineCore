@@ -1,6 +1,9 @@
 name: '${name}'
 version: '${version}'
 main: 'net.streamline.base.StreamlineSpigot'
+# Without an api-version Bukkit loads the plugin as legacy (pre-1.13) and remaps every
+# Material it touches to legacy ids, which newer servers no longer resolve.
+api-version: '1.13'
 
 authors: [ Drak ]
 website: https://github.com/Streamline-Essentials
