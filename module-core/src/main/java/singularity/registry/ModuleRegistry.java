@@ -351,6 +351,107 @@ public final class ModuleRegistry {
     }
 
     /**
+     * One StreamlineCore build, as {@code /core/{target}} lists it. Builds the registry does
+     * not store itself come from Modrinth ({@link #getSource()} {@code "modrinth"}) and carry
+     * only a SHA-512.
+     */
+    @Getter
+    public static final class CoreBuild {
+        /** The platform target, e.g. {@code spigot} or {@code fabric-1211}. */
+        private final String target;
+        private final String platform;
+        private final String version;
+        /** The Minecraft version the build is for; empty where it runs on any. */
+        private final String minecraft;
+        private final boolean client;
+        private final long size;
+        private final String sha256;
+        private final String sha512;
+        private final String downloadUrl;
+        /** {@code registry} or {@code modrinth}. */
+        private final String source;
+
+        CoreBuild(JsonObject json) {
+            this.target = string(json, "target");
+            this.platform = string(json, "platform");
+            this.version = string(json, "version");
+            this.minecraft = string(json, "minecraft");
+            JsonElement clientFlag = json.get("client");
+            this.client = clientFlag != null && clientFlag.isJsonPrimitive() && clientFlag.getAsBoolean();
+            this.size = number(json, "size");
+            this.sha256 = string(json, "sha256");
+            this.sha512 = string(json, "sha512");
+            this.downloadUrl = string(json, "downloadUrl");
+            this.source = string(json, "source");
+        }
+    }
+
+    /**
+     * The latest StreamlineCore build of a platform target, on the calling thread.
+     *
+     * @param target a core target: {@code spigot}, {@code bungee}, {@code velocity} or
+     *               {@code <fabric|forge|neoforge>-<minecraft without dots>}
+     */
+    public CoreBuild coreNow(String target) {
+        return new CoreBuild(getJson("/core/" + encode(target)));
+    }
+
+    /**
+     * Downloads a core build into a temporary {@code .part} file in {@code folder}, on the
+     * calling thread, and checks it against the SHA-256 the registry sends or, for a build
+     * served from Modrinth, the SHA-512 the listing holds. A build with neither is refused,
+     * since nothing could tell a damaged or substituted jar apart.
+     *
+     * @return the verified file; the caller moves or deletes it
+     */
+    public Path fetchCore(CoreBuild build, Path folder) {
+        String url = apiUrl() + "/core/" + encode(build.getTarget()) + "/download/" + encode(build.getVersion());
+
+        Path temp;
+        try {
+            Files.createDirectories(folder);
+            temp = Files.createTempFile(folder, ".core-", ".part");
+        } catch (IOException e) {
+            throw new RegistryException("Could not write to " + folder + ": " + e.getMessage(), e);
+        }
+
+        boolean keep = false;
+        try {
+            // Followed redirects lead to Modrinth's CDN for builds the registry does not store.
+            HttpResponse<byte[]> response = send(HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofMinutes(5))
+                    .header("Accept", "application/java-archive")
+                    .header("User-Agent", USER_AGENT)
+                    .GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() != 200) {
+                throw new RegistryException(errorMessage(response.statusCode(),
+                        new String(response.body(), StandardCharsets.UTF_8)), response.statusCode());
+            }
+            Files.write(temp, response.body());
+
+            String sha256 = header(response, "X-Checksum-SHA256").orElse(build.getSha256());
+            if (sha256 != null && ! sha256.isEmpty()) {
+                if (! sha256.equalsIgnoreCase(digest(temp, "SHA-256"))) {
+                    throw new RegistryException("Checksum mismatch for StreamlineCore " + build.getVersion() + "; the download was discarded.");
+                }
+            } else if (! build.getSha512().isEmpty()) {
+                if (! build.getSha512().equalsIgnoreCase(digest(temp, "SHA-512"))) {
+                    throw new RegistryException("Checksum mismatch for StreamlineCore " + build.getVersion() + "; the download was discarded.");
+                }
+            } else {
+                throw new RegistryException("The registry lists no checksum for StreamlineCore " + build.getVersion() + "; it was not downloaded.");
+            }
+
+            keep = true;
+            return temp;
+        } catch (IOException e) {
+            throw new RegistryException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
+        } finally {
+            if (! keep) deleteQuietly(temp);
+        }
+    }
+
+    /**
      * Compares dotted versions part by part, numerically where both parts are numbers
      * ({@code 1.10.0} is newer than {@code 1.9.2}); anything after a {@code -} or {@code +}
      * is ignored.
@@ -479,9 +580,14 @@ public final class ModuleRegistry {
     }
 
     public static String sha256(Path file) throws IOException {
+        return digest(file, "SHA-256");
+    }
+
+    /** The lower-case hex digest of a file with {@code algorithm} (e.g. {@code SHA-512}). */
+    public static String digest(Path file, String algorithm) throws IOException {
         MessageDigest digest;
         try {
-            digest = MessageDigest.getInstance("SHA-256");
+            digest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }

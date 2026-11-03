@@ -105,6 +105,15 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
     }
 
     /**
+     * Bukkit's {@code plugins/update}: a jar there replaces the plugin jar of the same file
+     * name on the next start, before any plugin loads.
+     */
+    @Override
+    public java.io.File getCoreUpdateFolder() {
+        return getServer().getUpdateFolderFile();
+    }
+
+    /**
      * The resource pack currently configured to be sent to players, if any.
      */
     @Getter @Setter

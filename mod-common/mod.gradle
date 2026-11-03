@@ -140,6 +140,21 @@ def writeRelocations = tasks.register('writeModuleRelocations') {
 }
 sourceSets.main.resources.srcDir(files(relocationsDir).builtBy(writeRelocations))
 
+// The registry target the core updater checks (singularity.updates.CoreUpdater): the platform
+// part of the jar's name, lower-cased (StreamlineCore-Fabric-1211 -> fabric-1211). It is fixed
+// at build time because one mod jar runs on more than one Minecraft version.
+def coreTargetDir = layout.buildDirectory.dir('generated/core-target')
+def writeCoreTarget = tasks.register('writeCoreTarget') {
+    def target = project.name.replaceFirst('^StreamlineCore-', '').toLowerCase(Locale.ROOT)
+    def outFile = coreTargetDir.map { it.file('streamline-core-target.properties') }
+    inputs.property('target', target)
+    outputs.file(outFile)
+    doLast {
+        outFile.get().asFile.text = "target=${target}\n"
+    }
+}
+sourceSets.main.resources.srcDir(files(coreTargetDir).builtBy(writeCoreTarget))
+
 // The plain jar holds only this project's classes; the shaded jar is the one that runs.
 tasks.named('jar', Jar) {
     archiveClassifier.set('plain')

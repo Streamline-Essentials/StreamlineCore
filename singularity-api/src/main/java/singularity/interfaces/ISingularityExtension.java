@@ -310,10 +310,44 @@ public interface ISingularityExtension {
      * {@link Singularity#platformEnabled(boolean)}.
      *
      * <p>Call this at the end of the platform plugin's enable sequence once all services
-     * and listeners are registered.</p>
+     * and listeners are registered. It also starts the core's update check
+     * ({@link singularity.updates.CoreUpdater}).</p>
      */
     default void setPlatformAsEnabled() {
         Singularity.platformEnabled(true);
+        singularity.updates.CoreUpdater.start(this);
+    }
+
+    /**
+     * The registry target ({@code https://modules.drak.gg/api/v1/core/<target>}) that this
+     * build of StreamlineCore updates from: {@code spigot}, {@code bungee}, {@code velocity},
+     * or {@code <fabric|forge|neoforge>-<minecraft without dots>} for mods, which bake it in at
+     * build time because a mod jar runs on more than one Minecraft version.
+     *
+     * @return the target, or {@code null} when this platform does not update itself
+     */
+    default String getCoreTarget() {
+        switch (getPlatformType()) {
+            case SPIGOT:
+                return "spigot";
+            case BUNGEE:
+                return "bungee";
+            case VELOCITY:
+                return "velocity";
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * A folder the platform itself moves updated plugin jars out of on its next start, matched
+     * by file name (Bukkit's {@code plugins/update}). The core updater falls back to it when
+     * the running jar cannot be replaced at shutdown.
+     *
+     * @return the folder, or {@code null} when the platform has none
+     */
+    default java.io.File getCoreUpdateFolder() {
+        return null;
     }
 
     /**

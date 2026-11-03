@@ -59,6 +59,9 @@ public class MainConfigHandler extends SimpleConfiguration {
         debugConsoleDebugPrefix();
 
         isNoInternet();
+        isCoreUpdatesEnabled();
+        isCoreUpdatesAutoInstall();
+        getCoreUpdatesIntervalHours();
         isPlayerLookupsEnabled();
         getPlayerLookupsBedrockPrefix();
 
@@ -430,6 +433,41 @@ public class MainConfigHandler extends SimpleConfiguration {
         reloadResource();
 
         return getResource().getOrSetDefault("no-internet", false);
+    }
+
+    /**
+     * Whether {@link singularity.updates.CoreUpdater} checks modules.drak.gg for newer
+     * StreamlineCore builds. {@code no-internet} turns the check off as well.
+     *
+     * @return {@code true} unless turned off
+     */
+    public boolean isCoreUpdatesEnabled() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("core-updates.enabled", true);
+    }
+
+    /**
+     * Whether a newer StreamlineCore build is downloaded and swapped in when the server stops,
+     * rather than only announced in the console.
+     *
+     * @return {@code true} unless turned off
+     */
+    public boolean isCoreUpdatesAutoInstall() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("core-updates.auto-install", true);
+    }
+
+    /**
+     * Hours between update checks after the one at start; {@code 0} or less checks only at start.
+     *
+     * @return the interval, {@code 6} by default
+     */
+    public int getCoreUpdatesIntervalHours() {
+        reloadResource();
+
+        return getResource().getOrSetDefault("core-updates.check-interval-hours", 6);
     }
 
     /**
