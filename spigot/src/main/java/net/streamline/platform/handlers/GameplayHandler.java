@@ -487,6 +487,34 @@ public class GameplayHandler implements IGameplayHandler {
         return player != null && player.isOp();
     }
 
+    /**
+     * Vanilla ids are checked against {@link Material}. Other namespaces only exist on hybrid
+     * servers, which name mod items in ways Bukkit cannot look up reliably, so they count as
+     * present.
+     */
+    @Override
+    public boolean hasItemType(String id) {
+        if (id == null || id.isBlank()) return false;
+        String key = id.trim().toLowerCase(Locale.ROOT);
+        if (key.contains(":") && ! key.startsWith("minecraft:")) return true;
+        Material material = Material.matchMaterial(key);
+        return material != null && ! material.isAir() && material.isItem();
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean hasEffectType(String id) {
+        if (id == null || id.isBlank()) return false;
+        NamespacedKey key = NamespacedKey.fromString(id.trim().toLowerCase(Locale.ROOT));
+        if (key == null) return false;
+        if (! key.getNamespace().equals(NamespacedKey.MINECRAFT)) return true;
+        try {
+            return org.bukkit.Registry.EFFECT.get(key) != null;
+        } catch (Throwable registryMissing) {
+            return org.bukkit.potion.PotionEffectType.getByKey(key) != null;
+        }
+    }
+
     @Override
     public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         return callSync(() -> BukkitStatistics.read(uuid, type, ids));

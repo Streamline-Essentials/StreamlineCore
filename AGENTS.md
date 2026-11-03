@@ -168,6 +168,8 @@ Menus look like BukkitOfUtils' shell GUIs: `GuiLayout.fillShell(gui, CornerColor
 
 `IGameplayHandler.statistics(uuid, type, ids)` reads vanilla statistics (live online, stats file offline) and waits for the server thread; the id `*` reads every entry of the type. Modules that read statistics for many players should do it off Streamline's single task thread (StreamlineCollections uses a small `StatReader` pool).
 
+`IGameplayHandler.hasItemType(id)` / `hasEffectType(id)` say whether the server registers a namespaced item or mob effect (mods: `BuiltInRegistries`, keys compared as strings; Spigot: `Material` / `Registry.EFFECT`, non-`minecraft` namespaces count as present). They answer `true` when a platform cannot tell, so callers can refuse before charging for a `/give` that would fail. StreamQuests' `/questshop` uses them to hide offers a version lacks.
+
 Event priority: `@BaseProcessor(priority = ...)` is honored because Streamline fires every event through `singularity.events.EventDispatcher` (LOWEST first, MONITOR last, ties in registration order); TheBase's own `BaseEventHandler.fireEvent` ignores priority, so never call it directly. Chat order on `CosmicChatEvent`: StreamlineMessaging channels (LOWEST) → TacoEssentials mute/alias prompts (LOW) → StreamlineDiscord relay (NORMAL) → TacoEssentials `ChatFormatter` (HIGH, `chat.format`) → LinkParser (HIGHEST). Each cancels what it takes over and skips cancelled events.
 
 Module commands also register as `/<module-id>:<label>` (`CosmicCommand.getNamespacedLabels()`), never written to the command's YAML.

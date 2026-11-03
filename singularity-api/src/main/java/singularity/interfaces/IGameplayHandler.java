@@ -103,6 +103,30 @@ public interface IGameplayHandler {
     Optional<CosmicLocation> findSafeLocation(String world, int x, int z, int nearY);
 
     /**
+     * Whether this server has an item with the namespaced id ({@code minecraft:heavy_core},
+     * {@code create:wrench}; a bare id means {@code minecraft:}). {@code false} only when the
+     * server certainly lacks it, so callers can refuse before taking anything for an item a
+     * {@code /give} would not hand out; a platform that cannot tell answers {@code true}.
+     *
+     * @param id the item id
+     * @return {@code false} if the item does not exist here
+     */
+    default boolean hasItemType(String id) {
+        return true;
+    }
+
+    /**
+     * Whether this server has a mob effect with the namespaced id ({@code minecraft:haste}; a
+     * bare id means {@code minecraft:}). Same contract as {@link #hasItemType(String)}.
+     *
+     * @param id the effect id
+     * @return {@code false} if the effect does not exist here
+     */
+    default boolean hasEffectType(String id) {
+        return true;
+    }
+
+    /**
      * A random safe standing spot whose horizontal distance from the world's spawn (from 0,0 in
      * worlds without one) lies between the radii. Oceans and rivers are skipped and the world
      * border is respected.
