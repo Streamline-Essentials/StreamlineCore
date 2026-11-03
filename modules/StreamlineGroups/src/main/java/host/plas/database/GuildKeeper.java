@@ -367,6 +367,9 @@ public class GuildKeeper extends DBKeeper<Guild> {
      */
     public CompletableFuture<ConcurrentSkipListSet<Guild>> pullAllGuilds() {
         return CompletableFuture.supplyAsync(() -> {
+            // Runs at startup, before any save or load has created the tables on a fresh database.
+            ensureTables();
+
             String statement = "SELECT `Uuid` FROM `%table_prefix%guilds`;";
 
             statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());
