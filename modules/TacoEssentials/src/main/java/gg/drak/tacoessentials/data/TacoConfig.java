@@ -21,12 +21,19 @@ public class TacoConfig extends ModularizedConfig {
     /** Writes every setting's default into the file, so admins can see what is configurable. */
     @Override
     public void init() {
+        warmupSeconds();
         tpaTimeoutSeconds();
         backHistorySize();
         backOnDeath();
         deathHistorySize();
         jumpMaxDistance();
         defaultMaxHomes();
+        homeNameMaxLength();
+        afkIdleSeconds();
+        afkBroadcast();
+        nearDefaultRadius();
+        nearMaxRadius();
+        broadcastFormat();
         rtpMaxAttempts();
         rtpCooldownSeconds();
         nickMaxLength();
@@ -56,6 +63,44 @@ public class TacoConfig extends ModularizedConfig {
         return getResource().getBoolean(key);
     }
 
+    /**
+     * Seconds a player stands still before a home, warp, spawn, /tpa, /rtp or /back teleport;
+     * 0 teleports at once. tacoessentials.teleport.bypasswarmup skips it.
+     */
+    public int warmupSeconds() {
+        return integer("teleport.warmup-seconds", 5);
+    }
+
+    /** Seconds without moving, chatting or running a command before a player goes AFK; 0 never. */
+    public int afkIdleSeconds() {
+        return integer("afk.idle-seconds", 300);
+    }
+
+    /** Whether going AFK and coming back is announced to everyone. */
+    public boolean afkBroadcast() {
+        return bool("afk.broadcast", true);
+    }
+
+    /** Longest home name /sethome and the homes menu accept. */
+    public int homeNameMaxLength() {
+        return Math.max(1, integer("homes.max-name-length", 30));
+    }
+
+    /** Blocks /near searches when given no distance. */
+    public int nearDefaultRadius() {
+        return integer("near.default-radius", 200);
+    }
+
+    /** The farthest /near (distance) may reach. */
+    public int nearMaxRadius() {
+        return integer("near.max-radius", 1000);
+    }
+
+    /** The /broadcast line; %message% is the text and %sender% who sent it. */
+    public String broadcastFormat() {
+        return string("broadcast.format", "&8[&6Broadcast&8] &f%message%");
+    }
+
     /** Seconds before a pending /tpa or /tpahere request expires. */
     public int tpaTimeoutSeconds() {
         return integer("teleport.tpa-timeout-seconds", 120);
@@ -81,7 +126,10 @@ public class TacoConfig extends ModularizedConfig {
         return integer("teleport.jump-max-distance", 256);
     }
 
-    /** Homes a player may own; tacoessentials.homes.unlimited lifts the limit (operators have it). */
+    /**
+     * Homes a player may own when they hold no tacoessentials.homes.&lt;N&gt; permission;
+     * tacoessentials.homes.unlimited lifts the limit (operators have it).
+     */
     public int defaultMaxHomes() {
         return integer("homes.default-max", 5);
     }

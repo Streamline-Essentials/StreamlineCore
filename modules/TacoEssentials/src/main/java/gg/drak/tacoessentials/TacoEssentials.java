@@ -17,6 +17,7 @@ import gg.drak.tacoessentials.data.TacoConfig;
 import gg.drak.tacoessentials.data.TacoDatabase;
 import gg.drak.tacoessentials.listeners.TacoListener;
 import gg.drak.tacoessentials.teleport.TpaManager;
+import gg.drak.tacoessentials.teleport.Warmups;
 import lombok.Getter;
 import org.pf4j.PluginWrapper;
 import singularity.Singularity;
@@ -95,6 +96,12 @@ public class TacoEssentials extends SimpleModule {
                 TpaManager.expire();
             }
         };
+        new ModuleRunnable(this, 10, 10) {
+            @Override
+            public void run() {
+                Warmups.tick();
+            }
+        };
         new ModuleRunnable(this, 100, 100) {
             @Override
             public void run() {
@@ -130,6 +137,7 @@ public class TacoEssentials extends SimpleModule {
     @Override
     public void onDisable() {
         TpaManager.clear();
+        Warmups.clear();
         Sessions.clear();
         AliasManager.unloadAll();
         AliasPrompts.clear();

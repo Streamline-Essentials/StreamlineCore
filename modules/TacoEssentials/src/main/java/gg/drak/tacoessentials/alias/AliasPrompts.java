@@ -9,8 +9,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * The alias editor's "type it in chat" prompts: while a player has one open, their next chat
- * message goes to the prompt instead of to chat. Typing {@code cancel} closes it.
+ * "Type it in chat" prompts, used by the alias editor and the homes menu: while a player has
+ * one open, their next chat message goes to the prompt instead of to chat. Typing
+ * {@code cancel} closes it.
  */
 public final class AliasPrompts {
 
@@ -21,7 +22,7 @@ public final class AliasPrompts {
     /** @return whether the prompt opened; a player has at most one open at a time */
     public static boolean open(CosmicPlayer player, Consumer<String> onAnswer) {
         if (PENDING.putIfAbsent(player.getUuid(), onAnswer) != null) {
-            player.sendMessage(Msg.error("You already have an alias editor prompt open. Type &6cancel &cor answer it first."));
+            player.sendMessage(Msg.error("You already have a chat prompt open. Type &6cancel &cor answer it first."));
             return false;
         }
         return true;
