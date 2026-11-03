@@ -45,6 +45,15 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 - Modules publish to the same Nexus repo as `gg.drak.streamlinemodule:<name>:<version>` (shaded jar + sources, empty POM): `group` and `name` come from each module's `gradle.properties`.
 - CodeMC's Jenkins job (freestyle, `gradlew clean build publish`, Java 21, so no mod jars) archives the `deploy/` folder. Jenkins keeps its workspace, so when `BUILD_NUMBER` is set `clearDeploys` also empties `deploy/modules`.
 
+### Cleaning old module jars
+
+```powershell
+.\clean-deploy-modules.ps1 -DryRun     # list what would be kept and removed
+.\clean-deploy-modules.bat -Force      # remove without asking
+```
+
+- `deploy\modules` (or `$env:DEPLOY_DIR\modules`; `-Path` for another folder) keeps every version a module was built at. The script groups jars by `<name>-<version>.jar`, keeps the highest version of each (numeric part by part, release over pre-release, file time on ties) and moves the rest to the Recycle Bin. Jars without a version in the name are skipped.
+
 ### Release uploads
 
 ```powershell
