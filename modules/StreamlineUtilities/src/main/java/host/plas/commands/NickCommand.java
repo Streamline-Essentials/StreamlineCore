@@ -86,10 +86,8 @@ public class NickCommand extends ModuleCommand {
         boolean clear = message.equalsIgnoreCase("-clear");
 
         String nickname;
-        if (reset) {
+        if (reset || clear) {
             nickname = "";
-        } else if (clear) {
-            nickname = user.getCurrentName();
         } else if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
             nickname = message.substring("!".length());
         } else {
