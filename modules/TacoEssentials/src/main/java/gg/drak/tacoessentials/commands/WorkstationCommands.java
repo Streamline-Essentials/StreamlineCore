@@ -45,9 +45,19 @@ public final class WorkstationCommands {
 
     public static List<TacoCommand> create() {
         List<TacoCommand> commands = new ArrayList<>();
-        commands.add(new TacoCommand("workstation", WorkstationCommands::workstation, WorkstationCommands::allowedNames));
-        SHORTCUTS.forEach((type, command) -> commands.add(new TacoCommand(command, ctx -> open(ctx, type))));
+        commands.add(new TacoCommand("workstation", WorkstationCommands::workstation, WorkstationCommands::allowedNames,
+                "workbench", "workbenches"));
+        SHORTCUTS.forEach((type, command) -> commands.add(new TacoCommand(command, ctx -> open(ctx, type), null,
+                SHORTCUT_ALIASES.getOrDefault(command, new String[0]))));
         return commands;
+    }
+
+    /** Extra command labels for a shortcut, as OpenDonut names them. */
+    private static final Map<String, String[]> SHORTCUT_ALIASES = new LinkedHashMap<>();
+
+    static {
+        SHORTCUT_ALIASES.put("smithing", new String[] {"smith"});
+        SHORTCUT_ALIASES.put("enchanting", new String[] {"etable"});
     }
 
     private static void workstation(TacoCommand.Ctx ctx) throws Msg.Fail {

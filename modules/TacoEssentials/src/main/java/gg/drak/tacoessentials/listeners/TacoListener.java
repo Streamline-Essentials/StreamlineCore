@@ -1,6 +1,8 @@
 package gg.drak.tacoessentials.listeners;
 
 import gg.drak.tacoessentials.TacoEssentials;
+import gg.drak.tacoessentials.activity.Afk;
+import gg.drak.tacoessentials.activity.Freeze;
 import gg.drak.tacoessentials.alias.AliasPrompts;
 import gg.drak.tacoessentials.commands.Msg;
 import gg.drak.tacoessentials.data.Loc;
@@ -48,6 +50,10 @@ public class TacoListener implements BaseEventListener {
             if (session.isGod()) gameplay().setGodMode(uuid, true);
             sendToFirstSpawn(uuid);
             PendingActions.apply(player);
+            if (session.isFrozen()) {
+                gameplay().getLocation(uuid).ifPresent(here -> session.setFrozenAt(Loc.of(here)));
+                player.sendMessage(Msg.error("You are frozen by staff. You can still use /msg."));
+            }
         } catch (Exception e) {
             MessageUtils.logWarning("[TacoEssentials] Could not load data for " + player.getCurrentName() + ": " + e.getMessage());
         }
@@ -91,6 +97,7 @@ public class TacoListener implements BaseEventListener {
     public void onChat(CosmicChatEvent event) {
         CosmicPlayer player = event.getPlayer();
         if (player == null) return;
+        Afk.active(player.getUuid());
         if (AliasPrompts.answer(player, event.getMessage())) {
             event.setCanceled(true);
             return;
@@ -105,6 +112,13 @@ public class TacoListener implements BaseEventListener {
         CosmicPlayer player = event.getPlayer();
         if (player == null) return;
         String label = event.getLabel();
+        // /afk toggles the status itself, so it must not first count as coming back.
+        if (! label.equals("afk")) Afk.active(player.getUuid());
+        if (Sessions.isFrozen(player.getUuid()) && ! Freeze.ALLOWED_COMMANDS.contains(label)) {
+            event.setCancelled(true);
+            player.sendMessage(Msg.error("You are frozen. You can only use /msg and /reply."));
+            return;
+        }
         if (CHAT_COMMANDS.contains(label) && Sessions.isMuted(player.getUuid())) {
             event.setCancelled(true);
             player.sendMessage(Msg.error("You are muted."));

@@ -1,5 +1,7 @@
 package gg.drak.tacoessentials;
 
+import gg.drak.tacoessentials.activity.Afk;
+import gg.drak.tacoessentials.activity.Freeze;
 import gg.drak.tacoessentials.alias.AliasEditor;
 import gg.drak.tacoessentials.alias.AliasManager;
 import gg.drak.tacoessentials.alias.AliasPrompts;
@@ -8,6 +10,7 @@ import gg.drak.tacoessentials.commands.AdminCommands;
 import gg.drak.tacoessentials.commands.HomeCommands;
 import gg.drak.tacoessentials.commands.Perms;
 import gg.drak.tacoessentials.commands.PositionCommands;
+import gg.drak.tacoessentials.commands.StaffCommands;
 import gg.drak.tacoessentials.commands.WorkstationCommands;
 import gg.drak.tacoessentials.commands.TeleportCommands;
 import gg.drak.tacoessentials.commands.UtilityCommands;
@@ -31,7 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Essential commands -- teleport requests, homes, warps, /back, /rtp, utilities and
+ * Essential commands modelled on OpenDonut's -- teleport requests with a stand-still countdown,
+ * numbered homes and their menu, warps, /back, /rtp, AFK, utilities, staff tools and
  * moderation -- and configurable public chat, on any backend Streamline platform. Everything in-game goes through
  * Streamline's gameplay API, so the module itself never touches a platform's classes; data
  * lives in Streamline's main database.
@@ -65,6 +69,7 @@ public class TacoEssentials extends SimpleModule {
         commands.addAll(PositionCommands.create());
         commands.addAll(WorkstationCommands.create());
         commands.addAll(AdminCommands.create());
+        commands.addAll(StaffCommands.create());
         commands.add(AliasEditor.create());
         setCommands(commands);
     }
@@ -100,6 +105,13 @@ public class TacoEssentials extends SimpleModule {
             @Override
             public void run() {
                 Warmups.tick();
+                Freeze.tick();
+            }
+        };
+        new ModuleRunnable(this, 100, 100) {
+            @Override
+            public void run() {
+                Afk.tick();
             }
         };
         new ModuleRunnable(this, 100, 100) {

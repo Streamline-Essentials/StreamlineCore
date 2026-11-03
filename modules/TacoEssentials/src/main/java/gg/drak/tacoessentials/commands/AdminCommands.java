@@ -2,6 +2,7 @@ package gg.drak.tacoessentials.commands;
 
 import gg.drak.tacoessentials.TacoEssentials;
 import gg.drak.tacoessentials.data.Loc;
+import gg.drak.tacoessentials.data.PendingActions;
 import gg.drak.tacoessentials.data.Sessions;
 import gg.drak.tacoessentials.data.TacoDatabase;
 import gg.drak.tacoessentials.teleport.Teleports;
@@ -17,7 +18,16 @@ import java.util.Optional;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal}, {@code /feed}, {@code /fly}, {@code /flyspeed}, {@code /walkspeed}, {@code /gm} (and {@code /gms}, {@code /gmc}, {@code /gma}, {@code /gmsp}), {@code /god}, {@code /invsee}, {@code /nickfor}, {@code /mute}, {@code /unmute}. */
+/**
+ * Operator commands: {@code /teleport_last}, {@code /tpx}, {@code /jump}, {@code /heal},
+ * {@code /feed}, {@code /fly}, {@code /flyspeed}, {@code /walkspeed}, {@code /gm} (and
+ * {@code /gms}, {@code /gmc}, {@code /gma}, {@code /gmsp}), {@code /god}, {@code /invsee},
+ * {@code /nickfor}, {@code /mute}, {@code /unmute}.
+ *
+ * <p>The player tools act on the runner, or with {@link Perms#STAFF_OTHERS} on a named player.
+ * A named player who is offline gets the change at their next join: heals, feeds and game mode
+ * changes are queued, while flight and god mode are saved per player anyway.</p>
+ */
 public final class AdminCommands {
 
     private AdminCommands() {}
@@ -28,21 +38,21 @@ public final class AdminCommands {
         commands.add(new TacoCommand("tpx", AdminCommands::tpx,
                 (ctx, arg) -> arg == 0 ? gameplay().getWorldNames() : Collections.emptyList()));
         commands.add(new TacoCommand("jump", AdminCommands::jump));
-        commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("feed", AdminCommands::feed, AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::onlineFirst));
+        commands.add(new TacoCommand("heal", AdminCommands::heal, AdminCommands::othersFirst));
+        commands.add(new TacoCommand("feed", AdminCommands::feed, AdminCommands::othersFirst));
+        commands.add(new TacoCommand("fly", AdminCommands::fly, AdminCommands::othersFirst));
         commands.add(new TacoCommand("flyspeed", ctx -> speed(ctx, "flyspeed", "fly", 10F, gameplay()::setFlySpeed),
                 speeds(FLY_SPEEDS), "fspeed"));
         commands.add(new TacoCommand("walkspeed", ctx -> speed(ctx, "walkspeed", "walk", 5F, gameplay()::setWalkSpeed),
                 speeds(WALK_SPEEDS), "wspeed"));
         commands.add(new TacoCommand("gm", AdminCommands::gm,
-                (ctx, arg) -> arg == 0 ? GAME_MODES : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList()));
-        commands.add(new TacoCommand("gms", ctx -> setGameMode(ctx, "survival", ctx.arg(0)), AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("gmc", ctx -> setGameMode(ctx, "creative", ctx.arg(0)), AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("gma", ctx -> setGameMode(ctx, "adventure", ctx.arg(0)), AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("gmsp", ctx -> setGameMode(ctx, "spectator", ctx.arg(0)), AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("god", AdminCommands::god, AdminCommands::onlineFirst));
-        commands.add(new TacoCommand("invsee", AdminCommands::invsee, AdminCommands::onlineFirst));
+                (ctx, arg) -> arg == 0 ? GAME_MODES : arg == 1 && ctx.has(Perms.STAFF_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList()));
+        commands.add(new TacoCommand("gms", ctx -> setGameMode(ctx, "survival", 0), AdminCommands::othersFirst));
+        commands.add(new TacoCommand("gmc", ctx -> setGameMode(ctx, "creative", 0), AdminCommands::othersFirst));
+        commands.add(new TacoCommand("gma", ctx -> setGameMode(ctx, "adventure", 0), AdminCommands::othersFirst));
+        commands.add(new TacoCommand("gmsp", ctx -> setGameMode(ctx, "spectator", 0), AdminCommands::othersFirst));
+        commands.add(new TacoCommand("god", AdminCommands::god, AdminCommands::othersFirst));
+        commands.add(new TacoCommand("invsee", AdminCommands::invsee, AdminCommands::onlineFirst, "inv", "cinv", "oi"));
         commands.add(new TacoCommand("nickfor", AdminCommands::nickFor, AdminCommands::knownFirst));
         commands.add(new TacoCommand("mute", ctx -> mute(ctx, true), AdminCommands::knownFirst));
         commands.add(new TacoCommand("unmute", ctx -> mute(ctx, false), AdminCommands::knownFirst));
@@ -51,6 +61,10 @@ public final class AdminCommands {
 
     private static List<String> onlineFirst(TacoCommand.Ctx ctx, int arg) {
         return arg == 0 ? TacoCommand.onlineNames() : Collections.emptyList();
+    }
+
+    private static List<String> othersFirst(TacoCommand.Ctx ctx, int arg) {
+        return arg == 0 && ctx.has(Perms.STAFF_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList();
     }
 
     private static List<String> knownFirst(TacoCommand.Ctx ctx, int arg) {
@@ -84,7 +98,7 @@ public final class AdminCommands {
     /** Same X/Z in another world (no Nether scaling), at the safe Y nearest the current one. */
     private static void tpx(TacoCommand.Ctx ctx) throws Msg.Fail {
         CosmicPlayer player = ctx.player();
-        String world = resolveWorld(ctx.require(0, "/tpx <world>"));
+        String world = TacoCommand.resolveWorld(ctx.require(0, "/tpx <world>"));
         CosmicLocation here = gameplay().getLocation(player.getUuid()).orElseThrow(() -> Msg.fail("You are not online here."));
         int x = (int) Math.floor(here.getX());
         int z = (int) Math.floor(here.getZ());
@@ -93,14 +107,6 @@ public final class AdminCommands {
         Loc to = new Loc(world, here.getX(), spot.getY(), here.getZ(), here.getYaw(), here.getPitch());
         Teleports.teleport(player.getUuid(), to, true);
         ctx.reply(Msg.success("Teleported to " + Loc.shortWorld(world) + " at " + x + ", " + (int) spot.getY() + ", " + z + "."));
-    }
-
-    /** Accepts a world's full name or, for namespaced dimension ids, the part after the colon. */
-    private static String resolveWorld(String name) throws Msg.Fail {
-        List<String> worlds = gameplay().getWorldNames();
-        for (String world : worlds) if (world.equalsIgnoreCase(name)) return world;
-        for (String world : worlds) if (Loc.shortWorld(world).equalsIgnoreCase(name)) return world;
-        throw Msg.fail("No world named " + name + ". Worlds: " + String.join(", ", worlds));
     }
 
     /** Teleports onto the first open, safe spot at or above the block being looked at. */
@@ -112,39 +118,43 @@ public final class AdminCommands {
         Teleports.teleport(player.getUuid(), Loc.of(spot), true);
     }
 
-    /** The online player named by the first argument, or the runner when there is none. */
-    private static CosmicPlayer targetOrSelf(TacoCommand.Ctx ctx) throws Msg.Fail {
-        return ctx.arg(0) != null ? TacoCommand.onlinePlayer(ctx.arg(0)) : ctx.player();
-    }
-
-    private static boolean isSelf(TacoCommand.Ctx ctx, CosmicPlayer target) {
-        return ctx.isPlayer() && ctx.sender().getUuid().equals(target.getUuid());
+    /** Tells the runner and the target what was done; an offline target hears nothing until it applies. */
+    private static void report(TacoCommand.Ctx ctx, TacoCommand.Target target, String toTarget, String toRunner) {
+        if (target.online == null) {
+            ctx.reply(Msg.success(toRunner) + Msg.muted(" " + target.name + " is offline; it applies when they next join."));
+            return;
+        }
+        target.online.sendMessage(Msg.success(toTarget));
+        if (! target.isSelf(ctx)) ctx.reply(Msg.success(toRunner));
     }
 
     private static void heal(TacoCommand.Ctx ctx) throws Msg.Fail {
-        CosmicPlayer target = targetOrSelf(ctx);
-        if (! gameplay().heal(target.getUuid())) throw Msg.fail(target.getCurrentName() + " is not online here.");
-        target.sendMessage(Msg.success("You have been healed."));
-        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Healed " + target.getCurrentName() + "."));
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, 0, Perms.STAFF_OTHERS, true);
+        if (target.online == null) PendingActions.heal(target.uuid);
+        else if (! gameplay().heal(target.uuid)) throw Msg.fail(target.name + " is not online here.");
+        report(ctx, target, "You have been healed.", "Healed " + target.name + ".");
     }
 
     private static void feed(TacoCommand.Ctx ctx) throws Msg.Fail {
-        CosmicPlayer target = targetOrSelf(ctx);
-        if (! gameplay().feed(target.getUuid())) throw Msg.fail(target.getCurrentName() + " is not online here.");
-        target.sendMessage(Msg.success("You have been fed."));
-        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Fed " + target.getCurrentName() + "."));
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, 0, Perms.STAFF_OTHERS, true);
+        if (target.online == null) PendingActions.feed(target.uuid);
+        else if (! gameplay().feed(target.uuid)) throw Msg.fail(target.name + " is not online here.");
+        report(ctx, target, "You have been fed.", "Fed " + target.name + ".");
     }
 
     /** Toggles flight; it stays on across respawns, world changes and relogs until toggled off. */
     private static void fly(TacoCommand.Ctx ctx) throws Msg.Fail {
-        CosmicPlayer target = targetOrSelf(ctx);
-        boolean enable = ! Sessions.get(target.getUuid()).isFly();
-        if (! gameplay().setFlight(target.getUuid(), enable)) throw Msg.fail(target.getCurrentName() + " is not online here.");
-        Sessions.setFly(target.getUuid(), enable);
-        target.sendMessage(Msg.success("Flight " + (enable ? "enabled." : "disabled.")));
-        if (! isSelf(ctx, target)) {
-            ctx.reply(Msg.success("Flight " + (enable ? "enabled" : "disabled") + " for " + target.getCurrentName() + "."));
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, 0, Perms.STAFF_OTHERS, true);
+        boolean enable;
+        if (target.online == null) {
+            enable = ! TacoDatabase.player(target.uuid).map(TacoDatabase.PlayerRecord::isFly).orElse(false);
+        } else {
+            enable = ! Sessions.get(target.uuid).isFly();
+            if (! gameplay().setFlight(target.uuid, enable)) throw Msg.fail(target.name + " is not online here.");
         }
+        Sessions.setFly(target.uuid, enable);
+        String state = enable ? "enabled" : "disabled";
+        report(ctx, target, "Flight " + state + ".", "Flight " + state + " for " + target.name + ".");
     }
 
     private static final List<String> FLY_SPEEDS = List.of("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "reset");
@@ -156,12 +166,12 @@ public final class AdminCommands {
     }
 
     private static TacoCommand.Completer speeds(List<String> speeds) {
-        return (ctx, arg) -> arg == 0 ? speeds : arg == 1 ? TacoCommand.onlineNames() : Collections.emptyList();
+        return (ctx, arg) -> arg == 0 ? speeds : arg == 1 && ctx.has(Perms.STAFF_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList();
     }
 
     /**
      * {@code /<label> <speed|reset> (player)}: speed is a multiple of the normal speed, from 0 to
-     * {@code max}; {@code reset} sets it back to 1.
+     * {@code max}; {@code reset} sets it back to 1. The game saves speeds, so the player must be online.
      */
     private static void speed(TacoCommand.Ctx ctx, String label, String what, float max, SpeedSetter setter) throws Msg.Fail {
         String usage = "/" + label + " <speed|reset> (player)";
@@ -178,11 +188,10 @@ public final class AdminCommands {
             String shownMax = String.valueOf((int) max);
             if (! (speed >= 0F && speed <= max)) throw Msg.fail(capitalize(what) + " speed must be between 0 and " + shownMax + " (1 is normal).");
         }
-        CosmicPlayer target = ctx.arg(1) != null ? TacoCommand.onlinePlayer(ctx.arg(1)) : ctx.player();
-        if (! setter.set(target.getUuid(), speed)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, 1, Perms.STAFF_OTHERS, false);
+        if (! setter.set(target.uuid, speed)) throw Msg.fail(target.name + " is not online here.");
         String shown = speed == (int) speed ? String.valueOf((int) speed) : String.valueOf(speed);
-        target.sendMessage(Msg.success(capitalize(what) + " speed set to " + shown + "."));
-        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s " + what + " speed to " + shown + "."));
+        report(ctx, target, capitalize(what) + " speed set to " + shown + ".", "Set " + target.name + "'s " + what + " speed to " + shown + ".");
     }
 
     private static String capitalize(String word) {
@@ -205,28 +214,31 @@ public final class AdminCommands {
     /** {@code /gm <gamemode> (player)}. */
     private static void gm(TacoCommand.Ctx ctx) throws Msg.Fail {
         String mode = gameMode(ctx.require(0, "/gm <gamemode> (player)"));
-        setGameMode(ctx, mode, ctx.arg(1));
+        setGameMode(ctx, mode, 1);
     }
 
-    /** Sets the game mode of the named online player, or of the sender when no name is given. */
-    private static void setGameMode(TacoCommand.Ctx ctx, String mode, String targetName) throws Msg.Fail {
-        CosmicPlayer target = targetName != null ? TacoCommand.onlinePlayer(targetName) : ctx.player();
-        if (! gameplay().setGameMode(target.getUuid(), mode)) throw Msg.fail(target.getCurrentName() + " is not online here.");
+    /** Sets the game mode of the player named at {@code index}, or of the sender when there is none. */
+    private static void setGameMode(TacoCommand.Ctx ctx, String mode, int index) throws Msg.Fail {
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, index, Perms.STAFF_OTHERS, true);
+        if (target.online == null) PendingActions.gameMode(target.uuid, mode);
+        else if (! gameplay().setGameMode(target.uuid, mode)) throw Msg.fail(target.name + " is not online here.");
         String shown = capitalize(mode);
-        target.sendMessage(Msg.success("Game mode set to " + shown + "."));
-        if (! isSelf(ctx, target)) ctx.reply(Msg.success("Set " + target.getCurrentName() + "'s game mode to " + shown + "."));
+        report(ctx, target, "Game mode set to " + shown + ".", "Set " + target.name + "'s game mode to " + shown + ".");
     }
 
     /** Toggles god mode; it stays on across respawns, world changes and relogs until toggled off. */
     private static void god(TacoCommand.Ctx ctx) throws Msg.Fail {
-        CosmicPlayer target = targetOrSelf(ctx);
-        boolean enable = ! Sessions.get(target.getUuid()).isGod();
-        if (! gameplay().setGodMode(target.getUuid(), enable)) throw Msg.fail(target.getCurrentName() + " is not online here.");
-        Sessions.setGod(target.getUuid(), enable);
-        target.sendMessage(Msg.success("God mode " + (enable ? "enabled." : "disabled.")));
-        if (! isSelf(ctx, target)) {
-            ctx.reply(Msg.success("God mode " + (enable ? "enabled" : "disabled") + " for " + target.getCurrentName() + "."));
+        TacoCommand.Target target = TacoCommand.targetOrSelf(ctx, 0, Perms.STAFF_OTHERS, true);
+        boolean enable;
+        if (target.online == null) {
+            enable = ! TacoDatabase.isGod(target.uuid);
+        } else {
+            enable = ! Sessions.get(target.uuid).isGod();
+            if (! gameplay().setGodMode(target.uuid, enable)) throw Msg.fail(target.name + " is not online here.");
         }
+        Sessions.setGod(target.uuid, enable);
+        String state = enable ? "enabled" : "disabled";
+        report(ctx, target, "God mode " + state + ".", "God mode " + state + " for " + target.name + ".");
     }
 
     private static void invsee(TacoCommand.Ctx ctx) throws Msg.Fail {

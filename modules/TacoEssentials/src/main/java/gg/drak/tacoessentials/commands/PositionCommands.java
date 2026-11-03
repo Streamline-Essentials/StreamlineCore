@@ -11,7 +11,7 @@ import java.util.List;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** {@code /up}, {@code /down}, {@code /top}, {@code /center}, {@code /tppos} and {@code /rotate}. */
+/** {@code /up} ({@code /upper}), {@code /down}, {@code /top}, {@code /center} and {@code /rotate}. */
 public final class PositionCommands {
 
     /** Furthest {@code /up} and {@code /down} search when given no distance: past any world's height. */
@@ -21,11 +21,10 @@ public final class PositionCommands {
 
     public static List<TacoCommand> create() {
         List<TacoCommand> commands = new ArrayList<>();
-        commands.add(new TacoCommand("up", ctx -> vertical(ctx, true)));
+        commands.add(new TacoCommand("up", ctx -> vertical(ctx, true), null, "upper"));
         commands.add(new TacoCommand("down", ctx -> vertical(ctx, false)));
         commands.add(new TacoCommand("top", PositionCommands::top));
         commands.add(new TacoCommand("center", PositionCommands::center));
-        commands.add(new TacoCommand("tppos", PositionCommands::tppos, PositionCommands::tpposCompletions));
         commands.add(new TacoCommand("rotate", PositionCommands::rotate, PositionCommands::rotateCompletions));
         return commands;
     }
@@ -84,22 +83,6 @@ public final class PositionCommands {
         ctx.reply(Msg.success("Centered on your block."));
     }
 
-    /** {@code /tppos <x> <y> <z> (pitch) (yaw)}, in the player's world; {@code ~} values are relative. */
-    private static void tppos(TacoCommand.Ctx ctx) throws Msg.Fail {
-        CosmicPlayer player = ctx.player();
-        String usage = "/tppos <x> <y> <z> (pitch) (yaw)";
-        CosmicLocation here = here(player);
-        double x = coordinate(ctx.require(0, usage), here.getX(), usage);
-        double y = coordinate(ctx.require(1, usage), here.getY(), usage);
-        double z = coordinate(ctx.require(2, usage), here.getZ(), usage);
-        float pitch = ctx.arg(3) == null ? here.getPitch() : pitch(coordinate(ctx.arg(3), here.getPitch(), usage));
-        float yaw = ctx.arg(4) == null ? here.getYaw() : yaw(coordinate(ctx.arg(4), here.getYaw(), usage));
-
-        Loc to = new Loc(here.getWorldName(), x, y, z, yaw, pitch);
-        if (! Teleports.teleport(player.getUuid(), to, true)) throw Msg.fail("You are not online here.");
-        ctx.reply(Msg.success(String.format("Teleported to %.2f, %.2f, %.2f.", x, y, z)));
-    }
-
     /** {@code /rotate <pitch> (yaw)}: turns the player in place; {@code ~} values are relative. */
     private static void rotate(TacoCommand.Ctx ctx) throws Msg.Fail {
         CosmicPlayer player = ctx.player();
@@ -120,7 +103,7 @@ public final class PositionCommands {
     }
 
     /** A number, or {@code ~} / {@code ~offset} relative to {@code current}. */
-    private static double coordinate(String raw, double current, String usage) throws Msg.Fail {
+    static double coordinate(String raw, double current, String usage) throws Msg.Fail {
         boolean relative = raw.startsWith("~");
         String number = relative ? raw.substring(1) : raw;
         if (relative && number.isEmpty()) return current;
@@ -134,30 +117,14 @@ public final class PositionCommands {
     }
 
     /** Pitch runs from -90 (straight up) to 90 (straight down). */
-    private static float pitch(double value) {
+    static float pitch(double value) {
         return (float) Math.max(-90.0, Math.min(90.0, value));
     }
 
     /** Yaw wrapped into [-180, 180). */
-    private static float yaw(double value) {
+    static float yaw(double value) {
         double wrapped = ((value + 180.0) % 360.0 + 360.0) % 360.0 - 180.0;
         return (float) wrapped;
-    }
-
-    private static List<String> tpposCompletions(TacoCommand.Ctx ctx, int arg) {
-        if (! ctx.isPlayer() || arg > 4) return Collections.emptyList();
-        List<String> out = new ArrayList<>();
-        out.add("~");
-        gameplay().getLocation(ctx.sender().getUuid()).ifPresent(here -> {
-            switch (arg) {
-                case 0: out.add(String.valueOf((int) Math.floor(here.getX()))); break;
-                case 1: out.add(String.valueOf((int) Math.floor(here.getY()))); break;
-                case 2: out.add(String.valueOf((int) Math.floor(here.getZ()))); break;
-                case 3: out.add(String.valueOf(Math.round(here.getPitch()))); break;
-                default: out.add(String.valueOf(Math.round(here.getYaw()))); break;
-            }
-        });
-        return out;
     }
 
     private static List<String> rotateCompletions(TacoCommand.Ctx ctx, int arg) {

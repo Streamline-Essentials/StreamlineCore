@@ -1,6 +1,7 @@
 package gg.drak.tacoessentials.commands;
 
 import gg.drak.tacoessentials.TacoEssentials;
+import gg.drak.tacoessentials.activity.Afk;
 import gg.drak.tacoessentials.data.TacoDatabase;
 import singularity.data.players.CosmicPlayer;
 import singularity.interfaces.IGameplayHandler;
@@ -11,11 +12,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static gg.drak.tacoessentials.teleport.Teleports.gameplay;
 
-/** {@code /kickme}, {@code /trashcan}, {@code /hat}, {@code /nick}, {@code /ec}, plus nickname handling shared with {@code /nickfor}. */
+/**
+ * {@code /kickme}, {@code /trashcan}, {@code /hat}, {@code /nick}, {@code /ec}, {@code /afk},
+ * {@code /ping} and {@code /playtime}, plus nickname handling shared with {@code /nickfor}.
+ */
 public final class UtilityCommands {
 
     private static final int TRASH_ROWS = 4;
@@ -27,12 +32,45 @@ public final class UtilityCommands {
         List<TacoCommand> commands = new ArrayList<>();
         commands.add(new TacoCommand("kickme", ctx -> ModuleUtils.kick(ctx.player(), "You kicked yourself. See you soon!")));
         commands.add(new TacoCommand("trashcan", ctx ->
-                gameplay().openDisposal(ctx.player().getUuid(), "&8Trash Can - items are deleted on close", TRASH_ROWS)));
+                gameplay().openDisposal(ctx.player().getUuid(), "&8Trash Can - items are deleted on close", TRASH_ROWS), null, "trash"));
         commands.add(new TacoCommand("hat", UtilityCommands::hat));
         commands.add(new TacoCommand("nick", UtilityCommands::nick, UtilityCommands::nickTargets));
         commands.add(new TacoCommand("ec", UtilityCommands::enderChest,
-                (ctx, arg) -> arg == 0 && ctx.has(Perms.EC_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList()));
+                (ctx, arg) -> arg == 0 && ctx.has(Perms.EC_OTHERS) ? TacoCommand.onlineNames() : Collections.emptyList(),
+                "enderchest", "ender"));
+        commands.add(new TacoCommand("afk", UtilityCommands::afk));
+        commands.add(new TacoCommand("ping", UtilityCommands::ping, UtilityCommands::onlineFirst));
+        commands.add(new TacoCommand("playtime", UtilityCommands::playtime,
+                (ctx, arg) -> arg == 0 ? TacoCommand.knownNames() : Collections.emptyList(), "pt", "playtimes"));
         return commands;
+    }
+
+    private static List<String> onlineFirst(TacoCommand.Ctx ctx, int arg) {
+        return arg == 0 ? TacoCommand.onlineNames() : Collections.emptyList();
+    }
+
+    private static void afk(TacoCommand.Ctx ctx) throws Msg.Fail {
+        CosmicPlayer player = ctx.player();
+        Afk.set(player.getUuid(), ! Afk.isAfk(player.getUuid()));
+    }
+
+    /** {@code /ping (player)}. */
+    private static void ping(TacoCommand.Ctx ctx) throws Msg.Fail {
+        CosmicPlayer target = ctx.arg(0) == null ? ctx.player() : TacoCommand.onlinePlayer(ctx.arg(0));
+        long ping = Math.round(ModuleUtils.getPlayerPing(target.getUuid()));
+        boolean self = ctx.isPlayer() && ctx.sender().getUuid().equals(target.getUuid());
+        ctx.reply(Msg.info((self ? "Your ping is " : target.getCurrentName() + "'s ping is ") + "&f" + ping + "ms" + Msg.info(".")));
+    }
+
+    /** {@code /playtime (player)}: time played on this server, from the game's own statistics. */
+    private static void playtime(TacoCommand.Ctx ctx) throws Msg.Fail {
+        TacoCommand.Target target = ctx.arg(0) == null ? TacoCommand.self(ctx) : TacoCommand.target(ctx.arg(0));
+        Map<String, Long> stats = gameplay().statistics(target.uuid, "minecraft:custom",
+                Arrays.asList("minecraft:play_time", "minecraft:play_one_minute"));
+        Long ticks = stats.getOrDefault("minecraft:play_time", stats.get("minecraft:play_one_minute"));
+        if (ticks == null) throw Msg.fail("No playtime is recorded for " + target.name + " on this server.");
+        String time = TacoCommand.duration(ticks / 20);
+        ctx.reply(Msg.info((target.isSelf(ctx) ? "You have played for " : target.name + " has played for ") + "&f" + time + Msg.info(".")));
     }
 
     /** {@code /ec (player)}: the runner's own ender chest, or {@code (player)}'s with the others permission. */
