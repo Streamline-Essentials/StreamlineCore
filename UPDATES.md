@@ -1,3 +1,6 @@
 + Nicknames now keep LuckPerms prefixes and suffixes.
 + Prefixes from inherited LuckPerms groups now show.
 + Prefix and suffix changes in LuckPerms apply instantly.
++ StreamlineCore now updates itself from modules.drak.gg.
+  + New versions install when the server stops.
+  + Turn off with core-updates.enabled in main-config.yml.
