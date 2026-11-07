@@ -206,6 +206,8 @@ Menus look like BukkitOfUtils' shell GUIs: `GuiLayout.fillShell(gui, CornerColor
 
 Event priority: `@BaseProcessor(priority = ...)` is honored because Streamline fires every event through `singularity.events.EventDispatcher` (LOWEST first, MONITOR last, ties in registration order); TheBase's own `BaseEventHandler.fireEvent` ignores priority, so never call it directly. Chat order on `CosmicChatEvent`: StreamlineMessaging channels (LOWEST) → TacoEssentials mute/alias prompts (LOW) → StreamlineDiscord relay (NORMAL) → TacoEssentials `ChatFormatter` (HIGH, `chat.format`) → LinkParser (HIGHEST). Each cancels what it takes over and skips cancelled events.
 
+`/streamlinedb (info|migrate <from> <to> (confirm))` (alias `/sldb`, `DatabaseCommand`) runs `singularity.database.DatabaseMigrator`: it saves loaded players, copies every table starting with the table prefix (core and module tables, all on the main `CoreDBOperator`) between the SQLite and MySQL set up in `database-config.yml`, creating missing tables from the source's columns and primary key (core tables come from the core schema), then writes `type` and reconnects the main operator in place. Without `confirm` it refuses when a copied target table already holds rows.
+
 Module commands also register as `/<module-id>:<label>` (`CosmicCommand.getNamespacedLabels()`), never written to the command's YAML.
 
 ### Platform Entry Points
