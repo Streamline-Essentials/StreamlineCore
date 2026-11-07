@@ -194,6 +194,10 @@ def bundleLibraries = { task ->
     task.exclude 'META-INF/services/ch.qos.logback.**'
     task.exclude 'logback*.xml'
 
+    // protobuf-java's .proto sources serve protoc only. Left in, their folder would count as a
+    // google.protobuf package of this jar's module and clash with mods shipping protobuf.
+    task.exclude 'google/protobuf/**'
+
     // TheBase's fat jar carries its own relocated database drivers and test classes.
     task.exclude 'org/junit/**'
     task.exclude 'gg/drak/thebase/lib/mysql/**'
