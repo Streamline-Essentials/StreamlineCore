@@ -61,6 +61,9 @@ public class GivenCommands {
     @Getter @Setter
     private static DebugCommand debugCommand;
 
+    @Getter @Setter
+    private static DatabaseCommand databaseCommand;
+
     /**
      * Instantiates every built-in command and registers each one with the
      * platform command dispatcher.
@@ -78,6 +81,7 @@ public class GivenCommands {
         setSetServerCommand(new SetServerCommand());
         setSyncCommand(new SyncCommand());
         setDebugCommand(new DebugCommand());
+        setDatabaseCommand(new DatabaseCommand());
 
         getModulesCommand().register();
         getParseCommand().register();
@@ -87,5 +91,6 @@ public class GivenCommands {
         getSetServerCommand().register();
         getSyncCommand().register();
         getDebugCommand().register();
+        getDatabaseCommand().register();
     }
 }
