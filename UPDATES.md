@@ -4,3 +4,4 @@
 + StreamlineCore now updates itself from modules.drak.gg.
   + New versions install when the server stops.
   + Turn off with core-updates.enabled in main-config.yml.
++ Fixed Forge/NeoForge crashing beside mods bundling SQLite.
