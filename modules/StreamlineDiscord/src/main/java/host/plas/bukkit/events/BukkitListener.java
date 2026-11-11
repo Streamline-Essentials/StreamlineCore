@@ -27,7 +27,7 @@ import java.util.Map;
  * advancement's display is read reflectively, by the method names both APIs share.
  */
 public class BukkitListener implements Listener {
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerAdvancementDoneEvent event) {
         try {
             new EventingEvent<Event>(event.getEventName(), event).fire();
@@ -50,7 +50,7 @@ public class BukkitListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(PlayerDeathEvent event) {
         try {
             new EventingEvent<Event>(event.getEventName(), event).fire();
@@ -64,6 +64,13 @@ public class BukkitListener implements Listener {
             // A death message removed by the server or a plugin means the death is not announced.
             String deathMessage = DiscordEventMessages.clean(event.getDeathMessage()).trim();
             if (deathMessage.isEmpty()) return;
+            // The message is still filled in when the showDeathMessages game rule hides it from chat.
+            try {
+                Boolean show = event.getEntity().getWorld().getGameRuleValue(GameRule.SHOW_DEATH_MESSAGES);
+                if (Boolean.FALSE.equals(show)) return;
+            } catch (Throwable ignored) {
+                // No game rules on this server version.
+            }
 
             CosmicSender sender = UserUtils.getOrGetSender(event.getEntity().getUniqueId().toString()).orElse(null);
             if (sender == null) return;

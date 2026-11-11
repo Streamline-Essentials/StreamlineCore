@@ -202,7 +202,10 @@ public class Route implements Loadable<Route> {
      * @param extra {@code %name%} placeholders for the message, keyed by {@code name}; may be null
      */
     public void bounceEvent(RoutedUser routedUser, String messageKey, Map<String, String> extra) {
-        submitEvent(routedUser, messageKey, extra);
+        submitEvent(routedUser, messageKey, extra).exceptionally(error -> {
+            StreamlineDiscord.getInstance().logWarning("Could not send '" + messageKey + "' to route " + getIdentifier() + ": " + error.getMessage());
+            return null;
+        });
     }
 
     /**
