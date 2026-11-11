@@ -106,7 +106,16 @@ public class MainListener implements BaseEventListener {
     @BaseProcessor
     public void onCommand(DiscordCommandEvent event) {
         StreamlineDiscord.getInstance().logDebug("Executing command '" + event.getCommand().getCommandIdentifier() + "'...!");
-        event.getCommand().execute(event.getMessage());
+        SingleSet<MessageCreateData, BotMessageConfig> reply = event.getCommand().execute(event.getMessage());
+        if (reply == null) return;
+
+        long channelId = event.getMessage().getChannel().getIdLong();
+        // A private reply goes to a thread only its author is added to, like verification messages.
+        if (event.getCommand().isReplyEphemeral()) {
+            DiscordMessenger.message(channelId, reply.getKey(), reply.getValue(), event.getMessage().getAuthor().getIdLong());
+        } else {
+            DiscordMessenger.message(channelId, reply.getKey(), reply.getValue());
+        }
     }
 
     @BaseProcessor(priority = BaseEventPriority.HIGHEST)
