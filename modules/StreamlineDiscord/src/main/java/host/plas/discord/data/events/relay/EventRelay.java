@@ -180,23 +180,14 @@ public final class EventRelay {
     private static void startReceiving() {
         List<String> via = new ArrayList<>();
 
-        if (allowed(Transport.REDIS) && redisAvailable()) {
-            try {
-                RedisListener listener = new RedisListener("streamline-discord-event-relay", REDIS_CHANNEL) {
-                    @Override
-                    public void onMessage(RedisMessage message) {
-                        String payload = message.getMessage();
-                        submit(() -> receive(RelayedEvent.fromJson(payload)));
-                    }
-                };
-                // Registered here, not through registerAndLoad(), whose background register() would reopen
-                // a connection closed by a quick disable.
-                listener.register();
-                listener.load();
-                redisListener = listener;
+        if (allowed(Transport.REDIS) && redisEnabled()) {
+            // Streamline connects to Redis in the background, possibly after modules start, so the
+            // subscription is retried until Redis is connected.
+            if (subscribeRedis()) {
                 via.add(Transport.REDIS.label());
-            } catch (Throwable t) {
-                StreamlineDiscord.getInstance().logWarning("Event relay: could not listen on Redis: " + t);
+            } else {
+                executor.scheduleWithFixedDelay(EventRelay::subscribeRedis, 10, 10, TimeUnit.SECONDS);
+                via.add(Transport.REDIS.label() + " (once connected)");
             }
         }
 
@@ -214,6 +205,31 @@ public final class EventRelay {
 
         if (! via.isEmpty()) {
             StreamlineDiscord.getInstance().logInfo("Event relay: posting game events other servers send over " + String.join(", ", via) + ".");
+        }
+    }
+
+    /** Subscribes to the Redis channel unless already subscribed; returns whether a subscription exists. */
+    private static synchronized boolean subscribeRedis() {
+        if (redisListener != null) return true;
+        if (executor == null || ! redisAvailable()) return false;
+
+        try {
+            RedisListener listener = new RedisListener("streamline-discord-event-relay", REDIS_CHANNEL) {
+                @Override
+                public void onMessage(RedisMessage message) {
+                    String payload = message.getMessage();
+                    submit(() -> receive(RelayedEvent.fromJson(payload)));
+                }
+            };
+            // Registered here, not through registerAndLoad(), whose background register() would reopen
+            // a connection closed by a quick disable.
+            listener.register();
+            listener.load();
+            redisListener = listener;
+            return true;
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Event relay: could not listen on Redis: " + t);
+            return false;
         }
     }
 
@@ -457,6 +473,14 @@ public final class EventRelay {
     private static boolean redisAvailable() {
         try {
             return OwnRedisClient.isEnabledAndConnected();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean redisEnabled() {
+        try {
+            return OwnRedisClient.isEnabled();
         } catch (Throwable t) {
             return false;
         }

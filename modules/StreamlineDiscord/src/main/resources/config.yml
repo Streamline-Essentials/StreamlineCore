@@ -109,6 +109,7 @@ server-events:
 # 'bot.full-disable: true'. Backends then pass their advancements,
 # deaths and server start/stop messages to the proxy's bot.
 # Join and leave messages are never passed on: the proxy sends those itself.
+# Set 'server-events.server-name' on each backend, so its messages name it.
 event-relay:
   # On a backend: send game events to the proxy's bot whenever this
   # server's own bot is turned off, has no token, or could not log in.

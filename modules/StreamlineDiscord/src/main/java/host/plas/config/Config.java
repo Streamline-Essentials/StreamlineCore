@@ -243,11 +243,15 @@ public class Config extends ModularizedConfig {
     public boolean eventRelayEnabled() {
         reloadResource();
 
-        if (getResource().contains("module.forward-events-to-proxy")) {
-            boolean legacy = getResource().getBoolean("module.forward-events-to-proxy");
-            getResource().remove("module.forward-events-to-proxy");
-            if (getResource().singleLayerKeySet("module").isEmpty()) getResource().remove("module");
-            if (! getResource().contains("event-relay.enabled")) getResource().set("event-relay.enabled", legacy);
+        try {
+            if (getResource().contains("module.forward-events-to-proxy")) {
+                boolean legacy = getResource().getBoolean("module.forward-events-to-proxy");
+                getResource().remove("module.forward-events-to-proxy");
+                if (getResource().singleLayerKeySet("module").isEmpty()) getResource().remove("module");
+                if (! getResource().contains("event-relay.enabled")) getResource().set("event-relay.enabled", legacy);
+            }
+        } catch (Throwable ignored) {
+            // The old key stays; the setting falls back to its default below.
         }
 
         return getOrSetDefault("event-relay.enabled", true);
