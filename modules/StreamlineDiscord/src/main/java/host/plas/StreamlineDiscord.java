@@ -15,6 +15,7 @@ import net.streamline.api.SLAPI;
 import org.pf4j.PluginWrapper;
 import host.plas.bukkit.BukkitAdapter;
 import host.plas.command.CreateChannelCommandMC;
+import host.plas.command.StreamlineDiscordCommandMC;
 import host.plas.command.UnVerifyCommandMC;
 import host.plas.command.VerifyCommandMC;
 import host.plas.config.Config;
@@ -124,6 +125,7 @@ public class StreamlineDiscord extends SimpleModule {
         new VerifyCommandMC().register();
         new CreateChannelCommandMC().register();
         new UnVerifyCommandMC().register();
+        new StreamlineDiscordCommandMC().register();
 
         // Bukkit classes exist only on Spigot; mod-loader backends are not proxies either.
         if (SLAPI.getInstance().getPlatform().getPlatformType() == ISingularityExtension.PlatformType.SPIGOT) {
