@@ -56,7 +56,7 @@ public class AsyncTask implements TaskLike<AsyncTask> {
     private static synchronized ScheduledExecutorService getTicker() {
         if (ticker == null || ticker.isShutdown()) {
             ticker = Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "BOU-AsyncTask-Ticker");
+                Thread thread = new Thread(runnable, "TheBase-AsyncTask-Ticker");
                 thread.setDaemon(true);
                 return thread;
             });

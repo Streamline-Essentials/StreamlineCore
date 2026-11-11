@@ -94,6 +94,13 @@ public class TaskManager {
     public static void stop() {
         if (timer != null) timer.shutdownNow();
         currentRunnables.clear();
+
+        // TheBase's async tasks tick on one shared thread. Only the copy bundled in this jar is
+        // Streamline's to stop: on Spigot TheBase comes from BukkitOfUtils, whose other plugins
+        // still use that thread, and BukkitOfUtils stops it itself.
+        if (gg.drak.thebase.async.AsyncUtils.class.getClassLoader() == TaskManager.class.getClassLoader()) {
+            gg.drak.thebase.async.AsyncUtils.shutdown();
+        }
     }
 
     /**
