@@ -152,18 +152,34 @@ public class DiscordHandler {
         return user.getName() + "#" + discriminator;
     }
 
+    /**
+     * Every command built for this login, by identifier, whether or not it is registered,
+     * so a disabled command can still be found and turned back on.
+     */
+    @Getter
+    private static final ConcurrentSkipListMap<String, DiscordCommand> knownCommands = new ConcurrentSkipListMap<>();
+
+    private static void track(DiscordCommand command) {
+        getKnownCommands().put(command.getCommandIdentifier(), command);
+    }
+
+    public static DiscordCommand getKnownCommand(String identifier) {
+        if (identifier == null) return null;
+        return getKnownCommands().get(identifier.toLowerCase());
+    }
+
     public static void registerCommands() {
-        new ChannelCommand();
-        new ChannelRemoveCommand();
-        new ChannelSetCommand();
-        new ChannelsCommand();
-        new EventsCommand();
-        new HelpCommand();
-        new PingCommand();
-        new ReloadCommand();
-        new RestartCommand();
-        new UnVerifyCommand();
-        new VerifyCommand();
+        track(new ChannelCommand());
+        track(new ChannelRemoveCommand());
+        track(new ChannelSetCommand());
+        track(new ChannelsCommand());
+        track(new EventsCommand());
+        track(new HelpCommand());
+        track(new PingCommand());
+        track(new ReloadCommand());
+        track(new RestartCommand());
+        track(new UnVerifyCommand());
+        track(new VerifyCommand());
     }
 
     /**
@@ -252,10 +268,11 @@ public class DiscordHandler {
             if (api == null) return false;
 
             // Slash commands stay registered on Discord across restarts; the next login
-            // compares against them and only sends what changed.
+            // reuses them as recorded in slash-commands.yml, or compares and sends what changed.
             getRegisteredCommands().clear();
             getRegisteredSlashCommands().clear();
             getPendingSlashCommands().clear();
+            getKnownCommands().clear();
 
             // JDA's worker threads must be gone before the module's class loader closes;
             // a survivor fails with NoClassDefFoundError on its next lazily loaded class.
@@ -503,71 +520,155 @@ public class DiscordHandler {
         getPendingSlashCommands().put(discordCommand.getCommandIdentifier(), discordCommand);
     }
 
+    /** The outcome of a slash command sync, worded for whoever asked for it. */
+    public static final class SyncResult {
+        public final boolean success;
+        public final String message;
+
+        private SyncResult(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+    }
+
+    /** Guards every slash command sync, so a login and an admin command never overlap. */
+    private static final Object SLASH_SYNC_LOCK = new Object();
+
+    @Getter
+    private static final SlashCommandState slashCommandState = new SlashCommandState();
+
+    public static SyncResult syncSlashCommands() {
+        return syncSlashCommands(false);
+    }
+
     /**
-     * Makes the bot's global slash commands match {@link #getPendingSlashCommands()}. Discord's
-     * current set is fetched in one request; only when a command was added, removed or
-     * changed is the full set sent back, as one bulk overwrite, which keeps the IDs of
-     * commands that did not change.
+     * Makes the bot's global slash commands match {@link #getPendingSlashCommands()}.
+     *
+     * <p>Unless {@code force} is set, {@code slash-commands.yml} is checked first: when it
+     * records this module version, this bot application and the same command set (by
+     * hash), Discord already has these commands and their ids are taken from the file
+     * without a request. Otherwise Discord's current set is fetched in one request, and
+     * only when a command was added, removed or changed is the full set sent back, as one
+     * bulk overwrite, which keeps the ids of commands that did not change. {@code force}
+     * skips both checks and always sends the full set. Every successful sync rewrites the
+     * file.</p>
      *
      * <p>Blocks on Discord from a single thread. JDA completes requests on
      * {@link java.util.concurrent.ForkJoinPool#commonPool()}, so many common-pool tasks
      * blocking on Discord at once can leave no thread to complete any of them.</p>
      */
-    public static void syncSlashCommands() {
-        JDA jda = getDiscordAPI();
-        if (jda == null) return;
+    public static SyncResult syncSlashCommands(boolean force) {
+        synchronized (SLASH_SYNC_LOCK) {
+            JDA jda = getDiscordAPI();
+            if (jda == null) return new SyncResult(false, "The Discord bot is not connected.");
 
-        try {
-            Map<String, Command> existing = new java.util.HashMap<>();
-            jda.retrieveCommands().complete().forEach(command -> existing.put(command.getName(), command));
+            try {
+                Map<String, DiscordCommand> pending = new java.util.TreeMap<>(getPendingSlashCommands());
 
-            List<SlashCommandData> wanted = new java.util.ArrayList<>();
-            List<String> changes = new java.util.ArrayList<>();
-            getPendingSlashCommands().forEach((name, discordCommand) -> {
-                SlashCommandData data = discordCommand.setupOptionData(jda.upsertCommand(name, discordCommand.getDescription()));
-                wanted.add(data);
+                List<SlashCommandData> wanted = new java.util.ArrayList<>();
+                List<String> jsons = new java.util.ArrayList<>();
+                pending.forEach((name, discordCommand) -> {
+                    SlashCommandData data = discordCommand.setupOptionData(jda.upsertCommand(name, discordCommand.getDescription()));
+                    wanted.add(data);
+                    jsons.add(new String(data.toData().toJson(), java.nio.charset.StandardCharsets.UTF_8));
+                });
 
-                Command current = existing.get(name);
-                if (current == null) changes.add("+" + name);
-                else if (! matches(current, data)) changes.add("~" + name);
-            });
-            existing.keySet().forEach(name -> {
-                if (! getPendingSlashCommands().containsKey(name)) changes.add("-" + name);
-            });
+                String version = SlashCommandState.moduleVersion();
+                String hash = SlashCommandState.hash(jsons);
+                long applicationId = jda.getSelfUser().getApplicationIdLong();
 
-            java.util.Collection<Command> live;
-            if (changes.isEmpty()) {
-                live = existing.values();
-                StreamlineDiscord.getInstance().logInfo("Slash commands are up to date; nothing sent to Discord.");
-            } else {
-                live = jda.updateCommands().addCommands(wanted).complete();
-                StreamlineDiscord.getInstance().logInfo("Published slash commands to Discord (&d" + String.join(" ", changes) + "&r).");
+                if (! force) {
+                    Map<String, Long> stored = getSlashCommandState().idsIfCurrent(version, hash, applicationId, pending.keySet());
+                    if (stored != null) {
+                        getRegisteredSlashCommands().clear();
+                        stored.forEach((name, id) -> mapSlashCommand(pending.get(name), id));
+                        String message = "Slash commands unchanged since the last sync (" + pending.size() + " commands); nothing sent to Discord.";
+                        StreamlineDiscord.getInstance().logInfo(message);
+                        return new SyncResult(true, message);
+                    }
+                }
+
+                java.util.Collection<Command> live;
+                String message;
+                if (force) {
+                    live = jda.updateCommands().addCommands(wanted).complete();
+                    message = "Re-registered all " + wanted.size() + " slash commands with Discord.";
+                } else {
+                    Map<String, Command> existing = new java.util.HashMap<>();
+                    jda.retrieveCommands().complete().forEach(command -> existing.put(command.getName(), command));
+
+                    List<String> changes = new java.util.ArrayList<>();
+                    for (SlashCommandData data : wanted) {
+                        Command current = existing.get(data.getName());
+                        if (current == null) changes.add("+" + data.getName());
+                        else if (! matches(current, data)) changes.add("~" + data.getName());
+                    }
+                    existing.keySet().forEach(name -> {
+                        if (! pending.containsKey(name)) changes.add("-" + name);
+                    });
+
+                    if (changes.isEmpty()) {
+                        live = existing.values();
+                        message = "Slash commands are up to date on Discord; nothing sent.";
+                    } else {
+                        live = jda.updateCommands().addCommands(wanted).complete();
+                        message = "Published slash commands to Discord (" + String.join(" ", changes) + ").";
+                    }
+                }
+                StreamlineDiscord.getInstance().logInfo(message);
+
+                getRegisteredSlashCommands().clear();
+                Map<String, Long> ids = new java.util.TreeMap<>();
+                live.forEach(command -> {
+                    DiscordCommand discordCommand = pending.get(command.getName());
+                    if (discordCommand == null) return;
+
+                    mapSlashCommand(discordCommand, command.getIdLong());
+                    ids.put(command.getName(), command.getIdLong());
+                });
+
+                getSlashCommandState().save(version, hash, applicationId, ids);
+                return new SyncResult(true, message);
+            } catch (Exception e) {
+                StreamlineDiscord.getInstance().logWarning("Could not sync slash commands with Discord: " + e.getMessage());
+                StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
+                return new SyncResult(false, "Could not sync slash commands with Discord: " + e.getMessage());
             }
-
-            live.forEach(command -> {
-                DiscordCommand discordCommand = getPendingSlashCommands().get(command.getName());
-                if (discordCommand == null) return;
-
-                getRegisteredSlashCommands().put(discordCommand, command.getIdLong());
-                discordCommand.setSlashCommandSnowflake(command.getIdLong());
-            });
-        } catch (Exception e) {
-            StreamlineDiscord.getInstance().logWarning("Could not sync slash commands with Discord: " + e.getMessage());
-            StreamlineDiscord.getInstance().logWarning(e.getStackTrace());
         }
     }
 
+    /**
+     * Runs {@link #syncSlashCommands(boolean)} on its own short-lived thread, never the
+     * common pool (see there), and completes with its result.
+     */
+    public static CompletableFuture<SyncResult> syncSlashCommandsAsync(boolean force) {
+        CompletableFuture<SyncResult> future = new CompletableFuture<>();
+        Thread thread = new Thread(() -> {
+            try {
+                future.complete(syncSlashCommands(force));
+            } catch (Throwable t) {
+                future.complete(new SyncResult(false, "Could not sync slash commands with Discord: " + t.getMessage()));
+            }
+        }, "StreamlineDiscord-SlashSync");
+        thread.setDaemon(true);
+        thread.start();
+        return future;
+    }
+
+    private static void mapSlashCommand(DiscordCommand discordCommand, long id) {
+        if (discordCommand == null) return;
+        getRegisteredSlashCommands().put(discordCommand, id);
+        discordCommand.setSlashCommandSnowflake(id);
+    }
+
+    /**
+     * Drops a command from the slash command set kept here. Discord's list follows on the
+     * next {@link #syncSlashCommands(boolean)}, which sends the whole set at once.
+     */
     public static void unregisterSlashCommand(DiscordCommand discordCommand) {
         getPendingSlashCommands().remove(discordCommand.getCommandIdentifier());
-        if (! getRegisteredSlashCommands().containsValue(discordCommand.getSlashCommandSnowflake())) return;
-
-        CompletableFuture.runAsync(() -> {
-            safeDiscordAPI().deleteCommandById(discordCommand.getSlashCommandSnowflake()).submit().join();
-            discordCommand.setSlashCommandSnowflake(-1);
-
-            getRegisteredSlashCommands().remove(discordCommand);
-            StreamlineDiscord.getInstance().logInfo("Unregistered &cDiscordCommand &rwith identifier '&d" + discordCommand.getCommandIdentifier() + "&r'.");
-        });
+        getRegisteredSlashCommands().remove(discordCommand);
+        discordCommand.setSlashCommandSnowflake(-1);
     }
 
     public static DiscordCommand getSlashCommand(long identifier) {
@@ -578,5 +679,29 @@ public class DiscordHandler {
         });
 
         return commandAtomicReference.get();
+    }
+
+    /**
+     * The command a slash interaction is for. Interactions name their command id; when
+     * that id is not one this bot mapped (ids reused from a {@code slash-commands.yml} that
+     * no longer matches Discord), the command is found by name instead, mapped to the id
+     * Discord used, and the file is marked stale so the next start syncs with Discord.
+     */
+    public static DiscordCommand resolveSlashCommand(long id, String name) {
+        DiscordCommand command = getSlashCommand(id);
+        if (command != null) return command;
+
+        command = getPendingSlashCommands().get(name);
+        if (command == null) return null;
+
+        mapSlashCommand(command, id);
+        StreamlineDiscord.getInstance().logWarning("Slash command '/" + name + "' arrived with an unknown id; "
+                + "slash commands will be synced with Discord on the next start.");
+        try {
+            getSlashCommandState().markStale();
+        } catch (Exception e) {
+            StreamlineDiscord.getInstance().logWarning("Could not mark " + SlashCommandState.FILE_NAME + " stale: " + e.getMessage());
+        }
+        return command;
     }
 }

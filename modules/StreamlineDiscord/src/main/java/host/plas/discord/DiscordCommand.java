@@ -40,6 +40,8 @@ public abstract class DiscordCommand extends ModularizedConfig {
     private String description = "No description provided.";
     private boolean replyEphemeral = false;
     private long slashCommandSnowflake = -1L;
+    /** Whether this command is offered as a Discord slash command; the prefix form does not depend on it. */
+    private boolean slashEnabled = true;
 
     public DiscordCommand(String commandIdentifier, String... aliases) {
         this(commandIdentifier, 0L, aliases);
@@ -69,12 +71,14 @@ public abstract class DiscordCommand extends ModularizedConfig {
         reloadResource(force);
 
         setEnabled(getResource().getOrSetDefault("enabled", true));
+        setSlashEnabled(getResource().getOrSetDefault("slash-enabled", true));
         setRole(getResource().getOrSetDefault("permissions.default", getRole()));
         setAliases(new ConcurrentSkipListSet<>(getResource().getOrSetDefault("aliases", new ArrayList<>(getAliases()))));
     }
 
     public void saveCommand() {
         write("enabled", isEnabled());
+        write("slash-enabled", isSlashEnabled());
         write("permissions.default", getRole());
         write("aliases", new ArrayList<>(getAliases()));
     }
@@ -83,7 +87,7 @@ public abstract class DiscordCommand extends ModularizedConfig {
         try {
             if (!isEnabled()) return;
             DiscordHandler.registerCommand(this);
-            if (StreamlineDiscord.getConfig().getBotLayout().isSlashCommandsEnabled()) {
+            if (isSlashEnabled() && StreamlineDiscord.getConfig().getBotLayout().isSlashCommandsEnabled()) {
                 DiscordHandler.registerSlashCommand(this);
             }
         } catch (Exception e) {

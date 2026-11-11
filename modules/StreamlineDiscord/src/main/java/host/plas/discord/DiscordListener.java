@@ -71,7 +71,7 @@ public class DiscordListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        DiscordCommand command = DiscordHandler.getSlashCommand(event.getCommandIdLong());
+        DiscordCommand command = DiscordHandler.resolveSlashCommand(event.getCommandIdLong(), event.getName());
         if (command == null) {
             StreamlineDiscord.getInstance().logWarning("No command found for command id: " + event.getCommandIdLong());
             return;
