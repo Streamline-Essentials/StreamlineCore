@@ -17,37 +17,62 @@ public final class YamlParser {
     final List<String> out = new ArrayList<>();
     final Map<String, List<String>> parsed = assignCommentsToKey(comments);
 
+    // Blank lines of the old file are kept as comments of the line below them. A blank line the
+    // new text writes itself (inside a multi-line text) is already in place, so a kept blank line
+    // right after it is the same one and is dropped; otherwise every save would add one more.
+    boolean afterWrittenBlank = false;
     for (final String line : updated) {
       val rawList = getKeyAndRemove(line, parsed);
       if (rawList == null || rawList.isEmpty()) {
 
         out.add(line);
+        afterWrittenBlank = line.trim().isEmpty();
         continue;
       }
 
       Collections.reverse(rawList);
-      out.addAll(rawList);
+      for (final String comment : rawList) {
+        if (afterWrittenBlank && comment.trim().isEmpty()) {
+          continue;
+        }
+        out.add(comment);
+      }
       if (!line.equals(FOOTER)) {
         out.add(line);
       }
+      afterWrittenBlank = line.trim().isEmpty();
     }
 
     return out;
   }
 
-  private List<String> getKeyAndRemove(String key, final Map<String, List<String>> data) {
-    key = key.split(":")[0];
+  private List<String> getKeyAndRemove(final String line, final Map<String, List<String>> data) {
+    // Blank lines carry no key: multi-line texts are written with one for every line break.
+    if (line.trim().isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    final String key = keyOf(line);
     for (val entry : data.entrySet()) {
-      final String entryKey = entry.getKey().split(":")[0];
+      final String entryKey = keyOf(entry.getKey());
 
       // using substring since indentation might differ a bit
-      if (key.equals(entryKey) || key.substring(1).equals(entryKey)) {
+      if (key.equals(entryKey) || (!key.isEmpty() && key.substring(1).equals(entryKey))) {
         data.remove(entry.getKey());
         return entry.getValue();
       }
     }
 
     return new ArrayList<>();
+  }
+
+  /**
+   * The part of a line before its first colon, or the whole line when it has none. Unlike
+   * {@code split(":")[0]}, a line that starts with a colon gives an empty key instead of throwing.
+   */
+  private static String keyOf(final String line) {
+    final int colon = line.indexOf(':');
+    return colon < 0 ? line : line.substring(0, colon);
   }
 
   public Map<String, List<String>> assignCommentsToKey() {
@@ -69,11 +94,11 @@ public final class YamlParser {
       if (!line.trim().startsWith("#") && !line.isEmpty()) {
         currentKey = line;
       } else {
-        final List<String> storage = out.get(currentKey.split(":")[0]);
+        final List<String> storage = out.get(keyOf(currentKey));
 
         if (storage == null) {
           out.put(
-              currentKey.split(":")[0],
+              keyOf(currentKey),
               new ArrayList<>(Collections.singletonList(line)));
         } else if (!storage.contains(line)) {
           storage.add(line);
