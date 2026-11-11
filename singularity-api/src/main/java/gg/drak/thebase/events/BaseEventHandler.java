@@ -54,7 +54,7 @@ public class BaseEventHandler {
     public static <T extends IEventable> void unbake(T eventable) {
         getRegularEvents().forEach((aClass, registeredListeners) -> {
             registeredListeners.forEach(registeredListener -> {
-                if (registeredListener.getEventable().equals(eventable)) getRegularEvents().get(aClass).remove(registeredListener);
+                if (eventable != null && eventable.equals(registeredListener.getEventable())) getRegularEvents().get(aClass).remove(registeredListener);
             });
         });
     }
@@ -64,14 +64,14 @@ public class BaseEventHandler {
         if (listeners == null) return;
 
         listeners.forEach(registeredListener -> {
-            if (registeredListener.getListener().equals(listener)) getRegularEvents().get(clazz).remove(registeredListener);
+            if (listener != null && listener.equals(registeredListener.getListener())) getRegularEvents().get(clazz).remove(registeredListener);
         });
     }
 
     public static void unbake(BaseEventListener listener) {
         getRegularEvents().forEach((aClass, registeredListeners) -> {
             registeredListeners.forEach(registeredListener -> {
-                if (registeredListener.getListener().equals(listener)) getRegularEvents().get(aClass).remove(registeredListener);
+                if (listener != null && listener.equals(registeredListener.getListener())) getRegularEvents().get(aClass).remove(registeredListener);
             });
         });
     }
@@ -81,7 +81,7 @@ public class BaseEventHandler {
         if (listeners == null) return;
 
         listeners.forEach(registeredListener -> {
-            if (registeredListener.getEventable().equals(eventable)) getRegularEvents().get(clazz).remove(registeredListener);
+            if (eventable != null && eventable.equals(registeredListener.getEventable())) getRegularEvents().get(clazz).remove(registeredListener);
         });
     }
 
