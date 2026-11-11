@@ -41,6 +41,11 @@ public class Config extends ModularizedConfig {
         serverEventSpigotAdvancement();
         serverEventSpigotDeath();
 
+        serverEventServerStart();
+        serverEventServerStop();
+        serverEventServerName();
+        serverEventProxyJoinDelayTicks();
+
         moduleForwardsEventsToProxy();
 
         verificationResponsesPrivate();
@@ -194,6 +199,38 @@ public class Config extends ModularizedConfig {
         reloadResource();
 
         return getOrSetDefault("server-events.spigot.death", true);
+    }
+
+    public boolean serverEventServerStart() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.server.start", true);
+    }
+
+    public boolean serverEventServerStop() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.server.stop", true);
+    }
+
+    /**
+     * The name event messages give this server; blank means Streamline's own server name
+     * ({@code server.name} in the core's server config) when one is set.
+     */
+    public String serverEventServerName() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.server-name", "");
+    }
+
+    /**
+     * Ticks a proxy waits before announcing a join, so the player has reached a backend server
+     * and the message can name it.
+     */
+    public int serverEventProxyJoinDelayTicks() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.proxy-join-delay-ticks", 40);
     }
 
     public boolean moduleForwardsEventsToProxy() {

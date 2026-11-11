@@ -24,6 +24,7 @@ import host.plas.database.EndPointKeeper;
 import host.plas.database.RouteKeeper;
 import host.plas.depends.MessagingDependency;
 import host.plas.discord.DiscordHandler;
+import host.plas.discord.data.events.DiscordEventMessages;
 import host.plas.discord.messaging.BotMessageMigration;
 import host.plas.discord.messaging.BotMessages;
 import host.plas.events.MainListener;
@@ -130,6 +131,10 @@ public class StreamlineDiscord extends SimpleModule {
 
         setMainListener(new MainListener());
 
+        // A proxy loads modules while it initialises and its start event cannot be relied on to reach
+        // them, so it counts as started once the module is up; backends wait for the server start event.
+        if (DiscordEventMessages.isProxy()) DiscordEventMessages.onServerStarted();
+
         new VerifyCommandMC().register();
         new CreateChannelCommandMC().register();
         new UnVerifyCommandMC().register();
@@ -169,6 +174,11 @@ public class StreamlineDiscord extends SimpleModule {
 
     @Override
     public void onDisable() {
+        // Waits (up to 5 seconds) for Discord to take the offline message: killing the bot cancels
+        // requests still queued.
+        DiscordEventMessages.announceStop();
+        DiscordEventMessages.shutdown();
+
         // The middleware writes in batches every 5 seconds; flush whatever is still queued.
         if (getDiscordMiddleware() != null) {
             getDiscordMiddleware().run();

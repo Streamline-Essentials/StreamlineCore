@@ -82,10 +82,26 @@ server-events:
     # Fired when a player leaves the server.
     logout: true
   spigot:
-    # Fired when a player achieves an advancement on the server.
+    # Fired when a player earns an advancement that is announced in chat
+    # (Spigot and Paper backends; recipe unlocks are never sent).
     advancement: true
-    # Fired when a player dies on the server.
+    # Fired when a player dies (Spigot and Paper backends, plus Fabric,
+    # Forge and NeoForge servers, which send "<player> died").
+    # Deaths whose death message another plugin removed are not sent.
     death: true
+  # This server starting and stopping. Works on proxies and backends.
+  server:
+    # Sent once the server has finished starting and the bot is connected.
+    start: true
+    # Sent while the server (or this module) shuts down.
+    stop: true
+  # The name event messages use for this server (%this_server_name%).
+  # Leave empty to use Streamline's server name (server.name in its server config).
+  # On a proxy, join, leave, advancement and death messages name the player's server instead.
+  server-name: ""
+  # On a proxy, how many ticks (20 = 1 second) to wait before sending a join message,
+  # so the player has reached a server and the message can name it.
+  proxy-join-delay-ticks: 40
 
 # All settings pertaining to the Discord Module's Module itself.
 module:

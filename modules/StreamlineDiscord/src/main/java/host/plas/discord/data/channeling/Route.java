@@ -202,14 +202,33 @@ public class Route implements Loadable<Route> {
      * @param extra {@code %name%} placeholders for the message, keyed by {@code name}; may be null
      */
     public void bounceEvent(RoutedUser routedUser, String messageKey, Map<String, String> extra) {
+        submitEvent(routedUser, messageKey, extra);
+    }
+
+    /**
+     * {@link #bounceEvent} that hands back the Discord request, completing once Discord accepted the message,
+     * or at once when nothing is sent (output not a Discord channel, message disabled, bot not connected).
+     */
+    public CompletableFuture<?> submitEvent(RoutedUser routedUser, String messageKey, Map<String, String> extra) {
+        CompletableFuture<?> none = CompletableFuture.completedFuture(null);
+
         ModuleUtils.fireEvent(new ChanneledMessageEvent(BotMessages.getText(messageKey), getInput(), getOutput()));
 
-        if (getOutput() == null || getOutput().getType() != EndPointType.DISCORD_TEXT) return;
+        if (getOutput() == null || getOutput().getType() != EndPointType.DISCORD_TEXT) return none;
+        // Channel lookups wait for the bot to be ready; a game event must never wait on Discord.
+        if (! DiscordHandler.isConnected()) return none;
 
         TextChannel channel = getOutput().asServerTextChannel();
-        if (channel == null) return;
+        if (channel == null) return none;
 
-        BotMessages.send(messageKey, channel.getIdLong(), routedUser.getUser(), extra);
+        SingleSet<MessageCreateData, BotMessageConfig> data = BotMessages.build(messageKey, routedUser.getUser(), extra);
+        if (data == null) return none;
+
+        CompletableFuture<?> sent = DiscordMessenger.submit(channel.getIdLong(), data.getKey());
+        if (data.getValue().isAvatarChange()) {
+            sent = sent.whenComplete((ignored, error) -> DiscordHandler.updateBotAvatar(data.getValue().getChangeAfterMessage()));
+        }
+        return sent;
     }
 
     /** Sends {@code message} on, or, with {@code forceEmbed}, sends it as embed JSON to this route's Discord channel. */

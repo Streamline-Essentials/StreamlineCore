@@ -79,12 +79,10 @@ public class EventsCommand extends DiscordCommand {
                 }
 
                 ConcurrentSkipListSet<EventClassifier> typesAdd = new ConcurrentSkipListSet<>();
-                if (! messagedString.getCommandArgs()[1].equals("all")) {
-                    try {
-                        typesAdd.add(EventClassifier.valueOf(messagedString.getCommandArgs()[1].toUpperCase()));
-                    } catch (Exception e) {
-                        return messageInfo(messagedString);
-                    }
+                if (! messagedString.getCommandArgs()[1].equalsIgnoreCase("all")) {
+                    EventClassifier classifierAdd = EventClassifier.parse(messagedString.getCommandArgs()[1]);
+                    if (classifierAdd == null) return messageInfo(messagedString);
+                    typesAdd.add(classifierAdd);
                 } else {
                     typesAdd.addAll(Arrays.asList(EventClassifier.values()));
                 }
@@ -118,12 +116,10 @@ public class EventsCommand extends DiscordCommand {
                 }
 
                 ConcurrentSkipListSet<EventClassifier> typesRemove = new ConcurrentSkipListSet<>();
-                if (! messagedString.getCommandArgs()[1].equals("all")) {
-                    try {
-                        typesRemove.add(EventClassifier.valueOf(messagedString.getCommandArgs()[1].toUpperCase()));
-                    } catch (Exception e) {
-                        return messageInfo(messagedString);
-                    }
+                if (! messagedString.getCommandArgs()[1].equalsIgnoreCase("all")) {
+                    EventClassifier classifierRemove = EventClassifier.parse(messagedString.getCommandArgs()[1]);
+                    if (classifierRemove == null) return messageInfo(messagedString);
+                    typesRemove.add(classifierRemove);
                 } else {
                     typesRemove.addAll(Arrays.asList(EventClassifier.values()));
                 }

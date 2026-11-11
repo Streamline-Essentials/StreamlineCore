@@ -28,6 +28,7 @@ import host.plas.discord.commands.*;
 import host.plas.discord.messaging.BotMessageConfig;
 import host.plas.discord.messaging.BotMessages;
 import host.plas.discord.voice.StreamlineVoiceInterceptor;
+import host.plas.discord.data.events.DiscordEventMessages;
 import host.plas.events.streamline.bot.BotStoppedEvent;
 import host.plas.events.streamline.verification.on.VerificationAlreadyVerifiedEvent;
 import host.plas.events.streamline.verification.on.VerificationFailureEvent;
@@ -83,6 +84,15 @@ public class DiscordHandler {
                 return api;
             }
         }
+    }
+
+    /**
+     * Whether the bot is logged in and connected to the gateway right now, so a message sent now
+     * goes out instead of waiting (or failing) on a bot that is starting, reconnecting or off.
+     */
+    public static boolean isConnected() {
+        JDA api = getDiscordAPI();
+        return api != null && api.getStatus() == JDA.Status.CONNECTED;
     }
 
     @Getter @Setter
@@ -250,7 +260,10 @@ public class DiscordHandler {
                     e.printStackTrace();
                 }
 
-                if (getDiscordAPI() != null) StreamlineDiscord.getInstance().logInfo("Bot Initialized!");
+                if (getDiscordAPI() != null) {
+                    StreamlineDiscord.getInstance().logInfo("Bot Initialized!");
+                    DiscordEventMessages.onBotReady();
+                }
             }
 
             return true;

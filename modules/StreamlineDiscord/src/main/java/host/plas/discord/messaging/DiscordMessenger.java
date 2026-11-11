@@ -61,6 +61,22 @@ public class DiscordMessenger {
         }
     }
 
+    /**
+     * Sends {@code data} to the text channel {@code channelId} and completes once Discord accepted it (or
+     * exceptionally when it did not). Unlike {@link #message}, the caller can wait for the request, e.g.
+     * before the bot shuts down, which cancels requests still queued. Completes at once when the channel
+     * cannot be found.
+     */
+    public static java.util.concurrent.CompletableFuture<?> submit(long channelId, MessageCreateData data) {
+        TextChannel channel = DiscordHandler.getTextChannelById(channelId);
+        if (channel == null) {
+            StreamlineDiscord.getInstance().logWarning("Tried to send a message to TextChannel with ID of '" + channelId + "', but failed.");
+            return java.util.concurrent.CompletableFuture.completedFuture(null);
+        }
+
+        return channel.sendMessage(data).submit();
+    }
+
     public static SingleSet<MessageCreateData, BotMessageConfig> simpleMessage(String message, CosmicSender user) {
         return simpleMessage(message, user, true);
     }

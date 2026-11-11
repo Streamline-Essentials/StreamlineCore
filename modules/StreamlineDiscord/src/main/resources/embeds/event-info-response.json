@@ -3,7 +3,7 @@
   "fields": [
     {
       "name": "Help",
-      "value": "[...] -> \"...\" is optional.\n<...> -> Argument described by \"...\"\nValid \"type\"s: LOGIN, LOGOUT, ADVANCEMENT, DEATH, all\nValid \"identifier\"s: The Routes' identifier.",
+      "value": "[...] -> \"...\" is optional.\n<...> -> Argument described by \"...\"\nValid \"type\"s: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all\nValid \"identifier\"s: The Routes' identifier.",
       "inline": false
     },
     {
