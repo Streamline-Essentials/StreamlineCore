@@ -7,7 +7,8 @@
 #
 # Texts use Discord markdown (**bold**, *italic*, `code`) and any Streamline placeholder.
 # Placeholders starting with %this_...% are filled in by the message itself (listed per message).
-# Use \n for a new line.
+# For a text over several lines, list the lines, each on its own line starting with "- ",
+# like the help message below. Use - "" for an empty line.
 # ------------------------------------------------------------------------------------------
 
 # Verifying a Minecraft account with Discord.
@@ -76,34 +77,57 @@ commands:
   ping:
     response: "Current latency is **%discord_bot_ping%**ms"
   help:
-    response: "Bot setup help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup\nSupport Discord: https://dsc.gg/streamline"
+    response:
+      - "Bot setup help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+      - "Support Discord: https://dsc.gg/streamline"
   reload:
     response: "Reloaded Streamline!"
   restart:
     response: "Restarted the bot!"
   # set / remove: %this_type%, %this_identifier%, %this_format%
   channel:
-    info: "**Usage:**\n`%discord_bot_prefix%%this_command_label% set <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove [<type> <identifier>]`\nTypes: GLOBAL_NATIVE, SPECIFIC_NATIVE, PERMISSION, GUILD, PARTY, SPECIFIC_HANDLED, DISCORD_TEXT\n\nMore help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    info:
+      - "**Usage:**"
+      - "`%discord_bot_prefix%%this_command_label% set <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% remove [<type> <identifier>]`"
+      - "Types: GLOBAL_NATIVE, SPECIFIC_NATIVE, PERMISSION, GUILD, PARTY, SPECIFIC_HANDLED, DISCORD_TEXT"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
     set: "Linked %this_channel_id% to %this_type% `%this_identifier%` with the format `%this_format%`."
     remove: "Unlinked %this_channel_id% from %this_type% `%this_identifier%`."
     none: "Sorry, but I could not find that route..."
     nothing-to-remove: "No channel found to remove!"
   channelset:
-    info: "**Usage:** `%discord_bot_prefix%%this_command_label% <type> <identifier>`\n\nMore help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    info:
+      - "**Usage:** `%discord_bot_prefix%%this_command_label% <type> <identifier>`"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
     set: "Linked %this_channel_id% to %this_type% `%this_identifier%` with the format `%this_format%`."
     none: "Sorry, but I could not find that route..."
   channelremove:
-    info: "**Usage:** `%discord_bot_prefix%%this_command_label% [<type> <identifier>]`\n\nMore help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    info:
+      - "**Usage:** `%discord_bot_prefix%%this_command_label% [<type> <identifier>]`"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
     remove: "Unlinked %this_channel_id% from %this_type% `%this_identifier%`."
     none: "Sorry, but I could not find that route..."
     nothing-to-remove: "No channel found to remove!"
   # %this_list_all% / %this_list_here%
   channels:
-    list: "**All routes**\n%this_list_all%"
-    list-here: "**Routes in this channel**\n%this_list_here%"
+    list:
+      - "**All routes**"
+      - "%this_list_all%"
+    list-here:
+      - "**Routes in this channel**"
+      - "%this_list_here%"
   # add / remove / clear: %this_identifier% (the route), %this_type% and %this_type_named% (the events)
   events:
-    info: "**Usage:**\n`%discord_bot_prefix%%this_command_label% add <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% clear all <identifier>`\nTypes: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all"
+    info:
+      - "**Usage:**"
+      - "`%discord_bot_prefix%%this_command_label% add <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% clear all <identifier>`"
+      - "Types: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all"
     add: "Added the event(s) for route `%this_identifier%`:%this_type_named%"
     remove: "Removed the event(s) for route `%this_identifier%`:%this_type_named%"
     clear: "Cleared the events of route `%this_identifier%`."

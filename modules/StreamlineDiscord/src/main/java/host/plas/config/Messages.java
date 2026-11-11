@@ -12,6 +12,7 @@ public class Messages extends ModularizedConfig {
     public Messages() {
         super(StreamlineDiscord.getInstance(), "messages.yml", true);
 
+        SafeYaml.normalize(this);
         init();
     }
 
@@ -56,7 +57,7 @@ public class Messages extends ModularizedConfig {
         reloadResource();
 
         if (getResource().contains(key)) return;
-        write(key, text);
+        SafeYaml.write(this, key, text);
     }
 
     public synchronized boolean has(String key) {
@@ -68,12 +69,12 @@ public class Messages extends ModularizedConfig {
     public synchronized void set(String key, Object value) {
         reloadResource();
 
-        write(key, value);
+        SafeYaml.write(this, key, value);
     }
 
     public synchronized void remove(String key) {
         reloadResource();
 
-        getResource().remove(key);
+        SafeYaml.remove(this, key);
     }
 }

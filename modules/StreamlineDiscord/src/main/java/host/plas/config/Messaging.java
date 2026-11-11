@@ -12,6 +12,7 @@ public class Messaging extends ModularizedConfig {
     public Messaging() {
         super(StreamlineDiscord.getInstance(), "messaging.yml", true);
 
+        SafeYaml.normalize(this);
         init();
     }
 
@@ -36,12 +37,12 @@ public class Messaging extends ModularizedConfig {
         reloadResource();
 
         if (getResource().contains(key)) return;
-        write(key, setting);
+        SafeYaml.write(this, key, setting);
     }
 
     public synchronized void set(String key, String setting) {
         reloadResource();
 
-        write(key, setting);
+        SafeYaml.write(this, key, setting);
     }
 }
