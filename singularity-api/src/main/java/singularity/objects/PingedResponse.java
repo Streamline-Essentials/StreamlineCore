@@ -1,6 +1,6 @@
 package singularity.objects;
 
-import gg.drak.thebase.lib.leonhard.storage.shaded.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;

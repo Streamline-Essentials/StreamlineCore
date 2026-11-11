@@ -44,6 +44,12 @@ java {
 shadowJar {
     configurations = [project.configurations.runtimeClasspath]
 
+    // BukkitOfUtils bundles TheBase (gg.drak.thebase, libraries under gg.drak.thebase.lib) and
+    // StreamlineCore links against BOU's types, so BOU's copy is the only one on Spigot: a second
+    // copy in this jar would load beside it and break every type the two plugins share.
+    exclude 'gg/drak/thebase/**'
+    exclude 'licenses/TheBase-LICENSE.txt'
+
     // Never package downloadable Maven Central libs (plugin.yml libraries: handles them).
     PLATFORM_LIBRARIES.each { coord ->
         def parts = coord.split(':')

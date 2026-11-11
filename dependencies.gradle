@@ -72,8 +72,21 @@ ext {
             "org.pf4j:pf4j:3.10.0",
             'io.lettuce:lettuce-core:6.8.0.RELEASE',
     ]
+    // TheBase (gg.drak.thebase) is built from source inside StreamlineCore-Singularity, so every
+    // project that has Singularity has it; nothing pulls the published gg.drak:TheBase jar.
     THE_BASE = [
-            'gg.drak:TheBase:1.1.1',
+    ]
+    // Libraries behind that source and behind SimplixStorage (de.leonhard.storage), whose source
+    // also lives in Singularity. Singularity shades them relocated under gg.drak.thebase.lib.*,
+    // the names the published TheBase and SimplixStorage jars used.
+    THE_BASE_LIBRARIES = [
+            'com.esotericsoftware.yamlbeans:yamlbeans:1.17',
+            'org.json:json:20231013',
+            'net.objecthunter:exp4j:0.4.8',
+            'com.google.re2j:re2j:1.7',
+            // Not relocated: the published TheBase jar carried org.jetbrains.annotations as is,
+            // and projects and modules compiling against the core use @NotNull / @Nullable from it.
+            'org.jetbrains:annotations:24.0.1',
     ]
     COMP_ONLY = [
     ]

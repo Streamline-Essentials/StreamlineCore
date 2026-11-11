@@ -1,8 +1,11 @@
+configurations {
+    theBaseLibraries
+}
+
 dependencies {
     // Defaults.
     compileOnly(files(FILES))
     annotationProcessor(ANNO)
-    annotationProcessor(THE_BASE)
     compileOnly(COMP_ONLY)
 
     // Downloadable libs: compile only — Spigot/Bungee/Velocity fetch at runtime.
@@ -17,8 +20,14 @@ dependencies {
         shadow(implementation(coord))
     }
 
-    // The Base
-    compileOnly(THE_BASE)
+    // TheBase's own source lives in this project (gg.drak.thebase). Its libraries are compiled
+    // against under their original names and packed in, relocated by shadowJar below. They sit in
+    // their own configuration, not 'shadow': other projects consume 'shadow', and would otherwise
+    // receive the unrelocated jars beside this one.
+    THE_BASE_LIBRARIES.each { coord ->
+        compileOnly(coord) { transitive = false }
+        theBaseLibraries(coord) { transitive = false }
+    }
 
     // JetBrains annotations (compile-only).
     annotationProcessor(compileOnly('org.jetbrains:annotations:20.1.0'))
@@ -26,5 +35,17 @@ dependencies {
 
 shadowJar {
     // Project classes + HOST_SHADED_LIBRARIES only (no Hikari/Netty/etc.).
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shadow, project.configurations.theBaseLibraries]
+
+    // Modules and other plugins import TheBase's libraries under these names, as the published
+    // gg.drak:TheBase jar shipped them, so the targets must not change.
+    // SimplixStorage's own libraries keep the names its published jar gave them.
+    relocate 'de.leonhard', 'gg.drak.thebase.lib.leonhard'
+    relocate 'org.json', 'gg.drak.thebase.lib.leonhard.storage.shaded.json'
+    relocate 'com.esotericsoftware', 'gg.drak.thebase.lib.leonhard.storage.shaded.esotericsoftware'
+    relocate 'net.objecthunter.exp4j', 'gg.drak.thebase.lib.exp4j'
+    relocate 'com.google.re2j', 'gg.drak.thebase.lib.re2j'
+
+    exclude 'META-INF/maven/com.esotericsoftware.yamlbeans/**'
+    exclude 'META-INF/maven/org.json/**'
 }

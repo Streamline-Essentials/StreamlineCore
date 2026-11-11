@@ -230,7 +230,7 @@ Each platform has `net.streamline.platform.BasePlugin`:
 - **PF4J 3.10.0** — Module/plugin framework
 - **Lettuce 6.8.0** — Redis client for cross-server sync
 - **Caffeine 3.1.8** — Caching
-- **TheBase 1.1.0** — Event system and utilities (`gg.drak:TheBase`)
+- **TheBase** — Event system, configs and utilities. Its source lives in `singularity-api/src/main/java/gg/drak/thebase` under the original package (modules and mods import `gg.drak.thebase.*`, so never rename or change its public methods), taken from BukkitOfUtils' bundled copy and fixed for StreamlineCore (null-safe `BaseEventHandler.unbake`, `TaskManager.stop()` stops the shared async thread). Its libraries (`THE_BASE_LIBRARIES`: SimplixStorage, exp4j, re2j) are compiled against under their original names and shaded into the Singularity jar relocated to `gg.drak.thebase.lib.*`, the names the published `gg.drak:TheBase` jar used, through the `theBaseLibraries` configuration (never `shadow`, which consumers inherit). `THE_BASE` is empty: every project gets TheBase with Singularity. On Spigot the jar leaves `gg/drak/thebase/**` out and uses BukkitOfUtils' copy, since StreamlineCore links against BOU's types.
 - **Logback 1.5.6** — Logging (relocated to `host.plas.bou.libs.logback`)
 - **LuckPerms API 5.5** — Optional permission backend. Only `LuckPermsPermissionProvider` (and `LuckPermsUtil`) may link against it; everything else goes through `net.streamline.api.permissions.Permissions`, which falls back to `NoPermissionProvider` when LuckPerms is absent. A class that imports `net.luckperms.*` on a common path crashes servers without LuckPerms with `NoClassDefFoundError`.
 - **PlaceholderAPI 2.11.6** — Placeholder expansion (Spigot only)
