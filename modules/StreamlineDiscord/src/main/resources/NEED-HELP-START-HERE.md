@@ -10,7 +10,7 @@ StreamlineDiscord connects your Minecraft server to your Discord server.
 - Minecraft chat shows up in a Discord channel.
 - Messages in that channel show up in Minecraft chat.
 - Players can link their Minecraft account to their Discord account.
-- The bot can post joins, leaves, deaths and more in Discord.
+- The bot can post server starts, joins, leaves, deaths and more in Discord.
 
 All files named in this guide sit in this same folder.
 
@@ -84,7 +84,17 @@ Ask on our Discord if you need one of those.
 ## Event messages
 
 The bot can post game events in a linked channel.
-Examples are joins, leaves, advancements and deaths.
+It can post these six events:
+
+- The server starting up.
+- The server shutting down.
+- A player joining.
+- A player leaving.
+- A player earning an advancement.
+- A player dying.
+
+Advancements only show on Spigot or Paper servers.
+Set `server-name` under `server-events` in `config.yml` to name your server.
 
 New links start with no events turned on. To turn them on:
 
