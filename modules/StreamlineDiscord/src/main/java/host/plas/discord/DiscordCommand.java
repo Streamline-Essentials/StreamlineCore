@@ -1,9 +1,6 @@
 package host.plas.discord;
 
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import gg.drak.thebase.objects.Identifiable;
-import gg.drak.thebase.storage.StorageUtils;
 import host.plas.discord.data.channeling.Route;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,19 +10,18 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
-import net.streamline.api.SLAPI;
 import host.plas.StreamlineDiscord;
 import host.plas.discord.messaging.BotMessageConfig;
-import host.plas.discord.messaging.DiscordMessenger;
+import host.plas.discord.messaging.BotMessages;
 import singularity.configs.ModularizedConfig;
 import singularity.objects.SingleSet;
+import singularity.utils.UserUtils;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 
@@ -126,7 +122,7 @@ public abstract class DiscordCommand extends ModularizedConfig {
 
         // Any guild channel carries a guild: text, announcement, thread, voice and stage chats alike.
         if (! (messagedString.getChannel() instanceof GuildChannel)) {
-            return DiscordMessenger.simpleMessage("This command can only be used in a server channel.");
+            return respond("commands.errors.server-only", messagedString);
         }
         Guild guild = ((GuildChannel) messagedString.getChannel()).getGuild();
 
@@ -138,7 +134,7 @@ public abstract class DiscordCommand extends ModularizedConfig {
             try {
                 member = guild.retrieveMember(messagedString.getAuthor()).complete();
             } catch (Exception e) {
-                return DiscordMessenger.simpleMessage("Error: could not look up your server membership. " + CONTACT_SUFFIX);
+                return respond("commands.errors.member-lookup-failed", messagedString);
             }
         }
 
@@ -146,92 +142,34 @@ public abstract class DiscordCommand extends ModularizedConfig {
         if (member.getRoles().stream().anyMatch(r -> superAdminRoles.contains(r.getIdLong()))) return executeMore(messagedString);
 
         if (defaultPermissionIsServerOwner()) {
-            return DiscordMessenger.simpleMessage("Only the server owner or a bot super admin can use this command. "
-                    + "Add a role's ID to 'bot.super-admin-roles' in the Discord module's config.yml, "
-                    + "or set 'permissions.default' in '" + getCommandIdentifier() + ".yml' to a role's ID.");
+            return respond("commands.errors.owner-only", messagedString);
         }
 
         Role role = guild.getRoleById(getRole());
         if (role == null) {
-            return DiscordMessenger.simpleMessage("Error: the role '" + getRole() + "' configured for this command does not exist. " + CONTACT_SUFFIX);
+            return respond("commands.errors.role-missing", messagedString, "this_role_id", String.valueOf(getRole()));
         }
 
         if (member.getRoles().contains(role)) return executeMore(messagedString);
-        return DiscordMessenger.simpleMessage("You need the '" + role.getName() + "' role to use this command.");
+        return respond("commands.errors.no-role", messagedString, "this_role_name", role.getName(), "this_role_id", role.getId());
     }
 
     public abstract SingleSet<MessageCreateData, BotMessageConfig> executeMore(MessagedString messagedString);
 
-    public void ensureJsonFile(String fileName) {
-        try {
-            SLAPI.getInstance().getResourceAsStream(fileName).close();
-        } catch (Exception e) {
-            return;
+    /**
+     * The bot message {@code key} (see {@link BotMessages}) as this command's reply, with
+     * {@code %this_command%}, {@code %this_command_label%} and {@code %this_channel_id%} filled in, plus
+     * {@code extra} as alternating placeholder names and values. Null when the owner disabled the message.
+     */
+    public SingleSet<MessageCreateData, BotMessageConfig> respond(String key, MessagedString messagedString, String... extra) {
+        Map<String, String> placeholders = BotMessages.placeholders(extra);
+        placeholders.put("this_command", getCommandIdentifier());
+        if (messagedString != null) {
+            placeholders.put("this_command_label", messagedString.getBase());
+            if (messagedString.getChannel() != null) placeholders.put("this_channel_id", messagedString.getChannel().getId());
         }
 
-        StorageUtils.ensureFileFromSelf(StreamlineDiscord.getInstance().getWrapper().getPluginClassLoader(), DiscordHandler.getDiscordCommandFolder(getCommandIdentifier()),
-                new File(DiscordHandler.getDiscordCommandFolder(getCommandIdentifier()), fileName), fileName);
-    }
-
-    public File getFolder() {
-        return DiscordHandler.getDiscordCommandFolder(getCommandIdentifier());
-    }
-
-    public String getJsonFromFile(String fileName) {
-        File[] files = DiscordHandler.getDiscordCommandFolder(getCommandIdentifier()).listFiles((dir, currentFile) -> currentFile.equals(fileName));
-
-        if (files == null) return null;
-
-        if (files.length == 0) {
-            loadFile(fileName);
-            files = DiscordHandler.getDiscordCommandFolder(getCommandIdentifier()).listFiles((dir, currentFile) -> currentFile.equals(fileName));
-        }
-
-        try {
-            if (files == null || files.length == 0) {
-                return null; // No file found
-            }
-            return new JsonParser().parse(new JsonReader(new FileReader(files[0]))).toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public boolean isJsonFile(String wholeInput) {
-        if (! wholeInput.startsWith("--file:")) return false;
-        wholeInput = wholeInput.substring("--file:".length());
-        return wholeInput.endsWith(".json");
-    }
-
-    public String getJsonFile(String wholeInput) {
-        if (wholeInput.startsWith("--file:")) {
-            wholeInput = wholeInput.substring("--file:".length());
-        }
-        if (! wholeInput.endsWith(".json")) {
-            wholeInput = wholeInput + ".json";
-        }
-        return wholeInput;
-    }
-
-    public void loadFile(String name) {
-        try {
-            File file = new File(getFolder(), name);
-
-            InputStream stream = StreamlineDiscord.class.getClassLoader().getResourceAsStream(name);
-            if (stream == null) return;
-
-            try (FileWriter writer = new FileWriter(file)) {
-                Scanner scanner = new Scanner(stream);
-                while (scanner.hasNextLine()) {
-                    writer.write(scanner.nextLine());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        return BotMessages.build(key, UserUtils.getConsole(), placeholders);
     }
 
     public String specialConcat(Collection<String> collection) {

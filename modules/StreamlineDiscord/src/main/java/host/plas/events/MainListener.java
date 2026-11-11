@@ -27,6 +27,9 @@ import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleUtils;
 import singularity.objects.SingleSet;
 import singularity.utils.UserUtils;
+
+import java.util.Collections;
+import java.util.Map;
 import host.plas.events.streamline.bot.command.DiscordCommandEvent;
 import host.plas.events.streamline.bot.posting.DiscordMessageEvent;
 import host.plas.events.streamline.proxy.SimpleDiscordPMessageReceivedEvent;
@@ -81,7 +84,7 @@ public class MainListener implements BaseEventListener {
                     SingleSet<MessageCreateData, BotMessageConfig> data =
                             DiscordHandler.tryVerificationForUser(event.getMessage(), event.getMessage().getTotalMessage(), false);
 
-                    DiscordMessenger.message(event.getMessage().getChannel().getIdLong(), data.getKey(), data.getValue());
+                    if (data != null) DiscordMessenger.message(event.getMessage().getChannel().getIdLong(), data.getKey(), data.getValue());
                 }
             }
             RouteLoader.getLoadedRoutes().forEach(route -> {
@@ -244,17 +247,17 @@ public class MainListener implements BaseEventListener {
         CosmicSender sender = event.getSender();
         if (sender == null) return;
 
-        String message = StreamlineDiscord.getMessages().forwardedStreamlineLogin();
+        Map<String, String> extra = Collections.emptyMap();
 
         RouteLoader.getLoadedRoutes().forEach(route -> {
             if (! route.hasEnabledEvent(EventClassifier.LOGIN)) return;
 
             if (route.getInput().getType().equals(EndPointType.GLOBAL_NATIVE)) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.join", extra);
             } else if (route.getInput().getType().equals(EndPointType.SPECIFIC_NATIVE) && route.getInput().getEndPointIdentifier().equals(sender.getServerName())) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.join", extra);
             } else if (route.getInput().getType().equals(EndPointType.PERMISSION) && sender.hasPermission(route.getInput().getEndPointIdentifier())) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.join", extra);
             }
         });
     }
@@ -266,19 +269,19 @@ public class MainListener implements BaseEventListener {
         CosmicSender sender = event.getSender();
         if (sender == null) return;
 
-        String message = StreamlineDiscord.getMessages().forwardedStreamlineLogout();
+        Map<String, String> extra = Collections.emptyMap();
 
         RouteLoader.getLoadedRoutes().forEach(route -> {
             if (! route.hasEnabledEvent(EventClassifier.LOGOUT)) return;
 
             if (route.getInput().getType().equals(EndPointType.GLOBAL_NATIVE)) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.leave", extra);
             } else if (
                     ( route.getInput().getType().equals(EndPointType.SPECIFIC_NATIVE) || route.getInput().getType().equals(EndPointType.SPECIFIC_HANDLED) )
                             && route.getInput().getEndPointIdentifier().equals(sender.getServerName())) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.leave", extra);
             } else if (route.getInput().getType().equals(EndPointType.PERMISSION) && sender.hasPermission(route.getInput().getEndPointIdentifier())) {
-                route.bounceEvent(new RoutedUser(sender), message);
+                route.bounceEvent(new RoutedUser(sender), "events.leave", extra);
             }
         });
     }

@@ -1,0 +1,92 @@
+# ------------------------------------------------------------------------------------------
+# How each Discord bot message is sent. Every message has one of these values:
+#
+#   default            -> send the plain text written for it in messages.yml
+#   <embed name>       -> send the embed in the "embeds" folder with that file name,
+#                         e.g. on-login sends embeds/on-login.json (".json" is optional)
+#   disabled  (or off) -> send nothing
+#
+# To make your own embed, copy any .json file in the "embeds" folder, rename it, edit it,
+# and put its name next to the message here. Embed files use Discord's embed format:
+#
+#   {
+#     "content": "Text shown above the embed (optional)",
+#     "title": "Title",
+#     "description": "Main text, **markdown** and %placeholders% work",
+#     "color": "#55FF55",
+#     "author": { "name": "%streamline_user_formatted%", "url": "https://...", "icon_url": "https://..." },
+#     "fields": [ { "name": "Field", "value": "Value", "inline": true } ],
+#     "thumbnail": "https://...",
+#     "image": "https://...",
+#     "footer": { "text": "Footer", "icon_url": "https://..." },
+#     "timestamp": true
+#   }
+#
+# Every part is optional. Changes apply to the next message; no reload is needed.
+# A command reply set to "disabled" answers nothing (a slash command's "thinking" reply is removed).
+# ------------------------------------------------------------------------------------------
+
+# Verifying a Minecraft account with Discord.
+verification:
+  success:
+    discord: verify-success-response
+  failure:
+    generic: verify-failure-response
+    already-verified: verify-already-response
+
+# Un-verifying a Minecraft account.
+unverification:
+  success:
+    discord: unverify-success-response
+  failure:
+    generic: unverify-failure-response
+    already-unverified: unverify-already-response
+
+# Game events sent to Discord channels linked with the bot's channel command.
+events:
+  join: on-login
+  leave: on-logout
+  advancement: on-advancement
+  death: on-death
+
+# Replies to the bot's Discord commands.
+commands:
+  ping:
+    response: ping-response
+  help:
+    response: help-response
+  reload:
+    response: reload-response
+  restart:
+    response: restart-response
+  channel:
+    info: channel-info-response
+    set: channel-set-response
+    remove: channel-remove-response
+    none: channel-none-response
+    nothing-to-remove: default
+  channelset:
+    info: channelset-info-response
+    set: channel-set-response
+    none: channel-none-response
+  channelremove:
+    info: channelremove-info-response
+    remove: channel-remove-response
+    none: channel-none-response
+    nothing-to-remove: default
+  channels:
+    list: channel-list-response
+    list-here: channel-list-here-response
+  events:
+    info: event-info-response
+    add: event-add-response
+    remove: event-remove-response
+    clear: event-clear-response
+    none: event-none-response
+  # Replies when someone may not use a command.
+  errors:
+    server-only: default
+    member-lookup-failed: default
+    owner-only: default
+    role-missing: default
+    no-role: default

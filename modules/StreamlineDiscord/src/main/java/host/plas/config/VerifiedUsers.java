@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import host.plas.StreamlineDiscord;
 import host.plas.discord.MessagedString;
 import host.plas.discord.messaging.BotMessageConfig;
-import host.plas.discord.messaging.DiscordMessenger;
+import host.plas.discord.messaging.BotMessages;
 import host.plas.events.streamline.verification.on.VerificationFailureEvent;
 import host.plas.events.streamline.verification.on.VerificationSuccessEvent;
 import singularity.data.console.CosmicSender;
@@ -67,7 +67,7 @@ public class VerifiedUsers {
         CosmicSender user = ModuleUtils.getOrCreateSender(uuid).orElse(null);
         if (user == null) {
             new VerificationFailureEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-            return DiscordMessenger.verificationMessage(UserUtils.getConsole(), StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+            return BotMessages.build("verification.failure.generic", UserUtils.getConsole());
         } else {
             VerifiedUser verified = getOrCreate(uuid);
             if (! isVerified(user)) {
@@ -75,22 +75,22 @@ public class VerifiedUsers {
                 verified.save();
 
                 VerificationSuccessEvent event = new VerificationSuccessEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-                if (event.isCancelled()) return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+                if (event.isCancelled()) return BotMessages.build("verification.failure.generic", user);
 
-                return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedSuccessDiscord());
+                return BotMessages.build("verification.success.discord", user);
             } else {
                 if (! verified.getDiscordIds().contains(messagedString.getAuthor().getIdLong())) {
                     verified.addDiscordId(messagedString.getAuthor().getIdLong());
                     verified.save();
 
                     VerificationSuccessEvent event = new VerificationSuccessEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-                    if (event.isCancelled()) return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+                    if (event.isCancelled()) return BotMessages.build("verification.failure.generic", user);
 
-                    return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedSuccessDiscord());
+                    return BotMessages.build("verification.success.discord", user);
                 }
 
                 new VerificationAlreadyVerifiedEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-                return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedFailureAlreadyVerifiedDiscord());
+                return BotMessages.build("verification.failure.already-verified", user);
             }
         }
     }
@@ -99,19 +99,19 @@ public class VerifiedUsers {
         CosmicSender user = ModuleUtils.getOrCreateSender(uuid).orElse(null);
         if (user == null) {
             new UnVerificationFailureEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-            return DiscordMessenger.verificationMessage(UserUtils.getConsole(), StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+            return BotMessages.build("unverification.failure.generic", UserUtils.getConsole());
         } else {
             if (isVerified(user)) {
                 UnVerificationSuccessEvent event = new UnVerificationSuccessEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-                if (event.isCancelled()) return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+                if (event.isCancelled()) return BotMessages.build("unverification.failure.generic", user);
 
                 VerifiedUser verified = getOrCreate(uuid);
                 verified.removeDiscordId(messagedString.getAuthor().getIdLong());
                 verified.save();
-                return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedSuccessDiscord());
+                return BotMessages.build("unverification.success.discord", user);
             } else {
                 new UnVerificationAlreadyUnVerifiedEvent(fromCommand, uuid, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-                return DiscordMessenger.verificationMessage(user, StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+                return BotMessages.build("unverification.failure.already-unverified", user);
             }
         }
     }

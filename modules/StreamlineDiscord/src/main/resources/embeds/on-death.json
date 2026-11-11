@@ -9,7 +9,7 @@
     }
   },
   "title": "PLAYER DEATH",
-  "description": "**%streamline_user_formatted%** has was KILLED",
+  "description": "**%streamline_user_formatted%** died",
   "fields": [
     {
       "name": "Death Message",

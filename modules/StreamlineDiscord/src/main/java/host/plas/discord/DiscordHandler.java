@@ -26,7 +26,7 @@ import net.streamline.api.SLAPI;
 import host.plas.StreamlineDiscord;
 import host.plas.discord.commands.*;
 import host.plas.discord.messaging.BotMessageConfig;
-import host.plas.discord.messaging.DiscordMessenger;
+import host.plas.discord.messaging.BotMessages;
 import host.plas.discord.voice.StreamlineVoiceInterceptor;
 import host.plas.events.streamline.bot.BotStoppedEvent;
 import host.plas.events.streamline.verification.on.VerificationAlreadyVerifiedEvent;
@@ -52,9 +52,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class DiscordHandler {
-
-    @Getter
-    private static final File forwardedJsonsFolder = new File(StreamlineDiscord.getInstance().getDataFolder(), "forwarded-jsons" + File.separator);
 
     @Getter @Setter
     private static AtomicReference<JDA> concurrentDiscordAPI;
@@ -227,8 +224,6 @@ public class DiscordHandler {
     }
 
     public static CompletableFuture<Boolean> init() {
-        getForwardedJsonsFolder().mkdirs();
-
         return CompletableFuture.supplyAsync(() -> {
             kill().join();
 
@@ -415,16 +410,16 @@ public class DiscordHandler {
 
         if (optional.isPresent()) {
             new VerificationAlreadyVerifiedEvent(fromCommand, null, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-            return DiscordMessenger.verificationMessage(UserUtils.getConsole(), StreamlineDiscord.getMessages().verifiedFailureAlreadyVerifiedDiscord());
+            return BotMessages.build("verification.failure.already-verified", UserUtils.getConsole());
         }
         if (! hasVerification(verification)) {
             new VerificationFailureEvent(fromCommand, null, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-            return DiscordMessenger.verificationMessage(UserUtils.getConsole(), StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+            return BotMessages.build("verification.failure.generic", UserUtils.getConsole());
         }
         CosmicSender user = getPendingVerificationUser(verification).orElse(null);
         if (user == null) {
             new VerificationFailureEvent(fromCommand, null, messagedString.getAuthor().getIdLong(), messagedString, verification).fire();
-            return DiscordMessenger.verificationMessage(UserUtils.getConsole(), StreamlineDiscord.getMessages().verifiedFailureGenericDiscord());
+            return BotMessages.build("verification.failure.generic", UserUtils.getConsole());
         }
         SingleSet<MessageCreateData, BotMessageConfig> data = VerifiedUsers.verifyUser(user.getUuid(), messagedString, verification, fromCommand);
         getPendingVerifications().remove(user.getUuid());

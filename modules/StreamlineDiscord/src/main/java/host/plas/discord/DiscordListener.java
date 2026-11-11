@@ -1,5 +1,8 @@
 package host.plas.discord;
 
+import singularity.objects.SingleSet;
+import host.plas.discord.messaging.BotMessageConfig;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import gg.drak.thebase.async.AsyncUtils;
 import gg.drak.thebase.objects.AtomicString;
 import host.plas.StreamlineDiscord;
@@ -87,7 +90,15 @@ public class DiscordListener extends ListenerAdapter {
         });
 
         MessagedString messagedString = new MessagedString(event.getUser(), event.getChannel(), message.get());
-        ReplyCallbackAction action = event.reply(command.execute(messagedString).getKey());
+        SingleSet<MessageCreateData, BotMessageConfig> reply = command.execute(messagedString);
+        if (reply == null) {
+            // The reply is disabled in messaging.yml, but Discord needs every interaction answered:
+            // acknowledge it privately and remove the "thinking" message.
+            event.deferReply(true).queue(hook -> hook.deleteOriginal().queue());
+            return;
+        }
+
+        ReplyCallbackAction action = event.reply(reply.getKey());
         if (command.isReplyEphemeral()) action = action.setEphemeral(true);
         action.queue();
     }

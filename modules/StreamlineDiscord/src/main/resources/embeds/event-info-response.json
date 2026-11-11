@@ -8,7 +8,7 @@
     },
     {
       "name": "Add Usage",
-      "value": "**%discord_bot_prefix%%this_command_label% set <type> <identifier>",
+      "value": "**%discord_bot_prefix%%this_command_label% add <type> <identifier>",
       "inline": false
     },
     {
@@ -18,7 +18,7 @@
     },
     {
       "name": "Clear Usage",
-      "value": "**%discord_bot_prefix%%this_command_label% clear <type> <identifier>",
+      "value": "**%discord_bot_prefix%%this_command_label% clear all <identifier>",
       "inline": false
     }
   ],
