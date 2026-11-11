@@ -31,6 +31,11 @@ import host.plas.placeholders.DiscordExpansion;
 import singularity.interfaces.ISingularityExtension;
 import singularity.modules.SimpleModule;
 
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class StreamlineDiscord extends SimpleModule {
@@ -86,6 +91,8 @@ public class StreamlineDiscord extends SimpleModule {
 
     @Override
     public void onEnable() {
+        writeHelpGuide();
+
         setGroupsDependency(new GroupsDependency());
         setMessagingDependency(new MessagingDependency());
 
@@ -134,6 +141,30 @@ public class StreamlineDiscord extends SimpleModule {
         }
 
         setVerifierTimer(new VerifierTimer());
+    }
+
+    public static final String HELP_GUIDE = "NEED-HELP-START-HERE.md";
+
+    /**
+     * Copies the shipped setup guide into the data folder whenever it is missing or differs
+     * from the jar's copy. It runs before anything that can stop the module (such as an unset
+     * main guild id), so a first start always leaves the guide beside config.yml.
+     */
+    private void writeHelpGuide() {
+        try (InputStream in = getWrapper().getPluginClassLoader().getResourceAsStream(HELP_GUIDE)) {
+            if (in == null) return;
+            byte[] shipped = in.readAllBytes();
+
+            File folder = getDataFolder();
+            if (! folder.exists()) folder.mkdirs();
+
+            Path target = new File(folder, HELP_GUIDE).toPath();
+            if (Files.isRegularFile(target) && Arrays.equals(Files.readAllBytes(target), shipped)) return;
+
+            Files.write(target, shipped);
+        } catch (Exception e) {
+            logWarning("Could not write " + HELP_GUIDE + " to the module folder: " + e.getMessage());
+        }
     }
 
     @Override
