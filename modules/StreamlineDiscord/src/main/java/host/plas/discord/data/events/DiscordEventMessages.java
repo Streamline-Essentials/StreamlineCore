@@ -8,6 +8,8 @@ import host.plas.discord.data.channeling.EndPointType;
 import host.plas.discord.data.channeling.Route;
 import host.plas.discord.data.channeling.RouteLoader;
 import host.plas.discord.data.channeling.RoutedUser;
+import host.plas.discord.data.events.relay.EventRelay;
+import host.plas.discord.data.events.relay.RelayedEvent;
 import host.plas.discord.messaging.BotMessages;
 import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 import singularity.Singularity;
@@ -36,7 +38,9 @@ import java.util.regex.Pattern;
  * bare name, or {@code The server}) and {@code %this_server_tag%} ({@code  (`name`)}, or nothing).
  *
  * <p>Messages are built and sent on one background thread, so a game thread never waits on files or
- * Discord, and nothing is sent while the bot is not connected.
+ * Discord, and nothing is sent while the bot is not connected. A backend without a usable bot of its own
+ * relays its events to the proxy's bot instead ({@link EventRelay}), which posts them with
+ * {@link #postRelayed(RelayedEvent)}.
  */
 public final class DiscordEventMessages {
     public static final String KEY_JOIN = "events.join";
@@ -116,7 +120,11 @@ public final class DiscordEventMessages {
         if (sender == null) return;
 
         later(() -> {
-            if (! DiscordHandler.isConnected()) return;
+            if (! DiscordHandler.isConnected()) {
+                // A backend without a bot of its own hands the event to the proxy's bot.
+                EventRelay.relayPlayerEvent(classifier, messageKey, sender, extra);
+                return;
+            }
 
             // The player's server is read when sending, so a delayed proxy join names the server reached.
             Map<String, String> placeholders = playerPlaceholders(sender);
@@ -214,23 +222,38 @@ public final class DiscordEventMessages {
 
     /** Called whenever the bot finishes connecting. */
     public static void onBotReady() {
+        EventRelay.onBotReady();
+        announceStart();
+    }
+
+    /** Called when the bot could not log in, so a backend announces its start through the proxy instead. */
+    public static void onBotLoginFailed() {
+        EventRelay.onBotLoginFailed();
         announceStart();
     }
 
     /**
      * Sends {@code events.server-start} once the server has started and the bot is connected, unless this
      * JVM already announced the server online since its last stop message, so a bot restart or reconnect
-     * sends nothing.
+     * sends nothing. A backend whose bot is off, has no token or failed to log in relays it to the proxy
+     * instead (see {@link EventRelay}).
      */
     public static synchronized void announceStart() {
         if (! Boolean.getBoolean(PROPERTY_SERVER_STARTED)) return;
         if (Boolean.getBoolean(PROPERTY_ONLINE_ANNOUNCED)) return;
-        if (! DiscordHandler.isConnected()) return;
+
+        boolean relay = ! DiscordHandler.isConnected();
+        if (relay && ! EventRelay.isSending()) return;
 
         System.setProperty(PROPERTY_ONLINE_ANNOUNCED, "true");
 
         Config config = StreamlineDiscord.getConfig();
         if (config == null || ! config.serverEventServerStart()) return;
+
+        if (relay) {
+            later(() -> EventRelay.relayServerEvent(EventClassifier.SERVER_START, KEY_SERVER_START), 0L);
+            return;
+        }
 
         later(() -> {
             for (CompletableFuture<?> sent : sendServerEvent(EventClassifier.SERVER_START, KEY_SERVER_START)) {
@@ -245,17 +268,25 @@ public final class DiscordEventMessages {
     /**
      * Sends {@code events.server-stop} when the server was announced online, and waits up to five seconds for
      * Discord to accept it. Runs on the calling thread, before the bot shuts down, since shutting the bot
-     * down cancels requests still queued.
+     * down cancels requests still queued. A backend that relays its events sends it to the proxy instead,
+     * waiting up to three seconds.
      */
     public static synchronized void announceStop() {
         try {
             if (! Boolean.getBoolean(PROPERTY_ONLINE_ANNOUNCED)) return;
-            if (! DiscordHandler.isConnected()) return;
+
+            boolean relay = ! DiscordHandler.isConnected();
+            if (relay && ! EventRelay.isSending()) return;
 
             System.clearProperty(PROPERTY_ONLINE_ANNOUNCED);
 
             Config config = StreamlineDiscord.getConfig();
             if (config == null || ! config.serverEventServerStop()) return;
+
+            if (relay) {
+                EventRelay.relayServerEvent(EventClassifier.SERVER_STOP, KEY_SERVER_STOP);
+                return;
+            }
 
             List<CompletableFuture<?>> sent = sendServerEvent(EventClassifier.SERVER_STOP, KEY_SERVER_STOP);
             if (sent.isEmpty()) return;
@@ -315,6 +346,80 @@ public final class DiscordEventMessages {
             return ModuleUtils.getServerType() == ISingularityExtension.ServerType.PROXY;
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    // ---------------------------------------------------------------- relayed events
+
+    /**
+     * Posts an event another server relayed (see {@link EventRelay}) to every route with its classifier
+     * enabled whose input takes it, as if it had happened here: global routes; routes of the origin server
+     * (its event name or Streamline name, or for a player the server this proxy sees them on); and, for
+     * player events, permission routes the player passes. {@code %this_server*%} name the origin server,
+     * and Streamline's player placeholders resolve against the player when this server knows them.
+     */
+    public static void postRelayed(RelayedEvent event) {
+        if (event == null) return;
+
+        later(() -> {
+            if (! DiscordHandler.isConnected()) return;
+
+            CosmicSender player = null;
+            if (event.isPlayerEvent()) {
+                try {
+                    player = UserUtils.getOrGetSender(event.getPlayerUuid()).orElse(null);
+                } catch (Throwable ignored) {
+                    // Unknown here; the payload's name stands in.
+                }
+            }
+
+            String serverName = event.getOriginName();
+            String seenOn = null;
+            if (player != null && isProxy()) {
+                String name = player.getServerName();
+                if (isKnownServerName(name)) seenOn = name;
+            }
+            if (serverName.isBlank() && seenOn != null) serverName = seenOn;
+
+            Map<String, String> placeholders = new HashMap<>();
+            if (event.isPlayerEvent()) {
+                String name = event.getPlayerName();
+                if ((name == null || name.isBlank()) && player != null) name = player.getCurrentName();
+                placeholders.put("this_player", escape(name));
+            }
+            putServer(placeholders, serverName);
+            placeholders.putAll(event.getPlaceholders());
+
+            CosmicSender subject = player != null ? player : UserUtils.getConsole();
+            for (Route route : RouteLoader.getLoadedRoutes()) {
+                try {
+                    if (! route.hasEnabledEvent(event.getClassifier())) continue;
+                    if (! takesRelayed(route.getInput(), event, seenOn, player)) continue;
+
+                    route.bounceEvent(new RoutedUser(subject), event.getMessageKey(), placeholders);
+                } catch (Throwable t) {
+                    StreamlineDiscord.getInstance().logWarning("Could not send relayed '" + event.getMessageKey() + "' to route " + route.getIdentifier() + ": " + t);
+                }
+            }
+        }, 0L);
+    }
+
+    private static boolean takesRelayed(EndPoint input, RelayedEvent event, String seenOn, CosmicSender player) {
+        if (input == null || input.getType() == null) return false;
+
+        switch (input.getType()) {
+            case GLOBAL_NATIVE:
+                return true;
+            case SPECIFIC_NATIVE:
+            case SPECIFIC_HANDLED:
+                String identifier = input.getEndPointIdentifier();
+                if (identifier == null || identifier.isBlank()) return false;
+                return identifier.equals(event.getOriginName()) || identifier.equals(event.getOriginCoreName())
+                        || identifier.equals(seenOn);
+            case PERMISSION:
+                return player != null && event.isPlayerEvent() && player.hasPermission(input.getEndPointIdentifier());
+            default:
+                return false;
         }
     }
 

@@ -46,7 +46,9 @@ public class Config extends ModularizedConfig {
         serverEventServerName();
         serverEventProxyJoinDelayTicks();
 
-        moduleForwardsEventsToProxy();
+        eventRelayEnabled();
+        eventRelayReceive();
+        eventRelayTransport();
 
         verificationResponsesPrivate();
 
@@ -233,10 +235,36 @@ public class Config extends ModularizedConfig {
         return getOrSetDefault("server-events.proxy-join-delay-ticks", 40);
     }
 
-    public boolean moduleForwardsEventsToProxy() {
+    /**
+     * Whether a backend without a Discord bot of its own (turned off, no token, or failed to log in) sends
+     * its game events to the proxy's bot. {@code module.forward-events-to-proxy} was this setting's name
+     * in earlier versions; its value carries over.
+     */
+    public boolean eventRelayEnabled() {
         reloadResource();
 
-        return getOrSetDefault("module.forward-events-to-proxy", true);
+        if (getResource().contains("module.forward-events-to-proxy")) {
+            boolean legacy = getResource().getBoolean("module.forward-events-to-proxy");
+            getResource().remove("module.forward-events-to-proxy");
+            if (getResource().singleLayerKeySet("module").isEmpty()) getResource().remove("module");
+            if (! getResource().contains("event-relay.enabled")) getResource().set("event-relay.enabled", legacy);
+        }
+
+        return getOrSetDefault("event-relay.enabled", true);
+    }
+
+    /** Whether a server with its own bot posts game events other servers relay to it. */
+    public boolean eventRelayReceive() {
+        reloadResource();
+
+        return getOrSetDefault("event-relay.receive", true);
+    }
+
+    /** How relayed events travel: {@code auto}, {@code redis}, {@code database} or {@code plugin-messages}. */
+    public String eventRelayTransport() {
+        reloadResource();
+
+        return getOrSetDefault("event-relay.transport", "auto");
     }
 
     public boolean verificationOnlyCommand() {

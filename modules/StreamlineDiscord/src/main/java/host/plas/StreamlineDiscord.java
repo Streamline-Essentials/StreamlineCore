@@ -25,6 +25,7 @@ import host.plas.database.RouteKeeper;
 import host.plas.depends.MessagingDependency;
 import host.plas.discord.DiscordHandler;
 import host.plas.discord.data.events.DiscordEventMessages;
+import host.plas.discord.data.events.relay.EventRelay;
 import host.plas.discord.messaging.BotMessageMigration;
 import host.plas.discord.messaging.BotMessages;
 import host.plas.events.MainListener;
@@ -112,7 +113,8 @@ public class StreamlineDiscord extends SimpleModule {
         setEndPointLoader(new EndPointLoader());
         setVerifiedUserLoader(new VerifiedUserLoader());
 
-        if (getConfig().getBotLayout().getMainGuildId() == 0L) {
+        // A server whose bot is off or has no token (a backend relaying to the proxy) needs no guild.
+        if (! EventRelay.ownBotDisabled() && getConfig().getBotLayout().getMainGuildId() == 0L) {
             logWarning("&bWARNING!&r &dYou need to set the main guild ID in the config.yml file for the Discord Streamline module!&r%newline%&cDisabling the Discord Streamline module...&r");
             super.stop();
             return;
@@ -130,6 +132,8 @@ public class StreamlineDiscord extends SimpleModule {
         DiscordHandler.init(); // init async
 
         setMainListener(new MainListener());
+
+        EventRelay.start();
 
         // A proxy loads modules while it initialises and its start event cannot be relied on to reach
         // them, so it counts as started once the module is up; backends wait for the server start event.
@@ -178,6 +182,8 @@ public class StreamlineDiscord extends SimpleModule {
         // requests still queued.
         DiscordEventMessages.announceStop();
         DiscordEventMessages.shutdown();
+        // Its thread, Redis connection and plugin-message listener would outlive an unloaded module.
+        EventRelay.stop();
 
         // The middleware writes in batches every 5 seconds; flush whatever is still queued.
         if (getDiscordMiddleware() != null) {

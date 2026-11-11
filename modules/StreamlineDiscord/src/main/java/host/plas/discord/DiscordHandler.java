@@ -245,6 +245,7 @@ public class DiscordHandler {
                 JDA jda = connect(layout, true);
                 if (jda == null) {
                     StreamlineDiscord.getInstance().logWarning("&cThe Discord bot could not log in; Discord features stay off until the bot is reloaded.");
+                    DiscordEventMessages.onBotLoginFailed();
                     return false;
                 }
                 setDiscordAPI(jda);
