@@ -96,7 +96,11 @@ It can post these six events:
 Advancements only show on Spigot or Paper servers.
 Set `server-name` under `server-events` in `config.yml` to name your server.
 
-New links start with no events turned on. To turn them on:
+New links start with no events turned on.
+The easy way: type `/add_all_events` in the linked channel.
+Pick "Every channel" to turn them on for all your links at once.
+
+To turn on single events instead:
 
 1. Type `/channels here:True` in the linked channel.
 2. Find the line that ends with DISCORD_TEXT.
