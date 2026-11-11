@@ -304,10 +304,12 @@ public final class BotMessages {
         register("unverification.failure.generic", "There was an issue handling that request...", "unverify-failure-response");
         register("unverification.failure.already-unverified", "You have already unverified your account!", "unverify-already-response");
 
-        register("events.join", "**%streamline_user_formatted%** connected to %streamline_user_server%", "on-login");
-        register("events.leave", "**%streamline_user_formatted%** left.", "on-logout");
-        register("events.advancement", "**%streamline_user_formatted%** has made the advancement **%this_advancement_title%**", "on-advancement");
-        register("events.death", "**%streamline_user_formatted%** died: %this_death_message%", "on-death");
+        register("events.join", ":inbox_tray: **%this_player%** joined %this_server%.", DEFAULT);
+        register("events.leave", ":outbox_tray: **%this_player%** left %this_server%.", DEFAULT);
+        register("events.advancement", ":trophy: **%this_player%** earned **%this_advancement_title%** on %this_server%.", DEFAULT);
+        register("events.death", ":skull: %this_death_message%%this_server_tag%", DEFAULT);
+        register("events.server-start", ":green_circle: **%this_server_name%** is online.", DEFAULT);
+        register("events.server-stop", ":red_circle: **%this_server_name%** went offline.", DEFAULT);
 
         register("commands.ping.response", "Current latency is **%discord_bot_ping%**ms", "ping-response");
         register("commands.help.response", "Bot setup help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup\nSupport Discord: https://dsc.gg/streamline", "help-response");
@@ -337,7 +339,7 @@ public final class BotMessages {
         register("commands.channels.list", "**All routes**\n%this_list_all%", "channel-list-response");
         register("commands.channels.list-here", "**Routes in this channel**\n%this_list_here%", "channel-list-here-response");
 
-        register("commands.events.info", "**Usage:**\n`%discord_bot_prefix%%this_command_label% add <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% clear all <identifier>`\nTypes: LOGIN, LOGOUT, ADVANCEMENT, DEATH, all", "event-info-response");
+        register("commands.events.info", "**Usage:**\n`%discord_bot_prefix%%this_command_label% add <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% clear all <identifier>`\nTypes: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all", "event-info-response");
         register("commands.events.add", "Added the event(s) for route `%this_identifier%`:%this_type_named%", "event-add-response");
         register("commands.events.remove", "Removed the event(s) for route `%this_identifier%`:%this_type_named%", "event-remove-response");
         register("commands.events.clear", "Cleared the events of route `%this_identifier%`.", "event-clear-response");
@@ -357,5 +359,10 @@ public final class BotMessages {
 
         // A route's format may name an embed ('--file:default-route-message.json'); this one ships as the example.
         Embeds.ensureShipped("default-route-message");
+
+        // Embed versions of the game event messages, for owners who switch an event to one in messaging.yml.
+        for (String embed : new String[] { "on-login", "on-logout", "on-advancement", "on-death", "on-server-start", "on-server-stop" }) {
+            Embeds.ensureShipped(embed);
+        }
     }
 }

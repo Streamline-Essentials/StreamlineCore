@@ -35,13 +35,40 @@ unverification:
     already-unverified: "You have already unverified your account!"
 
 # Game events sent to Discord channels linked with the bot's channel command.
+# A route only sends the events turned on for it (the bot's events command), and each event
+# can be turned off for the whole server under "server-events" in config.yml.
+#
+# Every event can use:
+#   %this_server%       the server as `name`, or "the server" when it has no name
+#   %this_server_name%  the server's name, or "The server" when it has none
+#   %this_server_tag%   " (`name`)", or nothing when the server has no name
+# The server is the player's server on a proxy, else this server ("server-events.server-name"
+# in config.yml, or Streamline's server name).
+# Player events (join, leave, advancement, death) can also use:
+#   %this_player%       the player's name (Discord markdown escaped)
+#   and any Streamline placeholder about the player, e.g. %streamline_user_absolute%,
+#   %streamline_user_formatted%, %streamline_user_uuid%
 events:
-  join: "**%streamline_user_formatted%** connected to %streamline_user_server%"
-  leave: "**%streamline_user_formatted%** left."
-  # %this_advancement_title%, %this_advancement_description%, %this_advancement_criteria%
-  advancement: "**%streamline_user_formatted%** has made the advancement **%this_advancement_title%**"
-  # %this_death_message%, %this_keep_inventory%, %this_keep_experience%
-  death: "**%streamline_user_formatted%** died: %this_death_message%"
+  # A player joined. On a proxy this is sent once they reach a server.
+  join: ":inbox_tray: **%this_player%** joined %this_server%."
+  # A player quit.
+  leave: ":outbox_tray: **%this_player%** left %this_server%."
+  # A player earned an advancement shown in chat (Spigot / Paper).
+  #   %this_advancement_title%        the advancement's name, e.g. Stone Age
+  #   %this_advancement_description%  its description
+  #   %this_advancement_key%          its id, e.g. minecraft:story/mine_stone
+  #   %this_advancement_criteria%     its criteria, comma separated
+  advancement: ":trophy: **%this_player%** earned **%this_advancement_title%** on %this_server%."
+  # A player died.
+  #   %this_death_message%    the game's death message, e.g. Steve was slain by Zombie
+  #                           (on Fabric / Forge / NeoForge: "Steve died")
+  #   %this_keep_inventory%   true / false (Spigot / Paper)
+  #   %this_keep_experience%  true / false (Spigot / Paper)
+  death: ":skull: %this_death_message%%this_server_tag%"
+  # This server finished starting and the bot is connected.
+  server-start: ":green_circle: **%this_server_name%** is online."
+  # This server (or the Discord module) is shutting down.
+  server-stop: ":red_circle: **%this_server_name%** went offline."
 
 # Replies to the bot's Discord commands.
 # Every command reply can use %this_command_label% (the command as typed) and %this_channel_id%.
@@ -76,7 +103,7 @@ commands:
     list-here: "**Routes in this channel**\n%this_list_here%"
   # add / remove / clear: %this_identifier% (the route), %this_type% and %this_type_named% (the events)
   events:
-    info: "**Usage:**\n`%discord_bot_prefix%%this_command_label% add <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% clear all <identifier>`\nTypes: LOGIN, LOGOUT, ADVANCEMENT, DEATH, all"
+    info: "**Usage:**\n`%discord_bot_prefix%%this_command_label% add <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`\n`%discord_bot_prefix%%this_command_label% clear all <identifier>`\nTypes: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all"
     add: "Added the event(s) for route `%this_identifier%`:%this_type_named%"
     remove: "Removed the event(s) for route `%this_identifier%`:%this_type_named%"
     clear: "Cleared the events of route `%this_identifier%`."

@@ -43,11 +43,15 @@ unverification:
     already-unverified: unverify-already-response
 
 # Game events sent to Discord channels linked with the bot's channel command.
+# Embed versions ship in the "embeds" folder: on-login, on-logout, on-advancement, on-death,
+# on-server-start and on-server-stop. Put one of those names here to send the embed instead.
 events:
-  join: on-login
-  leave: on-logout
-  advancement: on-advancement
-  death: on-death
+  join: default
+  leave: default
+  advancement: default
+  death: default
+  server-start: default
+  server-stop: default
 
 # Replies to the bot's Discord commands.
 commands:
