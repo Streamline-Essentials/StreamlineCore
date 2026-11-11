@@ -7,3 +7,4 @@
 + Fixed Forge/NeoForge crashing beside mods bundling SQLite.
 + Added /streamlinedb migrate to move data between SQLite and MySQL.
   + Switches Streamline to the new database afterwards.
++ Fixed module updates leaving the old version's listeners running.
