@@ -111,6 +111,20 @@ Use "Remove Event" or "Clear All" to turn events off again.
 
 The `server-events` part of `config.yml` turns each event on or off everywhere.
 
+## One bot for a whole network
+
+Using Velocity or BungeeCord? You only need one bot, on the proxy.
+Install the module on your game servers too, but leave their bot off.
+They then pass deaths, advancements, starts and shutdowns to the proxy's bot.
+The proxy posts joins and leaves itself.
+
+This works best when Streamline uses Redis or a MySQL database.
+Without either, game servers can only pass events while a player is online.
+Shutdown messages may then go missing.
+
+Give each game server a name with `server-name` under `server-events`.
+The `event-relay` part of `config.yml` turns this on or off.
+
 ## Linking accounts (verification)
 
 1. The player types `/verify` in Minecraft.
