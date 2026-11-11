@@ -176,6 +176,7 @@ public class DiscordHandler {
     }
 
     public static void registerCommands() {
+        track(new AddAllEventsCommand());
         track(new ChannelCommand());
         track(new ChannelRemoveCommand());
         track(new ChannelSetCommand());

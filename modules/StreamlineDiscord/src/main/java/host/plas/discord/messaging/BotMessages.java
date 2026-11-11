@@ -345,6 +345,11 @@ public final class BotMessages {
         register("commands.events.clear", "Cleared the events of route `%this_identifier%`.", "event-clear-response");
         register("commands.events.none", noneText, "event-none-response");
 
+        register("commands.add_all_events.here", "Turned on all events (%this_events%) for %this_count% link(s) in this channel:\n%this_routes%", DEFAULT);
+        register("commands.add_all_events.everywhere", "Turned on all events (%this_events%) for %this_count% link(s) in every channel:\n%this_routes%", DEFAULT);
+        register("commands.add_all_events.none-here", "This channel has no links that post into it. Link one with the channelset command first.", DEFAULT);
+        register("commands.add_all_events.none-everywhere", "No channel has links that post into it. Link one with the channelset command first.", DEFAULT);
+
         String contact = "Please tell an administrator to contact @drakdv on Discord.";
         register("commands.errors.server-only", "This command can only be used in a server channel.", DEFAULT);
         register("commands.errors.member-lookup-failed", "Error: could not look up your server membership. " + contact, DEFAULT);
