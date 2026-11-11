@@ -15,8 +15,10 @@ import singularity.modules.ModuleUtils;
 import singularity.objects.SingleSet;
 import singularity.utils.UserUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +61,8 @@ public final class BotMessages {
      * Declares a bot message and writes its defaults: {@code defaultText} to {@code messages.yml} and
      * {@code defaultEmbedOrDefault} to {@code messaging.yml}, each only where the key holds no value yet, so
      * an owner's settings are never overwritten. When the default names an embed, the shipped
-     * {@code embeds/<name>.json} is copied out if missing. Safe to call more than once.
+     * {@code embeds/<name>.json} is copied out if missing. Safe to call more than once; keys registered before the
+     * module enables are written to the files when it does.
      *
      * @param key                   dotted key, e.g. {@code events.join}
      * @param defaultText           plain text used for {@code default} and as the fallback when the embed is unreadable
@@ -197,21 +200,39 @@ public final class BotMessages {
         return setting != null && ! setting.isBlank() && ! setting.equalsIgnoreCase(DEFAULT) && ! isDisabled(setting);
     }
 
-    /** Replaces the {@code extra} placeholders, then Streamline's placeholders for {@code on}. */
+    /**
+     * Replaces the {@code extra} placeholders, then Streamline's placeholders for {@code on}. Extra values are
+     * inserted as they are and never parsed for placeholders themselves, since they often hold player text
+     * (chat, death messages, item names): each one stands in as an inert token during Streamline's pass.
+     */
     public static String resolve(String text, CosmicSender on, Map<String, String> extra) {
         if (text == null) return null;
 
         String result = text;
+        List<String> values = new ArrayList<>();
         if (extra != null) {
             for (Map.Entry<String, String> entry : extra.entrySet()) {
                 if (entry.getKey() == null) continue;
                 String name = entry.getKey();
                 if (! name.startsWith("%")) name = "%" + name + "%";
-                result = result.replace(name, entry.getValue() == null ? "" : entry.getValue());
+                if (! result.contains(name)) continue;
+
+                result = result.replace(name, token(values.size()));
+                values.add(entry.getValue() == null ? "" : entry.getValue());
             }
         }
 
-        return ModuleUtils.replacePlaceholders(on == null ? UserUtils.getConsole() : on, result);
+        result = ModuleUtils.replacePlaceholders(on == null ? UserUtils.getConsole() : on, result);
+
+        for (int i = 0; i < values.size(); i++) {
+            result = result.replace(token(i), values.get(i));
+        }
+        return result;
+    }
+
+    /** A private-use marker no placeholder pattern matches. */
+    private static String token(int index) {
+        return "\uE000" + index + "\uE001";
     }
 
     /**
@@ -330,6 +351,9 @@ public final class BotMessages {
                 + "or set 'permissions.default' in '%this_command%.yml' to a role's ID.", DEFAULT);
         register("commands.errors.role-missing", "Error: the role '%this_role_id%' configured for this command does not exist. " + contact, DEFAULT);
         register("commands.errors.no-role", "You need the '%this_role_name%' role to use this command.", DEFAULT);
+
+        // Keys registered before the configs loaded so far live only in memory.
+        REGISTERED.forEach((key, defaults) -> register(key, defaults[0], defaults[1]));
 
         // A route's format may name an embed ('--file:default-route-message.json'); this one ships as the example.
         Embeds.ensureShipped("default-route-message");

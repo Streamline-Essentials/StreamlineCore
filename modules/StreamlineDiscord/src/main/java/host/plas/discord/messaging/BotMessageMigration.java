@@ -66,13 +66,8 @@ public final class BotMessageMigration {
     private BotMessageMigration() {
     }
 
-    /**
-     * Runs after {@code messages.yml} and {@code messaging.yml} load and before the defaults are registered.
-     *
-     * @param upgrading whether {@code messages.yml} existed before this start created {@code messaging.yml}, so
-     *                  plain texts already in {@code messages.yml} were written for the old layout and are sent as text
-     */
-    public static void run(boolean upgrading) {
+    /** Runs after {@code messages.yml} and {@code messaging.yml} load and before the defaults are registered. */
+    public static void run() {
         try {
             Result result = new Result();
             File dataFolder = StreamlineDiscord.getInstance().getDataFolder();
@@ -81,7 +76,7 @@ public final class BotMessageMigration {
             // The old forwarded messages and verification responses.
             Map<String, String> forwarded = moveJsons(new File(dataFolder, "forwarded-jsons"), "forwarded",
                     new File(backup, "forwarded-jsons"), result);
-            translateMessages(forwarded, upgrading, result);
+            translateMessages(forwarded, result);
 
             File commandsFolder = new File(dataFolder, "discord-commands");
             File[] commandFolders = commandsFolder.listFiles(File::isDirectory);
@@ -161,10 +156,12 @@ public final class BotMessageMigration {
         if (left != null && left.length == 0) folder.delete();
     }
 
-    private static void translateMessages(Map<String, String> renamed, boolean upgrading, Result result) {
+    private static void translateMessages(Map<String, String> renamed, Result result) {
         Messages messages = StreamlineDiscord.getMessages();
         Messaging messaging = StreamlineDiscord.getMessaging();
 
+        // Every old messages.yml holds the 'forwarded' section and no new one does, so its presence marks a
+        // file written for the old layout, whose plain texts were meant to be sent as text.
         boolean hadForwarded = messages.has("forwarded");
         for (Map.Entry<String, String> entry : OLD_MESSAGE_KEYS.entrySet()) {
             String oldKey = entry.getKey();
@@ -184,7 +181,7 @@ public final class BotMessageMigration {
                 messaging.set(newKey, BotMessages.DEFAULT);
                 messages.remove(oldKey);
                 result.settings++;
-            } else if (upgrading) {
+            } else if (hadForwarded) {
                 messaging.set(newKey, BotMessages.DEFAULT);
                 result.settings++;
             }

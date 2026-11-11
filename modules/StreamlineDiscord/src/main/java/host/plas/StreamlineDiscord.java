@@ -31,7 +31,6 @@ import host.plas.placeholders.DiscordExpansion;
 import singularity.interfaces.ISingularityExtension;
 import singularity.modules.SimpleModule;
 
-import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class StreamlineDiscord extends SimpleModule {
@@ -91,12 +90,9 @@ public class StreamlineDiscord extends SimpleModule {
         setMessagingDependency(new MessagingDependency());
 
         setConfig(new Config());
-        // An install whose messages.yml predates messaging.yml still holds the old per-message settings.
-        boolean upgradingMessages = new File(getDataFolder(), "messages.yml").exists()
-                && ! new File(getDataFolder(), "messaging.yml").exists();
         setMessages(new Messages());
         setMessaging(new Messaging());
-        BotMessageMigration.run(upgradingMessages);
+        BotMessageMigration.run();
         BotMessages.registerDefaults();
         setVerifiedUsers(new VerifiedUsers());
 
