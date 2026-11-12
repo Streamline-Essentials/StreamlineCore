@@ -9,16 +9,11 @@
     }
   },
   "title": "ADVANCEMENT GET",
-  "description": "**%streamline_user_formatted%** has achieved %this_advancement_title%",
+  "description": "%streamline_user_absolute% has achieved %advancement%",
   "fields": [
     {
       "name": "Description",
-      "value": "%this_advancement_description%",
-      "inline": false
-    },
-    {
-      "name": "Criteria",
-      "value": "%this_advancement_criteria%",
+      "value": "%description%",
       "inline": false
     }
   ],

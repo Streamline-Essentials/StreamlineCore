@@ -56,7 +56,8 @@ events:
   leave: ":outbox_tray: **%this_player%** left %this_server%."
   # A player earned an advancement shown in chat (Spigot / Paper).
   #   %this_advancement_title%        the advancement's name, e.g. Stone Age
-  #   %this_advancement_description%  its description
+  #                                   (also %advancement%)
+  #   %this_advancement_description%  its description (also %description%)
   #   %this_advancement_key%          its id, e.g. minecraft:story/mine_stone
   #   %this_advancement_criteria%     its criteria, comma separated
   advancement: ":trophy: **%this_player%** earned **%this_advancement_title%** on %this_server%."

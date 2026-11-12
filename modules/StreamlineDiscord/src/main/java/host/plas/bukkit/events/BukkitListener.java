@@ -134,6 +134,9 @@ public class BukkitListener implements Listener {
         map.put("this_advancement_title", DiscordEventMessages.escape(title));
         map.put("this_advancement_description", DiscordEventMessages.escape(description));
         map.put("this_advancement_criteria", String.join(", ", advancement.getCriteria()));
+        // Short names for the shipped embed.
+        map.put("advancement", map.get("this_advancement_title"));
+        map.put("description", map.get("this_advancement_description"));
         return map;
     }
 
