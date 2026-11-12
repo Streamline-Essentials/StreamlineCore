@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -78,6 +79,20 @@ public final class BotMessages {
         if (messaging != null) messaging.ensureDefault(key, defaultEmbedOrDefault);
 
         if (isEmbedSetting(defaultEmbedOrDefault)) Embeds.ensureShipped(defaultEmbedOrDefault);
+    }
+
+    /** Embeds that ship without being a registered message's default: route formats and game event versions. */
+    public static final List<String> EXTRA_SHIPPED_EMBEDS = List.of(
+            "default-route-message", "on-login", "on-logout", "on-advancement", "on-death", "on-server-start", "on-server-stop");
+
+    /** The file name of every embed a registered message defaults to, plus {@link #EXTRA_SHIPPED_EMBEDS}. */
+    public static Set<String> getDefaultEmbeds() {
+        Set<String> names = new TreeSet<>();
+        for (String[] defaults : REGISTERED.values()) {
+            if (isEmbedSetting(defaults[1])) names.add(Embeds.fileName(defaults[1]));
+        }
+        for (String extra : EXTRA_SHIPPED_EMBEDS) names.add(Embeds.fileName(extra));
+        return names;
     }
 
     /** Every key registered since the module loaded. */
@@ -362,11 +377,9 @@ public final class BotMessages {
         // Keys registered before the configs loaded so far live only in memory.
         REGISTERED.forEach((key, defaults) -> register(key, defaults[0], defaults[1]));
 
-        // A route's format may name an embed ('--file:default-route-message.json'); this one ships as the example.
-        Embeds.ensureShipped("default-route-message");
-
-        // Embed versions of the game event messages, for owners who switch an event to one in messaging.yml.
-        for (String embed : new String[] { "on-login", "on-logout", "on-advancement", "on-death", "on-server-start", "on-server-stop" }) {
+        // A route's format may name an embed ('--file:default-route-message.json'), and each game event has an
+        // embed version owners can switch to in messaging.yml.
+        for (String embed : EXTRA_SHIPPED_EMBEDS) {
             Embeds.ensureShipped(embed);
         }
     }

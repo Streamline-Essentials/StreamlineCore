@@ -165,6 +165,11 @@ Type these in Minecraft. You need the permission `streamline.command.streamlined
 - `/streamlinediscord admin slashcommands disable <command>` hides only its slash version.
 - `/streamlinediscord admin slashcommands enable <command>` brings the slash version back.
 - `/streamlinediscord admin slashcommands reregister` sends every slash command to Discord again.
+- `/streamlinediscord admin messages reload` reloads the message files and checks your embeds.
+- `/streamlinediscord admin messages reset <file>` puts one message file back to its default.
+  Use `messages.yml`, `messaging.yml` or an embed like `on-advancement.json`.
+- `/streamlinediscord admin messages reset ALL` puts every message file back.
+  Old files are kept in `backups/message-resets/`.
 
 The bot only updates Discord's slash list when something really changed.
 Use `reregister` if the slash list in Discord looks wrong.

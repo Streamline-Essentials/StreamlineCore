@@ -3,27 +3,31 @@ package host.plas.command;
 import host.plas.StreamlineDiscord;
 import host.plas.discord.DiscordCommand;
 import host.plas.discord.DiscordHandler;
+import host.plas.discord.messaging.MessageFiles;
 import singularity.command.CosmicCommand;
 import singularity.command.ModuleCommand;
 import singularity.command.context.CommandContext;
 import singularity.data.console.CosmicSender;
 import singularity.modules.ModuleUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * {@code /streamlinediscord admin (slashcommands (reregister|enable <slashcommand>|disable <slashcommand>)|commands (enable <command>|disable <command>))}
+ * {@code /streamlinediscord admin (slashcommands (reregister|enable <slashcommand>|disable <slashcommand>)|commands (enable <command>|disable <command>)|messages (reload|reset <message-file|ALL>))}
  *
  * <p>Manages the bot's Discord commands from Minecraft. Changes are saved to each
  * command's {@code discord-commands/<id>/<id>.yml} ({@code enabled}, {@code slash-enabled})
  * and applied to the running bot; Discord's slash command list is synced off the
  * calling thread and the result is reported back to the sender.</p>
+ *
+ * <p>{@code messages} reloads or resets the bot's message files through {@link MessageFiles}.</p>
  */
 public class StreamlineDiscordCommandMC extends ModuleCommand {
-    public static final String USAGE = "&eUsage&8: &b/streamlinediscord admin (slashcommands (reregister|enable <slashcommand>|disable <slashcommand>)|commands (enable <command>|disable <command>))";
+    public static final String USAGE = "&eUsage&8: &b/streamlinediscord admin (slashcommands (reregister|enable <slashcommand>|disable <slashcommand>)|commands (enable <command>|disable <command>)|messages (reload|reset <message-file|ALL>))";
 
     public StreamlineDiscordCommandMC() {
         super(StreamlineDiscord.getInstance(),
@@ -70,9 +74,47 @@ public class StreamlineDiscordCommandMC extends ModuleCommand {
                 setEnabled(sender, target, action.equals("enable"));
                 return;
             }
+        } else if (group.equals("messages")) {
+            if (action.equals("reload")) {
+                reloadMessages(sender);
+                return;
+            }
+            if (action.equals("reset") && ! target.isEmpty()) {
+                resetMessages(sender, target);
+                return;
+            }
         }
 
         ModuleUtils.sendMessage(sender, USAGE);
+    }
+
+    private void reloadMessages(CosmicSender sender) {
+        MessageFiles.Result result = MessageFiles.reload();
+        ModuleUtils.sendMessage(sender, "&eReloaded &b" + String.join("&8, &b", result.done) + "&e.");
+        for (String failure : result.failed) {
+            ModuleUtils.sendMessage(sender, "&cWill not send&8: &7" + failure);
+        }
+    }
+
+    private void resetMessages(CosmicSender sender, String target) {
+        String file = target.equalsIgnoreCase(MessageFiles.ALL) ? MessageFiles.ALL : MessageFiles.match(target);
+        if (file == null) {
+            ModuleUtils.sendMessage(sender, "&cThere is no message file called &b" + target + "&c. Files with defaults&8: &7"
+                    + String.join("&8, &7", MessageFiles.resettable()) + "&8, &7" + MessageFiles.ALL);
+            return;
+        }
+
+        MessageFiles.Result result = MessageFiles.reset(file);
+        if (! result.done.isEmpty()) {
+            ModuleUtils.sendMessage(sender, "&eReset to defaults&8: &b" + String.join("&8, &b", result.done) + "&e.");
+        }
+        for (String failure : result.failed) {
+            ModuleUtils.sendMessage(sender, "&cCould not reset&8: &7" + failure);
+        }
+        if (result.backupFolder != null) {
+            String data = StreamlineDiscord.getInstance().getDataFolder().toPath().relativize(result.backupFolder.toPath()).toString();
+            ModuleUtils.sendMessage(sender, "&eThe old files were saved in &b" + data.replace('\\', '/') + "&e.");
+        }
     }
 
     private static boolean slashCommandsOn() {
@@ -179,17 +221,25 @@ public class StreamlineDiscordCommandMC extends ModuleCommand {
 
         if (count <= 1) return ModuleUtils.getCompletion(List.of("admin"), last);
         if (! arg(context, 0).equals("admin")) return new ConcurrentSkipListSet<>();
-        if (count == 2) return ModuleUtils.getCompletion(List.of("slashcommands", "commands"), last);
+        if (count == 2) return ModuleUtils.getCompletion(List.of("slashcommands", "commands", "messages"), last);
 
         String group = arg(context, 1);
         if (count == 3) {
             if (group.equals("slashcommands")) return ModuleUtils.getCompletion(List.of("reregister", "enable", "disable"), last);
             if (group.equals("commands")) return ModuleUtils.getCompletion(List.of("enable", "disable"), last);
+            if (group.equals("messages")) return ModuleUtils.getCompletion(List.of("reload", "reset"), last);
             return new ConcurrentSkipListSet<>();
         }
 
         if (count == 4) {
             String action = arg(context, 2);
+            if (group.equals("messages")) {
+                if (! action.equals("reset")) return new ConcurrentSkipListSet<>();
+                List<String> files = new ArrayList<>(MessageFiles.resettable());
+                files.add(MessageFiles.ALL);
+                return ModuleUtils.getCompletion(files, last);
+            }
+
             boolean enable = action.equals("enable");
             if (! enable && ! action.equals("disable")) return new ConcurrentSkipListSet<>();
 
