@@ -7,7 +7,9 @@ import lombok.Getter;
 import net.streamline.base.StreamlineSpigot;
 import net.streamline.platform.savables.UserManager;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.jetbrains.annotations.NotNull;
@@ -162,17 +164,27 @@ public class ProperCommand extends BuildableCommand implements TabExecutor, IPro
     /**
      * {@inheritDoc}
      *
-     * <p>Unregistration on Spigot is handled externally via
-     * {@link net.streamline.platform.BasePlugin#unregisterCommands(String...)};
-     * this method is intentionally a no-op.
+     * <p>Removes every command map entry pointing at this command: its label, aliases and their
+     * {@code <prefix>:} forms. Bukkit never lets a new {@link BukkitCommand} take a plain label another
+     * one holds, so an entry left behind by an unloaded module would keep answering for the label
+     * after the module loads again.
      */
     @Override
     public void unregisterThis() {
-//        try {
-//            StreamlineSpigot.unregisterCommands(getParent().getBase());
-//        } catch(Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            CommandMap map = host.plas.bou.commands.CommandHandler.getCommandMap();
+            if (map != null) {
+                if (map instanceof SimpleCommandMap) {
+                    ((SimpleCommandMap) map).getKnownCommands().values().removeIf(command -> command == this);
+                }
+                unregister(map);
+            }
+            unregisterWithBOU();
+            setRegistered(false);
+            host.plas.bou.commands.CommandHandler.syncCommands();
+        } catch (Throwable e) {
+            MessageUtils.logWarning("Could not unregister command '" + getParent().getBase() + "': " + e.getMessage());
+        }
     }
 
     /**
