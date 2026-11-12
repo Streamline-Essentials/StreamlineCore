@@ -145,7 +145,7 @@ public class StreamlineDiscord extends SimpleModule {
         new StreamlineDiscordCommandMC().register();
 
         // Bukkit classes exist only on Spigot; mod-loader backends are not proxies either.
-        if (SLAPI.getInstance().getPlatform().getPlatformType() == ISingularityExtension.PlatformType.SPIGOT) {
+        if (isSpigot()) {
             BukkitAdapter.init();
         }
 
@@ -176,8 +176,15 @@ public class StreamlineDiscord extends SimpleModule {
         }
     }
 
+    private static boolean isSpigot() {
+        return SLAPI.getInstance().getPlatform().getPlatformType() == ISingularityExtension.PlatformType.SPIGOT;
+    }
+
     @Override
     public void onDisable() {
+        // The listener belongs to StreamlineCore's plugin, so Bukkit keeps it after the module unloads.
+        if (isSpigot()) BukkitAdapter.stop();
+
         // Waits (up to 5 seconds) for Discord to take the offline message: killing the bot cancels
         // requests still queued.
         DiscordEventMessages.announceStop();
