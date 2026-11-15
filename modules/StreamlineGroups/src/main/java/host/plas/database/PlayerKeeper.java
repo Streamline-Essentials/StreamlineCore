@@ -201,6 +201,9 @@ public class PlayerKeeper extends DBKeeper<GroupedPlayer> {
     }
 
     public CompletableFuture<ConcurrentSkipListSet<GroupedPlayer>> pullAllThingsBoth() {
+        // May run before any save or load has created the table on a fresh database.
+        ensureTables();
+
         String statement = "SELECT `Uuid` FROM `%table_prefix%grouped_players`;";
 
         statement = statement.replace("%table_prefix%", SLAPI.getMainDatabase().getConnectorSet().getTablePrefix());

@@ -1,5 +1,6 @@
 package net.streamline.platform;
 
+import singularity.events.EventDispatcher;
 import gg.drak.thebase.events.BaseEventHandler;
 import lombok.Getter;
 import lombok.Setter;
@@ -252,6 +253,25 @@ public abstract class BasePlugin implements ISingularityExtension {
         }
     }
 
+    /**
+     * The target generated into this mod jar at build time ({@code fabric-1211} and so on). A
+     * game client does not update itself, even while it hosts a world: the player's launcher
+     * or mod manager owns the mods folder.
+     */
+    @Override
+    public String getCoreTarget() {
+        if (isClient()) return null;
+        try (java.io.InputStream in = BasePlugin.class.getClassLoader()
+                .getResourceAsStream(singularity.updates.CoreUpdater.TARGET_RESOURCE)) {
+            if (in == null) return null;
+            java.util.Properties properties = new java.util.Properties();
+            properties.load(in);
+            return properties.getProperty("target");
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
+
     /** The loader's gameplay handler, which knows how that loader refreshes player names. */
     protected abstract GameplayHandler createGameplayHandler();
 
@@ -355,7 +375,7 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Override
     public void fireEvent(IProperEvent<?> event) {
         if (event.getEvent() instanceof CosmicEvent) {
-            BaseEventHandler.fireEvent((CosmicEvent) event.getEvent());
+            EventDispatcher.fire((CosmicEvent) event.getEvent());
         }
     }
 
@@ -367,7 +387,7 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Override
     public void fireEvent(CosmicEvent event, boolean async) {
         try {
-            BaseEventHandler.fireEvent(event);
+            EventDispatcher.fire(event);
         } catch (Exception e) {
             handleMisSync(event, async);
         }
@@ -375,7 +395,7 @@ public abstract class BasePlugin implements ISingularityExtension {
 
     @Override
     public void handleMisSync(CosmicEvent event, boolean async) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     @Override

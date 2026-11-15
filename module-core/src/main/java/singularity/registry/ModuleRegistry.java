@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -74,13 +75,28 @@ public final class ModuleRegistry {
 
     /** A request that was refused or failed; the message is meant for whoever asked. */
     public static final class RegistryException extends RuntimeException {
+        /** The HTTP status the registry answered with, or 0 when the request never got an answer. */
+        @Getter
+        private final int status;
+
         public RegistryException(String message) {
+            this(message, 0);
+        }
+
+        public RegistryException(String message, int status) {
             super(message);
+            this.status = status;
         }
 
         public RegistryException(String message, Throwable cause) {
             super(message, cause);
+            this.status = 0;
         }
+    }
+
+    /** Whether {@code error} is the registry saying it does not host the requested module (HTTP 404). */
+    public static boolean isNotFound(Throwable error) {
+        return error instanceof RegistryException && ((RegistryException) error).getStatus() == 404;
     }
 
     /** One version of a module, as the registry lists it. */
@@ -176,6 +192,17 @@ public final class ModuleRegistry {
             }
             return null;
         }
+
+        /**
+         * @return the SHA-256 the registry lists for the jar of version {@code name}, or an
+         *         empty string when it lists none
+         */
+        public String sha256Of(String name) {
+            if (name == null) return "";
+            VersionInfo listed = version(name);
+            if (listed != null && ! listed.getSha256().isEmpty()) return listed.getSha256();
+            return version.equalsIgnoreCase(name) ? sha256 : "";
+        }
     }
 
     /** A verified jar the registry sent, sitting in a temporary {@code .part} file. */
@@ -250,7 +277,7 @@ public final class ModuleRegistry {
                     .header("User-Agent", USER_AGENT)
                     .GET().build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                throw new RegistryException(errorMessage(response.statusCode(), response.body()));
+                throw new RegistryException(errorMessage(response.statusCode(), response.body()), response.statusCode());
             }
             return new JsonParser().parse(response.body()).getAsJsonObject();
         } catch (IOException e) {
@@ -324,6 +351,107 @@ public final class ModuleRegistry {
     }
 
     /**
+     * One StreamlineCore build, as {@code /core/{target}} lists it. Builds the registry does
+     * not store itself come from Modrinth ({@link #getSource()} {@code "modrinth"}) and carry
+     * only a SHA-512.
+     */
+    @Getter
+    public static final class CoreBuild {
+        /** The platform target, e.g. {@code spigot} or {@code fabric-1211}. */
+        private final String target;
+        private final String platform;
+        private final String version;
+        /** The Minecraft version the build is for; empty where it runs on any. */
+        private final String minecraft;
+        private final boolean client;
+        private final long size;
+        private final String sha256;
+        private final String sha512;
+        private final String downloadUrl;
+        /** {@code registry} or {@code modrinth}. */
+        private final String source;
+
+        CoreBuild(JsonObject json) {
+            this.target = string(json, "target");
+            this.platform = string(json, "platform");
+            this.version = string(json, "version");
+            this.minecraft = string(json, "minecraft");
+            JsonElement clientFlag = json.get("client");
+            this.client = clientFlag != null && clientFlag.isJsonPrimitive() && clientFlag.getAsBoolean();
+            this.size = number(json, "size");
+            this.sha256 = string(json, "sha256");
+            this.sha512 = string(json, "sha512");
+            this.downloadUrl = string(json, "downloadUrl");
+            this.source = string(json, "source");
+        }
+    }
+
+    /**
+     * The latest StreamlineCore build of a platform target, on the calling thread.
+     *
+     * @param target a core target: {@code spigot}, {@code bungee}, {@code velocity} or
+     *               {@code <fabric|forge|neoforge>-<minecraft without dots>}
+     */
+    public CoreBuild coreNow(String target) {
+        return new CoreBuild(getJson("/core/" + encode(target)));
+    }
+
+    /**
+     * Downloads a core build into a temporary {@code .part} file in {@code folder}, on the
+     * calling thread, and checks it against the SHA-256 the registry sends or, for a build
+     * served from Modrinth, the SHA-512 the listing holds. A build with neither is refused,
+     * since nothing could tell a damaged or substituted jar apart.
+     *
+     * @return the verified file; the caller moves or deletes it
+     */
+    public Path fetchCore(CoreBuild build, Path folder) {
+        String url = apiUrl() + "/core/" + encode(build.getTarget()) + "/download/" + encode(build.getVersion());
+
+        Path temp;
+        try {
+            Files.createDirectories(folder);
+            temp = Files.createTempFile(folder, ".core-", ".part");
+        } catch (IOException e) {
+            throw new RegistryException("Could not write to " + folder + ": " + e.getMessage(), e);
+        }
+
+        boolean keep = false;
+        try {
+            // Followed redirects lead to Modrinth's CDN for builds the registry does not store.
+            HttpResponse<byte[]> response = send(HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofMinutes(5))
+                    .header("Accept", "application/java-archive")
+                    .header("User-Agent", USER_AGENT)
+                    .GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() != 200) {
+                throw new RegistryException(errorMessage(response.statusCode(),
+                        new String(response.body(), StandardCharsets.UTF_8)), response.statusCode());
+            }
+            Files.write(temp, response.body());
+
+            String sha256 = header(response, "X-Checksum-SHA256").orElse(build.getSha256());
+            if (sha256 != null && ! sha256.isEmpty()) {
+                if (! sha256.equalsIgnoreCase(digest(temp, "SHA-256"))) {
+                    throw new RegistryException("Checksum mismatch for StreamlineCore " + build.getVersion() + "; the download was discarded.");
+                }
+            } else if (! build.getSha512().isEmpty()) {
+                if (! build.getSha512().equalsIgnoreCase(digest(temp, "SHA-512"))) {
+                    throw new RegistryException("Checksum mismatch for StreamlineCore " + build.getVersion() + "; the download was discarded.");
+                }
+            } else {
+                throw new RegistryException("The registry lists no checksum for StreamlineCore " + build.getVersion() + "; it was not downloaded.");
+            }
+
+            keep = true;
+            return temp;
+        } catch (IOException e) {
+            throw new RegistryException("Could not reach " + baseUrl() + ": " + e.getMessage(), e);
+        } finally {
+            if (! keep) deleteQuietly(temp);
+        }
+    }
+
+    /**
      * Compares dotted versions part by part, numerically where both parts are numbers
      * ({@code 1.10.0} is newer than {@code 1.9.2}); anything after a {@code -} or {@code +}
      * is ignored.
@@ -343,6 +471,71 @@ public final class ModuleRegistry {
             if (compared != 0) return compared;
         }
         return 0;
+    }
+
+    /**
+     * Whether the registry has something other than the installed jar: a newer version, or
+     * the same version whose jar has a different SHA-256 than the one installed (a rebuilt or
+     * altered jar). With no SHA-256 listed for that version, only the versions are compared.
+     *
+     * @param installedVersion the installed module's version, or {@code null} when it is not installed
+     * @param installedJar     the installed jar, or {@code null} when unknown (versions only)
+     * @param info             the module's registry entry, whose latest version is the update
+     */
+    public static boolean updateAvailable(String installedVersion, Path installedJar, ModuleInfo info) {
+        if (installedVersion == null || info == null) return false;
+        int compared = compareVersions(installedVersion, info.getVersion());
+        if (compared != 0) return compared < 0;
+        return ! matchesRegistry(info, info.getVersion(), installedJar);
+    }
+
+    /**
+     * Whether {@code jar} is the registry's jar of {@code version}: true when their SHA-256s
+     * match, and also when the registry lists none for that version or the jar cannot be read,
+     * since then there is nothing to tell them apart by.
+     */
+    public static boolean matchesRegistry(ModuleInfo info, String version, Path jar) {
+        String expected = info == null ? "" : info.sha256Of(version);
+        if (expected.isEmpty() || jar == null) return true;
+        String actual = cachedSha256(jar);
+        return actual == null || actual.equalsIgnoreCase(expected.trim());
+    }
+
+    /** Hashes of jars already read, by absolute path, valid while their size and modification time stay. */
+    private static final Map<Path, CachedHash> HASHES = new ConcurrentHashMap<>();
+
+    private static final class CachedHash {
+        final long size;
+        final long modified;
+        final String sha256;
+
+        CachedHash(long size, long modified, String sha256) {
+            this.size = size;
+            this.modified = modified;
+            this.sha256 = sha256;
+        }
+    }
+
+    /**
+     * {@link #sha256} of a file, read again only when its size or modification time changes,
+     * so screens can ask every frame.
+     *
+     * @return the lower-case hex hash, or {@code null} when the file cannot be read
+     */
+    public static String cachedSha256(Path file) {
+        if (file == null) return null;
+        try {
+            Path key = file.toAbsolutePath().normalize();
+            long size = Files.size(key);
+            long modified = Files.getLastModifiedTime(key).toMillis();
+            CachedHash cached = HASHES.get(key);
+            if (cached != null && cached.size == size && cached.modified == modified) return cached.sha256;
+            String sha = sha256(key);
+            HASHES.put(key, new CachedHash(size, modified, sha));
+            return sha;
+        } catch (IOException | RuntimeException e) {
+            return null;
+        }
     }
 
     /** A main attribute of a jar's manifest, trimmed, or {@code null}. */
@@ -387,9 +580,14 @@ public final class ModuleRegistry {
     }
 
     public static String sha256(Path file) throws IOException {
+        return digest(file, "SHA-256");
+    }
+
+    /** The lower-case hex digest of a file with {@code algorithm} (e.g. {@code SHA-512}). */
+    public static String digest(Path file, String algorithm) throws IOException {
         MessageDigest digest;
         try {
-            digest = MessageDigest.getInstance("SHA-256");
+            digest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }

@@ -6,7 +6,6 @@ import host.plas.discord.data.channeling.Route;
 import host.plas.discord.data.channeling.RouteLoader;
 import host.plas.discord.data.events.EventClassifier;
 import host.plas.discord.messaging.BotMessageConfig;
-import host.plas.discord.messaging.DiscordMessenger;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -14,9 +13,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.restaction.CommandCreateAction;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
-import singularity.modules.ModuleUtils;
 import singularity.objects.SingleSet;
-import singularity.utils.UserUtils;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -26,28 +23,11 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 public class EventsCommand extends DiscordCommand {
-    private String replyMessageAdd;
-    private String replyMessageRemove;
-    private String replyMessageClear;
-    private String replyMessageInfo;
-    private String replyMessageNone;
-
     public EventsCommand() {
         super("events",
                 -1L,
                 "event", "ev", "e", "events"
         );
-
-        setReplyMessageAdd(getResource().getOrSetDefault("messages.reply.add", "--file:event-add-response.json"));
-        setReplyMessageRemove(getResource().getOrSetDefault("messages.reply.remove", "--file:event-remove-response.json"));
-        setReplyMessageRemove(getResource().getOrSetDefault("messages.reply.clear", "--file:event-clear-response.json"));
-        setReplyMessageInfo(getResource().getOrSetDefault("messages.reply.info", "--file:event-info-response.json"));
-        setReplyMessageNone(getResource().getOrSetDefault("messages.reply.none", "--file:event-none-response.json"));
-        loadFile("event-add-response.json");
-        loadFile("event-remove-response.json");
-        loadFile("event-clear-response.json");
-        loadFile("event-info-response.json");
-        loadFile("event-none-response.json");
     }
 
     @Override
@@ -99,12 +79,10 @@ public class EventsCommand extends DiscordCommand {
                 }
 
                 ConcurrentSkipListSet<EventClassifier> typesAdd = new ConcurrentSkipListSet<>();
-                if (! messagedString.getCommandArgs()[1].equals("all")) {
-                    try {
-                        typesAdd.add(EventClassifier.valueOf(messagedString.getCommandArgs()[1].toUpperCase()));
-                    } catch (Exception e) {
-                        return messageInfo(messagedString);
-                    }
+                if (! messagedString.getCommandArgs()[1].equalsIgnoreCase("all")) {
+                    EventClassifier classifierAdd = EventClassifier.parse(messagedString.getCommandArgs()[1]);
+                    if (classifierAdd == null) return messageInfo(messagedString);
+                    typesAdd.add(classifierAdd);
                 } else {
                     typesAdd.addAll(Arrays.asList(EventClassifier.values()));
                 }
@@ -138,12 +116,10 @@ public class EventsCommand extends DiscordCommand {
                 }
 
                 ConcurrentSkipListSet<EventClassifier> typesRemove = new ConcurrentSkipListSet<>();
-                if (! messagedString.getCommandArgs()[1].equals("all")) {
-                    try {
-                        typesRemove.add(EventClassifier.valueOf(messagedString.getCommandArgs()[1].toUpperCase()));
-                    } catch (Exception e) {
-                        return messageInfo(messagedString);
-                    }
+                if (! messagedString.getCommandArgs()[1].equalsIgnoreCase("all")) {
+                    EventClassifier classifierRemove = EventClassifier.parse(messagedString.getCommandArgs()[1]);
+                    if (classifierRemove == null) return messageInfo(messagedString);
+                    typesRemove.add(classifierRemove);
                 } else {
                     typesRemove.addAll(Arrays.asList(EventClassifier.values()));
                 }
@@ -183,62 +159,34 @@ public class EventsCommand extends DiscordCommand {
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageAdd(MessagedString messagedString, Route route, ConcurrentSkipListSet<EventClassifier> classifiers) {
-        return message(messagedString, getReplyMessageAdd(), route, classifiers);
+        return message(messagedString, "add", route, classifiers);
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageRemove(MessagedString messagedString, Route route, ConcurrentSkipListSet<EventClassifier> classifiers) {
-        return message(messagedString, getReplyMessageRemove(), route, classifiers);
+        return message(messagedString, "remove", route, classifiers);
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageClear(MessagedString messagedString, Route route) {
-        return message(messagedString, getReplyMessageClear(), route, new ConcurrentSkipListSet<>());
+        return message(messagedString, "clear", route, new ConcurrentSkipListSet<>());
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageInfo(MessagedString messagedString) {
-        return message(messagedString, getReplyMessageInfo());
+        return message(messagedString, "info");
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageNone(MessagedString messagedString) {
-        return message(messagedString, getReplyMessageNone());
+        return message(messagedString, "none");
     }
 
-    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String message) {
-        if (isJsonFile(message)) {
-            String json = getJsonFromFile(getJsonFile(message));
-            return DiscordMessenger.simpleEmbed(ModuleUtils.replacePlaceholders(UserUtils.getConsole(), json
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-            ));
-        } else {
-            return DiscordMessenger.simpleMessage(message
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-            );
-        }
+    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String reply) {
+        return respond("commands." + getCommandIdentifier() + "." + reply, messagedString);
     }
 
-    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String message, Route route, ConcurrentSkipListSet<EventClassifier> classifiers) {
-        if (isJsonFile(message)) {
-            String json = getJsonFromFile(getJsonFile(message));
-            return DiscordMessenger.simpleEmbed(
-                    ModuleUtils.replacePlaceholders(UserUtils.getConsole(),
-                            json
-                                    .replace("%this_command_label%", messagedString.getBase())
-                                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-                                    .replace("%this_identifier%", route.getIdentifier())
-                                    .replace("%this_type%", specialClassifiers(classifiers))
-                                    .replace("%this_type_named%", specialClassifiersEnum(classifiers))
-                    )
-            );
-        } else {
-            return DiscordMessenger.simpleMessage(message
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-                    .replace("%this_identifier%", route.getIdentifier())
-                    .replace("%this_type%", specialClassifiers(classifiers))
-                    .replace("%this_type_named%", specialClassifiersEnum(classifiers))
-            );
-        }
+    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String reply, Route route, ConcurrentSkipListSet<EventClassifier> classifiers) {
+        return respond("commands." + getCommandIdentifier() + "." + reply, messagedString,
+                "this_identifier", route.getIdentifier(),
+                "this_type", specialClassifiers(classifiers),
+                "this_type_named", specialClassifiersEnum(classifiers));
     }
 
     public boolean includeAll() {

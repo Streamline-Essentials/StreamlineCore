@@ -2,14 +2,19 @@ package host.plas;
 
 import host.plas.adapters.spigot.SpigotAdapter;
 import host.plas.commands.GrantCommand;
+import host.plas.commands.QuestShopCommand;
+import host.plas.commands.QuestsCommand;
 import host.plas.commands.ReloadCommand;
 import host.plas.commands.RevokeCommand;
 import host.plas.configs.QuestConfig;
+import host.plas.configs.ShopConfig;
+import host.plas.data.WorldTracker;
 import host.plas.database.Keeper;
 import host.plas.database.MyLoader;
 import host.plas.events.QuestsListener;
 import host.plas.ratapi.QuestExpansion;
 import lombok.Getter;
+import net.streamline.api.SLAPI;
 import lombok.Setter;
 import singularity.modules.SimpleModule;
 import org.pf4j.PluginWrapper;
@@ -20,6 +25,8 @@ public class StreamQuests extends SimpleModule {
 
     @Getter @Setter
     private static QuestConfig exampleConfig; // This will be used to access the config instance from anywhere in the plugin.
+    @Getter @Setter
+    private static ShopConfig shopConfig;
     @Getter @Setter
     private static QuestsListener questsListener; // This will be used to access the listener instance from anywhere in the plugin.
     @Getter @Setter
@@ -32,6 +39,8 @@ public class StreamQuests extends SimpleModule {
 
     @Getter @Setter
     private static SpigotAdapter spigotAdapter;
+    @Getter @Setter
+    private static WorldTracker worldTracker;
 
     public StreamQuests(PluginWrapper wrapper) {
         super(wrapper);
@@ -49,11 +58,14 @@ public class StreamQuests extends SimpleModule {
     @Override
     public void onEnable() {
         exampleConfig = new QuestConfig(); // Initialize the config.
+        shopConfig = new ShopConfig();
 
         keeper = new Keeper(); // Initialize the database.
         loader = new MyLoader(); // Initialize the loader.
 
         spigotAdapter = new SpigotAdapter();
+        // Bukkit reports world changes itself (SpigotListener); other game servers are polled.
+        if (! SpigotAdapter.isBukkit() && ! SLAPI.isProxy()) worldTracker = new WorldTracker();
 
         questsListener = new QuestsListener(); // Initialize the listener.
 
@@ -62,10 +74,16 @@ public class StreamQuests extends SimpleModule {
         new GrantCommand().register();
         new ReloadCommand().register();
         new RevokeCommand().register();
+        new QuestsCommand().register();
+        new QuestShopCommand().register();
     }
 
     @Override
     public void onDisable() {
+        if (worldTracker != null) {
+            worldTracker.cancel();
+            worldTracker = null;
+        }
         getLoader().getLoaded().forEach(qp -> {
             qp.saveAndUnload(false);
         });

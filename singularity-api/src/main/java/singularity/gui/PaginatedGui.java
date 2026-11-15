@@ -14,6 +14,12 @@ import java.util.List;
  * rest of the screen by overriding {@link #drawFrame(CosmicPlayer)} and supply the entries
  * through {@link #setEntries(List)} or by overriding {@link #buildEntries(CosmicPlayer)}, which
  * runs on every draw.</p>
+ *
+ * <p>Like BukkitOfUtils' paginated menus, every draw starts from a shell
+ * ({@link GuiLayout#fillShell}): a black border with corners in {@link #getCornerColor()}, or
+ * the colour of the title when that is {@code null}. {@link #setShelled(boolean) setShelled(false)}
+ * starts from an empty screen instead. The page buttons sit either side of the bottom-centre
+ * back slot.</p>
  */
 @Getter @Setter
 public class PaginatedGui extends CosmicGui {
@@ -22,19 +28,26 @@ public class PaginatedGui extends CosmicGui {
     private int page;
     private int previousSlot;
     private int nextSlot;
+    /** The previous-page button; {@code null} uses {@link GuiItems#pagePreviousButton(int)}. */
     private CosmicItem previousItem;
+    /** The next-page button; {@code null} uses {@link GuiItems#pageNextButton(int)}. */
     private CosmicItem nextItem;
+    private boolean shelled;
+    /** The shell's corner colour; {@code null} matches the title's first colour. */
+    private CornerColor cornerColor;
 
     public PaginatedGui(String title, int rows, List<Integer> contentSlots) {
         super(title, rows);
         this.entries = new ArrayList<>();
         this.contentSlots = new ArrayList<>(contentSlots);
         this.page = 1;
-        int bottom = GuiLayout.bottomCenter(getRows());
-        this.previousSlot = bottom - 1;
-        this.nextSlot = bottom + 1;
-        this.previousItem = CosmicItem.of("minecraft:arrow", "&bPrevious Page");
-        this.nextItem = CosmicItem.of("minecraft:arrow", "&bNext Page");
+        int back = GuiLayout.defaultBackSlot(getRows());
+        this.previousSlot = GuiLayout.pagePrevSlot(back);
+        this.nextSlot = GuiLayout.pageNextSlot(back);
+        this.previousItem = null;
+        this.nextItem = null;
+        this.shelled = true;
+        this.cornerColor = null;
     }
 
     /** A paginated GUI whose entries fill the slots inside the border. */
@@ -93,6 +106,7 @@ public class PaginatedGui extends CosmicGui {
         if (entries == null) entries = new ArrayList<>();
         if (page > getMaxPages()) page = getMaxPages();
 
+        if (shelled) shell(cornerColor == null ? CornerColor.fromDisplayText(getTitle()) : cornerColor);
         drawFrame(viewer);
 
         int start = (page - 1) * getPerPage();
@@ -102,10 +116,14 @@ public class PaginatedGui extends CosmicGui {
         }
 
         if (hasPreviousPage()) {
-            setIcon(previousSlot, previousItem.copy().setLore("&7Page " + (page - 1)), click -> previousPage());
+            CosmicItem item = previousItem == null ? GuiItems.pagePreviousButton(page - 1)
+                    : previousItem.copy().setLore("&7Page " + (page - 1));
+            setIcon(previousSlot, item, click -> previousPage());
         }
         if (hasNextPage()) {
-            setIcon(nextSlot, nextItem.copy().setLore("&7Page " + (page + 1)), click -> nextPage());
+            CosmicItem item = nextItem == null ? GuiItems.pageNextButton(page + 1)
+                    : nextItem.copy().setLore("&7Page " + (page + 1));
+            setIcon(nextSlot, item, click -> nextPage());
         }
     }
 }

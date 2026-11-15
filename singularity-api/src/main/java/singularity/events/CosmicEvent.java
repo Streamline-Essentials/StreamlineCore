@@ -16,4 +16,12 @@ public abstract class CosmicEvent extends BaseEvent {
      * {@link BaseEvent}.
      */
     public CosmicEvent() {}
+
+    /** Fires this event to its listeners in priority order (see {@link EventDispatcher}). */
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends BaseEvent> T fire() {
+        EventDispatcher.fire(this);
+        return (T) this;
+    }
 }

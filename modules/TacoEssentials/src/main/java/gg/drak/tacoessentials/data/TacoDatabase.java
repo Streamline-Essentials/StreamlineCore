@@ -3,6 +3,7 @@ package gg.drak.tacoessentials.data;
 import gg.drak.tacoessentials.alias.CustomAlias;
 import singularity.Singularity;
 import singularity.database.CoreDBOperator;
+import singularity.utils.MessageUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -122,8 +123,65 @@ public final class TacoDatabase {
                         + "`line` INT NOT NULL, `command` TEXT NOT NULL, PRIMARY KEY (`name`, `line`));;"
                         // God mode has its own table: CREATE TABLE IF NOT EXISTS never adds a column
                         // to an existing players table.
-                        + "CREATE TABLE IF NOT EXISTS `" + table("god") + "` (`uuid` VARCHAR(36) NOT NULL PRIMARY KEY);;",
+                        + "CREATE TABLE IF NOT EXISTS `" + table("god") + "` (`uuid` VARCHAR(36) NOT NULL PRIMARY KEY);;"
+                        // Homes in numbered slots, each optionally named. The older name-keyed
+                        // homes table is copied in once (see migrateHomes) and left in place.
+                        + "CREATE TABLE IF NOT EXISTS `" + table("home_slots") + "` (`uuid` VARCHAR(36) NOT NULL, "
+                        + "`slot` INT NOT NULL, `name` VARCHAR(64), " + LOC_COLUMNS + ", PRIMARY KEY (`uuid`, `slot`));;"
+                        + "CREATE TABLE IF NOT EXISTS `" + table("flags") + "` (`uuid` VARCHAR(36) NOT NULL, "
+                        + "`flag` VARCHAR(16) NOT NULL, PRIMARY KEY (`uuid`, `flag`));;"
+                        + "CREATE TABLE IF NOT EXISTS `" + table("pending") + "` (`uuid` VARCHAR(36) NOT NULL, "
+                        + "`seq` BIGINT NOT NULL, `action` VARCHAR(16) NOT NULL, `data` TEXT, PRIMARY KEY (`uuid`, `seq`));;"
+                        + "CREATE TABLE IF NOT EXISTS `" + table("warp_perms") + "` (`name` VARCHAR(64) NOT NULL PRIMARY KEY, "
+                        + "`permission` VARCHAR(128) NOT NULL);;",
                 s -> {});
+        migrateHomes();
+    }
+
+    /** The {@code flags} row, under a uuid no player has, recording that {@link #migrateHomes()} ran. */
+    private static final String SERVER_FLAG_UUID = "*";
+    private static final String FLAG_HOMES_SLOTTED = "homes_slotted";
+
+    /**
+     * Copies homes from the name-keyed table into numbered slots, once per database. A home whose
+     * name is a number ({@code /sethome 2} made it) takes that slot unnamed, so {@code /home 2}
+     * still finds it; the rest take the lowest free slots in name order and keep their names.
+     */
+    private static void migrateHomes() {
+        if (hasFlag(SERVER_FLAG_UUID, FLAG_HOMES_SLOTTED)) return;
+        int slotted = queryOne("SELECT COUNT(*) AS `n` FROM `" + table("home_slots") + "`;", rs -> rs.getInt("n")).orElse(0);
+        int moved = 0;
+        if (slotted == 0) {
+            Map<String, List<Named>> byPlayer = new TreeMap<>();
+            queryAll("SELECT * FROM `" + table("homes") + "` ORDER BY `uuid`, `name`;", rs -> {
+                byPlayer.computeIfAbsent(rs.getString("uuid"), k -> new ArrayList<>()).add(new Named(rs.getString("name"), readLoc(rs)));
+                return null;
+            });
+            for (Map.Entry<String, List<Named>> player : byPlayer.entrySet()) {
+                moved += migrateHomes(player.getKey(), player.getValue());
+            }
+            if (moved > 0) MessageUtils.logInfo("[TacoEssentials] Moved " + moved + " homes into numbered slots.");
+        }
+        setFlag(SERVER_FLAG_UUID, FLAG_HOMES_SLOTTED, true);
+    }
+
+    private static int migrateHomes(String uuid, List<Named> homes) {
+        java.util.Set<Integer> used = new java.util.HashSet<>();
+        List<Named> rest = new ArrayList<>();
+        for (Named home : homes) {
+            int slot = home.getName().matches("\\d{1,9}") ? Integer.parseInt(home.getName()) : 0;
+            if (slot >= 1 && used.add(slot)) setHome(uuid, slot, null, home.getLocation());
+            else rest.add(home);
+        }
+        int slot = 1;
+        for (Named home : rest) {
+            while (used.contains(slot)) slot++;
+            used.add(slot);
+            // Only-digit names cannot be home names any more, since they would read as slots.
+            String name = home.getName().matches("\\d+") ? null : home.getName();
+            setHome(uuid, slot, name, home.getLocation());
+        }
+        return homes.size();
     }
 
     // ---- players ----
@@ -181,28 +239,112 @@ public final class TacoDatabase {
                 rs.getInt("fly") != 0, last);
     }
 
+    // ---- player flags ----
+
+    /** A player's on/off setting, stored as a row while on. */
+    public static final String FLAG_TPAUTO = "tpauto";
+    public static final String FLAG_FROZEN = "frozen";
+
+    public static boolean hasFlag(String uuid, String flag) {
+        return queryOne("SELECT `uuid` FROM `" + table("flags") + "` WHERE `uuid` = ? AND `flag` = ?;", rs -> true, uuid, flag).isPresent();
+    }
+
+    public static void setFlag(String uuid, String flag, boolean on) {
+        if (on) update("REPLACE INTO `" + table("flags") + "` (`uuid`, `flag`) VALUES (?, ?);", uuid, flag);
+        else update("DELETE FROM `" + table("flags") + "` WHERE `uuid` = ? AND `flag` = ?;", uuid, flag);
+    }
+
+    // ---- actions queued for a player's next join ----
+
+    /** An action staff ran on an offline player, applied when they next join. */
+    public static final class Pending {
+        private final String action;
+        private final String data;
+
+        Pending(String action, String data) {
+            this.action = action;
+            this.data = data;
+        }
+
+        public String getAction() {
+            return action;
+        }
+
+        /** The action's argument (a serialized {@link Loc}, a game mode), or {@code null}. */
+        public String getData() {
+            return data;
+        }
+    }
+
+    public static void queue(String uuid, String action, String data) {
+        update("INSERT INTO `" + table("pending") + "` (`uuid`, `seq`, `action`, `data`) VALUES (?, ?, ?, ?);",
+                uuid, SEQUENCE.incrementAndGet(), action, data);
+    }
+
+    /** Removes and returns the player's queued actions, oldest first. */
+    public static List<Pending> takePending(String uuid) {
+        List<Pending> out = queryAll("SELECT * FROM `" + table("pending") + "` WHERE `uuid` = ? ORDER BY `seq`;",
+                rs -> new Pending(rs.getString("action"), rs.getString("data")), uuid);
+        if (! out.isEmpty()) update("DELETE FROM `" + table("pending") + "` WHERE `uuid` = ?;", uuid);
+        return out;
+    }
+
     // ---- homes ----
 
-    public static List<Named> homes(String uuid) {
-        return queryAll("SELECT * FROM `" + table("homes") + "` WHERE `uuid` = ? ORDER BY `name`;",
-                rs -> new Named(rs.getString("name"), readLoc(rs)), uuid);
+    /** A home: a numbered slot, optionally named. */
+    public static final class Home {
+        private final int slot;
+        private final String name;
+        private final Loc location;
+
+        Home(int slot, String name, Loc location) {
+            this.slot = slot;
+            this.name = name == null || name.trim().isEmpty() ? null : name;
+            this.location = location;
+        }
+
+        public int getSlot() {
+            return slot;
+        }
+
+        /** The name, or {@code null} for an unnamed home. */
+        public String getName() {
+            return name;
+        }
+
+        public Loc getLocation() {
+            return location;
+        }
+
+        /** {@code 3} or {@code 3 (base)}, for menus and messages. */
+        public String label() {
+            return name == null ? String.valueOf(slot) : slot + " (" + name + ")";
+        }
+
+        /** What {@code /home} accepts for this home: its name, or its slot number when unnamed. */
+        public String query() {
+            return name == null ? String.valueOf(slot) : name;
+        }
     }
 
-    public static Optional<Loc> home(String uuid, String name) {
-        return queryOne("SELECT * FROM `" + table("homes") + "` WHERE `uuid` = ? AND `name` = ?;", TacoDatabase::readLoc, uuid, name);
+    /** The player's homes in slot order. */
+    public static List<Home> homes(String uuid) {
+        return queryAll("SELECT * FROM `" + table("home_slots") + "` WHERE `uuid` = ? ORDER BY `slot`;",
+                rs -> new Home(rs.getInt("slot"), rs.getString("name"), readLoc(rs)), uuid);
     }
 
-    public static void setHome(String uuid, String name, Loc loc) {
-        update("REPLACE INTO `" + table("homes") + "` (`uuid`, `name`, `world`, `x`, `y`, `z`, `yaw`, `pitch`) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?);", uuid, name, loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(),
+    public static void setHome(String uuid, int slot, String name, Loc loc) {
+        update("REPLACE INTO `" + table("home_slots") + "` (`uuid`, `slot`, `name`, `world`, `x`, `y`, `z`, `yaw`, `pitch`) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", uuid, slot, name, loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(),
                 loc.getYaw(), loc.getPitch());
     }
 
-    /** @return whether a home was deleted */
-    public static boolean deleteHome(String uuid, String name) {
-        if (home(uuid, name).isEmpty()) return false;
-        update("DELETE FROM `" + table("homes") + "` WHERE `uuid` = ? AND `name` = ?;", uuid, name);
-        return true;
+    public static void renameHome(String uuid, int slot, String name) {
+        update("UPDATE `" + table("home_slots") + "` SET `name` = ? WHERE `uuid` = ? AND `slot` = ?;", name, uuid, slot);
+    }
+
+    public static void deleteHome(String uuid, int slot) {
+        update("DELETE FROM `" + table("home_slots") + "` WHERE `uuid` = ? AND `slot` = ?;", uuid, slot);
     }
 
     // ---- warps ----
@@ -215,16 +357,32 @@ public final class TacoDatabase {
         return queryOne("SELECT * FROM `" + table("warps") + "` WHERE `name` = ?;", TacoDatabase::readLoc, name);
     }
 
-    public static void setWarp(String name, Loc loc, String createdBy) {
+    /**
+     * @param permission the node a player needs to use the warp, or {@code null} for everyone
+     */
+    public static void setWarp(String name, Loc loc, String createdBy, String permission) {
         update("REPLACE INTO `" + table("warps") + "` (`name`, `world`, `x`, `y`, `z`, `yaw`, `pitch`, `created_by`) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?);", name, loc.getWorld(), loc.getX(), loc.getY(), loc.getZ(),
                 loc.getYaw(), loc.getPitch(), createdBy);
+        if (permission == null) update("DELETE FROM `" + table("warp_perms") + "` WHERE `name` = ?;", name);
+        else update("REPLACE INTO `" + table("warp_perms") + "` (`name`, `permission`) VALUES (?, ?);", name, permission);
+    }
+
+    /** The permission each restricted warp needs, by warp name. */
+    public static Map<String, String> warpPermissions() {
+        Map<String, String> out = new HashMap<>();
+        queryAll("SELECT * FROM `" + table("warp_perms") + "`;", rs -> {
+            out.put(rs.getString("name"), rs.getString("permission"));
+            return null;
+        });
+        return out;
     }
 
     /** @return whether a warp was deleted */
     public static boolean deleteWarp(String name) {
         if (warp(name).isEmpty()) return false;
         update("DELETE FROM `" + table("warps") + "` WHERE `name` = ?;", name);
+        update("DELETE FROM `" + table("warp_perms") + "` WHERE `name` = ?;", name);
         return true;
     }
 

@@ -82,21 +82,51 @@ server-events:
     # Fired when a player leaves the server.
     logout: true
   spigot:
-    # Fired when a player achieves an advancement on the server.
+    # Fired when a player earns an advancement that is announced in chat
+    # (Spigot and Paper backends; recipe unlocks are never sent).
     advancement: true
-    # Fired when a player dies on the server.
+    # Fired when a player dies (Spigot and Paper backends, plus Fabric,
+    # Forge and NeoForge servers, which send "<player> died").
+    # Deaths whose death message another plugin removed are not sent.
     death: true
+  # This server starting and stopping. Works on proxies and backends.
+  server:
+    # Sent once the server has finished starting and the bot is connected.
+    start: true
+    # Sent while the server (or this module) shuts down.
+    stop: true
+  # The name event messages use for this server (%this_server_name%).
+  # Leave empty to use Streamline's server name (server.name in its server config).
+  # On a proxy, join, leave, advancement and death messages name the player's server instead.
+  server-name: ""
+  # On a proxy, how many ticks (20 = 1 second) to wait before sending a join message,
+  # so the player has reached a server and the message can name it.
+  proxy-join-delay-ticks: 40
 
-# All settings pertaining to the Discord Module's Module itself.
-module:
-  # Tells the module if it should send event messaging information
-  # to the Proxy itself -- so the Proxy can handle it instead.
-  # This is useful if you want multiple servers to talk to Discord,
-  # but don't want to have multiple Discord bots.
-  #
-  # If you are running this module on the Proxy, changing this will
-  # do nothing. If you need more help, please ask on our Discord.
-  forward-events-to-proxy: true
+# Sending game events from servers without their own Discord bot
+# to a server that has one (usually your proxy).
+# Typical setup: the bot runs on the proxy, and every backend has
+# 'bot.full-disable: true'. Backends then pass their advancements,
+# deaths and server start/stop messages to the proxy's bot.
+# Join and leave messages are never passed on: the proxy sends those itself.
+# Set 'server-events.server-name' on each backend, so its messages name it.
+event-relay:
+  # On a backend: send game events to the proxy's bot whenever this
+  # server's own bot is turned off, has no token, or could not log in.
+  enabled: true
+  # On a server with a bot (usually the proxy): post the game events
+  # other servers send to it, through its own routes.
+  receive: true
+  # How events travel to the proxy:
+  #   auto            - Redis if Streamline's Redis is on and connected,
+  #                     else the database if Streamline uses MySQL,
+  #                     else plugin messages (Spigot and Paper only).
+  #   redis           - only Streamline's Redis.
+  #   database        - only Streamline's MySQL database (shared by every server).
+  #   plugin-messages - only plugin messages. These need a player online
+  #                     to carry them, so a server stop message is usually lost.
+  # The proxy listens on every way it can, so mixed setups work.
+  transport: "auto"
 
 # Settings for verifying users.
 verification:

@@ -3,6 +3,8 @@ package net.streamline.api.permissions;
 import lombok.Getter;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.event.EventSubscription;
+import net.luckperms.api.event.user.UserDataRecalculateEvent;
 import net.luckperms.api.model.group.Group;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
@@ -15,6 +17,7 @@ import net.streamline.api.utils.LuckPermsUtil;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * The LuckPerms backend. This is the only {@link PermissionProvider} that links against the
@@ -105,6 +108,19 @@ public final class LuckPermsPermissionProvider implements PermissionProvider {
     public ChatMeta getSuffix(UUID uuid) {
         LuckPermsUtil.MetaRecord record = LuckPermsUtil.grabSuffix(api, uuid);
         return new ChatMeta(record.getThing(), record.getPriority());
+    }
+
+    @Override
+    public boolean hasChatMeta(UUID uuid) {
+        return LuckPermsUtil.isLoaded(api, uuid);
+    }
+
+    /** LuckPerms recalculates a user's cached data whenever their nodes, groups or tracks change. */
+    @Override
+    public AutoCloseable onChatMetaChange(Consumer<UUID> listener) {
+        EventSubscription<UserDataRecalculateEvent> subscription = api.getEventBus().subscribe(
+                UserDataRecalculateEvent.class, event -> listener.accept(event.getUser().getUniqueId()));
+        return subscription::close;
     }
 
     private Optional<User> user(UUID uuid) {

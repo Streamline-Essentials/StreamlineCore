@@ -1,37 +1,144 @@
-# Message for Discord verification.
+# ------------------------------------------------------------------------------------------
+# The plain text of every message the Discord bot sends.
+#
+# Which messages use this text is set in messaging.yml: a message set to "default" there sends
+# the text below. A message set to an embed sends that embed instead, and falls back to this
+# text if the embed file is missing or broken.
+#
+# Texts use Discord markdown (**bold**, *italic*, `code`) and any Streamline placeholder.
+# Placeholders starting with %this_...% are filled in by the message itself (listed per message).
+# For a text over several lines, list the lines, each on its own line starting with "- ",
+# like the help message below. Use - "" for an empty line.
+# ------------------------------------------------------------------------------------------
+
+# Verifying a Minecraft account with Discord.
 verification:
-  # On completion.
   success:
-    # Minecraft message.
+    # Sent in Minecraft chat (not Discord) to the player who verified.
     minecraft: "&a&lSuccess&8! &eYou verified &d%streamline_user_absolute% &eas &d%discord_user_name_tagged%"
-    # Discord message.
-    discord: "--file:verify-success-response.json"
-  # On failure.
+    # Discord reply when the code was right.
+    discord: "You have successfully verified your account!"
   failure:
-    # Generic failure.
-    generic: "--file:verify-failure-response.json"
-    # Already verified.
-    already-verified: "--file:verify-already-response.json"
+    # Discord reply when the code was wrong or something went wrong.
+    generic: "Incorrect code!"
+    # Discord reply when the Discord account is already verified.
+    already-verified: "You have already verified your account!"
 
-# Message for Discord un-verification.
+# Un-verifying a Minecraft account.
 unverification:
-  # On completion.
   success:
-    # Minecraft message.
+    # Sent in Minecraft chat (not Discord) to the player who unverified.
     minecraft: "&a&lSuccess&8! &eYou unverified &d%streamline_user_absolute%"
-    # Discord message.
-    discord: "--file:unverify-success-response.json"
-  # On failure.
+    # Discord reply when the account was unverified.
+    discord: "You have successfully unverified your account!"
   failure:
-    # Generic failure.
-    generic: "--file:unverify-failure-response.json"
-    # Already verified.
-    already-unverified: "--file:unverify-already-response.json"
+    generic: "There was an issue handling that request..."
+    already-unverified: "You have already unverified your account!"
 
-forwarded:
-  streamline:
-    login: "--file:on-login.json"
-    logout: "--file:on-logout.json"
-  spigot:
-    advancement: "--file:on-advancement.json"
-    death: "--file:on-death.json"
+# Game events sent to Discord channels linked with the bot's channel command.
+# A route only sends the events turned on for it (the bot's events command), and each event
+# can be turned off for the whole server under "server-events" in config.yml.
+#
+# Every event can use:
+#   %this_server%       the server as `name`, or "the server" when it has no name
+#   %this_server_name%  the server's name, or "The server" when it has none
+#   %this_server_tag%   " (`name`)", or nothing when the server has no name
+# The server is the player's server on a proxy, else this server ("server-events.server-name"
+# in config.yml, or Streamline's server name).
+# Player events (join, leave, advancement, death) can also use:
+#   %this_player%       the player's name (Discord markdown escaped)
+#   and any Streamline placeholder about the player, e.g. %streamline_user_absolute%,
+#   %streamline_user_formatted%, %streamline_user_uuid%
+events:
+  # A player joined. On a proxy this is sent once they reach a server.
+  join: ":inbox_tray: **%this_player%** joined %this_server%."
+  # A player quit.
+  leave: ":outbox_tray: **%this_player%** left %this_server%."
+  # A player earned an advancement shown in chat (Spigot / Paper).
+  #   %this_advancement_title%        the advancement's name, e.g. Stone Age
+  #                                   (also %advancement%)
+  #   %this_advancement_description%  its description (also %description%)
+  #   %this_advancement_key%          its id, e.g. minecraft:story/mine_stone
+  #   %this_advancement_criteria%     its criteria, comma separated
+  advancement: ":trophy: **%this_player%** earned **%this_advancement_title%** on %this_server%."
+  # A player died.
+  #   %this_death_message%    the game's death message, e.g. Steve was slain by Zombie
+  #                           (on Fabric / Forge / NeoForge: "Steve died")
+  #   %this_keep_inventory%   true / false (Spigot / Paper)
+  #   %this_keep_experience%  true / false (Spigot / Paper)
+  death: ":skull: %this_death_message%%this_server_tag%"
+  # This server finished starting and the bot is connected.
+  server-start: ":green_circle: **%this_server_name%** is online."
+  # This server (or the Discord module) is shutting down.
+  server-stop: ":red_circle: **%this_server_name%** went offline."
+
+# Replies to the bot's Discord commands.
+# Every command reply can use %this_command_label% (the command as typed) and %this_channel_id%.
+commands:
+  ping:
+    response: "Current latency is **%discord_bot_ping%**ms"
+  help:
+    response:
+      - "Bot setup help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+      - "Support Discord: https://dsc.gg/streamline"
+  reload:
+    response: "Reloaded Streamline!"
+  restart:
+    response: "Restarted the bot!"
+  # set / remove: %this_type%, %this_identifier%, %this_format%
+  channel:
+    info:
+      - "**Usage:**"
+      - "`%discord_bot_prefix%%this_command_label% set <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% remove [<type> <identifier>]`"
+      - "Types: GLOBAL_NATIVE, SPECIFIC_NATIVE, PERMISSION, GUILD, PARTY, SPECIFIC_HANDLED, DISCORD_TEXT"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    set: "Linked %this_channel_id% to %this_type% `%this_identifier%` with the format `%this_format%`."
+    remove: "Unlinked %this_channel_id% from %this_type% `%this_identifier%`."
+    none: "Sorry, but I could not find that route..."
+    nothing-to-remove: "No channel found to remove!"
+  channelset:
+    info:
+      - "**Usage:** `%discord_bot_prefix%%this_command_label% <type> <identifier>`"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    set: "Linked %this_channel_id% to %this_type% `%this_identifier%` with the format `%this_format%`."
+    none: "Sorry, but I could not find that route..."
+  channelremove:
+    info:
+      - "**Usage:** `%discord_bot_prefix%%this_command_label% [<type> <identifier>]`"
+      - ""
+      - "More help: https://github.com/Streamline-Essentials/StreamlineWiki/wiki/Discord-Setup"
+    remove: "Unlinked %this_channel_id% from %this_type% `%this_identifier%`."
+    none: "Sorry, but I could not find that route..."
+    nothing-to-remove: "No channel found to remove!"
+  # %this_list_all% / %this_list_here%
+  channels:
+    list:
+      - "**All routes**"
+      - "%this_list_all%"
+    list-here:
+      - "**Routes in this channel**"
+      - "%this_list_here%"
+  # add / remove / clear: %this_identifier% (the route), %this_type% and %this_type_named% (the events)
+  events:
+    info:
+      - "**Usage:**"
+      - "`%discord_bot_prefix%%this_command_label% add <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% remove <type> <identifier>`"
+      - "`%discord_bot_prefix%%this_command_label% clear all <identifier>`"
+      - "Types: LOGIN, LOGOUT, ADVANCEMENT, DEATH, SERVER_START, SERVER_STOP, all"
+    add: "Added the event(s) for route `%this_identifier%`:%this_type_named%"
+    remove: "Removed the event(s) for route `%this_identifier%`:%this_type_named%"
+    clear: "Cleared the events of route `%this_identifier%`."
+    none: "Sorry, but I could not find that route..."
+  # Replies when someone may not use a command. %this_command% is the command's name.
+  errors:
+    server-only: "This command can only be used in a server channel."
+    member-lookup-failed: "Error: could not look up your server membership. Please tell an administrator to contact @drakdv on Discord."
+    owner-only: "Only the server owner or a bot super admin can use this command. Add a role's ID to 'bot.super-admin-roles' in the Discord module's config.yml, or set 'permissions.default' in '%this_command%.yml' to a role's ID."
+    # %this_role_id%
+    role-missing: "Error: the role '%this_role_id%' configured for this command does not exist. Please tell an administrator to contact @drakdv on Discord."
+    # %this_role_name%, %this_role_id%
+    no-role: "You need the '%this_role_name%' role to use this command."

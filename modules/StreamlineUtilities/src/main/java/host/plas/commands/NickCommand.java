@@ -18,11 +18,13 @@ import host.plas.accessors.SpigotAccessor;
 import host.plas.events.NicknameUpdateEvent;
 import singularity.utils.UserUtils;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 @Getter
 public class NickCommand extends ModuleCommand {
     private final String messageResultCleared;
+    private final String messageResultReset;
     private final String messageResultChanged;
     private final String messageResultCancelled;
     private final String permissionSetOthers;
@@ -37,6 +39,8 @@ public class NickCommand extends ModuleCommand {
 
         messageResultCleared = getCommandResource().getOrSetDefault("messages.result.cleared",
                 "&eChanged &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname to &b'%this_new%&b' &7(&efrom &b'%this_previous%&b'&7)");
+        messageResultReset = getCommandResource().getOrSetDefault("messages.result.reset",
+                "&eReset &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname &7(&efrom &b'%this_previous%&b'&7)");
         messageResultChanged = getCommandResource().getOrSetDefault("messages.result.changed",
                 "&eChanged &d%streamline_parse_%this_other%:::*/*streamline_user_formatted*/*%&8'&es nickname to &b'%this_new%&b' &7(&efrom &b'%this_previous%&b'&7)");
         messageResultCancelled = getCommandResource().getOrSetDefault("messages.result.cancelled",
@@ -56,16 +60,16 @@ public class NickCommand extends ModuleCommand {
 //        }
 //        CosmicPlayer sender = (CosmicPlayer) s;
 
-        String message = ModuleUtils.argsToString(strings);
-
         CosmicSender user = s;
+        int start = 0;
 
-        if (message.startsWith("-p:")) {
-            if (user.hasPermission(getPermissionSetOthers())) {
-                String name = strings[0].substring("-p:".length());
-                user = UserUtils.getOrGetPlayerByNameNullable(name);
-                message = message.substring(message.indexOf(' ') + 1);
+        if (strings.length > 0 && strings[0].startsWith("-p:")) {
+            if (! s.hasPermission(getPermissionSetOthers())) {
+                ctx.sendMessage(MainMessagesHandler.MESSAGES.INVALID.PERMISSIONS.get());
+                return;
             }
+            user = UserUtils.getOrGetPlayerByNameNullable(strings[0].substring("-p:".length()));
+            start = 1;
         }
 
         if (user == null) {
@@ -73,48 +77,38 @@ public class NickCommand extends ModuleCommand {
             return;
         }
 
-        if (message.isBlank()) {
-            strings = new String[]{"-clear"};
-            message = ModuleUtils.argsToString(strings);
-        }
+        String[] nickArgs = Arrays.copyOfRange(strings, start, strings.length);
+        String message = ModuleUtils.argsToString(nickArgs);
 
-        if (strings.length <= 2) {
-            if (strings[strings.length - 1].equals("-clear")) {
-                String current = user.getDisplayName();
-                final CosmicSender finalUser = user;
-                NickUtils.handleNickChange(user, message, current, (newNick, previous) -> {
-                    ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), finalUser)
-                            .replace("%this_new%", newNick)
-                            .replace("%this_previous%", previous)
-                    );
-                });
+        // "-reset", a bare "!" or no nickname at all go back to no nickname: the usual
+        // prefix + username + suffix. "-clear" shows the bare username, with no prefix or suffix.
+        boolean reset = message.isBlank() || message.equalsIgnoreCase("-reset") || message.equals("!");
+        boolean clear = message.equalsIgnoreCase("-clear");
 
-                ctx.sendMessage(getWithOther(s, getMessageResultCleared(), user)
-                        .replace("%this_new%", ModuleUtils.replaceAllPlayerBungee(user, "%streamline_user_formatted%"))
-                        .replace("%this_previous%", current)
-                );
-                return;
-            }
-        }
-
-        if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
-            message = message.substring("!".length());
+        String nickname;
+        if (reset || clear) {
+            nickname = "";
+        } else if (message.startsWith("!") && s.hasPermission(getPermissionSetNonFormatted())) {
+            nickname = message.substring("!".length());
         } else {
-            message = StreamlineUtilities.getConfigs().getNicknamesFormat().replace("%this_input%", message);
+            nickname = StreamlineUtilities.getConfigs().getNicknamesFormat().replace("%this_input%", message);
         }
 
-        String current = user.getDisplayName();
-        final CosmicSender finalUser = user;
-        NickUtils.handleNickChange(user, message, current, (newNick, previous) -> {
-            ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), finalUser)
-                    .replace("%this_new%", newNick)
+        String previous = NickUtils.currentNickname(user);
+        String applied = NickUtils.handleNickChange(user, nickname, previous, clear);
+
+        if (applied == null) {
+            ctx.sendMessage(getWithOther(s, getMessageResultCancelled(), user)
+                    .replace("%this_new%", nickname)
                     .replace("%this_previous%", previous)
             );
-        });
+            return;
+        }
 
-        ctx.sendMessage(getWithOther(s, getMessageResultChanged(), user)
-                .replace("%this_new%", message)
-                .replace("%this_previous%", current)
+        String result = reset ? getMessageResultReset() : clear ? getMessageResultCleared() : getMessageResultChanged();
+        ctx.sendMessage(getWithOther(s, result, user)
+                .replace("%this_new%", NickUtils.currentNickname(user))
+                .replace("%this_previous%", previous)
         );
     }
 
@@ -129,6 +123,7 @@ public class NickCommand extends ModuleCommand {
                     r.add("!" + s);
                 });
                 r.add("-clear");
+                r.add("-reset");
                 r.add("!");
 
                 return r;
@@ -143,6 +138,7 @@ public class NickCommand extends ModuleCommand {
             });
 
             r.add("-clear");
+            r.add("-reset");
             r.add("!");
 
             return r;
@@ -154,13 +150,14 @@ public class NickCommand extends ModuleCommand {
 
                 r.addAll(ModuleUtils.getOnlinePlayerNames());
                 r.add("-clear");
+                r.add("-reset");
 
                 return r;
             }
         }
 
         if (strings.length >= 2) {
-            if (strings[strings.length - 2].equals("-clear")) {
+            if (strings[strings.length - 2].equals("-clear") || strings[strings.length - 2].equals("-reset")) {
                 return new ConcurrentSkipListSet<>();
             }
         }

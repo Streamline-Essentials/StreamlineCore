@@ -3,13 +3,16 @@ package host.plas.discord.data.channeling;
 import host.plas.config.VerifiedUsers;
 import host.plas.database.DiscordMiddleware;
 import host.plas.discord.data.events.EventClassifier;
-import host.plas.utils.MessageMutator;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import host.plas.StreamlineDiscord;
 import host.plas.discord.DiscordHandler;
+import host.plas.discord.messaging.BotMessageConfig;
+import host.plas.discord.messaging.BotMessages;
 import host.plas.discord.messaging.DiscordMessenger;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import singularity.objects.SingleSet;
 import host.plas.events.streamline.channels.ChanneledMessageEvent;
 import singularity.data.console.CosmicSender;
 import singularity.loading.Loadable;
@@ -18,6 +21,7 @@ import singularity.utils.UserUtils;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -176,15 +180,11 @@ public class Route implements Loadable<Route> {
                 TextChannel channel = getOutput().asServerTextChannel();
                 if (channel == null) return;
 
-                if (isJsonFile(getOutput().getToFormat())) {
-                    String fileName = getJsonFile(getOutput().getToFormat());
-
-                    CompletableFuture.runAsync(() -> {
-                        StreamlineDiscord.loadFile(fileName);
-                    }).join();
-
-                    DiscordMessenger.sendSimpleEmbed(channel.getIdLong(), ModuleUtils.stripColor(
-                            ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), StreamlineDiscord.getJsonFromFile(fileName)).replace("%this_message%", message)));
+                // A format naming an embed ('--file:<name>.json') sends that file from embeds/.
+                if (getOutput().getToFormat() != null && getOutput().getToFormat().trim().startsWith("--file:")) {
+                    SingleSet<MessageCreateData, BotMessageConfig> embed = BotMessages.buildEmbed(getOutput().getToFormat(), routedUser.getUser(),
+                            BotMessages.placeholders("this_message", message));
+                    if (embed != null) DiscordMessenger.message(channel.getIdLong(), embed.getKey(), embed.getValue());
                 } else {
                     DiscordMessenger.sendSimpleMessage(channel.getIdLong(), ModuleUtils.stripColor(
                             ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), getOutput().getToFormat().replace("%this_message%", message))));
@@ -194,44 +194,61 @@ public class Route implements Loadable<Route> {
     }
 
 
-    public void bounceEvent(RoutedUser routedUser, String message) {
-        bounceEvent(routedUser, message, (s) -> s);
+    /**
+     * Sends the bot message {@code messageKey} (see {@link BotMessages}) about {@code routedUser} to this route's
+     * output when it is a Discord channel; other outputs ignore game events. Nothing is sent when the owner
+     * disabled the message in {@code messaging.yml}.
+     *
+     * @param extra {@code %name%} placeholders for the message, keyed by {@code name}; may be null
+     */
+    public void bounceEvent(RoutedUser routedUser, String messageKey, Map<String, String> extra) {
+        submitEvent(routedUser, messageKey, extra).exceptionally(error -> {
+            StreamlineDiscord.getInstance().logWarning("Could not send '" + messageKey + "' to route " + getIdentifier() + ": " + error.getMessage());
+            return null;
+        });
     }
 
-    public void bounceEvent(RoutedUser routedUser, String message, MessageMutator messageMutator) {
-        ModuleUtils.fireEvent(new ChanneledMessageEvent(message, getInput(), getOutput()));
+    /**
+     * {@link #bounceEvent} that hands back the Discord request, completing once Discord accepted the message,
+     * or at once when nothing is sent (output not a Discord channel, message disabled, bot not connected).
+     */
+    public CompletableFuture<?> submitEvent(RoutedUser routedUser, String messageKey, Map<String, String> extra) {
+        CompletableFuture<?> none = CompletableFuture.completedFuture(null);
 
-        switch (getOutput().getType()) {
-            case DISCORD_TEXT:
-                TextChannel channel = getOutput().asServerTextChannel();
-                if (channel == null) return;
+        ModuleUtils.fireEvent(new ChanneledMessageEvent(BotMessages.getText(messageKey), getInput(), getOutput()));
 
-                if (isJsonFile(message)) {
-                    String fileName = getJsonFile(message);
+        if (getOutput() == null || getOutput().getType() != EndPointType.DISCORD_TEXT) return none;
+        // Channel lookups wait for the bot to be ready; a game event must never wait on Discord.
+        if (! DiscordHandler.isConnected()) return none;
 
-                    CompletableFuture.runAsync(() -> {
-                        StreamlineDiscord.loadFile(fileName);
-                    }).join();
+        TextChannel channel = getOutput().asServerTextChannel();
+        if (channel == null) return none;
 
-                    DiscordMessenger.sendSimpleEmbed(channel.getIdLong(), ModuleUtils.stripColor(
-                            ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), messageMutator.apply(StreamlineDiscord.getJsonFromFile(fileName)))));
-                } else {
-                    DiscordMessenger.sendSimpleMessage(channel.getIdLong(), ModuleUtils.stripColor(
-                            ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), messageMutator.apply(message))));
-                }
-                break;
+        SingleSet<MessageCreateData, BotMessageConfig> data = BotMessages.build(messageKey, routedUser.getUser(), extra);
+        if (data == null) return none;
+
+        CompletableFuture<?> sent = DiscordMessenger.submit(channel.getIdLong(), data.getKey());
+        if (data.getValue().isAvatarChange()) {
+            sent = sent.whenComplete((ignored, error) -> DiscordHandler.updateBotAvatar(data.getValue().getChangeAfterMessage()));
         }
+        return sent;
     }
 
+    /** Sends {@code message} on, or, with {@code forceEmbed}, sends it as embed JSON to this route's Discord channel. */
     public void bounceMessage(RoutedUser routedUser, String message, boolean forceEmbed) {
-        if (forceEmbed) {
-            TextChannel channel = getOutput().asServerTextChannel();
-            if (channel == null) return;
-
-            DiscordMessenger.sendSimpleEmbed(channel.getIdLong(), ModuleUtils.stripColor(
-                    ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), message).replace("%this_message%", message)));
-        } else {
+        if (! forceEmbed) {
             bounceMessage(routedUser, message);
+            return;
+        }
+
+        TextChannel channel = getOutput().asServerTextChannel();
+        if (channel == null) return;
+
+        try {
+            DiscordMessenger.sendSimpleEmbed(channel.getIdLong(), ModuleUtils.stripColor(
+                    ModuleUtils.replaceAllPlayerBungee(routedUser.getUser(), message)));
+        } catch (Exception e) {
+            StreamlineDiscord.getInstance().logWarning("Could not send a forwarded embed to route " + getIdentifier() + ": " + e.getMessage());
         }
     }
 
@@ -295,22 +312,6 @@ public class Route implements Loadable<Route> {
         return candidate != null && candidate.getIdentifier().equals(endPoint.getIdentifier());
     }
 
-
-    public boolean isJsonFile(String wholeInput) {
-        if (! wholeInput.startsWith("--file:")) return false;
-        wholeInput = wholeInput.substring("--file:".length());
-        return wholeInput.endsWith(".json");
-    }
-
-    public String getJsonFile(String wholeInput) {
-        if (wholeInput.startsWith("--file:")) {
-            wholeInput = wholeInput.substring("--file:".length());
-        }
-        if (! wholeInput.endsWith(".json")) {
-            wholeInput = wholeInput + ".json";
-        }
-        return wholeInput;
-    }
 
     @Override
     public Route augment(CompletableFuture<Optional<Route>> completableFuture, boolean isGet) {

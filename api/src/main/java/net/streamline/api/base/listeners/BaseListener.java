@@ -5,7 +5,10 @@ import gg.drak.thebase.events.BaseEventListener;
 import gg.drak.thebase.events.processing.BaseProcessor;
 import singularity.Singularity;
 import net.streamline.api.base.module.BaseModule;
+import singularity.data.players.CosmicPlayer;
+import singularity.events.server.LoginCompletedEvent;
 import singularity.events.server.LogoutEvent;
+import singularity.utils.UserUtils;
 import singularity.gui.GuiManager;
 import singularity.messages.events.ProxyMessageInEvent;
 import singularity.messages.proxied.ProxiedMessageManager;
@@ -45,6 +48,20 @@ public class BaseListener implements BaseEventListener {
         if (event.getSubChannel() == null) return;
 
         ProxiedMessageManager.onProxiedMessageReceived(event.getMessage());
+    }
+
+    /**
+     * Copies the player's LuckPerms prefix and suffix into their meta once they are fully
+     * logged in, by which time LuckPerms holds them; the copy made while their data loaded
+     * may have come too early.
+     *
+     * @param event the login event
+     */
+    @BaseProcessor
+    public void onLoginCompleted(LoginCompletedEvent event) {
+        if (! (event.getSender() instanceof CosmicPlayer)) return;
+
+        UserUtils.syncChatMeta((CosmicPlayer) event.getSender());
     }
 
     /**

@@ -1,5 +1,6 @@
 package singularity.modules;
 
+import singularity.events.EventDispatcher;
 import com.google.common.base.Preconditions;
 import gg.drak.thebase.events.BaseEventHandler;
 import gg.drak.thebase.events.BaseEventListener;
@@ -272,7 +273,7 @@ public class ModuleManager {
             e.printStackTrace();
         }
         try {
-            BaseEventHandler.unbake(existing);
+            unregisterHandlersOf(existing);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -526,7 +527,7 @@ public class ModuleManager {
             e.printStackTrace();
         }
         try {
-            BaseEventHandler.unbake(toStop);
+            unregisterHandlersOf(toStop);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -799,7 +800,7 @@ public class ModuleManager {
             MessageUtils.logWarning("Base module is null!");
         }
 
-        BaseEventHandler.unbake(moduleLike);
+        unregisterHandlersOf(moduleLike);
 
         Path path = safePluginManager().getPlugin(id).getPluginPath();
         try {
@@ -848,12 +849,12 @@ public class ModuleManager {
     }
 
     /**
-     * Fires a {@link CosmicEvent} through the TheBase event bus.
+     * Fires a {@link CosmicEvent} to its TheBase listeners in priority order.
      *
      * @param event the event to fire; must not be {@code null}
      */
     public static void fireEvent(@NotNull CosmicEvent event) {
-        BaseEventHandler.fireEvent(event);
+        EventDispatcher.fire(event);
     }
 
     /**
@@ -864,7 +865,26 @@ public class ModuleManager {
      * @param module the module whose handlers should be removed
      */
     public static <T extends ModuleLike> void unregisterHandlersOf(T module) {
-        BaseEventHandler.unbake(module);
+        if (module == null) return;
+
+        ClassLoader moduleLoader = module.getClass().getClassLoader();
+        // The core's own loader is shared by every core listener, so it never identifies a module.
+        boolean ownLoader = moduleLoader != null && moduleLoader != ModuleManager.class.getClassLoader();
+
+        // TheBase's unbake(IEventable) stops at the first registration without an owner, which leaves
+        // the rest of the module's listeners registered. Walking the registrations here skips those
+        // nulls, and also drops registrations whose listener class came from this module's jar, since
+        // a listener baked before its module existed has no owner to match.
+        BaseEventHandler.getRegularEvents().forEach((eventClass, registrations) -> {
+            registrations.removeIf(registration -> {
+                Object owner = registration.getEventable();
+                if (owner != null && owner.equals(module)) return true;
+                if (! ownLoader) return false;
+
+                BaseEventListener listener = registration.getListener();
+                return listener != null && listener.getClass().getClassLoader() == moduleLoader;
+            });
+        });
     }
 
     /**

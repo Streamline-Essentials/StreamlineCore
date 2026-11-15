@@ -1,6 +1,6 @@
 package singularity.data.players.meta;
 
-import gg.drak.thebase.lib.re2j.Matcher;
+import com.google.re2j.Matcher;
 import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -107,6 +107,7 @@ public class SenderMeta implements IUuidable {
      * @param string the serialized tags string to parse
      */
     public void setTagsFromString(String string) {
+        if (string == null || string.isEmpty()) return;
         Matcher matcher = MatcherUtils.matcherBuilder("(!!!)(.*?)(:::)(.*?)(;;;)", string);
         List<String[]> matches = MatcherUtils.getGroups(matcher, 5);
 
@@ -140,6 +141,44 @@ public class SenderMeta implements IUuidable {
         }
 
         return full;
+    }
+
+    /**
+     * Tag marking a player who shows their nickname (or username) alone, without the
+     * prefix and suffix around it.
+     */
+    public static final String PLAIN_NAME_TAG = "plain-name";
+
+    /**
+     * Whether the player's display name leaves out their prefix and suffix.
+     *
+     * @return {@code true} if the {@link #PLAIN_NAME_TAG} tag is set
+     */
+    public boolean isPlainName() {
+        return hasTag(PLAIN_NAME_TAG);
+    }
+
+    /**
+     * Sets whether the player's display name leaves out their prefix and suffix.
+     *
+     * @param plain {@code true} to show the name alone
+     */
+    public void setPlainName(boolean plain) {
+        if (plain) {
+            if (! isPlainName()) addTag(PLAIN_NAME_TAG);
+        } else {
+            removeTag(PLAIN_NAME_TAG);
+        }
+    }
+
+    /**
+     * Whether a tag with the given identifier is set.
+     *
+     * @param tag the tag identifier
+     * @return {@code true} if present
+     */
+    public boolean hasTag(String tag) {
+        return tags.stream().anyMatch(metaTag -> metaTag.getIdentifier().equals(tag));
     }
 
     /**

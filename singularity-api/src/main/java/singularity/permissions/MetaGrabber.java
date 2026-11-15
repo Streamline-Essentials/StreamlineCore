@@ -63,4 +63,16 @@ public interface MetaGrabber {
      *              expiration are encoded within the value object
      */
     void setMeta(MetaValue value);
+
+    /**
+     * Whether {@link #getPrefix} and {@link #getSuffix} currently reflect the player's real
+     * prefix and suffix, rather than an empty answer for a player the permission plugin does
+     * not hold (or no plugin at all).
+     *
+     * @param player the player to check
+     * @return {@code true} when the values can be copied into the player's meta
+     */
+    default boolean hasChatMeta(CosmicPlayer player) {
+        return false;
+    }
 }

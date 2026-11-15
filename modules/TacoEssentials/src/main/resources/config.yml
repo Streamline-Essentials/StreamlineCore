@@ -1,6 +1,10 @@
 # TacoEssentials settings. Values are re-read on every use, so edits apply without a restart.
 
 teleport:
+  # Seconds a player must stand still before a home, warp, spawn, /tpa, /rtp or
+  # /back teleport; moving to another block cancels it. 0 teleports at once.
+  # tacoessentials.teleport.bypasswarmup skips it. Staff teleports never wait.
+  warmup-seconds: 5
   # Seconds before a pending /tpa or /tpahere request expires.
   tpa-timeout-seconds: 120
   # How many previous locations /back remembers per player.
@@ -13,8 +17,28 @@ teleport:
   jump-max-distance: 256
 
 homes:
-  # Homes a player may own; tacoessentials.homes.unlimited lifts the limit.
+  # Homes a player may own. tacoessentials.homes.<N> (N up to 100) grants N
+  # homes instead, the highest granted N winning; tacoessentials.homes.unlimited
+  # lifts the limit.
   default-max: 5
+  # Longest home name /sethome and the /homes menu accept.
+  max-name-length: 30
+
+afk:
+  # Seconds without moving, chatting or running a command before a player is
+  # marked AFK. 0 turns automatic AFK off (/afk still works).
+  idle-seconds: 300
+  # Whether going AFK and coming back is announced to everyone.
+  broadcast: true
+
+near:
+  # Blocks /near searches when given no distance, and the most it may reach.
+  default-radius: 200
+  max-radius: 1000
+
+broadcast:
+  # The /broadcast line. %message% is the text, %sender% who sent it.
+  format: "&8[&6Broadcast&8] &f%message%"
 
 rtp:
   # Candidate columns /rtp tries before giving up; each may generate a chunk.

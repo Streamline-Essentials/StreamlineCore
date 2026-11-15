@@ -1,0 +1,10 @@
+{
+  "title": "SERVER ONLINE",
+  "description": "**%this_server_name%** is online.",
+  "color": "#55FF55",
+  "timestamp": true,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

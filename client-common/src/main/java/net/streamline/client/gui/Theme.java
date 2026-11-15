@@ -30,6 +30,8 @@ final class Theme {
     static final int CONTROL = 0xFF2A1F20;
     static final int CONTROL_BORDER = 0xFF4D2A2D;
     static final int SWITCH_OFF = 0xFF4A3B3D;
+    /** Behind a tag pill: blue, so a label never reads as one of the red buttons. */
+    static final int TAG = 0xFF2F6FD3;
 
     static final int GLFW_ESCAPE = 256;
     static final int GLFW_ENTER = 257;
@@ -47,6 +49,11 @@ final class Theme {
     static final int GLFW_C = 67;
     static final int GLFW_V = 86;
     static final int GLFW_X = 88;
+    static final int GLFW_E = 69;
+    static final int GLFW_G = 71;
+    static final int GLFW_U = 85;
+    static final int GLFW_Y = 89;
+    static final int GLFW_Z = 90;
     static final int GLFW_MOD_SHIFT = 0x1;
     /** Control, or Command on macOS, as GLFW modifier bits. */
     static final int GLFW_MOD_SHORTCUT = 0x2 | 0x8;
@@ -64,6 +71,27 @@ final class Theme {
         int textX = x1 + (x2 - x1 - canvas.textWidth(label)) / 2;
         int textY = y1 + (y2 - y1 - canvas.lineHeight()) / 2 + 1;
         canvas.text(label, textX, textY, TEXT);
+    }
+
+    /**
+     * @return the width of {@link #tag} for {@code label}: the label with a 2-pixel left side and a
+     *         1-pixel right one, since the font's advance already ends each glyph with a blank column
+     */
+    static int tagWidth(Canvas canvas, String label) {
+        return canvas.textWidth(label) + 3;
+    }
+
+    /**
+     * A tag pill: {@code label} on a blue rectangle hugging the text, with its text on the
+     * line at {@code textY} so it sits inline with text there. A label only; it takes no clicks.
+     *
+     * @return the x right after the pill
+     */
+    static int tag(Canvas canvas, int x, int textY, String label) {
+        int x2 = x + tagWidth(canvas, label);
+        canvas.fill(x, textY - 2, x2, textY + canvas.lineHeight() + 1, TAG);
+        canvas.text(label, x + 2, textY, TEXT);
+        return x2;
     }
 
     /** An on/off switch, 20 by 10 pixels. */

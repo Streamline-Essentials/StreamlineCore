@@ -3,29 +3,23 @@ package host.plas.config;
 import host.plas.StreamlineDiscord;
 import singularity.configs.ModularizedConfig;
 
+/**
+ * {@code messages.yml}: the plain text of every bot message, keyed like {@code messaging.yml}, plus the
+ * Minecraft chat lines sent after verifying. A bot message uses this text when its
+ * {@code messaging.yml} entry is {@code default}, and falls back to it when its embed cannot be read.
+ */
 public class Messages extends ModularizedConfig {
     public Messages() {
         super(StreamlineDiscord.getInstance(), "messages.yml", true);
 
+        SafeYaml.normalize(this);
         init();
     }
 
     @Override
     public void init() {
         verifySuccessMinecraft();
-        verifiedSuccessDiscord();
-        verifiedFailureGenericDiscord();
-        verifiedFailureAlreadyVerifiedDiscord();
-
         unVerifySuccessMinecraft();
-        unVerifiedSuccessDiscord();
-        unVerifiedFailureGenericDiscord();
-        unVerifiedFailureAlreadyUnVerifiedDiscord();
-
-        forwardedStreamlineLogin();
-        forwardedStreamlineLogout();
-        forwardedSpigotAdvancement();
-        forwardedSpigotDeath();
     }
 
     public String verifySuccessMinecraft() {
@@ -34,69 +28,53 @@ public class Messages extends ModularizedConfig {
         return getOrSetDefault("verification.success.minecraft", "&a&lSuccess&8! &eYou verified &d%streamline_user_absolute% &eas &d%discord_user_name_tagged%");
     }
 
-    public String verifiedSuccessDiscord() {
-        reloadResource();
-
-        return getOrSetDefault("verification.success.discord", "--file:verify-success-response.json");
-    }
-
-    public String verifiedFailureGenericDiscord() {
-        reloadResource();
-
-        return getOrSetDefault("verification.failure.generic", "--file:verify-failure-response.json");
-    }
-
-    public String verifiedFailureAlreadyVerifiedDiscord() {
-        reloadResource();
-
-        return getOrSetDefault("verification.failure.already-verified", "--file:verify-already-response.json");
-    }
-
     public String unVerifySuccessMinecraft() {
         reloadResource();
 
         return getOrSetDefault("unverification.success.minecraft", "&a&lSuccess&8! &eYou unverified &d%streamline_user_absolute%");
     }
 
-    public String unVerifiedSuccessDiscord() {
+    /** The text stored under {@code key}, or null when there is none. */
+    public synchronized String getText(String key) {
         reloadResource();
 
-        return getOrSetDefault("unverification.success.discord", "--file:unverify-success-response.json");
+        Object value = getResource().get(key);
+        if (value == null) return null;
+        if (value instanceof java.util.List) {
+            // A YAML list reads as one line per entry.
+            StringBuilder builder = new StringBuilder();
+            for (Object line : (java.util.List<?>) value) {
+                if (builder.length() > 0) builder.append('\n');
+                builder.append(line);
+            }
+            return builder.toString();
+        }
+        return value.toString();
     }
 
-    public String unVerifiedFailureGenericDiscord() {
+    /** Writes {@code text} under {@code key} unless the key already holds a value. */
+    public synchronized void ensureDefault(String key, String text) {
         reloadResource();
 
-        return getOrSetDefault("unverification.failure.generic", "--file:unverify-failure-response.json");
+        if (getResource().contains(key)) return;
+        SafeYaml.write(this, key, text);
     }
 
-    public String unVerifiedFailureAlreadyUnVerifiedDiscord() {
+    public synchronized boolean has(String key) {
         reloadResource();
 
-        return getOrSetDefault("unverification.failure.already-unverified", "--file:unverify-already-response.json");
+        return getResource().contains(key);
     }
 
-    public String forwardedStreamlineLogin() {
+    public synchronized void set(String key, Object value) {
         reloadResource();
 
-        return getOrSetDefault("forwarded.streamline.login", "--file:on-login.json");
+        SafeYaml.write(this, key, value);
     }
 
-    public String forwardedStreamlineLogout() {
+    public synchronized void remove(String key) {
         reloadResource();
 
-        return getOrSetDefault("forwarded.streamline.logout", "--file:on-logout.json");
-    }
-
-    public String forwardedSpigotAdvancement() {
-        reloadResource();
-
-        return getOrSetDefault("forwarded.spigot.advancement", "--file:on-advancement.json");
-    }
-
-    public String forwardedSpigotDeath() {
-        reloadResource();
-
-        return getOrSetDefault("forwarded.spigot.death", "--file:on-death.json");
+        SafeYaml.remove(this, key);
     }
 }

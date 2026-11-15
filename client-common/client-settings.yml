@@ -1,0 +1,101 @@
+# Names and descriptions of the settings on the /slclient menu pages.
+#
+# Read at build time only (client-common/client-settings.gradle): each entry is compiled into a
+# generated class, so players see these texts but cannot change them. This file is not packaged.
+#
+#   built-in.<built-in-type-id>.<setting-key>  StreamlineClient's own pages, compiled into
+#                                              StreamlineCore-ModuleCore (BuiltInSettingTexts).
+#   modules.<module-name>.<setting-key>        a client module's page, compiled into that module
+#                                              as <pf.class>.SettingTexts. <module-name> is the
+#                                              module's `name` (or `pf.id`) in its gradle.properties.
+#
+# <setting-key> is the key the setting is saved under. A setting missing here shows its key.
+# Names are Title Case.
+
+built-in:
+  client-settings:
+    show-hud:
+      name: "Show HUD"
+      description: "Toggles drawing HUD elements in game."
+    background:
+      name: "Backgrounds"
+      description: "Globally toggles backgrounds for HUD elements."
+    background-color:
+      name: "Background Color"
+      description: "Default background color for HUD elements."
+    text-shadow:
+      name: "Text Shadow"
+      description: "Globally toggles the drop shadow on text for HUD elements."
+    strip-colors:
+      name: "Strip Colors"
+      description: "Removes all color from all HUD text."
+    chroma-everywhere:
+      name: "Chroma Everywhere"
+      description: "Sets all HUD elements to use chroma."
+    remember-page:
+      name: "Remember Last Page"
+      description: "Reopens this menu on the page it was closed on."
+    check-ecloud:
+      name: "Update Checks"
+      description: "Toggles polling for module updates."
+    chroma-type:
+      name: "Chroma Type"
+      description: "The type of chroma to use."
+    chroma-cycle:
+      name: "Chroma Cycle Seconds"
+      description: "Time in seconds per chroma cycle."
+    chroma-saturation:
+      name: "Chroma Saturation"
+      description: "Percentage of saturation for chroma."
+    chroma-brightness:
+      name: "Chroma Brightness"
+      description: "Percentage of brightness for chroma."
+
+modules:
+  StreamlineHUD:
+    main-color:
+      name: "Main Color"
+      description: "Used for labels. Has a placeholder."
+    text-color:
+      name: "Text Color"
+      description: "Used for uncolored text. Has a placeholder."
+    background:
+      name: "Backgrounds"
+      description: "Toggles backgrounds for StreamlineHUD elements."
+    background-color:
+      name: "Background Color"
+      description: "Default background color for StreamlineHUD elements."
+    shadow:
+      name: "Text Shadow"
+      description: "Toggles the drop shadow on text for StreamlineHUD elements."
+    coordinate-decimals:
+      name: "Coordinate Decimals"
+      description: "Number of decimal places for coordinates."
+    clock-format:
+      name: "Clock Format"
+      description: "24-hour or 12-hour clocks."
+  ClientTogglesModule:
+    sprint-key:
+      name: "Toggle Sprint Key"
+      description: "Keybind for toggling sprint."
+    sneak-key:
+      name: "Toggle Sneak Key"
+      description: "Keybind for toggling sneak."
+    yes-text:
+      name: "Toggled Value"
+      description: "Value for a toggled state."
+    no-text:
+      name: "Not Toggled Value"
+      description: "Value for a not toggled state."
+    sprinting-on-text:
+      name: "Sprinting Toggled Text"
+      description: "The HUD text shown when sprinting is toggled."
+    sprinting-off-text:
+      name: "Sprinting Not Toggled Text"
+      description: "The HUD text shown when sprinting is not toggled."
+    sneaking-on-text:
+      name: "Sneaking Toggled Text"
+      description: "The HUD text shown when sneaking is toggled."
+    sneaking-off-text:
+      name: "Sneaking Not Toggled Text"
+      description: "The HUD text shown when sneaking is not toggled."

@@ -41,7 +41,14 @@ public class Config extends ModularizedConfig {
         serverEventSpigotAdvancement();
         serverEventSpigotDeath();
 
-        moduleForwardsEventsToProxy();
+        serverEventServerStart();
+        serverEventServerStop();
+        serverEventServerName();
+        serverEventProxyJoinDelayTicks();
+
+        eventRelayEnabled();
+        eventRelayReceive();
+        eventRelayTransport();
 
         verificationResponsesPrivate();
 
@@ -196,10 +203,72 @@ public class Config extends ModularizedConfig {
         return getOrSetDefault("server-events.spigot.death", true);
     }
 
-    public boolean moduleForwardsEventsToProxy() {
+    public boolean serverEventServerStart() {
         reloadResource();
 
-        return getOrSetDefault("module.forward-events-to-proxy", true);
+        return getOrSetDefault("server-events.server.start", true);
+    }
+
+    public boolean serverEventServerStop() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.server.stop", true);
+    }
+
+    /**
+     * The name event messages give this server; blank means Streamline's own server name
+     * ({@code server.name} in the core's server config) when one is set.
+     */
+    public String serverEventServerName() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.server-name", "");
+    }
+
+    /**
+     * Ticks a proxy waits before announcing a join, so the player has reached a backend server
+     * and the message can name it.
+     */
+    public int serverEventProxyJoinDelayTicks() {
+        reloadResource();
+
+        return getOrSetDefault("server-events.proxy-join-delay-ticks", 40);
+    }
+
+    /**
+     * Whether a backend without a Discord bot of its own (turned off, no token, or failed to log in) sends
+     * its game events to the proxy's bot. {@code module.forward-events-to-proxy} was this setting's name
+     * in earlier versions; its value carries over.
+     */
+    public boolean eventRelayEnabled() {
+        reloadResource();
+
+        try {
+            if (getResource().contains("module.forward-events-to-proxy")) {
+                boolean legacy = getResource().getBoolean("module.forward-events-to-proxy");
+                getResource().remove("module.forward-events-to-proxy");
+                if (getResource().singleLayerKeySet("module").isEmpty()) getResource().remove("module");
+                if (! getResource().contains("event-relay.enabled")) getResource().set("event-relay.enabled", legacy);
+            }
+        } catch (Throwable ignored) {
+            // The old key stays; the setting falls back to its default below.
+        }
+
+        return getOrSetDefault("event-relay.enabled", true);
+    }
+
+    /** Whether a server with its own bot posts game events other servers relay to it. */
+    public boolean eventRelayReceive() {
+        reloadResource();
+
+        return getOrSetDefault("event-relay.receive", true);
+    }
+
+    /** How relayed events travel: {@code auto}, {@code redis}, {@code database} or {@code plugin-messages}. */
+    public String eventRelayTransport() {
+        reloadResource();
+
+        return getOrSetDefault("event-relay.transport", "auto");
     }
 
     public boolean verificationOnlyCommand() {

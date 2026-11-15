@@ -74,6 +74,16 @@ public class MetaGrabberImpl implements MetaGrabber {
     /**
      * {@inheritDoc}
      * <p>
+     * True while the permission plugin holds the player (LuckPerms: the user is loaded).
+     */
+    @Override
+    public boolean hasChatMeta(CosmicPlayer player) {
+        return Permissions.hasChatMeta(player.getUuid());
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
      * Setting meta is not supported by this implementation; this method is
      * intentionally a no-op.
      *

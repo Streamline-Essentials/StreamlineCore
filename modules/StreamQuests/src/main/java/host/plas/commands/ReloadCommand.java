@@ -2,6 +2,7 @@ package host.plas.commands;
 
 import host.plas.StreamQuests;
 import host.plas.data.QuestManager;
+import host.plas.data.shop.ShopManager;
 import singularity.command.ModuleCommand;
 import singularity.command.CosmicCommand;
 import singularity.command.context.CommandContext;
@@ -39,5 +40,9 @@ public class ReloadCommand extends ModuleCommand {
         StreamQuests.getExampleConfig().reloadConfig();
 
         context.sendMessage("&aLoaded &e" + QuestManager.getQuests().size() + " &aquests&8.");
+
+        StreamQuests.getShopConfig().reloadConfig();
+
+        context.sendMessage("&aLoaded &e" + ShopManager.getEntries().size() + " &aquest shop items&8.");
     }
 }

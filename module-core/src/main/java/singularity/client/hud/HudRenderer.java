@@ -1,5 +1,7 @@
 package singularity.client.hud;
 
+import singularity.client.settings.StreamlineClientSettings;
+
 /**
  * Draws a {@link HudElement}. Coordinates are GUI-scaled pixels relative to the element's
  * top-left corner; the renderer has already moved and scaled to the element's place.
@@ -22,4 +24,25 @@ public interface HudRenderer {
 
     /** Fills the rectangle from ({@code x1}, {@code y1}) to ({@code x2}, {@code y2}), exclusive. */
     void fill(int x1, int y1, int x2, int y2, int color);
+
+    /**
+     * @return whether the player gave this element a background of their own in the HUD editor,
+     * which an element drawing its own background should then leave out
+     */
+    default boolean hasPlayerBackground() {
+        return false;
+    }
+
+    /**
+     * @return whether the player allows HUD elements to draw their own backgrounds (Client
+     * Settings); an element drawing one should leave it out when this is false
+     */
+    default boolean backgroundsAllowed() {
+        return StreamlineClientSettings.background();
+    }
+
+    /** @return the ARGB background chosen in Client Settings, for elements with no color of their own */
+    default int backgroundColor() {
+        return StreamlineClientSettings.backgroundColor();
+    }
 }

@@ -4,7 +4,6 @@ import net.streamline.api.base.module.BaseModule;
 import net.streamline.api.permissions.Permissions;
 import singularity.placeholders.expansions.RATExpansion;
 import singularity.placeholders.replaceables.IdentifiedUserReplaceable;
-import singularity.utils.UserUtils;
 
 /**
  * RAT placeholder expansion that exposes permission-plugin data for every
@@ -14,8 +13,8 @@ import singularity.utils.UserUtils;
  * provides the following placeholders (all prefixed with
  * {@code %streamline_luckperms_}):
  * <ul>
- *   <li>{@code prefix} — the player's effective prefix.</li>
- *   <li>{@code suffix} — the player's effective suffix.</li>
+ *   <li>{@code prefix} — the permission plugin's prefix, ignoring Streamline's own.</li>
+ *   <li>{@code suffix} — the permission plugin's suffix, ignoring Streamline's own.</li>
  *   <li>{@code primary_group} — the player's primary group name.</li>
  *   <li>{@code highest_group} — the first inherited group in the contextual
  *       inheritance chain.</li>
@@ -45,8 +44,8 @@ public class LuckpermsExpansion extends RATExpansion {
      */
     @Override
     public void init() {
-        new IdentifiedUserReplaceable(this, "prefix", (s, user) -> UserUtils.getPrefix(user)).register();
-        new IdentifiedUserReplaceable(this, "suffix", (s, user) -> UserUtils.getSuffix(user)).register();
+        new IdentifiedUserReplaceable(this, "prefix", (s, user) -> Permissions.getPrefix(user.getUuid()).getValue()).register();
+        new IdentifiedUserReplaceable(this, "suffix", (s, user) -> Permissions.getSuffix(user.getUuid()).getValue()).register();
 
         new IdentifiedUserReplaceable(this, "primary_group", (s, user) ->
                 Permissions.getPrimaryGroup(user.getUuid()).orElse(s.string())).register();

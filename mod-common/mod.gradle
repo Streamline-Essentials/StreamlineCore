@@ -82,7 +82,11 @@ dependencies {
 
     // The shaded libraries come before TheBase so their copies win over the stale ones
     // bundled inside TheBase's fat jar.
-    (MOD_SHADED_LIBRARIES + THE_BASE).each { modShade(it) { transitive = false } }
+    // Forge and NeoForge nest sqlite-jdbc instead (see jarJarSqlite below), and still compile
+    // against it.
+    def nested = (project.ext.has('jarJarSqlite') && project.jarJarSqlite) ? MOD_SHADED_LIBRARIES.findAll { it.startsWith('org.xerial:sqlite-jdbc:') } : []
+    (MOD_SHADED_LIBRARIES - nested + THE_BASE).each { modShade(it) { transitive = false } }
+    nested.each { compileOnly(it) { transitive = false } }
     modShade(project(path: ':StreamlineCore-API', configuration: 'shadow')) { transitive = false }
 }
 
@@ -140,6 +144,21 @@ def writeRelocations = tasks.register('writeModuleRelocations') {
 }
 sourceSets.main.resources.srcDir(files(relocationsDir).builtBy(writeRelocations))
 
+// The registry target the core updater checks (singularity.updates.CoreUpdater): the platform
+// part of the jar's name, lower-cased (StreamlineCore-Fabric-1211 -> fabric-1211). It is fixed
+// at build time because one mod jar runs on more than one Minecraft version.
+def coreTargetDir = layout.buildDirectory.dir('generated/core-target')
+def writeCoreTarget = tasks.register('writeCoreTarget') {
+    def target = project.name.replaceFirst('^StreamlineCore-', '').toLowerCase(Locale.ROOT)
+    def outFile = coreTargetDir.map { it.file('streamline-core-target.properties') }
+    inputs.property('target', target)
+    outputs.file(outFile)
+    doLast {
+        outFile.get().asFile.text = "target=${target}\n"
+    }
+}
+sourceSets.main.resources.srcDir(files(coreTargetDir).builtBy(writeCoreTarget))
+
 // The plain jar holds only this project's classes; the shaded jar is the one that runs.
 tasks.named('jar', Jar) {
     archiveClassifier.set('plain')
@@ -175,6 +194,10 @@ def bundleLibraries = { task ->
     task.exclude 'META-INF/services/ch.qos.logback.**'
     task.exclude 'logback*.xml'
 
+    // protobuf-java's .proto sources serve protoc only. Left in, their folder would count as a
+    // google.protobuf package of this jar's module and clash with mods shipping protobuf.
+    task.exclude 'google/protobuf/**'
+
     // TheBase's fat jar carries its own relocated database drivers and test classes.
     task.exclude 'org/junit/**'
     task.exclude 'gg/drak/thebase/lib/mysql/**'
@@ -191,11 +214,68 @@ def bundleLibraries = { task ->
     task.exclude 'META-INF/maven/**'
 }
 
+// Forge and NeoForge put each jar on the module path, and other mods (CreativeCore among them)
+// ship sqlite-jdbc as a module of its own. org.sqlite cannot be relocated (see above), so a
+// shaded copy would make two modules export it and stop the game from starting. These loaders
+// get sqlite-jdbc as a nested JarJar library instead, under its Maven coordinates, so JarJar
+// keeps one copy (the highest version) however many mods bring it. Fabric has no module path
+// and keeps the shaded copy.
+def jarJarSqlite = project.ext.has('jarJarSqlite') && project.jarJarSqlite
+def sqliteCoordinates = MOD_SHADED_LIBRARIES.find { it.startsWith('org.xerial:sqlite-jdbc:') }
+def sqliteVersion = sqliteCoordinates.split(':')[2]
+
+configurations {
+    modJarJar {
+        canBeConsumed = false
+        transitive = false
+    }
+}
+dependencies {
+    modJarJar sqliteCoordinates
+}
+
+// ModDevGradle's own jarJar task writes to generated/jarjar, for the plain jar only.
+def jarJarDir = layout.buildDirectory.dir('generated/sqlite-jarjar')
+def writeJarJarMetadata = tasks.register('writeJarJarMetadata') {
+    def outFile = jarJarDir.map { it.file('META-INF/jarjar/metadata.json') }
+    def metadata = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([
+            jars: [[
+                    identifier  : [group: 'org.xerial', artifact: 'sqlite-jdbc'],
+                    version     : [range: '[3.0,)', artifactVersion: sqliteVersion],
+                    path        : "META-INF/jarjar/sqlite-jdbc-${sqliteVersion}.jar".toString(),
+                    isObfuscated: false,
+            ]]
+    ]))
+    inputs.property('metadata', metadata)
+    outputs.file(outFile)
+    doLast {
+        outFile.get().asFile.text = metadata
+    }
+}
+
 tasks.named('shadowJar') {
     bundleLibraries(it)
     archiveBaseName.set(project.name)
     archiveClassifier.set('')
     modRelocations.each { from, to -> relocate(from, to) }
+
+    if (jarJarSqlite) {
+        // sqlite-jdbc is left out of modShade on these loaders, but TheBase's fat jar carries
+        // org.sqlite too. Neither may list org.sqlite.JDBC as a java.sql.Driver provider here,
+        // which would claim the package for this jar's module all the same; TheBase lists no
+        // services and the nested jar registers the driver itself.
+        exclude 'org/sqlite/**'
+        exclude 'META-INF/versions/*/org/sqlite/**'
+        exclude 'META-INF/native-image/org.xerial/**'
+        exclude 'sqlite-jdbc.properties'
+
+        dependsOn writeJarJarMetadata
+        from(jarJarDir)
+        from(project.configurations.modJarJar) {
+            into 'META-INF/jarjar'
+            rename { "sqlite-jdbc-${sqliteVersion}.jar" }
+        }
+    }
 }
 
 // Dev runs load the mod from its compiled classes, which use the libraries' original

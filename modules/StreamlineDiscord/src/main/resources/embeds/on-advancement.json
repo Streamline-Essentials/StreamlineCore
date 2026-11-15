@@ -1,0 +1,25 @@
+{
+  "bot": {
+    "avatar": {
+      "change": {
+        "enabled": true,
+        "to-on-message": "%discord_user_avatar_url%",
+        "to-after-message": "%discord_bot_avatar_url%"
+      }
+    }
+  },
+  "title": "ADVANCEMENT GET",
+  "description": "%streamline_user_absolute% has achieved %advancement%",
+  "fields": [
+    {
+      "name": "Description",
+      "value": "%description%",
+      "inline": false
+    }
+  ],
+  "color": 16777215,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

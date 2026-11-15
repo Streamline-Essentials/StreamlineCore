@@ -110,6 +110,17 @@ public class CosmicGui {
         return this;
     }
 
+    /** A black pane border with corners in {@code cornerColor}; see {@link GuiLayout#fillShell}. */
+    public CosmicGui shell(CornerColor cornerColor) {
+        GuiLayout.fillShell(this, cornerColor);
+        return this;
+    }
+
+    /** {@link #shell(CornerColor)} with the corners matched to the title's first colour. */
+    public CosmicGui shell() {
+        return shell(CornerColor.fromDisplayText(title));
+    }
+
     /** Opens this GUI for {@code viewer}, replacing whatever GUI they had open. */
     public void open(CosmicPlayer viewer) {
         GuiManager.open(viewer, this);

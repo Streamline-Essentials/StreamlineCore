@@ -1,7 +1,9 @@
 package net.streamline.api.permissions;
 
 import net.streamline.api.SLAPI;
+import singularity.data.players.CosmicPlayer;
 import singularity.utils.MessageUtils;
+import singularity.utils.UserUtils;
 import singularity.utils.UuidUtils;
 
 import java.util.Optional;
@@ -27,6 +29,7 @@ public final class Permissions {
     private static volatile PermissionProvider provider = NoPermissionProvider.INSTANCE;
     private static volatile boolean luckPermsAbsent;
     private static volatile long nextAttempt;
+    private static volatile AutoCloseable chatMetaSubscription = () -> {};
 
     private Permissions() {}
 
@@ -61,6 +64,7 @@ public final class Permissions {
             LuckPermsPermissionProvider luckPerms = LuckPermsPermissionProvider.create();
             SLAPI.setLpOptional(Optional.of(luckPerms.getApi()));
             provider = luckPerms;
+            chatMetaSubscription = luckPerms.onChatMetaChange(Permissions::chatMetaChanged);
             MessageUtils.logInfo("Hooked into LuckPerms for permissions.");
         } catch (IllegalStateException e) {
             // LuckPerms is installed but not enabled yet; retried after RETRY_MILLIS.
@@ -75,6 +79,12 @@ public final class Permissions {
      * Drops the active provider, e.g. on disable, so a later {@link #hook()} binds afresh.
      */
     public static synchronized void unhook() {
+        try {
+            chatMetaSubscription.close();
+        } catch (Exception e) {
+            MessageUtils.logWarning("Could not stop listening for LuckPerms prefix changes.", e);
+        }
+        chatMetaSubscription = () -> {};
         provider = NoPermissionProvider.INSTANCE;
         luckPermsAbsent = false;
         nextAttempt = 0L;
@@ -84,6 +94,23 @@ public final class Permissions {
     /**
      * @return whether a permission plugin backs Streamline's permissions
      */
+    /**
+     * @see PermissionProvider#hasChatMeta(UUID)
+     */
+    public static boolean hasChatMeta(String uuid) {
+        UUID id = toUuid(uuid);
+        return id != null && getProvider().hasChatMeta(id);
+    }
+
+    /**
+     * Copies a changed prefix and suffix into the player's Streamline meta, if Streamline has
+     * the player loaded. Players are never loaded for this; others pick it up when they load.
+     */
+    private static void chatMetaChanged(UUID uuid) {
+        CosmicPlayer player = UserUtils.getLoadedPlayers().get(uuid.toString());
+        if (player != null) UserUtils.syncChatMeta(player);
+    }
+
     public static boolean isHooked() {
         return getProvider() != NoPermissionProvider.INSTANCE;
     }

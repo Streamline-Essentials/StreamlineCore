@@ -78,6 +78,11 @@ public class MainListener implements BaseEventListener {
             }
         }
 
+        // Older versions stored "/pnick -clear" literally as the nickname.
+        if ("-clear".equals(event.getSender().getMeta().getNickname())) {
+            event.getSender().getMeta().setNickname("");
+        }
+
         if (StreamlineUtilities.getConfigs().isNicknamesEnabled()) {
             SpigotAccessor.updateCustomName(streamPlayer, event.getSender().getDisplayName());
         }

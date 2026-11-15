@@ -1,11 +1,10 @@
 package net.streamline.api.utils;
 
-import gg.drak.thebase.utils.MathUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import net.luckperms.api.LuckPerms;
-import net.luckperms.api.model.group.Group;
+import net.luckperms.api.cacheddata.CachedMetaData;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.NodeType;
 import net.luckperms.api.node.types.ChatMetaNode;
@@ -15,7 +14,7 @@ import singularity.utils.UUIDFetcher;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.SortedMap;
 
 /**
  * Utility class for reading LuckPerms chat-meta nodes (prefix and suffix)
@@ -38,19 +37,9 @@ public class LuckPermsUtil {
     }
 
     /**
-     * Generic helper that resolves the highest-priority chat-meta node of
-     * the requested type for a player identified by username.
-     *
-     * <p>Resolution order:
-     * <ol>
-     *   <li>Determine the player's UUID from the in-memory cache, falling back
-     *       to a remote UUID lookup.</li>
-     *   <li>Fetch the LuckPerms {@code User} and their primary {@code Group}.</li>
-     *   <li>Collect all matching nodes from the group (if present) then from
-     *       the user, storing them in priority order.</li>
-     *   <li>Return the value at the ceiling (highest) priority, or {@code ""}
-     *       when no nodes are found.</li>
-     * </ol>
+     * Resolves the prefix or suffix of the requested type for a player identified by
+     * username: the UUID comes from the in-memory cache, falling back to a remote UUID
+     * lookup, and is then resolved by {@link #grabThing(LuckPerms, UUID, NodeType)}.
      *
      * @param <N>        the concrete {@link ChatMetaNode} type
      * @param <B>        the builder type for {@code N}
@@ -79,51 +68,45 @@ public class LuckPermsUtil {
     }
 
     /**
-     * Resolves the highest-priority chat-meta node of the requested type for the loaded
-     * player with the given UUID, as {@link #grabThing(LuckPerms, String, NodeType)} does
-     * once it has resolved a username.
+     * Resolves the prefix or suffix of the requested type for the loaded player with the
+     * given UUID, as {@link #grabThing(LuckPerms, String, NodeType)} does once it has
+     * resolved a username.
+     *
+     * <p>The value is LuckPerms' own resolution ({@link CachedMetaData#getPrefix()} /
+     * {@link CachedMetaData#getSuffix()}): inherited groups, tracks, contexts, weights and
+     * meta stacking all apply, exactly as chat plugins reading LuckPerms see it.</p>
      *
      * @param <N>        the concrete {@link ChatMetaNode} type
      * @param <B>        the builder type for {@code N}
      * @param <T>        the {@link NodeType} used to filter nodes
      * @param luckPerms  the LuckPerms API instance to query
      * @param uuid       the player's UUID
-     * @param type       the node type to query (e.g. {@code NodeType.PREFIX})
-     * @return a {@link MetaRecord} containing the resolved value and its priority;
-     *         returns a record with an empty string and priority 0 when the player
-     *         is not loaded or holds no matching nodes
+     * @param type       {@code NodeType.PREFIX} or {@code NodeType.SUFFIX}
+     * @return a {@link MetaRecord} containing the resolved value and the priority of the
+     *         highest entry; an empty string and priority 0 when the player is not loaded
+     *         or has none
      */
     public static <N extends ChatMetaNode<N, B>, B extends ChatMetaNode.Builder<N, B>, T extends NodeType<N>> MetaRecord
     grabThing(LuckPerms luckPerms, UUID uuid, T type) {
-        String toReturn;
-        int priority;
-
         User user = luckPerms.getUserManager().getUser(uuid);
         if (user == null) return new MetaRecord("", 0);
 
-        Group group = luckPerms.getGroupManager().getGroup(user.getPrimaryGroup());
+        CachedMetaData meta = user.getCachedData().getMetaData();
+        boolean prefix = type == NodeType.PREFIX;
+        String value = prefix ? meta.getPrefix() : meta.getSuffix();
+        SortedMap<Integer, String> all = prefix ? meta.getPrefixes() : meta.getSuffixes();
+        int priority = all.isEmpty() ? 0 : all.firstKey();
 
-        ConcurrentSkipListMap<Integer, String> preWeight = new ConcurrentSkipListMap<>();
-        if (group == null) {
-            for (N node : user.getNodes(type)) {
-                preWeight.put(node.getPriority(), node.getMetaValue());
-            }
-        } else {
-            for (N node : group.getNodes(type)) {
-                preWeight.put(node.getPriority(), node.getMetaValue());
-            }
+        return new MetaRecord(value == null ? "" : value, priority);
+    }
 
-            for (N node : user.getNodes(type)) {
-                preWeight.put(node.getPriority(), node.getMetaValue());
-            }
-        }
-
-        toReturn = preWeight.get(MathUtils.getCeilingInt(preWeight.keySet()));
-        priority = MathUtils.getCeilingInt(preWeight.keySet());
-
-        if (toReturn == null) toReturn = "";
-
-        return new MetaRecord(toReturn, priority);
+    /**
+     * Whether LuckPerms has the player with this UUID loaded, i.e. whether
+     * {@link #grabThing(LuckPerms, UUID, NodeType)} reflects their real prefix and suffix
+     * rather than the empty answer it gives for players it does not hold.
+     */
+    public static boolean isLoaded(LuckPerms luckPerms, UUID uuid) {
+        return luckPerms.getUserManager().getUser(uuid) != null;
     }
 
     /**

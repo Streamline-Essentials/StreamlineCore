@@ -49,9 +49,13 @@ public class GuiView {
         return clickable.contains(slot);
     }
 
-    /** Whether a renderer can swap this view's items into an open screen showing {@code other}. */
+    /**
+     * Whether a renderer can swap this view's items into an open screen showing {@code other}:
+     * both have the same number of rows. A different title is changed in place where the
+     * platform allows it.
+     */
     public boolean isLayoutCompatible(GuiView other) {
-        return other != null && other.rows == rows && other.title.equals(title);
+        return other != null && other.rows == rows;
     }
 
     public String encode() {

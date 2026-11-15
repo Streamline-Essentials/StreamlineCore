@@ -15,7 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Command for managing the lifecycle of PF4J modules at runtime.
@@ -31,7 +33,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
  *   <li>{@code delete <module>} — unloads a module and deletes its jar.</li>
  *   <li>{@code ecloud download <module> [version]} — downloads a module from the
  *       module registry into the module folder and loads it.</li>
- *   <li>{@code ecloud update <module>} — replaces a module with the registry's latest
+ *   <li>{@code ecloud update <module>} (or {@code ALL} for every installed module) — replaces a module with the registry's latest
  *       version when that is newer.</li>
  * </ul>
  * When no module identifiers are provided the operation applies to all modules.
@@ -130,6 +132,12 @@ public class ModulesCommand extends CosmicCommand {
     /** Sent when the update fails. */
     private final String messageEcloudUpdateFailed;
 
+    /** Sent when an {@code ecloud update ALL} starts. */
+    private final String messageEcloudUpdateAllChecking;
+
+    /** Sent when an {@code ecloud update ALL} finishes, with its counts. */
+    private final String messageEcloudUpdateAllDone;
+
     /** Usage hint for the {@code ecloud} sub-command. */
     private final String messageEcloudUsage;
 
@@ -200,9 +208,13 @@ public class ModulesCommand extends CosmicCommand {
         this.messageEcloudFailed = this.getCommandResource().getOrSetDefault("messages.ecloud.failed",
                 "&cCould not download &7'&c%this_identifier%&7'&8: &c%this_error%");
         this.messageEcloudUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.usage",
-                "&eUsage&8: &f/modules ecloud <download <module> (version)|update <module>|get <downloads|version|all> <module>>");
+                "&eUsage&8: &f/modules ecloud <download <module> (version)|update <<module>|ALL>|get <downloads|version|all> <module>>");
         this.messageEcloudUpdateUsage = this.getCommandResource().getOrSetDefault("messages.ecloud.update.usage",
-                "&eUsage&8: &f/modules ecloud update <module>");
+                "&eUsage&8: &f/modules ecloud update <<module>|ALL>");
+        this.messageEcloudUpdateAllChecking = this.getCommandResource().getOrSetDefault("messages.ecloud.update.all.checking",
+                "&eChecking the module cloud for updates to &a%this_count% &einstalled module(s)&8...");
+        this.messageEcloudUpdateAllDone = this.getCommandResource().getOrSetDefault("messages.ecloud.update.all.done",
+                "&eUpdated &a%this_updated% &emodule(s)&8. &7(&a%this_up_to_date% &7up to date, &f%this_not_hosted% &7not on eCloud, &c%this_failed% &7failed)");
         this.messageEcloudUpdateChecking = this.getCommandResource().getOrSetDefault("messages.ecloud.update.checking",
                 "&eChecking the module cloud for an update to &7'&c%this_identifier%&7'&8...");
         this.messageEcloudUpdateNone = this.getCommandResource().getOrSetDefault("messages.ecloud.update.none",
@@ -476,6 +488,10 @@ public class ModulesCommand extends CosmicCommand {
             return;
         }
         String name = context.getStringArg(2);
+        if (name.equalsIgnoreCase(UPDATE_ALL)) {
+            runEcloudUpdateAll(context);
+            return;
+        }
         context.sendMessage(messageEcloudUpdateChecking.replace("%this_identifier%", name));
 
         ModuleCloud.update(name).whenComplete((result, error) -> {
@@ -510,6 +526,68 @@ public class ModulesCommand extends CosmicCommand {
                 context.sendMessage(messageEcloudUpdateLeftover.replace("%this_file%", result.getLeftoverJar()));
             }
         });
+    }
+
+    /** The {@code ecloud update} argument that updates every installed module. */
+    private static final String UPDATE_ALL = "ALL";
+
+    /**
+     * Handles {@code ecloud update ALL}: updates every installed module (loaded or not) one
+     * after another, since an update unloads and reloads the modules depending on it. Only
+     * updates and failures are reported per module; modules eCloud does not host and modules
+     * already up to date are only counted in the summary.
+     *
+     * @param context the command context
+     */
+    private void runEcloudUpdateAll(CommandContext<CosmicCommand> context) {
+        ConcurrentSkipListSet<String> ids = new ConcurrentSkipListSet<>(String.CASE_INSENSITIVE_ORDER);
+        ids.addAll(ModuleManager.getOnlyMalleableModuleIdentifiers());
+        ids.addAll(ModuleManager.getUnloadedExternalModuleIdentifiers());
+        context.sendMessage(messageEcloudUpdateAllChecking.replace("%this_count%", String.valueOf(ids.size())));
+
+        AtomicInteger updated = new AtomicInteger();
+        AtomicInteger upToDate = new AtomicInteger();
+        AtomicInteger notHosted = new AtomicInteger();
+        AtomicInteger failed = new AtomicInteger();
+
+        CompletableFuture<Void> chain = CompletableFuture.completedFuture(null);
+        for (String id : ids) {
+            chain = chain.thenCompose(ignored -> ModuleCloud.update(id).handle((result, error) -> {
+                if (error != null) {
+                    Throwable cause = error.getCause() != null ? error.getCause() : error;
+                    if (ModuleRegistry.isNotFound(cause)) {
+                        notHosted.incrementAndGet();
+                        return null;
+                    }
+                    failed.incrementAndGet();
+                    String reason = cause instanceof ModuleRegistry.RegistryException ? cause.getMessage() : String.valueOf(cause);
+                    context.sendMessage(messageEcloudUpdateFailed
+                            .replace("%this_identifier%", id)
+                            .replace("%this_error%", reason));
+                    return null;
+                }
+                if (result.getStatus() != ModuleCloud.Update.Status.UPDATED) {
+                    upToDate.incrementAndGet();
+                    return null;
+                }
+                updated.incrementAndGet();
+                context.sendMessage((result.isLoaded() ? messageEcloudUpdateUpdated : messageEcloudUpdateNotLoaded)
+                        .replace("%this_identifier%", result.getModuleId())
+                        .replace("%this_old_version%", orNone(result.getOldVersion()))
+                        .replace("%this_version%", orNone(result.getVersion()))
+                        .replace("%this_file%", result.getFile() == null ? "none" : result.getFile().getFileName().toString())
+                        .replace("%this_error%", String.valueOf(result.getLoadError())));
+                if (result.getLeftoverJar() != null) {
+                    context.sendMessage(messageEcloudUpdateLeftover.replace("%this_file%", result.getLeftoverJar()));
+                }
+                return null;
+            }));
+        }
+        chain.whenComplete((ignored, error) -> context.sendMessage(messageEcloudUpdateAllDone
+                .replace("%this_updated%", String.valueOf(updated.get()))
+                .replace("%this_up_to_date%", String.valueOf(upToDate.get()))
+                .replace("%this_not_hosted%", String.valueOf(notHosted.get()))
+                .replace("%this_failed%", String.valueOf(failed.get()))));
     }
 
     /** What {@code ecloud get} can report. */
@@ -584,8 +662,9 @@ public class ModulesCommand extends CosmicCommand {
         String installed = installedVersion(info.getId());
         String installedText;
         if (installed == null) installedText = "&cnot installed";
-        else if (installed.equals(info.getVersion())) installedText = "&a" + installed + " &7(latest)";
-        else installedText = "&e" + installed + " &7(update available)";
+        else if (ModuleRegistry.updateAvailable(installed, installedJar(info.getId()), info)) installedText = "&e" + installed + " &7(update available)";
+        else if (ModuleRegistry.compareVersions(installed, info.getVersion()) > 0) installedText = "&a" + installed + " &7(newer than eCloud)";
+        else installedText = "&a" + installed + " &7(latest)";
 
         String sha = info.getSha256();
         return template
@@ -621,6 +700,16 @@ public class ModulesCommand extends CosmicCommand {
         try {
             org.pf4j.PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(id);
             return wrapper == null ? null : wrapper.getDescriptor().getVersion();
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    /** The jar of the module with Plugin-Id {@code id} loaded on this server, or {@code null}. */
+    private static java.nio.file.Path installedJar(String id) {
+        try {
+            org.pf4j.PluginWrapper wrapper = ModuleManager.safePluginManager().getPlugin(id);
+            return wrapper == null ? null : wrapper.getPluginPath();
         } catch (Throwable e) {
             return null;
         }
@@ -689,7 +778,10 @@ public class ModulesCommand extends CosmicCommand {
         }
         if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
                 && context.getStringArg(1).equalsIgnoreCase("update")) {
-            return ModuleManager.getOnlyMalleableModuleIdentifiers();
+            ConcurrentSkipListSet<String> targets = new ConcurrentSkipListSet<>(ModuleManager.getOnlyMalleableModuleIdentifiers());
+            targets.addAll(ModuleManager.getUnloadedExternalModuleIdentifiers());
+            targets.add(UPDATE_ALL);
+            return targets;
         }
         if (context.getArgCount() == 3 && context.getStringArg(0).equalsIgnoreCase("ecloud")
                 && context.getStringArg(1).equalsIgnoreCase("download")) {

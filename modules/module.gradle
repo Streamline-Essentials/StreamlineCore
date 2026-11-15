@@ -133,11 +133,18 @@ dependencies {
         compileOnly "me.clip:placeholderapi:${rootProject.properties["papi_version"]}"
     }
 
-    // PF4J and TheBase are compileOnly (hence non-transitive) upstream, but modules
-    // compile directly against CosmicModule, @Extension and TheBase's utilities.
-    compileOnly(THE_BASE)
+    // PF4J is compileOnly (hence non-transitive) upstream, but modules compile directly
+    // against CosmicModule and @Extension. TheBase comes with the core's shadow jar above.
     compileOnly(HOST_SHADED_LIBRARIES)
     compileOnly(PLATFORM_LIBRARIES)
+}
+
+// A client module's setting names and descriptions, from client-common/client-settings.yml
+// (modules.<name>, or modules.<pf.id>), as <pf.class>.SettingTexts.
+if (project.ext.clientModule) {
+    apply from: rootProject.file('client-common/client-settings.gradle')
+    generateModuleSettingTexts([project.ext.moduleName, moduleProp('pf.id', project.name).toString()],
+            moduleProp('pf.class').toString(), 'SettingTexts')
 }
 
 // The core shadow JARs must exist before a module compiles against them.

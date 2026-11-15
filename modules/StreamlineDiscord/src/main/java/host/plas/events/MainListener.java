@@ -18,7 +18,13 @@ import host.plas.discord.messaging.BotMessageConfig;
 import host.plas.discord.messaging.DiscordMessenger;
 import host.plas.discord.messaging.DiscordProxiedMessage;
 import singularity.data.console.CosmicSender;
+import singularity.events.player.CosmicDeathEvent;
 import singularity.events.server.CosmicChatEvent;
+import singularity.events.server.ServerStartEvent;
+import singularity.interfaces.ISingularityExtension;
+import net.streamline.api.SLAPI;
+import host.plas.discord.data.events.DiscordEventMessages;
+import host.plas.discord.messaging.BotMessages;
 import singularity.events.server.LoginCompletedEvent;
 import singularity.events.server.LogoutEvent;
 import singularity.messages.events.ProxiedMessageEvent;
@@ -27,6 +33,7 @@ import singularity.messages.proxied.ProxiedMessage;
 import singularity.modules.ModuleUtils;
 import singularity.objects.SingleSet;
 import singularity.utils.UserUtils;
+
 import host.plas.events.streamline.bot.command.DiscordCommandEvent;
 import host.plas.events.streamline.bot.posting.DiscordMessageEvent;
 import host.plas.events.streamline.proxy.SimpleDiscordPMessageReceivedEvent;
@@ -39,7 +46,12 @@ public class MainListener implements BaseEventListener {
         StreamlineDiscord.getInstance().logInfo(getClass().getSimpleName() + " is now registered!");
     }
 
-    @BaseProcessor
+    /**
+     * Runs at {@link BaseEventPriority#NORMAL}: after mutes and channels (which cancel what they
+     * take), before chat formatters such as TacoEssentials' (at {@code HIGH}), which cancel the
+     * event to broadcast their own line.
+     */
+    @BaseProcessor(priority = BaseEventPriority.NORMAL)
     public void onStreamlineMessage(CosmicChatEvent event) {
         if (event.isCanceled()) return;
         if (ModuleUtils.isCommand(event.getMessage())) return;
@@ -76,7 +88,7 @@ public class MainListener implements BaseEventListener {
                     SingleSet<MessageCreateData, BotMessageConfig> data =
                             DiscordHandler.tryVerificationForUser(event.getMessage(), event.getMessage().getTotalMessage(), false);
 
-                    DiscordMessenger.message(event.getMessage().getChannel().getIdLong(), data.getKey(), data.getValue());
+                    if (data != null) DiscordMessenger.message(event.getMessage().getChannel().getIdLong(), data.getKey(), data.getValue());
                 }
             }
             RouteLoader.getLoadedRoutes().forEach(route -> {
@@ -98,7 +110,20 @@ public class MainListener implements BaseEventListener {
     @BaseProcessor
     public void onCommand(DiscordCommandEvent event) {
         StreamlineDiscord.getInstance().logDebug("Executing command '" + event.getCommand().getCommandIdentifier() + "'...!");
-        event.getCommand().execute(event.getMessage());
+        try {
+            SingleSet<MessageCreateData, BotMessageConfig> reply = event.getCommand().execute(event.getMessage());
+            if (reply == null) return;
+
+            long channelId = event.getMessage().getChannel().getIdLong();
+            // A private reply goes to a thread only its author is added to, like verification messages.
+            if (event.getCommand().isReplyEphemeral()) {
+                DiscordMessenger.message(channelId, reply.getKey(), reply.getValue(), event.getMessage().getAuthor().getIdLong());
+            } else {
+                DiscordMessenger.message(channelId, reply.getKey(), reply.getValue());
+            }
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Could not answer the Discord command '" + event.getCommand().getCommandIdentifier() + "': " + t);
+        }
     }
 
     @BaseProcessor(priority = BaseEventPriority.HIGHEST)
@@ -232,49 +257,74 @@ public class MainListener implements BaseEventListener {
         }
     }
 
-    @BaseProcessor
+    @BaseProcessor(priority = BaseEventPriority.MONITOR)
     public void onLogin(LoginCompletedEvent event) {
-        if (! StreamlineDiscord.getConfig().serverEventStreamlineLogin()) return;
+        try {
+            if (! StreamlineDiscord.getConfig().serverEventStreamlineLogin()) return;
 
-        CosmicSender sender = event.getSender();
-        if (sender == null) return;
+            CosmicSender sender = event.getSender();
+            if (sender == null) return;
 
-        String message = StreamlineDiscord.getMessages().forwardedStreamlineLogin();
-
-        RouteLoader.getLoadedRoutes().forEach(route -> {
-            if (! route.hasEnabledEvent(EventClassifier.LOGIN)) return;
-
-            if (route.getInput().getType().equals(EndPointType.GLOBAL_NATIVE)) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            } else if (route.getInput().getType().equals(EndPointType.SPECIFIC_NATIVE) && route.getInput().getEndPointIdentifier().equals(sender.getServerName())) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            } else if (route.getInput().getType().equals(EndPointType.PERMISSION) && sender.hasPermission(route.getInput().getEndPointIdentifier())) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            }
-        });
+            // A proxy announces the join once the player has reached a backend, so the message can name it.
+            long delay = DiscordEventMessages.isProxy() ? Math.max(0, StreamlineDiscord.getConfig().serverEventProxyJoinDelayTicks()) : 0L;
+            DiscordEventMessages.sendPlayerEvent(EventClassifier.LOGIN, DiscordEventMessages.KEY_JOIN, sender, null, delay);
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Could not send a join message to Discord: " + t);
+        }
     }
 
-    @BaseProcessor
+    @BaseProcessor(priority = BaseEventPriority.MONITOR)
     public void onLogout(LogoutEvent event) {
-        if (! StreamlineDiscord.getConfig().serverEventStreamlineLogout()) return;
+        try {
+            if (! StreamlineDiscord.getConfig().serverEventStreamlineLogout()) return;
 
-        CosmicSender sender = event.getSender();
-        if (sender == null) return;
+            CosmicSender sender = event.getSender();
+            if (sender == null) return;
 
-        String message = StreamlineDiscord.getMessages().forwardedStreamlineLogout();
+            DiscordEventMessages.sendPlayerEvent(EventClassifier.LOGOUT, DiscordEventMessages.KEY_LEAVE, sender, null);
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Could not send a quit message to Discord: " + t);
+        }
+    }
 
-        RouteLoader.getLoadedRoutes().forEach(route -> {
-            if (! route.hasEnabledEvent(EventClassifier.LOGOUT)) return;
+    /**
+     * Deaths on Fabric, Forge and NeoForge servers. Streamline's death event carries no death message there,
+     * so the message reads "{@code <player> died}". Spigot posts its own deaths, with the vanilla message,
+     * from the Bukkit listener.
+     */
+    @BaseProcessor(priority = BaseEventPriority.MONITOR)
+    public void onDeath(CosmicDeathEvent event) {
+        try {
+            if (! isModServer()) return;
+            if (! StreamlineDiscord.getConfig().serverEventSpigotDeath()) return;
 
-            if (route.getInput().getType().equals(EndPointType.GLOBAL_NATIVE)) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            } else if (
-                    ( route.getInput().getType().equals(EndPointType.SPECIFIC_NATIVE) || route.getInput().getType().equals(EndPointType.SPECIFIC_HANDLED) )
-                            && route.getInput().getEndPointIdentifier().equals(sender.getServerName())) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            } else if (route.getInput().getType().equals(EndPointType.PERMISSION) && sender.hasPermission(route.getInput().getEndPointIdentifier())) {
-                route.bounceEvent(new RoutedUser(sender), message);
-            }
-        });
+            CosmicSender sender = event.getSender();
+            if (sender == null) return;
+
+            String deathMessage = DiscordEventMessages.escape(sender.getCurrentName()) + " died";
+            DiscordEventMessages.sendPlayerEvent(EventClassifier.DEATH, DiscordEventMessages.KEY_DEATH, sender,
+                    BotMessages.placeholders(
+                            "this_death_message", deathMessage,
+                            "this_keep_inventory", "",
+                            "this_keep_experience", ""));
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Could not send a death message to Discord: " + t);
+        }
+    }
+
+    private static boolean isModServer() {
+        ISingularityExtension.PlatformType type = SLAPI.getInstance().getPlatform().getPlatformType();
+        return type == ISingularityExtension.PlatformType.FABRIC
+                || type == ISingularityExtension.PlatformType.FORGE
+                || type == ISingularityExtension.PlatformType.NEOFORGE;
+    }
+
+    @BaseProcessor(priority = BaseEventPriority.MONITOR)
+    public void onServerStart(ServerStartEvent event) {
+        try {
+            DiscordEventMessages.onServerStarted();
+        } catch (Throwable t) {
+            StreamlineDiscord.getInstance().logWarning("Could not send the server start message to Discord: " + t);
+        }
     }
 }

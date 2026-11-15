@@ -455,6 +455,31 @@ public abstract class GameplayHandler implements IGameplayHandler {
     }
 
     @Override
+    public boolean hasItemType(String id) {
+        return registryHas(BuiltInRegistries.ITEM.keySet(), id);
+    }
+
+    @Override
+    public boolean hasEffectType(String id) {
+        return registryHas(BuiltInRegistries.MOB_EFFECT.keySet(), id);
+    }
+
+    /**
+     * Whether a registry's keys include the id. Keys are compared as strings because their type
+     * is {@code ResourceLocation} up to 1.21.10 and {@code Identifier} after; registries are
+     * frozen once the server starts, so reading them from any thread is safe.
+     */
+    private static boolean registryHas(Set<?> keys, String id) {
+        if (id == null || id.isBlank()) return false;
+        String key = id.trim().toLowerCase(Locale.ROOT);
+        if (! key.contains(":")) key = "minecraft:" + key;
+        for (Object entry : keys) {
+            if (key.equals(String.valueOf(entry))) return true;
+        }
+        return false;
+    }
+
+    @Override
     public Map<String, Long> statistics(String uuid, String type, java.util.Collection<String> ids) {
         MinecraftServer server = BasePlugin.getServer();
         if (server == null) return java.util.Collections.emptyMap();

@@ -1,0 +1,10 @@
+{
+  "title": "SERVER OFFLINE",
+  "description": "**%this_server_name%** went offline.",
+  "color": "#FF5555",
+  "timestamp": true,
+  "footer": {
+    "text": "Powered by StreamlineCore.",
+    "icon_url": "https://raw.githubusercontent.com/Streamline-Essentials/StreamlineWiki/main/s.png"
+  }
+}

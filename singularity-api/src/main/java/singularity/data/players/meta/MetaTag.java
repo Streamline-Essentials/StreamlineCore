@@ -1,6 +1,6 @@
 package singularity.data.players.meta;
 
-import gg.drak.thebase.lib.re2j.Matcher;
+import com.google.re2j.Matcher;
 import gg.drak.thebase.objects.Identifiable;
 import gg.drak.thebase.utils.MatcherUtils;
 import lombok.Getter;

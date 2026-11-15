@@ -13,10 +13,8 @@ import host.plas.StreamlineDiscord;
 import host.plas.discord.DiscordCommand;
 import host.plas.discord.MessagedString;
 import host.plas.discord.messaging.BotMessageConfig;
-import host.plas.discord.messaging.DiscordMessenger;
 import singularity.modules.ModuleUtils;
 import singularity.objects.SingleSet;
-import singularity.utils.UserUtils;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -26,25 +24,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @Setter
 @Getter
 public class ChannelCommand extends DiscordCommand {
-    private String replyMessageSet;
-    private String replyMessageRemove;
-    private String replyMessageInfo;
-    private String replyMessageNone;
-
     public ChannelCommand() {
         super("channel",
                 -1L,
                 "chan", "ch", "channel"
         );
-
-        setReplyMessageSet(getResource().getOrSetDefault("messages.reply.set", "--file:channel-set-response.json"));
-        setReplyMessageRemove(getResource().getOrSetDefault("messages.reply.remove", "--file:channel-remove-response.json"));
-        setReplyMessageInfo(getResource().getOrSetDefault("messages.reply.info", "--file:channel-info-response.json"));
-        setReplyMessageNone(getResource().getOrSetDefault("messages.reply.none", "--file:channel-none-response.json"));
-        loadFile("channel-set-response.json");
-        loadFile("channel-remove-response.json");
-        loadFile("channel-info-response.json");
-        loadFile("channel-none-response.json");
     }
 
     @Override
@@ -182,7 +166,7 @@ public class ChannelCommand extends DiscordCommand {
                 return messageSet(messagedString, other);
             case "remove":
                 if (messagedString.getCommandArgs().length == 1) {
-                    AtomicReference<SingleSet<MessageCreateData, BotMessageConfig>> data = new AtomicReference<>(DiscordMessenger.simpleMessage("No channel found to remove!"));
+                    AtomicReference<SingleSet<MessageCreateData, BotMessageConfig>> data = new AtomicReference<>(respond("commands." + getCommandIdentifier() + ".nothing-to-remove", messagedString));
 
                     // Both directions of the link: Discord -> game and game -> Discord.
                     String channelId = messagedString.getChannel().getId();
@@ -231,58 +215,30 @@ public class ChannelCommand extends DiscordCommand {
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageSet(MessagedString messagedString, EndPoint endPoint) {
-        return message(messagedString, getReplyMessageSet(), endPoint);
+        return message(messagedString, "set", endPoint);
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageRemove(MessagedString messagedString, EndPoint endPoint) {
-        return message(messagedString, getReplyMessageRemove(), endPoint);
+        return message(messagedString, "remove", endPoint);
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageInfo(MessagedString messagedString) {
-        return message(messagedString, getReplyMessageInfo());
+        return message(messagedString, "info");
     }
 
     public SingleSet<MessageCreateData, BotMessageConfig> messageNone(MessagedString messagedString) {
-        return message(messagedString, getReplyMessageNone());
+        return message(messagedString, "none");
     }
 
-    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String message) {
-        if (isJsonFile(message)) {
-            String json = getJsonFromFile(getJsonFile(message));
-            return DiscordMessenger.simpleEmbed(ModuleUtils.replacePlaceholders(UserUtils.getConsole(), json
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-            ));
-        } else {
-            return DiscordMessenger.simpleMessage(message
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-            );
-        }
+    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String reply) {
+        return respond("commands." + getCommandIdentifier() + "." + reply, messagedString);
     }
 
-    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String message, EndPoint endPoint) {
-        if (isJsonFile(message)) {
-            String json = getJsonFromFile(getJsonFile(message));
-            return DiscordMessenger.simpleEmbed(
-                    ModuleUtils.replacePlaceholders(UserUtils.getConsole(),
-                            json
-                                    .replace("%this_command_label%", messagedString.getBase())
-                                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-                                    .replace("%this_type%", endPoint.getType().toString())
-                                    .replace("%this_identifier%", endPoint.getEndPointIdentifier())
-                                    .replace("%this_format%", endPoint.getToFormat())
-                    )
-            );
-        } else {
-            return DiscordMessenger.simpleMessage(message
-                    .replace("%this_command_label%", messagedString.getBase())
-                    .replace("%this_channel_id%", messagedString.getChannel().getId())
-                    .replace("%this_type%", endPoint.getType().toString())
-                    .replace("%this_identifier%", endPoint.getEndPointIdentifier())
-                    .replace("%this_format%", endPoint.getToFormat())
-            );
-        }
+    public SingleSet<MessageCreateData, BotMessageConfig> message(MessagedString messagedString, String reply, EndPoint endPoint) {
+        return respond("commands." + getCommandIdentifier() + "." + reply, messagedString,
+                "this_type", endPoint.getType().toString(),
+                "this_identifier", endPoint.getEndPointIdentifier(),
+                "this_format", endPoint.getToFormat());
     }
 
     @Override

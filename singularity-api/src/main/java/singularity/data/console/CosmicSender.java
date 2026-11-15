@@ -616,29 +616,26 @@ public class CosmicSender implements Loadable<CosmicSender> {
     }
 
     /**
-     * Builds and returns the formatted display name for this sender. If the
-     * meta object has a non-blank full override it is returned as-is; otherwise
-     * the console display name is used for the console, and for players the
-     * LuckPerms prefix/suffix and nickname (or username fallback) are assembled.
+     * Builds and returns the formatted display name for this sender, entirely from its
+     * {@link SenderMeta}. The console shows its meta override ({@link SenderMeta#getFull()})
+     * or the console display name. Players show their meta prefix, their nickname (or
+     * username when none is set) and their meta suffix; the prefix and suffix are left out
+     * when {@link SenderMeta#isPlainName()} is set. With LuckPerms the meta prefix and
+     * suffix are copies of LuckPerms' ({@link UserUtils#syncChatMeta}).
      *
      * @return the fully formatted display name string
      */
     public String getDisplayName() {
-        if (! getMeta().getFull().isEmpty() && ! getMeta().getFull().isBlank()) {
-            return getMeta().getFull();
+        if (isConsole()) {
+            String full = getMeta().getFull();
+            return full.isBlank() ? getConsoleDisplayName() : full;
         }
 
-        return isConsole() ?
-                getConsoleDisplayName() :
-                (
-                        UserUtils.getPrefix(this) +
-                                (
-                                        (getMeta().getNickname().isEmpty() || getMeta().getNickname().isBlank()) ?
-                                                getCurrentName() :
-                                                getMeta().getNickname()
-                                ) +
-                                UserUtils.getSuffix(this)
-                );
+        String nickname = getMeta().getNickname();
+        String name = nickname == null || nickname.isBlank() ? getCurrentName() : nickname;
+        if (getMeta().isPlainName()) return name;
+
+        return UserUtils.getPrefix(this) + name + UserUtils.getSuffix(this);
     }
 
     /**

@@ -59,7 +59,10 @@ public class ConsoleHolder implements IConsoleHolder<Object> {
             public void runCommand(String command) {
                 MinecraftServer server = BasePlugin.getServer();
                 if (server == null) return;
-                server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command);
+                // Commands touch the world, so they run on the server thread.
+                Runnable task = () -> server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command);
+                if (server.isSameThread()) task.run();
+                else server.execute(task);
             }
         };
     }
