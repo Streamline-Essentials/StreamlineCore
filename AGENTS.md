@@ -82,13 +82,13 @@ StreamlineCore is a cross-platform Minecraft plugin framework that supports Velo
 .\module-utils.ps1 -Get StreamQuests                           # just the version: 1.7.0
 .\module-utils.ps1 -Get StreamQuests TacoEssentials            # StreamQuests=1.7.0 lines; -Get alone lists every module
 .\module-utils.ps1                                             # modules with commits since their last bump (code vs metadata only)
-.\module-utils.ps1 StreamQuests TacoEssentials -CoAuthor "Claude Opus 5.5 <noreply@anthropic.com>"   # minor bump, one commit each
+.\module-utils.ps1 StreamQuests TacoEssentials                 # minor bump, one commit each
 .\module-utils.ps1 StreamQuests=1.8.0 RunOn=2.0.0              # exact versions (or: StreamQuests -Version 1.8.0)
 .\module-utils.ps1 -Changed -Part Patch -DryRun                # every module with code changes since its bump
 ```
 
 - A module's last bump is the newest commit changing its `version` line. Later commits count as code changes when they touch anything besides `gradle.properties`; `-IncludeMetadata` also takes modules whose only changes are tags, group, license or authors.
-- Each bump is its own `bump: <module> version` commit touching only the version line (`-NoCommit` leaves it uncommitted, `-CoAuthor` adds the commit trailer; agents pass their attribution there). It refuses to run with other changes staged.
+- Each bump is its own `bump: <module> version` commit touching only the version line (`-NoCommit` leaves it uncommitted, `-CoAuthor` adds a `Co-Authored-By:` trailer for a human co-author only; agents never pass it, since commits carry no agent attribution). It refuses to run with other changes staged.
 - Bump before the change, per the changelog rules: a module bumped and then changed in the same release still shows up in the listing, so check the commits before bumping it again.
 
 ### Mod-loader subprojects (Fabric / Forge / NeoForge)
