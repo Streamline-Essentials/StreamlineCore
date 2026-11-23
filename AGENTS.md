@@ -208,6 +208,8 @@ Event priority: `@BaseProcessor(priority = ...)` is honored because Streamline f
 
 `/streamlinedb (info|migrate <from> <to> (confirm))` (alias `/sldb`, `DatabaseCommand`) runs `singularity.database.DatabaseMigrator`: it saves loaded players, copies every table starting with the table prefix (core and module tables, all on the main `CoreDBOperator`) between the SQLite and MySQL set up in `database-config.yml`, creating missing tables from the source's columns and primary key (core tables come from the core schema), then writes `type` and reconnects the main operator in place. Without `confirm` it refuses when a copied target table already holds rows.
 
+`/streamlineversion (core|<module>)` (aliases `/slversion`, `/slv`, `VersionCommand`, styled after BOU's `/bouversion` and `/boup info`): no argument or `core` shows the core version, platform (`ISingularityExtension.getPlatformDisplayName()`, Paper on Paper), server software (`getServerSoftware()`: Bukkit name + version, proxy name + version + supported range, mods loader + loader version (`BasePlugin.getLoaderVersion()`) + Minecraft), the Minecraft version as `singularity.objects.Versioning` (a cross-platform copy of BOU's `Versioning`: `getServerVersion()` parses `getMinecraftVersion()`: Bukkit's version, the mod server's game version, a proxy's newest supported version), and an async core update check (`ModuleRegistry.coreNow`); a module shows its descriptor (or the manifest of an unloaded jar) and its eCloud status. Messages live in its command YAML.
+
 Module commands also register as `/<module-id>:<label>` (`CosmicCommand.getNamespacedLabels()`), never written to the command's YAML.
 
 ### Platform Entry Points
