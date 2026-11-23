@@ -272,6 +272,53 @@ public abstract class BasePlugin implements ISingularityExtension {
         }
     }
 
+    /**
+     * The loader, its version and the Minecraft version, e.g. {@code Fabric 0.16.9 (Minecraft 1.21.1)};
+     * a client hosting a world adds {@code integrated server}.
+     */
+    @Override
+    public String getServerSoftware() {
+        StringBuilder software = new StringBuilder(getPlatformDisplayName());
+        String loaderVersion = null;
+        try {
+            loaderVersion = getLoaderVersion();
+        } catch (Throwable ignored) {
+            // Shown without a loader version.
+        }
+        if (loaderVersion != null && ! loaderVersion.isEmpty()) software.append(' ').append(loaderVersion);
+        MinecraftServer current = getServer();
+        if (current != null) software.append(" (Minecraft ").append(current.getServerVersion()).append(')');
+        if (isClient()) software.append(" integrated server");
+        return software.toString();
+    }
+
+    /** The game version of the running server, or an empty string before it has started. */
+    @Override
+    public String getMinecraftVersion() {
+        MinecraftServer current = getServer();
+        return current == null ? "" : current.getServerVersion();
+    }
+
+    /** The mod loader's own version, or {@code null} when it cannot be read. */
+    protected String getLoaderVersion() {
+        return null;
+    }
+
+    /**
+     * Calls the static {@code getVersion()} of a loader's version class by reflection, since
+     * where it lives and what else the loader's mod list offers differ between versions.
+     *
+     * @return the version, or {@code null} when the class or method is missing
+     */
+    protected static String staticVersion(String className) {
+        try {
+            Object version = Class.forName(className).getMethod("getVersion").invoke(null);
+            return version == null ? null : version.toString();
+        } catch (ReflectiveOperationException | LinkageError e) {
+            return null;
+        }
+    }
+
     /** The loader's gameplay handler, which knows how that loader refreshes player names. */
     protected abstract GameplayHandler createGameplayHandler();
 

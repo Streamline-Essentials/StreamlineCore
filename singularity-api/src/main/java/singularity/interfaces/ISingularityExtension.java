@@ -231,6 +231,54 @@ public interface ISingularityExtension {
     String getVersion();
 
     /**
+     * The name and version of the server software StreamlineCore runs on, for display
+     * (e.g. {@code Paper 1.21.4-123-abcdef (MC: 1.21.4)} or {@code Fabric 0.16.9 (Minecraft 1.21.1)}).
+     *
+     * @return the server software; never {@code null}
+     */
+    default String getServerSoftware() {
+        return getPlatformDisplayName();
+    }
+
+    /**
+     * The Minecraft version this server runs, as the platform reports it: Bukkit's version
+     * ({@code 1.21.4-R0.1-SNAPSHOT}) on Spigot, the game version on mod loaders, and the newest
+     * supported version on proxies, which accept a range. Parsed by
+     * {@link singularity.objects.Versioning#getServerVersion()}.
+     *
+     * @return the version, or an empty string when unknown
+     */
+    default String getMinecraftVersion() {
+        return "";
+    }
+
+    /**
+     * The display name of {@link #getPlatformType()}: {@code Spigot}, {@code BungeeCord},
+     * {@code Velocity}, {@code Fabric}, {@code Forge} or {@code NeoForge}. Spigot reads
+     * {@code Paper} on Paper and its forks.
+     *
+     * @return the platform's display name
+     */
+    default String getPlatformDisplayName() {
+        switch (getPlatformType()) {
+            case SPIGOT:
+                return isPaperServer() ? "Paper" : "Spigot";
+            case BUNGEE:
+                return "BungeeCord";
+            case VELOCITY:
+                return "Velocity";
+            case FABRIC:
+                return "Fabric";
+            case FORGE:
+                return "Forge";
+            case NEOFORGE:
+                return "NeoForge";
+            default:
+                return getPlatformType().name();
+        }
+    }
+
+    /**
      * Sends the given resource pack to the specified player.
      *
      * @param resourcePack the resource pack to send; must not be {@code null}

@@ -65,6 +65,12 @@ public class GivenCommands {
     private static DatabaseCommand databaseCommand;
 
     /**
+     * The singleton instance of {@link VersionCommand} registered at startup.
+     */
+    @Getter @Setter
+    private static VersionCommand versionCommand;
+
+    /**
      * Instantiates every built-in command and registers each one with the
      * platform command dispatcher.
      *
@@ -82,6 +88,7 @@ public class GivenCommands {
         setSyncCommand(new SyncCommand());
         setDebugCommand(new DebugCommand());
         setDatabaseCommand(new DatabaseCommand());
+        setVersionCommand(new VersionCommand());
 
         getModulesCommand().register();
         getParseCommand().register();
@@ -92,5 +99,6 @@ public class GivenCommands {
         getSyncCommand().register();
         getDebugCommand().register();
         getDatabaseCommand().register();
+        getVersionCommand().register();
     }
 }

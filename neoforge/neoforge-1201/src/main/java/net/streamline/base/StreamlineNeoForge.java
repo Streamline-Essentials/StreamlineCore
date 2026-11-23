@@ -28,6 +28,12 @@ public class StreamlineNeoForge extends BasePlugin {
         return PlatformType.NEOFORGE;
     }
 
+    /** NeoForge 1.20.1 still carries Forge's version class. */
+    @Override
+    protected String getLoaderVersion() {
+        return staticVersion("net.minecraftforge.versions.forge.ForgeVersion");
+    }
+
     @Override
     protected GameplayHandler createGameplayHandler() {
         return ForgeListener.gameplayHandler();

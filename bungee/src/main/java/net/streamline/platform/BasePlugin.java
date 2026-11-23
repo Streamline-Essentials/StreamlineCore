@@ -70,6 +70,21 @@ public abstract class BasePlugin extends Plugin implements ISingularityExtension
     @Getter
     private String version;
 
+    /** The proxy's name and version, e.g. {@code BungeeCord git:BungeeCord-Bootstrap:1.21-R0.1-SNAPSHOT:abcdef:1900}. */
+    @Override
+    public String getServerSoftware() {
+        return getProxy().getName() + " " + getProxy().getVersion() + " (Minecraft " + getProxy().getGameVersion() + ")";
+    }
+
+    /** The newest Minecraft version this proxy accepts: the end of its game version range ({@code 1.8.x-1.21.x}). */
+    @Override
+    public String getMinecraftVersion() {
+        String range = getProxy().getGameVersion();
+        if (range == null) return "";
+        int dash = range.lastIndexOf('-');
+        return dash >= 0 ? range.substring(dash + 1) : range;
+    }
+
     /** The singleton instance of the currently running {@code BasePlugin}. */
     @Getter
     private static BasePlugin instance;

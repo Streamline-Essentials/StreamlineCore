@@ -29,6 +29,13 @@ public class StreamlineNeoForge extends BasePlugin {
     }
 
     @Override
+    protected String getLoaderVersion() {
+        return net.neoforged.fml.ModList.get().getModContainerById("neoforge")
+                .map(container -> container.getModInfo().getVersion().toString())
+                .orElse(null);
+    }
+
+    @Override
     protected GameplayHandler createGameplayHandler() {
         return new GameplayHandler() {
             @Override

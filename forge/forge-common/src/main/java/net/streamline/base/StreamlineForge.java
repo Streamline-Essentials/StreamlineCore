@@ -25,6 +25,11 @@ public class StreamlineForge extends BasePlugin {
     }
 
     @Override
+    protected String getLoaderVersion() {
+        return staticVersion("net.minecraftforge.versions.forge.ForgeVersion");
+    }
+
+    @Override
     protected GameplayHandler createGameplayHandler() {
         return ForgeListener.gameplayHandler();
     }

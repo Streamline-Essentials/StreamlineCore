@@ -26,6 +26,13 @@ public class StreamlineFabric extends BasePlugin implements ModInitializer {
         return PlatformType.FABRIC;
     }
 
+    @Override
+    protected String getLoaderVersion() {
+        return FabricLoader.getInstance().getModContainer("fabricloader")
+                .map(container -> container.getMetadata().getVersion().getFriendlyString())
+                .orElse(null);
+    }
+
     /** Fabric has no hook for formatting player names, so there is nothing to refresh. */
     @Override
     protected GameplayHandler createGameplayHandler() {

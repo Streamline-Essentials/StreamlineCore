@@ -134,6 +134,20 @@ public abstract class BasePlugin implements ISingularityExtension {
     @Getter
     private final ProxyServer proxy;
 
+    /** Velocity's name and version, e.g. {@code Velocity 3.4.0-SNAPSHOT (git-abcdef-b500)}. */
+    @Override
+    public String getServerSoftware() {
+        com.velocitypowered.api.util.ProxyVersion version = getProxy().getVersion();
+        return version.getName() + " " + version.getVersion()
+                + " (Minecraft " + com.velocitypowered.api.network.ProtocolVersion.SUPPORTED_VERSION_STRING + ")";
+    }
+
+    /** The newest Minecraft version this Velocity accepts. */
+    @Override
+    public String getMinecraftVersion() {
+        return com.velocitypowered.api.network.ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion();
+    }
+
     /**
      * The SLF4J logger provided by Velocity.
      */

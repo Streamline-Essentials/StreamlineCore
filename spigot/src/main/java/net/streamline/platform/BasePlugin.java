@@ -153,6 +153,18 @@ public abstract class BasePlugin extends BetterPlugin implements ISingularityExt
         return getServer();
     }
 
+    /** Bukkit's server name and version, e.g. {@code Paper 1.21.4-123-abcdef (MC: 1.21.4)}. */
+    @Override
+    public String getServerSoftware() {
+        return getServer().getName() + " " + getServer().getVersion();
+    }
+
+    /** Bukkit's version, e.g. {@code 1.21.4-R0.1-SNAPSHOT}. */
+    @Override
+    public String getMinecraftVersion() {
+        return getServer().getBukkitVersion();
+    }
+
     /** The platform-specific user manager. */
     @Getter
     private UserManager userManager;
